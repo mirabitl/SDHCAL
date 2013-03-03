@@ -1,6 +1,6 @@
 #ifndef _DIFReadoutConstant_h
 #define _DIFReadoutConstant_h
-
+#include <stdint.h>
 #define DIF_FIRMWARE_VERSION 12
 
 #if DIF_FIRMWARE_VERSION <= 12 
