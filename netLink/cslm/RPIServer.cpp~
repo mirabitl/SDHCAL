@@ -1,0 +1,250 @@
+
+#include <iostream>
+#include <string.h>
+#include<stdio.h>
+#include "NMServer.h"
+using namespace std;
+#include <sstream>
+class DIFHardware
+{
+  virtual void addDIF(uint32_t num)=0;
+  virtual uint32_t writeSlowControl(uint32_t num,uint32_t nbasic,uint32_t framesize,unsigned char* cbuf)=0;
+  virtual void writeSlowControlRegister(uint32_t num,uint32_t screg)=0;
+  virtual uint32_t readdata(uint32_t num,unsigned char* cbuf)=0;
+};
+
+class UsbDIFHardware
+{
+  virtual void addDIF(uint32_t num)
+  {
+    std::map<uint32_t,UsbDIFDriver*>::iterator it = mDriver_.find(num);
+    if (it==mDriver_.end())
+      {
+	char name[24];
+	memset(name,0,24);
+	sprintf(name,"FT101%.3d",num);
+	UsbDIFDriver* d= new UsbDIFDriver(name);
+	std::pair<uint32_t,UsbDIFDriver*> p(num,d);
+	mDriver_.insert(p)
+	  }
+  }
+  virtual void writeSlowControlRegister(uint32_t num,uint32_t screg)
+  {
+    std::map<uint32_t,UsbDIFDriver*>::iterator it = mDriver_.find(num);
+    if (it==mDriver_.end()) return;
+    it->second->->SetControlRegister(screg);
+  }
+  virtual uint32_t writeSlowControl(uint32_t num,uint32_t nbasic,uint32_t framesize,unsigned char* cbuf)
+  {
+    std::map<uint32_t,UsbDIFDriver*>::iterator it = mDriver_.find(num);
+    if (it==mDriver_.end()) return 0xFFFFFFFF;
+    unsigned char vframe[HARDROCV2_SLC_FRAME_SIZE]; 
+    unsigned char** cslow = (unsigned char**) cbuf;
+    // send configure command
+    unsigned short tCRC;
+    unsigned char CurrentCRC[2];   
+    // set default register values
+    tCRC=0xFFFF;							// initial value of the CRC
+    try 
+      {
+	it->second->HardrocCommandSLCWrite();	
+      }
+    catch (HAL::HardwareAccessException& e)
+      {
+	std::cout<< theName_<<": Unable to send start SLC command to DIF"<<std::endl;
+	throw;
+      }
+
+    for (int tAsic=nbasic;tAsic>0;tAsic--)
+      {
+	//      std::cout<<"Configuring "<<tAsic<<std::endl;
+	for (int tbyte=0;tbyte<framesize;tbyte++)
+	  {
+	    printf("%02x",cslow[tAsic-1][tbyte] );
+	    vframe[tbyte]=cslow[tAsic-1][tbyte];
+	  }
+	printf("\n");
+
+	for (int tbyte=0;tbyte<framesize;tbyte++) 
+	  {
+	    tCRC=((tCRC&0xFF)<<8) ^ ( UsbDIFDriver::CrcTable[ (tCRC>>8)^theSlowBuffer_[tAsic-1][tbyte] ] );
+	  } 
+	try 
+	  {
+
+	    it->second->CommandSLCWriteSingleSLCFrame(vframe,framesize);
+	    
+	    
+	  }
+	catch (HAL::HardwareAccessException& e)
+	  {
+	    std::cout<<theName_<<":Unable to send SLC frame to DIF"<<std::endl;	
+	    throw;
+	  }
+
+      }	//for (int tAsic=NbOfASICs;tAsic>0;tAsic--)
+		
+    
+  }
+private:
+  std::map<uint32_t,UsbDIFDriver*> mDriver_;
+};
+class RPIServer: public NMServer
+{
+public:
+  RPIServer(std::string host,uint32_t port,DIFHardware* dh,uint32_t dif1,uint32_t dif2,uint32_t dif3) : NMServer(host,port),difHardware_(dh)
+  {
+    
+    this->registerCommand("START",boost::bind(&RPIServer::commandHandler,this,_1));
+    this->registerCommand("STOP",boost::bind(&RPIServer::commandHandler,this,_1));
+
+    if (dif1!=0) this->registerDIF(dif1);
+    if (dif2!=0) this->registerDIF(dif2);
+    if (dif3!=0) this->registerDIF(dif3);
+    
+    this->start(); // On demarre le serveur
+
+    running_=false;
+  }
+  void registerDIF(uint32_t num)
+  {
+    std::stringstream sc("");
+    sc<<"SC"<<num;
+    this->registerCommand(sc.str(),boost::bind(&RPIServer::SCHandler,this,_1)); // StoreSlowControl
+    std::stringstream scr("");
+    sc<<"SCR"<<num;
+    this->registerCommand(sc.str(),boost::bind(&RPIServer::SCRHandler,this,_1)); // StoreSlowControl
+
+    std::stringstream data("");
+    data<<"DIF"<<num;
+    this->registerService(data.str());
+    difList_.push_back(num);
+    difHardware_->addDIF(num);
+  }
+
+  NetMessage* SCHandler(NetMessage* m)
+  {
+
+    // On fait le SC et on renvoie le code
+    uint32_t* ibuf=(uint32_t*) m->getPayload();
+    unsigned char* cbuf=m->getPayload();
+    uint32_t nbAsic=ibuf[0];
+    uint32_t frameSize=ibuf[1];
+    unsigned char* slowBuffer=&cbuf[8];
+    uint32_t num;
+    sscanf(m->getName().c_str(),"SC%d",&num);
+    std::vector<uint32_t>::iterator i = find(difList_.begin(),difList_.end(), num);
+    if (i==difList_.end()) difList_.push_back(num);
+
+    uint32_t rc=difHardware_->writeSlowControl(num,nbAsic,frameSize,slowBuffer);
+    NetMessage* mrep=new NetMessage(m->getName,NetMessage::COMMAND_ACKNOWLEDGE,4);
+    uint32_t* ibufr=(uint32_t*) mrep->getPayload();
+    ibufr[0]=rc;
+    return mrep;
+  }
+
+  NetMessage* SCRHandler(NetMessage* m)
+  {
+
+    // On fait le SC et on renvoie le code
+    uint32_t* ibuf=(uint32_t*) m->getPayload();
+    uint32_t slowcontrolregister=ibuf[0];
+    uint32_t num;
+    sscanf(m->getName().c_str(),"SC%d",&num);
+
+    difHardware_->writeSlowControlRegister(num,slowControlRegister);
+    return NULL;
+  }
+
+  NetMessage* commandHandler(NetMessage* m)
+  {
+    std::string start="START";
+    std::string stop="STOP";
+    
+    printf(" J'ai recu %s COMMAND %s %s  \n",m->getName().c_str(),start.c_str(),stop.c_str());
+    if (m->getName().compare(start)==0)
+      {
+	running_=true;
+	this->startServices();
+      }
+    if (m->getName().compare(stop)==0)
+      {
+	running_=false;
+	this->joinServices();
+      }
+
+    return NULL;
+  }
+  void startServices()
+  {
+    // On envoie le start au DIF ?
+    // On demarre la lecture
+    m_Thread_s = boost::thread(&RPIServer::readServices, this);  
+  }
+  void joinServices()
+  {
+    // On attend la fin des threads
+    m_Thread_s.join();  
+  }
+  void readServices()
+  {
+    unsigned char CurrentDIFDigitalData[MAX_EVENT_SIZE];
+
+    while (true)
+      {
+	usleep((uint32_t) 100);
+	if (!running_) break;
+	for (std::vector<uint32_t>::iterator i=difList_.begin();i!=difList_.end();i++)
+	  {
+	    uint32_t len =difHardware_->readData(i,CurrentDIFDigitalData);
+	    DEBUG(" J'update UNESSAI \n");
+
+	    if (len>0)
+	      {
+		std::stringstream s();
+		s<<"DIF"<<i;
+		NetMessage m(s.str(),NetMessage::SERVICE,len);
+		//uint32_t* ibuf=(uint32_t*) m.getPayload();
+		memcpy(m.getPayload(),CurrentDIFDigitalData,len);
+		this->updateService(s.str(),&m);
+	      }
+	  }
+      }
+  }
+private:
+  bool running_;
+  boost::thread    m_Thread_s;
+  std::vector<uint32_t> difList_;
+  DIFHardware* difHardware_;
+};
+
+int main(int argc, char **argv) {
+  RPIServer s("lyopc252",atoi(argv[1]));
+  //s.start();
+	// NL::init();
+
+	// cout << "\nStarting Server...";
+	// cout.flush();
+
+	// NL::Socket socketServer(SERVER_PORT);
+
+	// NL::SocketGroup group;
+
+	// OnAccept onAccept;
+	// OnRead onRead;
+	// OnDisconnect onDisconnect;
+
+	// group.setCmdOnAccept(&onAccept);
+	// group.setCmdOnRead(&onRead);
+	// group.setCmdOnDisconnect(&onDisconnect);
+
+	// group.add(&socketServer);
+
+	// while(true) {
+
+	// 	if(!group.listen(2000))
+	// 		cout << "\nNo msg recieved during the last 2 seconds";
+	// }
+  while (true)
+    { sleep((unsigned int) 100);}
+}

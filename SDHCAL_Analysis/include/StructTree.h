@@ -1,0 +1,122 @@
+#ifndef _STRUCTTREE_H_
+#define _STRUCTTREE_H_
+#include<stdint.h>
+
+typedef struct { 
+  double xhit[61]; 
+  double yhit[61]; 
+  float  ax; 
+  float  bx; 
+  float  ay; 
+  float  by; 
+  float  chi2; 
+  int32_t    npoint; 
+  int32_t    idx; 
+  uint32_t    eventid;
+  uint8_t nhit0[61]; 
+  uint8_t nhit1[61]; 
+  uint8_t nhit2[61]; 
+} track_t; 
+
+typedef struct { 
+  float  x; 
+  float  y; 
+  float  dx; 
+  float  dy; 
+  float  z; 
+  int32_t    tkid; 
+  int32_t    id; 
+  int32_t    eventid; 
+  int32_t    runid; 
+  int32_t    chamber;
+}  point_t;
+
+typedef struct {
+  float  X;
+  float  Y;
+  float  dX;
+  float  dY;
+
+  int32_t id;
+  int32_t pointid;
+} cluster_t;
+
+
+typedef struct {
+  float  X;
+  float  Y;
+  float  Z;
+  int8_t   I,J;
+  int32_t id;
+  int32_t clusterid;
+  int8_t dif;
+  int8_t amplitude;
+  uint8_t difI,difJ,asic,channel;
+
+
+} hit_t;
+
+typedef struct { 
+  uint64_t    bcid;
+  uint64_t    ib1;
+  uint32_t    time;
+  uint32_t    eventid;
+  uint32_t    gtc;
+  double     xm[3];
+  double     lambda[3];
+  double     v1[3];
+  double     v2[3];
+  double     v3[3];
+  double     xb1,yb1,maxlb1;
+  double     n9,n25,rbs,rbt;
+  
+
+  double     rxm[3];
+  double     rlambda[3];
+  double     rv1[3];
+  double     rv2[3];
+  double     rv3[3];
+  double     corr0[60];
+  double     corr1[60];
+  double     corr2[60];
+  double     rncor[3];
+  uint32_t    idx; 
+
+  uint16_t    nhit[3];
+  uint16_t    rnhit[3];
+
+
+  uint16_t    plan0[60];
+  uint16_t    plan1[60];
+  uint16_t    plan2[60];
+
+  uint8_t    firstplan;
+  uint8_t    lastplan;
+  uint8_t    np1,fp1,lp1;
+  double     fd[4];
+  uint16_t   NH0[8];
+  uint16_t   NH1[8];
+  uint16_t   NH2[8];
+  uint16_t   NH[8];
+} shower_t;
+
+ 
+
+typedef struct { 
+  uint32_t    idx;
+  uint64_t    bcid;
+  double     energy;
+  uint32_t    run; 
+  uint32_t    event; 
+  uint32_t    gtc;
+  uint32_t    dtc;
+  uint32_t    time;
+  uint32_t    npoint;
+  uint32_t    allpoints;
+  uint16_t    ntrack;
+  uint16_t    allshowers;
+  uint16_t    showers;
+  uint8_t    type;
+} event_t;
+
+#endif

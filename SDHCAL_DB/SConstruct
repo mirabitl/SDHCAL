@@ -1,0 +1,113 @@
+import sys,os,commands
+import  os
+import re
+import sys
+
+def SWIGSharedLibrary(env, library, sources, **args):
+  swigre = re.compile('(.*).i')
+  if env.WhereIs('swig') is None:
+    sourcesbis = []
+    for source in sources:
+      cName = swigre.sub(r'\1_wrap.c', source)
+      cppName = swigre.sub(r'\1_wrap.cc', source)
+      if os.path.exists(cName):
+        sourcesbis.append(cName)
+      elif os.path.exists(cppName):
+        sourcesbis.append(cppName)
+      else:
+        sourcesbis.append(source)
+  else:
+    sourcesbis = sources
+ 
+  if 'SWIGFLAGS' in args:
+    args['SWIGFLAGS'] += ['-python']
+  else:
+    args['SWIGFLAGS'] = ['-python'] + env['SWIGFLAGS']
+  args['SHLIBPREFIX']=""
+  if sys.version >= '2.5':
+    args['SHLIBSUFFIX']=".pyd"
+ 
+  cat=env.SharedLibrary(library, sourcesbis, **args)
+  return cat
+ 
+
+
+# environment
+#import xdaq
+#print xdaq.INCLUDES
+#print xdaq.LIBRARY_PATHS
+#print xdaq.LIBRARIES
+
+#print "----------------------------------------------"
+Decider('MD5-timestamp')
+XDAQ_ROOT="/opt/xdaq"
+DHCAL_ROOT=os.path.abspath("..")
+
+# includes
+INCLUDES=['include',"/usr/include/ILCConfDB",\
+	os.path.join(DHCAL_ROOT,"SDHCAL_common","include"),\
+	os.path.join(DHCAL_ROOT,"DBUtils","python","Cpp")]
+
+#MYSQL and sqlite
+INCLUDES.append("/usr/include/libxml2")
+INCLUDES.append("/data/ilcsoft/lcio/v01-51/include")
+
+INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
+
+CPPFLAGS=commands.getoutput("$ROOTSYS/bin/root-config --cflags").split(" ") + ["-O4","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2"]
+
+#Library ROOT + some of XDAQ + DB 
+LIBRARIES=['pthread', 'uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c',  'stdc++',]
+
+
+
+#Library path XDAQ,DHCAL and ROOT + Python
+LIBRARY_PATHS=["/usr/lib","/usr/local/lib",os.path.join(XDAQ_ROOT,"lib"),os.path.join(DHCAL_ROOT,"opt","dhcal","lib"),os.path.join(os.environ["ROOTSYS"],"lib")]
+LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
+
+#link flags
+LDFLAGS=commands.getoutput("$ROOTSYS/bin/root-config --ldflags").split(" ")
+LDFLAGS.append("-fPIC -dynamiclib ")
+
+# SWIG
+SWIGSF=["-c++","-classic"]
+
+for i in INCLUDES:
+    SWIGSF.append("-I"+i)
+print SWIGSF
+
+# Create the Environment
+env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS,SWIGFLAGS=SWIGSF)
+
+#print "CC is:",env.subst('$CPPPATH')
+
+env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
+
+
+# Library source
+
+LIBRARY_SOURCES=Glob("#src/*.cc")
+
+for i in LIBRARY_SOURCES:
+  print i 	 
+#Shared library
+SDHCALDB=env.SharedLibrary("#lib/SDHCALDB",source=LIBRARY_SOURCES)
+
+#Python module
+LSDHCALDB=env.PythonModule('_LSDHCALDB', ['LSDHCALDB.i'],LIBPATH="#lib",LIBS="SDHCALDB")
+
+#Test Program
+#EXE_LIBPATH=LIBRARY_PATHS
+#EXE_LIBPATH.append("#lib")
+#EXE_LIBS=LIBRARIES
+#EXE_LIBS.append("SDHCALDB")
+#TMAIN=env.Program("bin/main",source="src/main.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+
+Default([SDHCALDB,LSDHCALDB])
+env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SDHCALDB)
+env.Install("/opt/dhcal/lib",SDHCALDB)
+
+env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/lib"])
+
+
+
