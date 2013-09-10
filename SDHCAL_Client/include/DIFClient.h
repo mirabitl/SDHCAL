@@ -33,7 +33,7 @@ class DIFClient: public NMClient
 {
 public:
 	DIFClient(std::string host,uint32_t port);
-
+	~DIFClient();
 	NetMessage* serviceHandler(NetMessage* m);
 
 	void sendSecureCommand(std::string s,NetMessage* m);

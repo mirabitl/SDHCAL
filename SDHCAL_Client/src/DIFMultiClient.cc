@@ -13,6 +13,22 @@
 
 using namespace std;
 
+
+void DIFMultiClient::purge()
+{
+  if (theCCCClient_!=NULL)
+    {
+      delete theCCCClient_;
+      theCCCClient_=NULL;
+    }
+  if (theDIFClients_.size()!=0)
+    {
+      // for (std::vector<DIFClient*>::iterator it=theDIFClients_.begin();it!=theDIFClients_.end();it++) delete (*it);
+    }
+  theDIFClients_.clear();
+}
+
+
 void DIFMultiClient::addClient(std::string host,uint32_t port)
 {
   DIFClient* dc= new DIFClient(host,port);
@@ -54,9 +70,14 @@ void DIFMultiClient::Initialise()
 
   theCCCClient_->doInitialise("DCCCCC01");
   theCCCClient_->doConfigure();
-  theCCCClient_->doDIFReset();
-  theCCCClient_->doCCCReset();
+
   theCCCClient_->doStop();
+  sleep((uint32_t) 1);
+  theCCCClient_->doCCCReset();
+  sleep((uint32_t) 1);
+  theCCCClient_->doDIFReset();
+  sleep((uint32_t) 1);
+  theCCCClient_->doCCCReset();
   
   
   boost::thread_group g;
@@ -79,9 +100,12 @@ void DIFMultiClient::doInitialise(DIFClient* d)
 uint32_t DIFMultiClient::Configure(DIFDBManager* db,uint32_t ctrlreg)
 {
   uint32_t ndif=0;
-  //theCCCClient_->doDIFReset();
-  //  theCCCClient_->doCCCReset();
-
+  theCCCClient_->doCCCReset();
+  sleep((uint32_t) 1);
+  theCCCClient_->doDIFReset();
+  sleep((uint32_t) 1);
+  theCCCClient_->doCCCReset();
+  sleep((uint32_t) 1);
 
 	boost::thread_group g;
   for (std::vector<DIFClient*>::iterator it=theDIFClients_.begin();it!=theDIFClients_.end();it++)
@@ -120,14 +144,13 @@ if (theProxy_ == NULL)
     }
  for (std::vector<DIFClient*>::iterator it=theDIFClients_.begin();it!=theDIFClients_.end();it++)
    (*it)->doStart();
-
  theCCCClient_->doStart();
 }
 
 uint32_t DIFMultiClient::Stop()
 {
 theCCCClient_->doStop();
-
+ sleep((uint32_t) 1);
  for (std::vector<DIFClient*>::iterator it=theDIFClients_.begin();it!=theDIFClients_.end();it++)
    (*it)->doStop();
 

@@ -27,7 +27,7 @@ void CCCServer::doInitialise(std::string device)
 }
 NetMessage* CCCServer::commandHandler(NetMessage* m)
 {
-	printf(" J'ai recu %s COMMAND %s %s  \n",m->getName().c_str());
+	printf(" J'ai recu %s COMMAND  \n",m->getName().c_str());
 	if (m->getName().compare("INITIALISE")==0)
 	{
 		std::string device((const char*) m->getPayload());

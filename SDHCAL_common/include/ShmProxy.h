@@ -35,6 +35,7 @@ class ShmProxy
   void Start(uint32_t run=0,std::string dir="/tmp");
   void Stop();
   void purgeShm();
+  static void save2DevShm(unsigned char* cbuf,uint32_t size_buf,uint32_t dif_shift,std::string memory_dir);
 
   static void transferToFile(unsigned char* cbuf,uint32_t size_buf,uint64_t bcid,uint32_t detector_event,uint32_t global_event,uint32_t id);
 

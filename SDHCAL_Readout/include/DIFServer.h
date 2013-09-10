@@ -37,6 +37,7 @@ private:
 	std::map<uint32_t,DIFReadout*> theDIFMap_;
 	std::vector<uint32_t> theListOfDIFFounds_;
 	boost::thread  m_Thread_d[255];
+	boost::thread_group g_d;
 };
 #endif
 

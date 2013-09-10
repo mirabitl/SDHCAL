@@ -12,13 +12,14 @@
 class DIFMultiClient
 {
 public:
-  DIFMultiClient(){theProxy_=NULL;}
+  DIFMultiClient(){theProxy_=NULL;theCCCClient_=NULL;theDIFClients_.clear();}
   void addClient(std::string host,uint32_t port);
   void addCCC(std::string host,uint32_t port);
   void ScanDevices();
 	void Print(std::ostream& os=std::cout) const;
   void doScanDevices(DIFClient* d);
   void Initialise();
+  void purge();
   void doInitialise(DIFClient* d);
   uint32_t Configure(DIFDBManager* db,uint32_t ctrlreg=0x89580000);
   void doConfigure(DIFClient* d);

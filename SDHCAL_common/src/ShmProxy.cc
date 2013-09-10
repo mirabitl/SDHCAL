@@ -16,6 +16,16 @@
 #include <string.h>
 #include <stdint.h>
 #include <fcntl.h>
+extern  int alphasort(); //Inbuilt sorting function  
+#define FALSE 0  
+#define TRUE !FALSE      
+int file_select_1(const struct direct *entry)  
+{  
+  if ((strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0))  
+    return (FALSE);  
+  else  
+    return (TRUE);  
+}  
 
 ShmProxy::ShmProxy(uint32_t nbdif,bool save,DIFWritterInterface* w) : theNumberOfDIF_(nbdif),theSave_(save),theWritter_(w)
 {
@@ -140,8 +150,21 @@ bool ShmProxy::performWrite()
 	      {
 		unsigned char* cdata=(*iv);
 		uint32_t* idata=(uint32_t*) cdata;
-		printf("\t DIF %d writing %d bytes",idata[SHM_APV_ADDRESS],idata[SHM_BUFFER_SIZE]);
+		printf("\t DIF %d writing %d bytes \n",idata[SHM_APV_ADDRESS],idata[SHM_BUFFER_SIZE]);
+		
+
 	      }
+	  struct direct **files;     
+	  int count = scandir("/dev/shm/monitor/closed/", &files, file_select_1, alphasort);  
+	  if (count<10*theNumberOfDIF_)
+	    {
+	      for (std::vector<unsigned char*>::iterator iv=it->second.begin();iv!=it->second.end();iv++) 
+		{
+		  unsigned char* cdata=(*iv);
+		  uint32_t* idata=(uint32_t*) cdata;
+		  ShmProxy::save2DevShm(cdata,idata[SHM_BUFFER_SIZE],SHM_EVENT_ADDRESS*sizeof(uint32_t),"/dev/shm/monitor");
+		}
+	    }
       // if (theEventNumber_%100==0) 
       // 	std::cout<<"Standard completion "<<theEventNumber_<<" GTC "<<it->first<<" Time "<<time(0)-theTime_<<" size "<<theTotalSize_<<std::endl;
       // // To be implemented
@@ -192,16 +215,6 @@ bool ShmProxy::performWrite()
 	
 }
 
-extern  int alphasort(); //Inbuilt sorting function  
-#define FALSE 0  
-#define TRUE !FALSE      
-int file_select_1(const struct direct *entry)  
-{  
-  if ((strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0))  
-    return (FALSE);  
-  else  
-    return (TRUE);  
-}  
 
 void ShmProxy::purgeShm()
 {
@@ -411,6 +424,50 @@ bool ShmProxy::performReadFiles()
 	
   return true;
 }
+
+
+
+void ShmProxy::save2DevShm(unsigned char* cbuf,uint32_t size_buf,uint32_t dif_shift,std::string memory_dir)
+{
+  std::stringstream s("");
+  s<<memory_dir<<"/Event_"
+    << ShmProxy::getBufferABCID(cbuf,dif_shift)<<"_"
+    << ShmProxy::getBufferDTC(cbuf,dif_shift)<<"_"
+    <<ShmProxy::getBufferGTC(cbuf,dif_shift)<<"_"
+    <<ShmProxy::getBufferDIF(cbuf,dif_shift);
+   int fd= ::open(s.str().c_str(),O_CREAT| O_RDWR | O_NONBLOCK,S_IRWXU);
+   if (fd<0)
+     {
+       perror("No way to store to file :");
+       //std::cout<<" No way to store to file"<<std::endl;
+       return;
+     }
+   int ier=write(fd,cbuf,size_buf);
+   if (ier!=size_buf) 
+     {
+       std::cout<<"pb in write "<<ier<<std::endl;
+       return;
+     }
+   ::close(fd);
+   std::stringstream st("");
+   st<<memory_dir<<"/closed/"
+    << ShmProxy::getBufferABCID(cbuf,dif_shift)<<"_"
+    << ShmProxy::getBufferDTC(cbuf,dif_shift)<<"_"
+    <<ShmProxy::getBufferGTC(cbuf,dif_shift)<<"_"
+    <<ShmProxy::getBufferDIF(cbuf,dif_shift);
+
+
+   fd= ::open(st.str().c_str(),O_CREAT| O_RDWR | O_NONBLOCK,S_IRWXU);
+   //std::cout<<st.str().c_str()<<" "<<fd<<std::endl;
+   //write(fd,b,1);
+   ::close(fd);
+}
+
+
+
+
+
+
 
 #ifdef USE_DIM
 void ShmProxy::configureDimServer()

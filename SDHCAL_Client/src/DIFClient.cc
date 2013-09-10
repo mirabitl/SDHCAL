@@ -10,7 +10,10 @@ DIFClient::DIFClient(std::string host,uint32_t port) : NMClient(host,port),theDB
 	nbytes_=0;
 	bsem_.lock();
 }
-
+DIFClient::~DIFClient()
+{
+  std::cout<<"destroying DIF Client \n";
+}
 NetMessage* DIFClient::serviceHandler(NetMessage* m)
 {
 	if (m->getName().compare(0,3,"DIF") == 0)

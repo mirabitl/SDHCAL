@@ -204,7 +204,7 @@ void DIFServer::initialise(uint32_t difid) throw (LocalHardwareException)
 }
 std::vector<uint32_t>& DIFServer::scanDevices()
 {
-  system("./scan_devices.sh");
+  system("/opt/dhcal/bin/scan_devices.sh");
   std::string line;
   std::ifstream myfile ("/tmp/ftdi_devices");
   std::stringstream diflist;
@@ -239,7 +239,7 @@ std::vector<uint32_t>& DIFServer::scanDevices()
 
 NetMessage* DIFServer::commandHandler(NetMessage* m)
 {
-  printf(" J'ai recu %s COMMAND %s %s  \n",m->getName().c_str());
+  printf(" J'ai recu %s COMMAND  \n",m->getName().c_str());
   if (m->getName().compare("SCANDEVICES")==0)
     {
       std::vector<uint32_t> v=scanDevices();
@@ -310,16 +310,18 @@ NetMessage* DIFServer::commandHandler(NetMessage* m)
   if (m->getName().compare("DESTROY")==0)
     {
       readoutStarted_=false;
+      g_d.join_all();
       for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
 	{
 
 
-	  m_Thread_d[itd->first].join();
+	  //m_Thread_d[itd->first].join();
 
  
 	  delete itd->second;
 	  std::stringstream s;
 	  s<<"DIF"<<itd->first;
+	  std::cout<<s.str()<<" beiing destroyed"<<std::endl;
 	  this->destroyService(s.str());
 			
 	}
@@ -402,11 +404,14 @@ void DIFServer::startServices()
 void DIFServer::startReadout()
 {
   if (readoutStarted_) return;
+  readoutStarted_=true;	
+
   for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
     {
-      m_Thread_d[itd->first]= boost::thread(&DIFServer::readout, this,itd->first); 
+      //m_Thread_d[itd->first]= boost::thread(&DIFServer::readout, this,itd->first); 
+      g_d.create_thread(boost::bind(&DIFServer::readout, this,itd->first));
     }
-  readoutStarted_=true;	
+  
 }
 
 void DIFServer::readout(uint32_t difid)
@@ -451,7 +456,7 @@ void DIFServer::readout(uint32_t difid)
 	}
 		
     }
-  std::cout<<"Thread of dif "<<difid<<" is stopped"<<std::endl;
+  std::cout<<"Thread of dif "<<difid<<" is stopped"<<readoutStarted_<<std::endl;
 }
 
 

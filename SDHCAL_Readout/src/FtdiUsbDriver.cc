@@ -55,7 +55,8 @@ uint16_t FtdiUsbDriver::CrcTable[256] =
 FtdiUsbDriver::FtdiUsbDriver(char * deviceIdentifier )     throw (LocalHardwareException)
 {
  int ret;
-
+ int ntry=0;
+start:
 	if (ftdi_init(&theFtdi) < 0)
 	{
 		fprintf(stderr, "ftdi_init failed\n");
@@ -71,20 +72,17 @@ FtdiUsbDriver::FtdiUsbDriver(char * deviceIdentifier )     throw (LocalHardwareE
 
 	uint32_t regctrl=0;
 
-	timeOut=100;
-	ret=UsbRegisterWrite(2,0x1234567);
-        printf("%x write rte \n");
-        usleep(100000);
-	ret=UsbRegisterRead(2,&regctrl);
-	printf(" Reg before read %x \n",regctrl);
+	//ret=UsbRegisterWrite(2,0x1234567);
 
-
-
+        //::usleep(100000);
+       // printf("%x write rte \n",ret);
+        //getchar();
+	//ret=UsbRegisterRead(2,&regctrl);
 	ret=ftdi_usb_reset(&theFtdi); 
 	printf("Reset %d %s \n",ret,deviceIdentifier);
 	ftdi_disable_bitbang(&theFtdi); 	
 	ftdi_setflowctrl(&theFtdi,SIO_DISABLE_FLOW_CTRL);
-	ftdi_set_latency_timer(&theFtdi,5); // ca marchait avec0x200 on remet 2
+	ftdi_set_latency_timer(&theFtdi,2); // ca marchait avec0x200 on remet 2
 
 	ftdi_write_data_set_chunksize (&theFtdi,65535);
 	ftdi_read_data_set_chunksize (&theFtdi,65535);
@@ -97,6 +95,14 @@ FtdiUsbDriver::FtdiUsbDriver(char * deviceIdentifier )     throw (LocalHardwareE
 	ret=UsbRegisterWrite(2,0x1234567);
         printf("%d write rte \n");
         }
+        usleep(100000);
+	printf(" on commence par ecrire read %x \n",regctrl);
+	UsbRegisterWrite(2,0xfedcdead);
+	printf(" Reg read %x \n",regctrl);
+	//getchar();
+	printf(" Reg read %x \n",regctrl);
+	ret=UsbRegisterRead(2,&regctrl);
+	printf(" Reg read %x \n",regctrl);
 	ret=UsbRegisterRead(2,&regctrl);
 	printf(" Reg before read %x \n",regctrl);
 	UsbRegisterWrite(2,0x1234567);
