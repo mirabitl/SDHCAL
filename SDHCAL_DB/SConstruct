@@ -43,10 +43,30 @@ Decider('MD5-timestamp')
 XDAQ_ROOT="/opt/xdaq"
 DHCAL_ROOT=os.path.abspath("..")
 
+fres=os.popen('uname -r')
+kl=fres.readline().split(".")
+
+platform="UBUNTU"
+if (kl[len(kl)-1][0:3] == 'el5'):
+    platform="SLC5"
+
+
+fres=os.popen('uname -p')
+kp=fres.readline()
+osv=kp[0:len(kp)-1]
+
+print platform,osv
+
+
 # includes
 INCLUDES=['include',"/usr/include/ILCConfDB",\
 	os.path.join(DHCAL_ROOT,"SDHCAL_common","include"),\
+	os.path.join(DHCAL_ROOT,"netLink","include"),\
+	os.path.join(DHCAL_ROOT,"netLink","cslm"),\
 	os.path.join(DHCAL_ROOT,"DBUtils","python","Cpp")]
+
+if (platform=="SLC5"):
+    INCLUDES.append('/usr/include/boost141')
 
 #MYSQL and sqlite
 INCLUDES.append("/usr/include/libxml2")
@@ -57,12 +77,21 @@ INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as con
 CPPFLAGS=commands.getoutput("$ROOTSYS/bin/root-config --cflags").split(" ") + ["-O4","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2"]
 
 #Library ROOT + some of XDAQ + DB 
-LIBRARIES=['pthread', 'uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c',  'stdc++',]
+LIBRARIES=['pthread', 'uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c',  'stdc++','cslm','netlink','boost_system','boost_thread']
 
 
 
 #Library path XDAQ,DHCAL and ROOT + Python
-LIBRARY_PATHS=["/usr/lib","/usr/local/lib",os.path.join(XDAQ_ROOT,"lib"),os.path.join(DHCAL_ROOT,"opt","dhcal","lib"),os.path.join(os.environ["ROOTSYS"],"lib")]
+if ( platform=="SLC5" and osv=="x86_64"):
+    LIBRARY_PATHS=["/usr/lib64/boost141","/usr/lib64","/usr/local/lib"]
+else:
+    if ( platform=="SLC5"):
+        LIBRARY_PATHS=["/usr/lib/boost141","/usr/lib","/usr/local/lib"]
+    else:
+        LIBRARY_PATHS=["/usr/lib","/usr/local/lib"]
+
+#Library path XDAQ,DHCAL and ROOT + Python
+LIBRARY_PATHS.append([os.path.join(XDAQ_ROOT,"lib"),os.path.join(DHCAL_ROOT,"opt","dhcal","lib"),os.path.join(os.environ["ROOTSYS"],"lib")])
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
 
 #link flags
@@ -96,6 +125,15 @@ SDHCALDB=env.SharedLibrary("#lib/SDHCALDB",source=LIBRARY_SOURCES)
 #Python module
 LSDHCALDB=env.PythonModule('_LSDHCALDB', ['LSDHCALDB.i'],LIBPATH="#lib",LIBS="SDHCALDB")
 
+
+#Daemon 
+EXE_LIBPATH=LIBRARY_PATHS
+EXE_LIBPATH.append("#lib")
+EXE_LIBS=LIBRARIES
+EXE_LIBS.append("SDHCALDB")
+dsdb=env.Program("bin/dsdb",source="src/dsdb.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+
+
 #Test Program
 #EXE_LIBPATH=LIBRARY_PATHS
 #EXE_LIBPATH.append("#lib")
@@ -106,8 +144,8 @@ LSDHCALDB=env.PythonModule('_LSDHCALDB', ['LSDHCALDB.i'],LIBPATH="#lib",LIBS="SD
 Default([SDHCALDB,LSDHCALDB])
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SDHCALDB)
 env.Install("/opt/dhcal/lib",SDHCALDB)
-
-env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/lib"])
+env.Install("/opt/dhcal/bin",dsdb)
+env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/lib","/opt/dhcal/bin"])
 
 
 
