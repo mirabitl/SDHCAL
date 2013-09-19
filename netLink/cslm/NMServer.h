@@ -24,7 +24,7 @@ public:
 
   void updateService(std::string s,NetMessage* m);
   void registerCommand(std::string cmd,boost::function<NetMessage* (NetMessage*)> f);
-private:
+protected:
   NL::Socket* socketServer_;
   NL::SocketGroup* group_;
 

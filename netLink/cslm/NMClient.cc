@@ -19,6 +19,16 @@ NMClient::NMClient(std::string host,uint32_t port)
   group_->add(socketClient_);
   disconnected_=0;
 }
+NMClient::~NMClient()
+{
+  delete onRead_;
+  delete onDisconnect_;
+  delete mh_;
+  delete group_;
+  delete socketClient_;
+
+
+}
 void NMClient::start()
 {
   m_Thread = boost::thread(&NMClient::svc, this);  

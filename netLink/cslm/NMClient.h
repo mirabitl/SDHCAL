@@ -13,6 +13,7 @@ class NMClient
 {
 public:
   NMClient(std::string host,uint32_t port);
+  ~NMClient();
   void start();
   void join();
   void svc();
@@ -20,7 +21,7 @@ public:
   void sendCommand(std::string s,NetMessage* m);
   void registerHandler(std::string cmd,boost::function<NetMessage* (NetMessage*)> f);
   bool isDisconnected();
-private:
+protected:
   NL::Socket* socketClient_;
   NL::SocketGroup* group_;
 
