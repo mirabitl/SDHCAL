@@ -1,14 +1,19 @@
+#!/usr/bin/python
 import DHCalEventReader as dr
 
 
 
-fileList=[ "/data/NAS/Results/DHCAL_715451_I0_0.slcio"
-          ]
+fileList=[
+"/data/NAS/Results/DHCAL_716282_I0_0.slcio",
+"/data/NAS/Results/DHCAL_716282_I1_0.slcio",
+"/data/NAS/Results/DHCAL_716282_I2_0.slcio",
+"/data/NAS/Results/DHCAL_716282_I3_0.slcio",
+"/data/NAS/Results/DHCAL_716282_I4_0.slcio"]
 #fileList=["/data/online/Results/DHCAL_710456_I0_8.slcio"]
 
 
 
-fileOut="/tmp/test713792.slcio"
+fileOut="/tmp/DHCAL_716282_I0_0.slcio"
 
 
 #fileOut="/tmp/t27ch.slcio"
@@ -21,14 +26,14 @@ rootHandler=dr.DCHistogramHandler()
 
 
 
-dher.ParseSteering("/home/acqilc/Slot1_39_MARLIN.xml")
+dher.ParseSteering("can37.xml")
 
 a=dr.FilterAnalyzer( dher,rootHandler);
 
 
 
-a.setuseSynchronized(False);
-a.setminChambersInTime(5);
+a.setuseSynchronized(True);
+a.setminChambersInTime(7);
 a.setWriting(True)
 dher.setDropFirstRU(True);
 dher.openOutput(fileOut)
@@ -39,6 +44,7 @@ for x in fileList:
     dher.open(x)
     dher.readStream()
     dher.close()  
-
+dher.endJob()
 dher.closeOutput()
+
 #rootHandler.writeHistograms("toto20650.root")

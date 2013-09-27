@@ -59,6 +59,7 @@ INCLUDES.append("/usr/local/include/eigen3/")
 #python
 INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
 
+INCLUDES.append("../SDHCAL_common/include/")
 #flags
 CPPFLAGS=commands.getoutput("$ROOTSYS/bin/root-config --cflags").split(" ") + ["-O4","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__", "-Dx86","-DDAQ_VERSION_2","-Wno-deprecated"] 
 if (USE_OPENCV):
@@ -91,7 +92,7 @@ CUDA_LIBPATH=[os.getenv("CULA_LIB_PATH_64"),"/usr/local/cula/lib"]
 
 # Summary
 
-LIBRARIES=ROOT_LIBS+MY_LIBS+['pthread', 'lcio','xml2','sqlite3','X11']
+LIBRARIES=ROOT_LIBS+MY_LIBS+['SDHCALcommon','pthread', 'lcio','xml2','sqlite3','X11']
 
 if (USE_CULA or USE_OPENCV):
 	LIBRARIES=LIBRARIES+CUDA_LIBS
@@ -105,6 +106,7 @@ LIBRARY_PATHS=ROOT_LIBPATH+MY_LIBPATH+["/usr/lib","/usr/local/lib"]
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
 LIBRARY_PATHS.append(os.path.join(os.getenv("LCIODIR"),"lib"))
 
+LIBRARY_PATHS.append("../SDHCAL_common/lib/")
 if (USE_CULA or USE_OPENCV):
 	LIBRARY_PATHS=LIBRARY_PATHS+CUDA_LIBPATH
 

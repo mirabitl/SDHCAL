@@ -16,8 +16,10 @@ class FilterAnalyzer : public DHCALAnalyzer
       reader_->writeRunHeader();
   }
   void setWriting(bool t){writing_=t;}
+  virtual void setReader(DHCalEventReader* r){reader_=r;handler_=DCHistogramHandler::instance();}
+	
   virtual void initJob(){;}
-  virtual void endJob(){;}
+  virtual void endJob();
   virtual void initRun(){;}
   virtual void endRun(){;}
   inline void setminChambersInTime(int t){minChambersInTime_=t;}
@@ -29,5 +31,6 @@ class FilterAnalyzer : public DHCALAnalyzer
   bool headerWritten_;
   int minChambersInTime_;
   bool useSynchronized_;
+  uint32_t lastEvent_;
 };
 #endif

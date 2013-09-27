@@ -9,6 +9,7 @@
  \brief Purely abstract class that defines the analysis method
 
 */
+class DHCalEventReader;
 class DHCALAnalyzer
 {
  public:

@@ -13,7 +13,7 @@ using namespace lcio ;
 #define CHECK_BIT(var,pos) ((var)& (1<<(pos)))
 
 //static DCFrame theFrameBuffer[256*48*128];
-DHCalEventReader::DHCalEventReader() :dropFirstRU_(true),theXdaqShift_(92)
+DHCalEventReader::DHCalEventReader() :dropFirstRU_(true),theXdaqShift_(92),currentFileName_("NONE")
 {
   evt_ = 0;
   runh_ = 0;
@@ -22,7 +22,7 @@ DHCalEventReader::DHCalEventReader() :dropFirstRU_(true),theXdaqShift_(92)
   vdif_.clear();
   vframe_.clear();
   vslow_.clear();
-
+  filenames_.clear();
   newRunHeader_=false;
 
   //  lcWriter_ = new LCSplitWriter(LCFactory::getInstance()->createLCWriter() , 2040109465 ) ;
@@ -53,7 +53,27 @@ DHCalEventReader::~DHCalEventReader()
   //if (lcReader_) delete lcReader_;
   //if (lcWriter_) delete lcWriter_;
 }
+void DHCalEventReader::open ( std::vector< std::string > &filenames)
+{
+  if (lcReader_==0) 
+    {
+      lcReader_ = LCFactory::getInstance()->createLCReader(IO::LCReader::directAccess) ;
+      //lcReader_->registerLCRunListener(this) ;
+      // lcReader_->registerLCEventListener(this) ;
+      
+    }
 
+  try{
+    for (std::vector< std::string >::iterator it=filenames.begin();it!=filenames.end();it++)
+      std::cout<<"File "<<(*it)<<std::endl;
+    lcReader_->open( filenames) ;
+    printf("All those files have %d events \n",lcReader_->getNumberOfEvents());
+  }
+  catch( IOException& e) {
+    std::cout << e.what() << std::endl ;
+    exit(1) ;
+  }
+}
 void DHCalEventReader::open(std::string name)
 {
   if (lcReader_==0) 
@@ -67,6 +87,7 @@ void DHCalEventReader::open(std::string name)
   try{
     
     lcReader_->open( name.c_str() ) ;
+    printf("%s has %d events \n",name.c_str(),lcReader_->getNumberOfEvents());
   }
   catch( IOException& e) {
     std::cout << e.what() << std::endl ;
@@ -143,6 +164,7 @@ int DHCalEventReader::readEvent()
   try{
     evt_ = (IMPL::LCEventImpl*) lcReader_->readNextEvent() ; 
     //     if (evt_!=0) LCTOOLS::dumpEvent( evt_ ) ;
+    analyzeEvent();
   }
   catch( IOException& e) {
     std::cout << e.what() << std::endl ;
@@ -154,6 +176,50 @@ int DHCalEventReader::readEvent()
   else
     return 0;
 }
+
+void DHCalEventReader::findEvent(int run,int event)
+{
+  if (lcReader_==0) 
+    {
+      lcReader_ = LCFactory::getInstance()->createLCReader(IO::LCReader::directAccess ) ;
+      lcReader_->registerLCRunListener(this) ;
+      lcReader_->registerLCEventListener(this) ;
+      
+    }
+  if (currentFileName_!="NONE") return;
+  for (std::vector< std::string >::iterator it=filenames_.begin();it!=filenames_.end();it++)
+    {
+      lcReader_->open((*it));
+      evt_ = (IMPL::LCEventImpl*) lcReader_->readEvent(run,event) ; 
+      if (evt_!=0) {currentFileName_=(*it) ; break;}
+      
+      lcReader_->close();
+    
+    }
+}
+int DHCalEventReader::readOneEvent(int run,int event)
+{
+  try{
+    this->findEvent(run,event);
+    evt_ = (IMPL::LCEventImpl*) lcReader_->readEvent(run,event) ; 
+    if (evt_==0) {currentFileName_="NONE"; this->findEvent(run,event);}
+    if (evt_!=0)
+      analyzeEvent();
+
+    
+    
+  }
+  catch( IOException& e) {
+    std::cout << e.what() << std::endl ;
+    return -1;
+    //  exit(2) ;
+  }
+  if (evt_!=0)
+    return evt_->getEventNumber();
+  else
+    return 0;
+}
+
 
 void DHCalEventReader::clear()
 {
@@ -843,13 +909,13 @@ void DHCalEventReader::closeOutput()
 }
 
 
-void DHCalEventReader::createEvent(int nrun,std::string detname)
+void DHCalEventReader::createEvent(int nrun,std::string detname,bool deleteEvent)
 {
   // Clear DIF and Frames
   this->clear();
   // Create the event
   int lastevt=0;
-  if (evt_!=0) {
+  if (evt_!=0 && deleteEvent) {
     lastevt=evt_->getEventNumber();
     delete evt_;
   }
@@ -1033,6 +1099,123 @@ void DHCalEventReader::fastFlag2(std::vector<uint32_t> &seed_,uint32_t seedCut,u
  
 
 }
+
+void DHCalEventReader::findTimeSeeds(  int32_t nhit_min,std::vector<uint32_t>& candidate)
+{
+  std::map<uint32_t,uint32_t> tcount;
+  std::map<uint32_t,int32_t> tedge;
+
+  for (std::vector<DIFPtr*>::iterator it = theDIFPtrList_.begin();it!=theDIFPtrList_.end();it++) // Loop on DIF
+    {
+      DIFPtr* d = (*it);
+      uint32_t chid= getChamber(d->getID());
+      // LMTest      uint32_t bc = rint(f->getBunchCrossingTime()/DCBufferReader::getDAQ_BC_Period());
+      // Loop on Frames
+      for (uint32_t ifra=0;ifra<d->getNumberOfFrames();ifra++)
+	{
+	  uint32_t bc=d->getFrameTimeToTrigger(ifra);
+	  
+	  
+	  
+	  std::map<uint32_t,uint32_t>::iterator it=tcount.find(bc);
+	  if (it!=tcount.end()) 
+	    it->second=it->second+1;
+	  else
+	    {
+	      std::pair<uint32_t,uint32_t> p(bc,1);
+	      tcount.insert(p);
+	    }
+	}
+    }
+  std::vector<uint32_t> seed;
+  seed.clear();
+	
+  //d::cout<<"Size =>"<<tcount.size()<<std::endl;
+  // Tedge is convolute with +1 -1 +1 apply to tcount[i-1],tcount[i],tcount[i+1]
+  for ( std::map<uint32_t,uint32_t>::iterator it=tcount.begin();it!=tcount.end();it++)
+    {
+      //std::cout<<it->first<<" "<<it->second<<std::endl;
+		
+      std::map<uint32_t,uint32_t>::iterator ita=tcount.find(it->first+1);
+      std:: map<uint32_t,uint32_t>::iterator itb=tcount.find(it->first-1);
+      int32_t c=-1*it->second;
+      if (ita!=tcount.end()) c+=ita->second;
+      if (itb!=tcount.end()) c+=itb->second;
+      std::pair<uint32_t,int32_t> p(it->first,c);
+      tedge.insert(p);
+		
+    }
+  //d::cout<<"Size Edge =>"<<tedge.size()<<std::endl;
+  // Now ask for a minimal number of hits
+  uint32_t nshti=0;
+  for ( std::map<uint32_t,int32_t>::iterator it=tedge.begin();it!=tedge.end();)
+    {
+      //std::cout<<it->first<<"====>"<<it->second<<" count="<<tcount[it->first]<<std::endl;
+      if (it->second<-1*(nhit_min-2))
+	{
+			
+	  //std::cout<<it->first<<"====>"<<it->second<<" count="<<tcount[it->first]<<std::endl;
+
+	  seed.push_back(it->first);
+	  it++;
+	}
+      else
+	tedge.erase(it++);
+    }
+	
+  // for (std::vector<uint32_t>::iterator is=seed.begin();is!=seed.end();is++)
+  //   std::cout<<" seed " <<(*is)<<" count "<<tcount[(*is)]<<std::endl      ;
+  // Merge adjacent seeds
+  candidate.clear();
+  for (uint32_t i=0;i<seed.size();)
+    {
+      if ((i+1)<=(seed.size()-1))
+	{
+	  if (seed[i+1]-seed[i]<=5)
+	    {
+	      //candidate.push_back(int((seed[i+1]+seed[i])/2));
+	      uint32_t max_c=0;
+	      uint32_t max_it=0;
+	      uint32_t imin=seed[i];
+	      uint32_t imax=seed[i+1];
+	      if (seed[i+1]>seed[i])
+		{
+		}
+	      for (uint32_t it=imin;it<=imax;it++)
+		{
+		  if (tcount.find(it)==tcount.end()) continue;
+		  if (tcount[it]>max_c) {max_c=tcount[it];max_it=it;}
+		}
+	      if (max_it!=0)
+		candidate.push_back(max_it);
+	      else
+		candidate.push_back(seed[i]);
+	      i+=2;
+	    }
+	  else
+	    {
+	      candidate.push_back(seed[i]);
+	      i++;
+	    }
+	}
+      else
+	{
+	  candidate.push_back(seed[i]);
+	  i++;
+	}
+
+		
+    }
+  //td::cout<<candidate.size()<<" good showers "<< tedge.size()<<std::endl;
+  std::sort(candidate.begin(),candidate.end(),std::greater<uint32_t>());
+
+  /*  for (std::vector<uint32_t>::iterator is=candidate.begin();is!=candidate.end();is++)
+      std::cout<<__PRETTY_FUNCTION__<<" Time "<< (*is)<<" gives ---> "<<tcount[(*is)]<<std::endl; */
+  return ;
+}
+
+
+
 
 
 void DHCalEventReader::fastFlag(uint32_t seedCut,uint32_t minChamberInTime)
@@ -1629,6 +1812,13 @@ void DHCalEventReader::ParseElement(xmlNode * a_node)
     if (cur_node->type == XML_ELEMENT_NODE) {
       //printf("node type: Element, name: %s\n", cur_node->name);
       xmlChar* name=xmlGetNoNsProp(cur_node,(const xmlChar*) "name");
+      if (name!=NULL && (strcmp((const char*) cur_node->name,(const char*)"processor")==0)) 
+	{
+	  xmlChar* pname=xmlGetNoNsProp(cur_node,(const xmlChar*) "name");
+	  xmlChar* lname=xmlGetNoNsProp(cur_node,(const xmlChar*) "library");
+	  printf("Processor %s loads from library %s \n",pname,lname);
+
+	}
       if (name!=NULL && (strcmp((const char*) cur_node->name,(const char*)"parameter")==0)) 
 	{
 

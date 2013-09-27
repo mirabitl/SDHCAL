@@ -61,6 +61,11 @@ ChamberAnalyzer::ChamberAnalyzer(DHCalEventReader* r,DCHistogramHandler* h) :tra
 {
 	reader_=r;
 	rootHandler_ =h;
+	this->initialise();
+}
+
+void ChamberAnalyzer::initialise()
+{
 	headerWritten_=false;
 	//  TVirtualFitter::SetDefaultFitter("Minuit"); 
 	//  gPluginMgr->AddHandler("ROOT::Math::Minimizer", "Minuit", "TMinuitMinimizer", "Minuit", "TMinuitMinimizer(const char *)"); 
@@ -75,10 +80,10 @@ ChamberAnalyzer::ChamberAnalyzer(DHCalEventReader* r,DCHistogramHandler* h) :tra
 	theTime_.millitm=0;
 	theDb_=NULL;
 	useSqlite_=false;
-	useMysql_=true;
+	useMysql_=false;
 	theImage_.initialise(theImageBuffer_,60,96,96);
 	theImageWeight_.initialise(theImageWeightBuffer_,60,96,96);
-	
+
 }
 void ChamberAnalyzer::initJob(){presetParameters();}
 void ChamberAnalyzer::endJob(){
@@ -1170,7 +1175,7 @@ void ChamberAnalyzer::processEvent()
 	if (evt_->getEventNumber()<=theSkip_) return;
 	IMPL::LCCollectionVec* rhcol=NULL;
 	bool rhcoltransient=false;
-	if (rebuild_ || useSynchronised_)
+	if (rebuild_)
 	{
 		reader_->parseRawEvent();
 		//      DEBUG_PRINT("End of parseraw \n");
@@ -1188,11 +1193,11 @@ void ChamberAnalyzer::processEvent()
 		rhcoltransient=true;
 #else
 		std::vector<uint32_t> seed;
-		if (useSynchronised_ && false)
+		if (useSynchronised_ )
 		{
 			//DEBUG_PRINT("Calling FastFlag2\n");
 			
-			reader_->fastFlag2(seed,2,minChambersInTime_);
+		  reader_->findTimeSeeds(minChambersInTime_,seed);
 			// DEBUG_PRINT("End of FastFlag2 \n");
 			
 		}

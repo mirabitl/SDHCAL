@@ -44,6 +44,7 @@ class ChamberAnalyzer : public DHCALAnalyzer
 public:
 	ChamberAnalyzer(DHCalEventReader* r,DCHistogramHandler* h);
 	virtual ~ChamberAnalyzer(){;}
+	void initialise();
 	virtual void processEvent();
 	virtual void initHistograms();
 	virtual void processRunHeader()
@@ -53,6 +54,8 @@ public:
 	}
 	void presetParameters();
 	void setWriting(bool t){writing_=t;}
+	virtual void setReader(DHCalEventReader* r){reader_=r;rootHandler_=DCHistogramHandler::instance();}
+
 	virtual void initJob();
 	virtual void endJob();
 	virtual void initRun(){;}

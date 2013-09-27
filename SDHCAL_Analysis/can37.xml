@@ -12,7 +12,7 @@
 
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
   <execute>
-    <processor name="ChamberAnalysis"/>
+    <processor name="ChamberAnalysis" library="/home/laurent/libtoto.so"/>
   </execute>
   <global>
     <parameter name="LCIOInputFiles"> 
@@ -24,7 +24,7 @@
     <!--parameter name="GearXMLFile"> gear_ldc.xml </parameter-->  
     <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> DEBUG  </parameter> 
   </global>
-  <processor name="ChamberAnalysis" type="ChamberAnalysis">
+  <processor name="ChamberAnalysis" type="ChamberAnalysis" library="/home/laurent/libtoto.so">
     <!--Marlin_DHCALOnline does whatever it does ...-->
     <!--The name of the output root file name without the .root suffix-->
     <parameter name="OutputFileName" type="string">/tmp/NewScan</parameter>

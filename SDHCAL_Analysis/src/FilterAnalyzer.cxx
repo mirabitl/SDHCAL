@@ -1,17 +1,25 @@
 #include "DIFUnpacker.h"
 
 #include "FilterAnalyzer.h"
+std::map<uint32_t,IMPL::LCEventImpl*> evtmap;
 void FilterAnalyzer::initHistograms()
 {
 
 }
-FilterAnalyzer::FilterAnalyzer(DHCalEventReader* r,DCHistogramHandler* h)  :useSynchronized_(false),minChambersInTime_(3)
+FilterAnalyzer::FilterAnalyzer(DHCalEventReader* r,DCHistogramHandler* h)  :useSynchronized_(false),minChambersInTime_(3),lastEvent_(0)
 {
   reader_=r;
   handler_ =h;
   headerWritten_=false;
 }
-
+void FilterAnalyzer::endJob()
+{
+  for (std::map<uint32_t,IMPL::LCEventImpl*>::iterator it=evtmap.begin();it!=evtmap.end();it++)
+    {
+      std::cout<<" Eritting"<<it->first;
+      reader_->write(it->second);
+    }
+}
 
 void FilterAnalyzer::processEvent()
 {
@@ -30,7 +38,7 @@ void FilterAnalyzer::processEvent()
     //    getchar();
     // reader_->analyzeEvent();
       // getchar();
-    //std::cout<<"event "<<reader_->getEvent()->getEventNumber()<<std::endl;
+    std::cout<<"event "<<reader_->getEvent()->getEventNumber()<<std::endl;
       reader_->parseRawEvent();
       //reader_->flagSynchronizedFrame(9);
 #if DU_DATA_FORMAT_VERSION <= 12
@@ -46,7 +54,7 @@ void FilterAnalyzer::processEvent()
        {
 	 //printf("Calling FastFlag2\n");
       
-		reader_->fastFlag2(seed,2,minChambersInTime_);
+	 reader_->findTimeSeeds(minChambersInTime_,seed);
 	 // printf("End of FastFlag2 \n");
       
        }
@@ -77,7 +85,20 @@ void FilterAnalyzer::processEvent()
       //LCTOOLS::printRawCalorimeterHits(HitVec);
 
       if (writing_)
-	reader_->write(evtOutput_);
+	//reader_->write(evtOutput_);
+	{
+	  std::pair<uint32_t,IMPL::LCEventImpl*> p(evt_->getEventNumber(),evtOutput_);
+	  evtmap.insert(p);
+	  std::map<uint32_t,IMPL::LCEventImpl*>::iterator nextevt=evtmap.find(lastEvent_+1);
+	  if (nextevt!=evtmap.end())
+	    {
+	      printf(" Writting %d \n",nextevt->first);
+	      reader_->write(nextevt->second);
+	      evtmap.erase(nextevt);
+	      lastEvent_=lastEvent_+1;
+	    }
+	  
+	}
       else
 	delete evtOutput_;
   }

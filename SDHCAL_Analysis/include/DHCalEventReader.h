@@ -233,7 +233,7 @@ public:
       @param run Run number
       @param det Name of the detector
   */
-  void createEvent(int run,std::string det);
+  void createEvent(int run,std::string det,bool del=true);
 
   //! Create an empty LCIO Run header  
   /** 
@@ -261,6 +261,8 @@ public:
   */
   void open(std::string name);
 
+  void open (std::vector< std::string > &filenames);
+
   //! close the current file
   void close();
 
@@ -281,7 +283,7 @@ public:
       @return  ier > 0 if new event found
   */
   int readEvent();
-
+int readOneEvent(int run,int event);
   //! Read next run
   void readRun();
 
@@ -393,6 +395,9 @@ public:
 
   //! Flag frames in synch in different chambers (+-1)
   void flagSynchronizedFrame(uint32_t synchcut=0,uint32_t nfcut=3);
+
+
+   void findTimeSeeds(  int32_t nhit_min,std::vector<uint32_t>& candidate);
   //! <i>Internal</i> create the DHCALRawHits collection 
   IMPL::LCCollectionVec* createRawCalorimeterHits(bool usesynch=false);
   IMPL::LCCollectionVec* createRawCalorimeterHits(std::vector<uint32_t> seeds);
@@ -408,20 +413,27 @@ public:
   void setDropFirstRU(bool t){dropFirstRU_=t;}
   std::map<std::string,MarlinParameter>& getMarlinParameterMap(){return  theMarlinParameterMap_;}
   void setXdaqShift(unsigned int s){theXdaqShift_=s;}
-private:
+  //void addFile(std::string s) {filenames_.push_back(s);}
+
+  void addFile(std::string s) {filenames_.push_back(s);}
+  uint32_t getNumberOfEvents(){return lcReader_->getNumberOfEvents();}
+  void openFiles(){this->open(filenames_);}
+  void findEvent(int run,int event);
+
+ private:
   LCReader* lcReader_; /// LCIO Reader
   //  LCSplitWriter* lcWriter_; /// LCIO Writer
   LCWriter* lcWriter_; /// LCIO Writer
   IMPL::LCEventImpl* evt_; /// LCIO Event ptr
   IMPL::LCEventImpl* evtOutput_; /// LCIO Event output ptr
   IMPL::LCRunHeaderImpl* runh_; /// LCIO Run Heder ptr
-
+ 
 
   std::vector<DCDIF*> vdif_; /// <i>Internal </i> to handle DIF
   std::vector<DCFrame*> vframe_; /// <i>Internal </i> to handle Frame
   std::vector<DIFSlowControl* > vslow_; /// <i>Internal </i> to handle SlowControl
 
-
+  std::vector<std::string> filenames_;
   std::vector<DHCALAnalyzer*> vProcess_; /// Vector of DHCALAnalyzer
   
   uint32_t version_; /// version of data
@@ -446,6 +458,8 @@ private:
   uint32_t theXdaqShift_;
   
   std::vector<DIFPtr*> theDIFPtrList_;
+
+  std::string currentFileName_;
 };
 
 #endif
