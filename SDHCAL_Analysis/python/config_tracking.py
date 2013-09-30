@@ -1,6 +1,6 @@
 #marlin="./Slot1_39_MARLIN.xml"
 marlin="./can37.xml"
-rebuild=True
+rebuild=False
 useSynch=True
 #
 minChambersInTime=8;
@@ -14,7 +14,8 @@ tkExtDistCut=5.;
 
 #
 #filePath="/data/NAS/Results/PS_04_2012/DHCAL_%d_I%d_0.slcio"
-filePath="/data/NAS/Results/DHCAL_%d_I%d_%d.slcio"
+#filePath="/data/NAS/Results/DHCAL_%d_I%d_%d.slcio"
+filePath="/tmp/DHCAL_%d_I%d_%d.slcio"
 nevent=20000
 rootFilePath="../Tracks%d_%d.root"
 treeName="./showers_%d_%d.root"

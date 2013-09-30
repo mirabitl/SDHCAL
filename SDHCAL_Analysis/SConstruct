@@ -34,7 +34,7 @@ def SWIGSharedLibrary(env, library, sources, **args):
 
 
 # environment
-USE_CULA=True
+USE_CULA=False
 USE_CIMG=False
 USE_OPENCV=False
 #import xdaq

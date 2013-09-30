@@ -90,12 +90,13 @@ void FilterAnalyzer::processEvent()
 	  std::pair<uint32_t,IMPL::LCEventImpl*> p(evt_->getEventNumber(),evtOutput_);
 	  evtmap.insert(p);
 	  std::map<uint32_t,IMPL::LCEventImpl*>::iterator nextevt=evtmap.find(lastEvent_+1);
-	  if (nextevt!=evtmap.end())
+	  while (nextevt!=evtmap.end())
 	    {
 	      printf(" Writting %d \n",nextevt->first);
 	      reader_->write(nextevt->second);
 	      evtmap.erase(nextevt);
 	      lastEvent_=lastEvent_+1;
+	      nextevt=evtmap.find(lastEvent_+1); 
 	    }
 	  
 	}

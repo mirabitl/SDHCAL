@@ -434,6 +434,7 @@ int readOneEvent(int run,int event);
   std::vector<DIFSlowControl* > vslow_; /// <i>Internal </i> to handle SlowControl
 
   std::vector<std::string> filenames_;
+  std::vector<LCReader*> readers_;
   std::vector<DHCALAnalyzer*> vProcess_; /// Vector of DHCALAnalyzer
   
   uint32_t version_; /// version of data

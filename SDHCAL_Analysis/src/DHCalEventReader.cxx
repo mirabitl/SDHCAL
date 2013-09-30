@@ -55,19 +55,22 @@ DHCalEventReader::~DHCalEventReader()
 }
 void DHCalEventReader::open ( std::vector< std::string > &filenames)
 {
-  if (lcReader_==0) 
+  if (readers_.size()==0) 
     {
-      lcReader_ = LCFactory::getInstance()->createLCReader(IO::LCReader::directAccess) ;
+    for (std::vector< std::string >::iterator it=filenames.begin();it!=filenames.end();it++)
+      
+      readers_.push_back(LCFactory::getInstance()->createLCReader(IO::LCReader::directAccess)) ;
       //lcReader_->registerLCRunListener(this) ;
       // lcReader_->registerLCEventListener(this) ;
       
     }
 
   try{
-    for (std::vector< std::string >::iterator it=filenames.begin();it!=filenames.end();it++)
-      std::cout<<"File "<<(*it)<<std::endl;
-    lcReader_->open( filenames) ;
-    printf("All those files have %d events \n",lcReader_->getNumberOfEvents());
+    for (uint32_t i=0;i<readers_.size();i++)
+      {
+	readers_[i]->open(filenames_[i]);
+	printf(" those files %s have %d events \n",filenames_[i].c_str(),readers_[i]->getNumberOfEvents());
+      }
   }
   catch( IOException& e) {
     std::cout << e.what() << std::endl ;
@@ -98,14 +101,21 @@ void DHCalEventReader::open(std::string name)
 void DHCalEventReader::close()
 {
   //std::cout<<"On ferme "<<std::endl;
-  try{
-    lcReader_->close() ;
-  }
-  catch( IOException& e) {
-    std::cout << e.what() << std::endl ;
-    exit(2) ;
-  }
+  if (lcReader_!=NULL)
+    {
+      try{
+	lcReader_->close() ;
+      }
+      catch( IOException& e) {
+	std::cout << e.what() << std::endl ;
+	exit(2) ;
+      }
+    }
   //std::cout<<"Bye "<<std::endl;
+  for (uint32_t i=0;i<readers_.size();i++)
+    {
+      readers_[i]->close();
+    }
 }
 void DHCalEventReader::readRun()
 {
@@ -200,13 +210,15 @@ void DHCalEventReader::findEvent(int run,int event)
 int DHCalEventReader::readOneEvent(int run,int event)
 {
   try{
-    this->findEvent(run,event);
-    evt_ = (IMPL::LCEventImpl*) lcReader_->readEvent(run,event) ; 
-    if (evt_==0) {currentFileName_="NONE"; this->findEvent(run,event);}
-    if (evt_!=0)
-      analyzeEvent();
-
-    
+    for (uint32_t i=0;i<readers_.size();i++)
+    {
+      evt_ = (IMPL::LCEventImpl*) readers_[i]->readEvent(run,event);
+      if (evt_!=0)
+	{
+	  this->analyzeEvent();
+	  break;
+	}
+    }
     
   }
   catch( IOException& e) {
@@ -966,6 +978,7 @@ void  DHCalEventReader::registerAnalysis(DHCALAnalyzer* a)
 {
   vProcess_.push_back(a);
 }
+
 void  DHCalEventReader::analyzeEvent()
 {
   for (std::vector<DHCALAnalyzer*>::iterator it=vProcess_.begin();it!=vProcess_.end();it++)
