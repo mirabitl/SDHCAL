@@ -10,10 +10,12 @@ else:
 
 
 fileList=[]
+thepath="/data/NAS/Results/DHCAL_%d_I%d_%d.slcio"
+#thepath="/tmp/DHCAL_%d_I%d_%d.slcio"
 
 for iseq in range(0,nseq):
     for ifu in range(0,nfu):
-        fileList.append("/data/NAS/Results/DHCAL_%d_I%d_%d.slcio" % (run,ifu,iseq))
+        fileList.append(thepath % (run,ifu,iseq))
 
 print fileList
 
@@ -39,9 +41,11 @@ a=dr.FilterAnalyzer( dher,rootHandler);
 a.setuseSynchronized(True);
 a.setminChambersInTime(7);
 a.setWriting(True)
+a.setRebuild(True)
 dher.setDropFirstRU(True);
 dher.openOutput(fileOut)
 dher.registerAnalysis(a);
+
 #dher.setDropFirstRU(True);
 for x in fileList:
     print "================================>",x

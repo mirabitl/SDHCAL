@@ -4,16 +4,16 @@ import DHCalEventReader as dr
 
 
 fileList=[
-"/data/NAS/Results/DHCAL_716282_I0_0.slcio",
-"/data/NAS/Results/DHCAL_716282_I1_0.slcio",
-"/data/NAS/Results/DHCAL_716282_I2_0.slcio",
-"/data/NAS/Results/DHCAL_716282_I3_0.slcio",
-"/data/NAS/Results/DHCAL_716282_I4_0.slcio"]
+"/data/NAS/Results/DHCAL_716308_I1_0.slcio"]
+#"/data/NAS/Results/DHCAL_716308_I0_0.slcio",
+#"/data/NAS/Results/DHCAL_716308_I1_0.slcio",
+#"/data/NAS/Results/DHCAL_716308_I2_0.slcio",
+#"/data/NAS/Results/DHCAL_716308_I4_0.slcio"]
 #fileList=["/data/online/Results/DHCAL_710456_I0_8.slcio"]
 
 
 
-fileOut="/tmp/DHCAL_716282_I0_0.slcio"
+fileOut="/tmp/DHCAL_716308_I1_0.slcio"
 
 
 #fileOut="/tmp/t27ch.slcio"

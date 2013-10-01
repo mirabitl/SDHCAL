@@ -24,11 +24,13 @@ class FilterAnalyzer : public DHCALAnalyzer
   virtual void endRun(){;}
   inline void setminChambersInTime(int t){minChambersInTime_=t;}
   inline void setuseSynchronized(bool t){useSynchronized_=t;}
+  void setRebuild(bool t){rebuild_=t;}
  private:
   DHCalEventReader* reader_;
   DCHistogramHandler* handler_;
   bool writing_;
   bool headerWritten_;
+  bool rebuild_;
   int minChambersInTime_;
   bool useSynchronized_;
   uint32_t lastEvent_;

@@ -39,6 +39,9 @@ void FilterAnalyzer::processEvent()
     // reader_->analyzeEvent();
       // getchar();
     std::cout<<"event "<<reader_->getEvent()->getEventNumber()<<std::endl;
+    IMPL::LCCollectionVec* HitVec;
+    if (rebuild_)
+      {
       reader_->parseRawEvent();
       //reader_->flagSynchronizedFrame(9);
 #if DU_DATA_FORMAT_VERSION <= 12
@@ -67,14 +70,22 @@ void FilterAnalyzer::processEvent()
   // getchar();
      //printf("Calling CreaetRaw\n");
 
-      IMPL::LCCollectionVec* HitVec=reader_->createRawCalorimeterHits(seed);
+     HitVec=reader_->createRawCalorimeterHits(seed);
       
       //printf("End of CreaetRaw %d \n",rhcol->getNumberOfElements());
+
 #endif
+
+      }
+    else
+      {
+	HitVec=(IMPL::LCCollectionVec*) reader_->getEvent()->takeCollection("DHCALRawHits");
+	HitVec->setTransient(false);
+      }
       IMPL::LCEventImpl* evt_=reader_->getEvent();
       if (evt_->getEventNumber()%1==0)
 	std::cout<<evt_->getEventNumber()<<" Number of Hit "<<HitVec->getNumberOfElements()<<std::endl;
-      
+
       IMPL::LCEventImpl* evtOutput_ =new IMPL::LCEventImpl();
       evtOutput_->setRunNumber(evt_->getRunNumber());
       evtOutput_->setEventNumber(evt_->getEventNumber());
@@ -85,7 +96,10 @@ void FilterAnalyzer::processEvent()
       //LCTOOLS::printRawCalorimeterHits(HitVec);
 
       if (writing_)
-	//reader_->write(evtOutput_);
+#undef NOSORT
+#ifdef NOSORT
+	reader_->write(evtOutput_);
+#else
 	{
 	  std::pair<uint32_t,IMPL::LCEventImpl*> p(evt_->getEventNumber(),evtOutput_);
 	  evtmap.insert(p);
@@ -100,6 +114,7 @@ void FilterAnalyzer::processEvent()
 	    }
 	  
 	}
+#endif
       else
 	delete evtOutput_;
   }

@@ -81,7 +81,7 @@ void DHCalEventReader::open(std::string name)
 {
   if (lcReader_==0) 
     {
-      lcReader_ = LCFactory::getInstance()->createLCReader() ;
+      lcReader_ = LCFactory::getInstance()->createLCReader(0) ;
       lcReader_->registerLCRunListener(this) ;
       lcReader_->registerLCEventListener(this) ;
       
@@ -89,8 +89,8 @@ void DHCalEventReader::open(std::string name)
 
   try{
     
-    lcReader_->open( name.c_str() ) ;
-    printf("%s has %d events \n",name.c_str(),lcReader_->getNumberOfEvents());
+    lcReader_->open( name.c_str()) ;
+    // printf("%s has %d events \n",name.c_str(),lcReader_->getNumberOfEvents());
   }
   catch( IOException& e) {
     std::cout << e.what() << std::endl ;
