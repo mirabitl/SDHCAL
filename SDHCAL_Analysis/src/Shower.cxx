@@ -8,6 +8,7 @@ using namespace Eigen;
 #include <limits.h>
 #include <sys/timeb.h>
 #include <float.h>
+#include "ChamberAnalyzer.h"
 double getHighResolutionTime(void)
 {
 	struct timeb tp;
@@ -1029,3 +1030,280 @@ uint32_t Shower::getNumberOfMips(uint32_t plan)
 	return getNumberOfHits(plan,0)+3*getNumberOfHits(plan,1)+15*getNumberOfHits(plan,2);
 }
 
+
+void Shower::EdgeDetection()
+{
+  // Initialisation
+  unsigned char bufv[60*32*32];
+  array3D<unsigned char> imagev;
+  imagev.initialise(bufv,60,32,32); imagev.clear();
+  printf("A\n");
+  float bufi[60*32*32];
+  array3D<float> image3;
+  image3.initialise(bufi,60,32,32); image3.clear();
+  //printf("B\n");
+  unsigned char bufc[60*32*32];
+  array3D<unsigned char> cores;
+  cores.initialise(bufc,60,32,32); cores.clear();
+  //printf("C\n");
+  unsigned char bufe[60*32*32];
+  array3D<unsigned char> edges;
+  edges.initialise(bufe,60,32,32); edges.clear();
+  //printf("D\n");
+  unsigned char adjBuf[60*32*32];
+  array3D<unsigned char> adj;
+  adj.initialise(adjBuf,60,32,32);adj.clear();
+  //printf("E\n");
+  // Fill table imagev
+  for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ipl!=thePlans_.end();ipl++)
+    {
+      for (std::vector<RecoHit>::iterator ih=ipl->second.begin();ih!=ipl->second.end();ih++)
+	{
+	  imagev.setValue(ih->chamber(),ih->I()/3,ih->J()/3,1);
+	}
+	  
+    }
+  //printf("F\n");
+  ChamberAnalyzer::sobel_volume(imagev,image3);
+  //printf("G\n");
+
+
+  uint32_t na3=0,ne3=0,nc3=0;
+  float w3=0;
+
+  for (uint32_t k=1;k<imagev.getXSize();k++)
+    {
+      for (uint32_t i=1;i<imagev.getYSize();i++)
+	{
+	  //if (image2x[k][i]>=-1 ) continue;
+			
+	  for (uint32_t j=1;j<imagev.getZSize();j++)
+	    {
+	      //if (image2y[k][j]>=-1 ) continue;
+	      if (imagev.getValue(k,i,j)==1) {
+		na3++;
+		w3+=image3.getValue(k,i,j);
+	      }
+	      if (image3.getValue(k,i,j)>=-20) // -32 si poids -44
+		{
+		  if (image3.getValue(k,i,j)>=-2) continue;
+		  if (imagev.getValue(k,i,j)!=0) cores.setValue(k,i,j,1);
+					
+		  continue;
+		}
+	      edges.setValue(k,i,j,1);
+	      if (image3.getValue(k,i,j)<-25)
+	       edges.setValue(k,i,j,2);
+	    }
+	}
+    }
+  //printf("H\n");
+  // Add adjacent hit to core
+	
+  for (uint32_t k=1;k<imagev.getXSize()-1;k++)
+    {
+      for (uint32_t i=1;i<imagev.getYSize()-1;i++)
+	{
+	  //if (image2x[k][i]>=-1 ) continue;
+			
+	  for (uint32_t j=1;j<imagev.getZSize()-1;j++)
+	    {
+	      if (edges.getValue(k,i,j)==0) continue;
+				
+	      for (uint32_t ks=k-1;ks<=k+1;ks++)
+		{
+		  for (uint32_t is=i-1;is<=i+1;is++)
+		    {
+		      for (uint32_t js=j-1;js<=j+1;js++)
+			{
+			  if (cores.getValue(ks,is,js)>0)
+			    {
+			      adj.setValue(ks,is,js,1);
+			      edges.setValue(k,i,j,0);
+			      break;
+			    }
+			}
+		    }
+		}
+				
+	    }
+	}
+    }
+  //printf("I\n");
+  // Merge the adjacents
+  for (uint32_t k=1;k<imagev.getXSize()-1;k++)
+    {
+      for (uint32_t i=1;i<imagev.getYSize()-1;i++)
+	{
+	  //if (image2x[k][i]>=-1 ) continue;
+			
+	  for (uint32_t j=1;j<imagev.getZSize()-1;j++)
+	    {
+	      if (adj.getValue(k,i,j)>0)
+		cores.setValue(k,i,j,1);
+	      if (edges.getValue(k,i,j)>0) ne3++;
+	    }
+	}
+    }
+  //printf("J\n");
+  //Now loop on core hits
+
+
+  nc3=na3-ne3;
+
+  float ratioEdge3= ne3*100./na3;
+  DEBUG_PRINT("Ratio of Edge3 / All3  = %f  %d %d %d\n",ratioEdge3,na3,ne3,nc3);
+  //Store the evnt information
+  //printf("K\n");
+  if (ratioEdge3>95) return;
+  //printf("L\n");
+
+  // Now build amas and count hits
+
+  std::vector<Amas> theAmas;
+  uint32_t ne[3],nc[3];
+  memset(ne,0,3*sizeof(uint32_t));
+  memset(nc,0,3*sizeof(uint32_t));
+
+for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ipl!=thePlans_.end();ipl++)
+    {
+      for (std::vector<RecoHit>::iterator ih=ipl->second.begin();ih!=ipl->second.end();ih++)
+	{
+	    RecoHit& h = (*ih);
+	    int ithr=ih->getAmplitude()&0x3;
+	    if (cores.getValue(ih->chamber(),ih->I()/3,ih->J()/3))
+	      {
+		bool appended=false;
+		for (std::vector<Amas>::iterator ia=theAmas.begin();ia!=theAmas.end();ia++)
+		  {
+		    appended=(ia->append(&h,2));
+		    if (appended) break;
+		  }
+		if (!appended)
+		  {
+		    Amas a(&h);
+		    theAmas.push_back(a);
+		  }
+		if (ithr==1) nc[1]++;
+		if (ithr==2) nc[0]++;
+		if (ithr==3) nc[2]++;
+	      }
+	    else
+	      {
+		if (ithr==1) ne[1]++;
+		if (ithr==2) ne[0]++;
+		if (ithr==3) ne[2]++;
+
+	      }
+	}
+    }	 
+
+
+  INFO_PRINT("Number of Amas %d : Core (%d,%d,%d) Edges (%d,%d,%d) \n",theAmas.size(),nc[0],nc[1],nc[2],ne[0],ne[1],ne[2]);
+  uint32_t theNall=nc[0]+nc[1]+nc[2]+ne[0]+ne[1]+ne[2];
+  bool electron=false;
+  bool leak=false;
+  bool leakt=false;
+  double emax =-DBL_MAX;
+  double zmax =-DBL_MAX;
+  double zlast =-DBL_MAX;
+  double zfirst=DBL_MAX;
+  double zLastAmas_=134.;
+
+  uint32_t ng=0;
+  std::sort(theAmas.rbegin(),theAmas.rend());
+  for (std::vector<Amas>::iterator ia=theAmas.begin();ia!=theAmas.end();ia++)
+    {
+      ia->compute();
+      if (ia->size()<=4) continue;
+      if (ia->size()>=10)ng++;
+      for (uint32_t i=0;i<21;i++)
+	DEBUG_PRINT("%6.3f ",ia->getComponents(i));
+      DEBUG_PRINT(" Size %d\n",ia->size()); 
+      if (ia->getComponents(2)>zmax) zmax=ia->getComponents(2);
+      if (ia->getComponents(16)>zlast) zlast=ia->getComponents(16);
+      if (ia->getComponents(15)<zfirst) zfirst=ia->getComponents(15);
+      if (ia->size()>emax)
+	{
+	  emax=ia->size();
+	  if (ia->getComponents(15)<=2.81 && (ia->size()*1./theNall)>0.2 ) 
+	    {
+	      electron=true;
+	    }
+
+
+	}
+      if (ia->getComponents(16)>=zLastAmas_ && (ia->size())>4)
+	{
+	  leak=true;
+	}
+      if (ia->getComponents(17)<4 && (ia->size())>4)
+	{
+	  leakt=true;
+	}
+      if (ia->getComponents(18)>93 && (ia->size())>4)
+	{
+	  leakt=true;
+	}
+
+      if (ia->getComponents(19)<4 && (ia->size())>4)
+	{
+	  leakt=true;
+	}
+      if (ia->getComponents(20)>93 && (ia->size())>4)
+	{
+	  leakt=true;
+	}
+
+    }
+  uint32_t nafter=0;
+  uint32_t theTag_=0;
+  theTag_|=(ng<<16);
+
+
+
+  std::bitset<61> planes(0);
+  for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ipl!=thePlans_.end();ipl++)
+    {
+      for (std::vector<RecoHit>::iterator ih=ipl->second.begin();ih!=ipl->second.end();ih++)
+	{
+	    RecoHit& h = (*ih);
+	    if (h.Z()>zlast) {
+	      if (h.chamber()<61)
+		planes.set(h.chamber(),true);
+	    }
+	}
+    }
+  for (uint32_t i=0;i<51;i++)
+    if (planes[i]!=0) nafter++;
+
+
+
+
+  INFO_PRINT("%d good amas First Plane %f Last Plane %f N hit after last %d\n",ng,zfirst,zlast,nafter);
+  /*
+
+  theZMax_=zmax;
+  theZFirst_=zfirst;
+  theZLast_=zlast;
+  thePlanAfter_=nafter;
+
+
+  electron =electron && (ng<=3) && (zlast<50.) && nafter<10;
+
+  // theAllHit_=(na2<<20)|(na1<<10)|na0;
+  // theEdgeHit_=(ne2<<20)|(ne1<<10)|ne0;
+
+  if (leak) INFO_PRINT("==================================================> L E A K A G E <==============================\n");
+  if (leakt) INFO_PRINT("==================================================> T R A N S V E R S E  L E A K A G E <==============================\n");
+  if (electron) INFO_PRINT("==================================================> E L E C T R O N <============================== %d %f %d \n",ng,zmax,nafter);
+
+
+  theTag_=0;
+  if (electron) theTag_=1;
+  if (leak) theTag_+=2;
+  if (leakt) theTag_+=4;
+  */
+
+
+}

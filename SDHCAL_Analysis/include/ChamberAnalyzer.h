@@ -86,7 +86,7 @@ public:
 	void ImageBuilder(std::vector<RecoHit*> &vreco);
 	void sobel_filtering(unsigned char i[60][96], float j[60][96]);
 
-	void sobel_volume(unsigned char image1[60][96][96],float image2[60][96][96] );
+	static void sobel_volume(unsigned char image1[60][96][96],float image2[60][96][96] );
 
 	void drawDisplay();
 	void HT();
@@ -147,7 +147,7 @@ public:
 	//void EdgeDetection(unsigned char imagev[60][96][96],unsigned char core[60][96][96],unsigned char edge[60][96][96]);
 	void EdgeDetection(array3D<unsigned char> &i,array3D<unsigned char> &c,array3D<unsigned char> &e);
 	//void sobel_volume(unsigned char *image1,float *image2,uint32_t x_size1,uint32_t y_size1,uint32_t z_size1 );
-	void sobel_volume(array3D<unsigned char> &im1,array3D<float> &im2);
+	static void sobel_volume(array3D<unsigned char> &im1,array3D<float> &im2);
 	void draw(array3D<unsigned char> &all,array3D<unsigned char> &core,array3D<unsigned char> &edge);
 	void draw(std::vector<RecoCandTk> &tracks,std::vector<RecoPoint> &points);
 	uint32_t mergeAmas(array3D<unsigned char> &core,array3D<unsigned char> &edge);

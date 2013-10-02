@@ -14,7 +14,8 @@ class RecoHit;
 #include <cublas.h>
 #include <cublas_v2.h>
 #include <cublas_api.h>
-
+#include <Array3D.h>
+#include <Amas.h>
 culaStatus benchSgesvd(int n);
 #endif
 
@@ -62,7 +63,8 @@ public:
 	bool isSelected(){return selected_;}
 	double closestDistance(Shower& sh);
 	uint32_t getFirstPlan(){return firstPlan_;}
-	uint32_t getLastPlan(){return lastPlan_;}
+        uint32_t getLastPlan(){return lastPlan_;}
+        void EdgeDetection();
 private:
 	std::map<uint32_t,std::vector<RecoHit> > thePlans_;
 	double l1_,l2_,l3_;

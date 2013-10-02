@@ -23,7 +23,7 @@ bool Amas::append(RecoHit* h,uint32_t del)
 	{
 		uint32_t iDist=abs(2.8*abs((*it)->chamber()-h->chamber())+1*(abs((*it)->I()-h->I())+abs((*it)->J()-h->J())));
 		//iht->chamber()-h.chamber())+2*(abs(h.I()-iht->I())+abs(h.J()-iht->J()));
-		if (iDist>7) continue;
+		if (iDist>5) continue; // c'etait 7 avant
 		//if (abs((*it)->chamber()-h->chamber())>del) continue;
 		//if (abs((*it)->I()-h->I())>del) continue;
 		//if (abs((*it)->J()-h->J())>del) continue;
