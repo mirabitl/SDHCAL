@@ -57,7 +57,7 @@ ChamberAnalyzer::ChamberAnalyzer(DHCalEventReader* r,DCHistogramHandler* h) :tra
 									     tkMinPoint_(3),tkExtMinPoint_(3),tkBigClusterSize_(32),tkChi2Cut_(0.01),tkDistCut_(5.),tkExtChi2Cut_(0.01),tkExtDistCut_(10.),tkAngularCut_(20.),zLastAmas_(134.),
 									     findTracks_(true),dropFirstSpillEvent_(false),useSynchronised_(true),chamberEdge_(5.),rebuild_(false),oldAlgo_(true),collectionName_("DHCALRawHits"),
 									     tkFirstChamber_(1),tkLastChamber_(61),useTk4_(false),offTimePrescale_(1),houghIndex_(0),theRhcolTime_(0.),theTimeSortTime_(0.),theTrackingTime_(0),
-  theHistoTime_(0),theSeuil_(0),draw_(false),theSkip_(0),theMonitoring_(r,h),theMonitoringPeriod_(0),theMonitoringPath_("/dev/shm/Monitoring"),ntkbetween(0)
+  theHistoTime_(0),theSeuil_(0),draw_(false),theSkip_(0),theMonitoring_(r,h),theMonitoringPeriod_(0),theMonitoringPath_("/dev/shm/Monitoring"),ntkbetween(0),theBCIDSpill_(0)
 {
   reader_=r;
   rootHandler_ =h;
@@ -609,8 +609,10 @@ void ChamberAnalyzer::findTimeSeeds( IMPL::LCCollectionVec* rhcol, int32_t nhit_
   //td::cout<<candidate.size()<<" good showers "<< tedge.size()<<std::endl;
   std::sort(candidate.begin(),candidate.end(),std::greater<uint32_t>());
 
-  for (std::vector<uint32_t>::iterator is=candidate.begin();is!=candidate.end();is++)
+  /*  
+      for (std::vector<uint32_t>::iterator is=candidate.begin();is!=candidate.end();is++)
     std::cout<<(*is)<<" ---> "<<tcount[(*is)]<<std::endl;
+  */
   return ;
 }
 
@@ -1254,6 +1256,14 @@ void ChamberAnalyzer::processEvent()
   for (std::vector<uint32_t>::iterator is=vseeds.begin();is!=vseeds.end();is++)
     {
       currentTime_=(*is);
+
+      theAbsoluteTime_=theBCID_-currentTime_;
+      if (theBCIDSpill_==0) theBCIDSpill_=theAbsoluteTime_;
+      if (theAbsoluteTime_-theBCIDSpill_>15/2E-7) theBCIDSpill_=theAbsoluteTime_;
+
+      DEBUG_PRINT("GTC %d DTC %d BCID %llu Current Time %llu Time SPill %f Distance %f \n",theGTC_,theDTC_,theBCID_,currentTime_,theBCIDSpill_*2E-7,(theAbsoluteTime_-theBCIDSpill_)*2E-7);
+      //      continue;
+      
       tempim.clear();
       // DEBUG_PRINT("Building voulume for %d \n",(*is));
       uint32_t nhits=buildVolume(rhcol,(*is));
@@ -1276,7 +1286,7 @@ void ChamberAnalyzer::processEvent()
 
       ShowerParams ish;
       Shower::computePrincipalComponents(vrh,(double*) &ish);
-      printf(" %d Hits Composantes principales %f %f %f => %f \n",vrh.size(),ish.lambda[0],ish.lambda[1],ish.lambda[2], sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2]));
+      DEBUG_PRINT(" %d Hits Composantes principales %f %f %f => %f \n",vrh.size(),ish.lambda[0],ish.lambda[1],ish.lambda[2], sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2]));
       if (sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1) continue;
 
       double* v=ish.l2;
@@ -1303,7 +1313,7 @@ void ChamberAnalyzer::processEvent()
 	  continue;
 	}
       Shower::computePrincipalComponents(vrh1,(double*) &ish);
-       printf(" Second fit %d Composantes principales %f %f %f => %f \n",vrh1.size(),ish.lambda[0],ish.lambda[1],ish.lambda[2], sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2]));
+      DEBUG_PRINT(" Second fit %d Composantes principales %f %f %f => %f \n",vrh1.size(),ish.lambda[0],ish.lambda[1],ish.lambda[2], sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2]));
       if (vrh1.size()>0.8*vrh.size() && sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1) continue;
 
 
@@ -1347,13 +1357,14 @@ void ChamberAnalyzer::processEvent()
 	  if (useMysql_)
 	    connect("mirabito/braze1@lyosdhcal11:BEAM_TEST_2012_E");
 
+	  this->createTrees("./toto.root");
 	}
       nAnalyzed_++;
 	
 
       this->ShowerBuilder(vrh);
-      //getchar();
-
+      
+      continue;
 	
       EdgeDetection(tempim,cores,edges);
       vrh.clear();
@@ -5171,9 +5182,12 @@ void ChamberAnalyzer::ShowerBuilder(std::vector<RecoHit*> vreco)
     {
       if (!ish->isSelected()) continue;
       theEvent.showers=theEvent.showers+1;
-      ish->EdgeDetection();
+      ish->setSelected(ish->EdgeDetection());
+      std::cout<<ish->getEdge3()<<" "<<ish->getAll3()<<std::endl;
+      if (ish->getEdge3()*100/ish->getAll3()>95) ish->setSelected(false);
     }
   //if (theEvent.showers>1) return;
+
   uint32_t indx=0;
   for (std::vector<Shower>::iterator ish=showerList.begin();ish!=showerList.end();ish++)
     {
@@ -5464,6 +5478,8 @@ void ChamberAnalyzer::ShowerBuilder(std::vector<RecoHit*> vreco)
       nshower++;
 
       nmips+=nmip;
+      //printf("Hi all \n");
+      draw_=false;
       if (TCShower!=NULL && draw_ )
 	{
 	  std::stringstream sp("");
@@ -5549,8 +5565,8 @@ void ChamberAnalyzer::ShowerBuilder(std::vector<RecoHit*> vreco)
 
     }
   //  DEBUG_PRINT("Number of good showers %d ========================> %d \n",nshower,nmips);
-
-  if (TCShower!=NULL && (nshower>0 && 1<0))
+      //printf("Hi all 1\n");
+  if (TCShower!=NULL && (nshower>0))
     {
       std::stringstream sp("");
       sp<<"Hit300";
@@ -5614,13 +5630,15 @@ void ChamberAnalyzer::ShowerBuilder(std::vector<RecoHit*> vreco)
   //       }
 
   //   }
-  if (nshower>0 && nmips>2500 && draw_)
+  //printf("Hi all 3\n");
+  if (nshower>0 && TCShower!=NULL && draw_)
     {
       std::stringstream ss("");
       ss<<"/tmp/Display_"<<evt_->getRunNumber()<<"_"<<evt_->getEventNumber()<<"_"<<currentTime_<<".png";
       TCShower->SaveAs(ss.str().c_str());
       char c;c=getchar();putchar(c); if (c=='.') exit(0);;
     }
+      //printf("Hi all 4\n");
   if (tEvents_!=NULL)
     {
       treeFile_->cd();
@@ -5628,6 +5646,7 @@ void ChamberAnalyzer::ShowerBuilder(std::vector<RecoHit*> vreco)
 		
       tEvents_->Fill();
     }
+  //printf("Hi all 5 \n");
 }
 
 void ChamberAnalyzer::createTrees(std::string s)

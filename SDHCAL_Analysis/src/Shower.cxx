@@ -1031,13 +1031,13 @@ uint32_t Shower::getNumberOfMips(uint32_t plan)
 }
 
 
-void Shower::EdgeDetection()
+bool Shower::EdgeDetection()
 {
   // Initialisation
   unsigned char bufv[60*32*32];
   array3D<unsigned char> imagev;
   imagev.initialise(bufv,60,32,32); imagev.clear();
-  printf("A\n");
+  //printf("A\n");
   float bufi[60*32*32];
   array3D<float> image3;
   image3.initialise(bufi,60,32,32); image3.clear();
@@ -1068,36 +1068,40 @@ void Shower::EdgeDetection()
   //printf("G\n");
 
 
-  uint32_t na3=0,ne3=0,nc3=0;
+  //uint32_t 
+  na3_=0;ne3_=0;nc3_=0;
   float w3=0;
 
   for (uint32_t k=1;k<imagev.getXSize();k++)
     {
-      for (uint32_t i=1;i<imagev.getYSize();i++)
+      for (uint32_t i=0;i<imagev.getYSize();i++)
 	{
 	  //if (image2x[k][i]>=-1 ) continue;
 			
-	  for (uint32_t j=1;j<imagev.getZSize();j++)
+	  for (uint32_t j=0;j<imagev.getZSize();j++)
 	    {
 	      //if (image2y[k][j]>=-1 ) continue;
 	      if (imagev.getValue(k,i,j)==1) {
-		na3++;
+		na3_++;
 		w3+=image3.getValue(k,i,j);
 	      }
 	      if (image3.getValue(k,i,j)>=-20) // -32 si poids -44
 		{
 		  if (image3.getValue(k,i,j)>=-2) continue;
-		  if (imagev.getValue(k,i,j)!=0) cores.setValue(k,i,j,1);
+		  if (imagev.getValue(k,i,j)!=0) {
+		    cores.setValue(k,i,j,1);nc3_++;}
 					
 		  continue;
 		}
 	      edges.setValue(k,i,j,1);
 	      if (image3.getValue(k,i,j)<-25)
 	       edges.setValue(k,i,j,2);
+	      ne3_++;
 	    }
 	}
     }
-  //printf("H\n");
+  //printf("na3 %d %d %d\n",na3_,ne3_,nc3_);
+  if (ne3_==0 && nc3_==0) {ne3_=na3_;return false;}
   // Add adjacent hit to core
 	
   for (uint32_t k=1;k<imagev.getXSize()-1;k++)
@@ -1131,6 +1135,7 @@ void Shower::EdgeDetection()
     }
   //printf("I\n");
   // Merge the adjacents
+  nc3_=0;ne3_=0;
   for (uint32_t k=1;k<imagev.getXSize()-1;k++)
     {
       for (uint32_t i=1;i<imagev.getYSize()-1;i++)
@@ -1141,7 +1146,7 @@ void Shower::EdgeDetection()
 	    {
 	      if (adj.getValue(k,i,j)>0)
 		cores.setValue(k,i,j,1);
-	      if (edges.getValue(k,i,j)>0) ne3++;
+	      if (edges.getValue(k,i,j)>0) ne3_++;
 	    }
 	}
     }
@@ -1149,32 +1154,33 @@ void Shower::EdgeDetection()
   //Now loop on core hits
 
 
-  nc3=na3-ne3;
-
-  float ratioEdge3= ne3*100./na3;
-  DEBUG_PRINT("Ratio of Edge3 / All3  = %f  %d %d %d\n",ratioEdge3,na3,ne3,nc3);
+  nc3_=na3_-ne3_;
+  
+  float ratioEdge3= ne3_*100./na3_;
+  DEBUG_PRINT("Ratio of Edge3 / All3  = %f  %d %d %d\n",ratioEdge3,na3_,ne3_,nc3_);
   //Store the evnt information
   //printf("K\n");
-  if (ratioEdge3>95) return;
+  if (ratioEdge3>95) return false;
   //printf("L\n");
 
   // Now build amas and count hits
 
-  std::vector<Amas> theAmas;
-  uint32_t ne[3],nc[3];
-  memset(ne,0,3*sizeof(uint32_t));
-  memset(nc,0,3*sizeof(uint32_t));
-
+  // std::vector<Amas> theAmas_;
+  //  uint32_t ne[3],nc_[3];
+  memset(ne_,0,3*sizeof(uint32_t));
+  memset(nc_,0,3*sizeof(uint32_t));
+  uint32_t nall=0;
 for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ipl!=thePlans_.end();ipl++)
     {
       for (std::vector<RecoHit>::iterator ih=ipl->second.begin();ih!=ipl->second.end();ih++)
 	{
 	    RecoHit& h = (*ih);
 	    int ithr=ih->getAmplitude()&0x3;
-	    if (cores.getValue(ih->chamber(),ih->I()/3,ih->J()/3))
+	    nall++;
+	    if (cores.getValue(ih->chamber(),ih->I()/3,ih->J()/3)!=0)
 	      {
 		bool appended=false;
-		for (std::vector<Amas>::iterator ia=theAmas.begin();ia!=theAmas.end();ia++)
+		for (std::vector<Amas>::iterator ia=theAmas_.begin();ia!=theAmas_.end();ia++)
 		  {
 		    appended=(ia->append(&h,2));
 		    if (appended) break;
@@ -1182,25 +1188,27 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
 		if (!appended)
 		  {
 		    Amas a(&h);
-		    theAmas.push_back(a);
+		    theAmas_.push_back(a);
 		  }
-		if (ithr==1) nc[1]++;
-		if (ithr==2) nc[0]++;
-		if (ithr==3) nc[2]++;
+		if (ithr==1) nc_[1]++;
+		if (ithr==2) nc_[0]++;
+		if (ithr==3) nc_[2]++;
 	      }
 	    else
 	      {
-		if (ithr==1) ne[1]++;
-		if (ithr==2) ne[0]++;
-		if (ithr==3) ne[2]++;
+		if (ithr==1) ne_[1]++;
+		if (ithr==2) ne_[0]++;
+		if (ithr==3) ne_[2]++;
 
 	      }
 	}
     }	 
+  
+ double guessEnergy=(nall+nc_[2]*(1.5+1.85E-3*(nall*1.-102.)))*0.052;
+ DEBUG_PRINT("E= %f Number of Amas %d : %d Core (%d,%d,%d) Edges (%d,%d,%d) \n",guessEnergy,theAmas_.size(),nall,nc_[0],nc_[1],nc_[2],ne_[0],ne_[1],ne_[2]);
 
 
-  INFO_PRINT("Number of Amas %d : Core (%d,%d,%d) Edges (%d,%d,%d) \n",theAmas.size(),nc[0],nc[1],nc[2],ne[0],ne[1],ne[2]);
-  uint32_t theNall=nc[0]+nc[1]+nc[2]+ne[0]+ne[1]+ne[2];
+  uint32_t theNall=nc_[0]+nc_[1]+nc_[2]+ne_[0]+ne_[1]+ne_[2];
   bool electron=false;
   bool leak=false;
   bool leakt=false;
@@ -1211,8 +1219,8 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
   double zLastAmas_=134.;
 
   uint32_t ng=0;
-  std::sort(theAmas.rbegin(),theAmas.rend());
-  for (std::vector<Amas>::iterator ia=theAmas.begin();ia!=theAmas.end();ia++)
+  std::sort(theAmas_.rbegin(),theAmas_.rend());
+  for (std::vector<Amas>::iterator ia=theAmas_.begin();ia!=theAmas_.end();ia++)
     {
       ia->compute();
       if (ia->size()<=4) continue;
@@ -1280,7 +1288,7 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
 
 
 
-  INFO_PRINT("%d good amas First Plane %f Last Plane %f N hit after last %d\n",ng,zfirst,zlast,nafter);
+  DEBUG_PRINT("%d good amas First Plane %f Last Plane %f N hit after last %d\n",ng,zfirst,zlast,nafter);
   /*
 
   theZMax_=zmax;
@@ -1305,5 +1313,5 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
   if (leakt) theTag_+=4;
   */
 
-
+  return true;
 }

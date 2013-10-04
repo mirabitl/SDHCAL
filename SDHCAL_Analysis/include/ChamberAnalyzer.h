@@ -230,6 +230,9 @@ private:
 	int theSeuil_;
 	int32_t theSkip_,npi_;
 	unsigned long long theBCID_;
+	unsigned long long theBCIDSpill_;
+	unsigned long long theAbsoluteTime_;
+
 	uint32_t theDTC_,theGTC_;
 	TTree* tEvents_;
 	TTree* tShowers_;
