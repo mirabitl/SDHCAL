@@ -98,6 +98,14 @@ typedef struct {
   uint16_t   NH1[8];
   uint16_t   NH2[8];
   uint16_t   NH[8];
+
+  uint32_t   nc[3];
+  uint32_t   ne[3];
+
+  uint32_t   namas,ngood,nhitafterlast;
+  double     zfirst,zlast;
+  
+
 } shower_t;
 
  

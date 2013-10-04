@@ -71,6 +71,11 @@ public:
   inline uint32_t getEdge(uint32_t th){return ne_[th];}
   inline uint32_t getAll(uint32_t th){return ne_[th]+nc_[th];}
   inline uint32_t getCore(uint32_t th){return nc_[th];}
+  inline uint32_t getNGood(){return ng_;}
+  inline uint32_t getNAfter(){return nafter_;}
+  inline double getZFirstAmas(){return zfirst_;}
+  inline double getZLastAmas(){return zlast_;}
+  inline std::vector <Amas>& getAmas(){return theAmas_;} 
 private:
   std::map<uint32_t,std::vector<RecoHit> > thePlans_;
   double l1_,l2_,l3_;
@@ -78,9 +83,10 @@ private:
   double xm_[3];
   bool selected_;
   uint32_t firstPlan_,lastPlan_;
-  uint32_t ne3_,nc3_,na3_;
+  uint32_t ne3_,nc3_,na3_,ng_,nafter_;
   uint32_t ne_[3],nc_[3];
   std::vector <Amas> theAmas_;
+  double zfirst_,zlast_;
 
 };
 #endif

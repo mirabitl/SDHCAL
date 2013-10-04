@@ -5438,12 +5438,27 @@ void ChamberAnalyzer::ShowerBuilder(std::vector<RecoHit*> vreco)
 
 
       theShower.rncor[0]=theNall_;
-      theShower.rncor[1]=theNedge_;
+      theShower.rncor[1]=(theAbsoluteTime_-theBCIDSpill_)*2E-7;
       theShower.rncor[2]=theTag_;
 
       theShower.np1=np1;
       theShower.fp1=fp1;
       theShower.lp1=lp1;
+
+
+      theShower.ne[0]=ish->getEdge(0);
+      theShower.ne[1]=ish->getEdge(1);
+      theShower.ne[2]=ish->getEdge(2);
+      theShower.nc[0]=ish->getCore(0);
+      theShower.nc[1]=ish->getCore(1);
+      theShower.nc[2]=ish->getCore(2);
+      theShower.rncor[0]=theShower.ne[0]+theShower.ne[1]+theShower.ne[2]+theShower.nc[0]+theShower.nc[1]+theShower.nc[2];
+      theShower.ngood=ish->getNGood();
+      theShower.namas=ish->getAmas().size();
+      theShower.nhitafterlast=ish->getNAfter();
+      theShower.zfirst=ish->getZFirstAmas();
+      theShower.zlast=ish->getZLastAmas();
+
 
       if (tEvents_!=NULL)
 	{
@@ -5452,8 +5467,8 @@ void ChamberAnalyzer::ShowerBuilder(std::vector<RecoHit*> vreco)
 	  else
 	    {
 	      treeFile_->cd();
-	      theShower.bcid= theEvent.bcid;
-	      theShower.time= theEvent.time;
+	      theShower.bcid= theBCID_;
+	      theShower.time= currentTime_;
 
 	      tShowers_->Fill();
 	    }
@@ -5725,6 +5740,20 @@ void ChamberAnalyzer::createTrees(std::string s)
   tShowers_->Branch("NH1",&theShower.NH1,"NH1[8]/s");
   tShowers_->Branch("NH2",&theShower.NH2,"NH2[8]/s");
   tShowers_->Branch("NH",&theShower.NH,"NH[8]/s");
+
+
+  tShowers_->Branch("nc",&theShower.nc,"nc[3]/i");
+  tShowers_->Branch("ne",&theShower.ne,"ne[3]/i");
+  tShowers_->Branch("namas",&theShower.namas,"namas/i");
+  tShowers_->Branch("ngood",&theShower.ngood,"ngood/i");
+  tShowers_->Branch("nhitafter",&theShower.nhitafterlast,"nhitafter/i");
+  tShowers_->Branch("zfirst",&theShower.zfirst,"zfirst/D");
+  tShowers_->Branch("zlast",&theShower.zlast,"zlast/D");
+
+
+
+
+
 
 
   tTracks_ = new TTree("tracks","Tracks");

@@ -1214,23 +1214,23 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
   bool leakt=false;
   double emax =-DBL_MAX;
   double zmax =-DBL_MAX;
-  double zlast =-DBL_MAX;
-  double zfirst=DBL_MAX;
-  double zLastAmas_=134.;
+  zlast_ =-DBL_MAX;
+  zfirst_=DBL_MAX;
+  double zlast_Amas_=134.;
 
-  uint32_t ng=0;
+  ng_=0;
   std::sort(theAmas_.rbegin(),theAmas_.rend());
   for (std::vector<Amas>::iterator ia=theAmas_.begin();ia!=theAmas_.end();ia++)
     {
       ia->compute();
       if (ia->size()<=4) continue;
-      if (ia->size()>=10)ng++;
+      if (ia->size()>=10)ng_++;
       for (uint32_t i=0;i<21;i++)
 	DEBUG_PRINT("%6.3f ",ia->getComponents(i));
       DEBUG_PRINT(" Size %d\n",ia->size()); 
       if (ia->getComponents(2)>zmax) zmax=ia->getComponents(2);
-      if (ia->getComponents(16)>zlast) zlast=ia->getComponents(16);
-      if (ia->getComponents(15)<zfirst) zfirst=ia->getComponents(15);
+      if (ia->getComponents(16)>zlast_) zlast_=ia->getComponents(16);
+      if (ia->getComponents(15)<zfirst_) zfirst_=ia->getComponents(15);
       if (ia->size()>emax)
 	{
 	  emax=ia->size();
@@ -1241,7 +1241,7 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
 
 
 	}
-      if (ia->getComponents(16)>=zLastAmas_ && (ia->size())>4)
+      if (ia->getComponents(16)>=zlast_Amas_ && (ia->size())>4)
 	{
 	  leak=true;
 	}
@@ -1264,9 +1264,9 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
 	}
 
     }
-  uint32_t nafter=0;
+  nafter_=0;
   uint32_t theTag_=0;
-  theTag_|=(ng<<16);
+  theTag_|=(ng_<<16);
 
 
 
@@ -1276,35 +1276,35 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
       for (std::vector<RecoHit>::iterator ih=ipl->second.begin();ih!=ipl->second.end();ih++)
 	{
 	    RecoHit& h = (*ih);
-	    if (h.Z()>zlast) {
+	    if (h.Z()>zlast_) {
 	      if (h.chamber()<61)
 		planes.set(h.chamber(),true);
 	    }
 	}
     }
   for (uint32_t i=0;i<51;i++)
-    if (planes[i]!=0) nafter++;
+    if (planes[i]!=0) nafter_++;
 
 
 
 
-  DEBUG_PRINT("%d good amas First Plane %f Last Plane %f N hit after last %d\n",ng,zfirst,zlast,nafter);
+  DEBUG_PRINT("%d good amas First Plane %f Last Plane %f N hit after last %d\n",ng_,zfirst_,zlast_,nafter_);
   /*
 
   theZMax_=zmax;
-  theZFirst_=zfirst;
-  theZLast_=zlast;
-  thePlanAfter_=nafter;
+  theZfirst__=zfirst_;
+  theZlast__=zlast_;
+  thePlanafter__=nafter_;
 
 
-  electron =electron && (ng<=3) && (zlast<50.) && nafter<10;
+  electron =electron && (ng_<=3) && (zlast_<50.) && nafter_<10;
 
   // theAllHit_=(na2<<20)|(na1<<10)|na0;
   // theEdgeHit_=(ne2<<20)|(ne1<<10)|ne0;
 
   if (leak) INFO_PRINT("==================================================> L E A K A G E <==============================\n");
   if (leakt) INFO_PRINT("==================================================> T R A N S V E R S E  L E A K A G E <==============================\n");
-  if (electron) INFO_PRINT("==================================================> E L E C T R O N <============================== %d %f %d \n",ng,zmax,nafter);
+  if (electron) INFO_PRINT("==================================================> E L E C T R O N <============================== %d %f %d \n",ng_,zmax,nafter_);
 
 
   theTag_=0;
