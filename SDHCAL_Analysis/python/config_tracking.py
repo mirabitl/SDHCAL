@@ -16,6 +16,6 @@ tkExtDistCut=5.;
 #filePath="/data/NAS/Results/PS_04_2012/DHCAL_%d_I%d_0.slcio"
 filePath="/data/NAS/BeamTest2012Compressed/DHCAL_%d_I%d_%d.slcio"
 #filePath="/tmp/DHCAL_%d_I%d_%d.slcio"
-nevent=5000
+nevent=0
 rootFilePath="../Tracks%d_%d.root"
 treeName="./showers_%d_%d.root"
