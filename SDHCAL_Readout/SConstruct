@@ -48,7 +48,7 @@ Bit64=False
 Bit64=os.uname()[4]=='x86_64'
 
 
-NetLink="/data/online/netLink"
+NetLink="../netLink"
 if ( not os.path.exists(NetLink)):
   NetLink=os.getenv("HOME")+"/netLink"
 

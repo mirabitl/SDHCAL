@@ -20,7 +20,7 @@
 
 class FtdiUsbDriver {
 public:
-	FtdiUsbDriver(char * deviceIdentifier )     throw (LocalHardwareException);
+  FtdiUsbDriver(char * deviceIdentifier ,uint32_t productid=0x6001)     throw (LocalHardwareException);
 	~FtdiUsbDriver()     throw (LocalHardwareException);
 	void FT245Purge( void ) throw (LocalHardwareException);
 	int32_t read( unsigned char  *resultPtr ) throw (LocalHardwareException);
@@ -54,6 +54,7 @@ public:
 protected:
 	struct ftdi_context theFtdi;
 	uint32_t timeOut;
+	uint32_t theProduct_;
 };
 
 #endif

@@ -52,10 +52,11 @@ uint16_t FtdiUsbDriver::CrcTable[256] =
 
 #define MY_DEBUG
 
-FtdiUsbDriver::FtdiUsbDriver(char * deviceIdentifier )     throw (LocalHardwareException)
+FtdiUsbDriver::FtdiUsbDriver(char * deviceIdentifier, uint32_t productid )     throw (LocalHardwareException)
 {
  int ret;
  int ntry=0;
+ theProduct_=productid;
 start:
 	if (ftdi_init(&theFtdi) < 0)
 	{
@@ -63,7 +64,7 @@ start:
 		_exit(1);
 	}
 
-	if ((ret = ftdi_usb_open_desc(&theFtdi, 0x0403, 0x6001,NULL,deviceIdentifier)) < 0)
+	if ((ret = ftdi_usb_open_desc(&theFtdi, 0x0403,theProduct_,NULL,deviceIdentifier)) < 0)
 	{
 		fprintf(stderr, "unable to open ftdi device: %d (%s)\n", ret, ftdi_get_error_string(&theFtdi));
 		_exit(1);
@@ -71,7 +72,7 @@ start:
 
 
 	uint32_t regctrl=0;
-
+	if (theProduct_==0x6014) ftdi_set_bitmode(&theFtdi,0,0);
 	//ret=UsbRegisterWrite(2,0x1234567);
 
         //::usleep(100000);
