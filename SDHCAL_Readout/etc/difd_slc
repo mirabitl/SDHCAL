@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# difd        This shell script takes care of starting and stopping
+#               lsyncd (the Live Syncing (Mirror) Daemon)
+#
+# Author: Randy Reddekopp not-public@usask.ca
+#
+# chkconfig: 2345 13 87
+# description: Lsyncd uses rsync to synchronize local directories with a remote \
+#    machine running rsyncd. It watches multiple directories trees \
+#    through inotify. The first step after adding the watches is to \
+#    rsync all directories with the remote host, and then sync single \
+#    file by collecting the inotify events. So lsyncd is a light-weight \
+#    live mirror solution.
+# pidfile: /var/run/lsyncd.pid
+# processname: lsyncd
+
+# Source function library.
+. /etc/init.d/functions
+
+PIDFILE="/var/run/difd.pid"
+DIFD_DIR="/opt/dhcal/bin/"
+
+start() {
+        echo -n "Starting DIF Daemon: "
+        if [ -f $PIDFILE ]; then
+                PID=`cat $PIDFILE`
+                echo difd already running: $PID
+                exit 1;
+        else
+                cd $DIFD_DIR
+                ./dsv  &> /var/log/pi/some.log &
+                RETVAL=$?
+                echo
+                [ $RETVAL -eq 0 ] && touch /var/lock/subsys/difd
+                return $RETVAL
+        fi
+
+}
+
+stop() {
+        echo -n "Shutting down Live Syncing Daemon: "
+        echo
+        killproc dsv
+        echo
+        rm -f /var/lock/subsys/difd
+        return 0
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status dsv
+        ;;
+    restart)
+        stop
+        start
+       ;;
+    *)
+        echo "Usage:  {start|stop|status|restart}"
+        exit 1
+        ;;
+esac
+exit $?
+
