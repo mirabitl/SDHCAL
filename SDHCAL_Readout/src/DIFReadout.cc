@@ -1,7 +1,7 @@
 #include "DIFReadout.h"
 #include "FtdiUsbDriver.h"
 /* Main program de readout */
-DIFReadout::DIFReadout (std::string name) : FtdiDIFDriver ((char*) name.c_str()),theName_(name),theAsicType_(2),theNumberOfAsics_(48),theControlRegister_(0x80181B00),	theCurrentSLCStatus_(0),
+DIFReadout::DIFReadout (std::string name,uint32_t productid) : FtdiDIFDriver ((char*) name.c_str(),productid),theName_(name),theAsicType_(2),theNumberOfAsics_(48),theControlRegister_(0x80181B00),	theCurrentSLCStatus_(0),
 					    thePwrToPwrARegister_(0x3E8),thePwrAToPwrDRegister_(0x3E6),thePwrDToDAQRegister_(0x4E),theDAQToPwrDRegister_(0x4E),thePwrDToPwrARegister_(0x4E)
 {
   sscanf(name.c_str(),"FT101%d",&theDIFId_);
@@ -65,22 +65,23 @@ void DIFReadout::DoRefreshNbOfASICs()
   uint8_t tnbasicsl3=(theNumberOfAsics_>>16)&0xFF;
   uint8_t tnbasicsl4=(theNumberOfAsics_>>24)&0xFF;
   uint8_t tnbasics=tnbasicsl1+tnbasicsl2+tnbasicsl3+tnbasicsl4;
-  //	printf ("thetheNumberOfAsics__= %d\n",theNumberOfAsics_);
-  //	printf ("tnbasics= %d\n",tnbasics);
-  //	printf ("tnbasicsl1= %d\n",tnbasicsl1);
-  //	printf ("tnbasicsl2= %d\n",tnbasicsl2);
-  //	printf ("tnbasicsl3= %d\n",tnbasicsl3);
-  //	printf ("tnbasicsl4= %d\n",tnbasicsl4);
+//   printf ("thetheNumberOfAsics__= %d\n",theNumberOfAsics_);
+//   printf ("tnbasics= %d\n",tnbasics);
+//   printf ("tnbasicsl1= %d\n",tnbasicsl1);
+//   printf ("tnbasicsl2= %d\n",tnbasicsl2);
+//   printf ("tnbasicsl3= %d\n",tnbasicsl3);
+//   printf ("tnbasicsl4= %d\n",tnbasicsl4);
   if (theAsicType_==11)
     {
 
-      try { //printf ("assuming all asics present, tu be completed!!\n");
+      try { 
+	//printf ("MicroRoc assuming all asics present, tu be completed!!\n");
 	NbAsicsWrite(tnbasics,tnbasicsl1,tnbasicsl2,tnbasicsl3,tnbasicsl4);}
       catch (LocalHardwareException& e)	{	std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<"==>"<< "DIFReadout : Unable to set the correct number of hardrocs"<<std::endl;	}
       return;}
   else
     {
-      //	printf ("theNumberOfAsics_= %d\n",theNumberOfAsics_);
+      //printf ("HR2 theNumberOfAsics_= %d\n",theNumberOfAsics_);
       try {NbAsicsWrite(	tnbasics,tnbasics,0,0,0);}
       catch (LocalHardwareException& e)	{	std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<"==>"<< "DIFReadout : Unable to set the correct number of hardrocs"<<std::endl;	}
       return;
@@ -96,7 +97,17 @@ int32_t DIFReadout::DoReadSLCStatus()
   int32_t tretry=0;
   while ((CurrentSLCStatus==0) && (tretry<5))
     {
-      try {	HardrocSLCStatusRead(&CurrentSLCStatus);}
+      try {
+	//printf ("before read status, tretry=%d\n",tretry);
+	//getchar();
+	uint32_t rx, tx, ev;
+	//readStatus(&rx,&tx,&ev);
+	//printf ("%ld %ld %ld\n",rx,rx,ev);
+	//getchar();
+	HardrocSLCStatusRead(&CurrentSLCStatus);
+	//printf ("status = %x\n",CurrentSLCStatus);
+			
+      }
       catch (LocalHardwareException& e)	{	std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<"==>"<< "DIFReadout : Unable to send command to DIF : "+(std::string)e.what()<<std::endl;	}
       tretry++;
       //      std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<"==>"<<toolbox::toString("****** 	CurrentSLCStatus = %ld",CurrentSLCStatus)<<std::endl;	
@@ -343,13 +354,21 @@ int32_t DIFReadout::configureChips(SingleHardrocV2ConfigurationFrame* slow) thro
   unsigned char CurrentCRC[2];
   uint32_t framesize=0;
   // set default register values
-
+  uint32_t regctrl;
+//   UsbRegisterRead(2,&regctrl);
+//   printf("Apres test  %x \n",regctrl);
+//   getchar();
+//   UsbRegisterRead(0,&regctrl);
+//   printf("Apres Reg0  %x \n",regctrl);
+//   getchar();
   if (theAsicType_==2) framesize = HARDROCV2_SLC_FRAME_SIZE;
   else if (theAsicType_==11) framesize = MICROROC_SLC_FRAME_SIZE;
   else 	std::cout <<"Bad Asic type"<<std::endl;
 
+  //UsbRegisterWrite2(0,0x100);
   tCRC=0xFFFF;							// initial value of the CRC
-
+  //printf ("avant HardrocCommandSLCWrite\n");
+  //getchar();
   try 
     {
       HardrocCommandSLCWrite();	
@@ -359,7 +378,8 @@ int32_t DIFReadout::configureChips(SingleHardrocV2ConfigurationFrame* slow) thro
       std::cout<< theName_<<": Unable to send start SLC command to DIF"<<std::endl;
       throw e;
     }
-
+  // printf("avant Frame \n");
+  //getchar();
 
   for (int tAsic=theNumberOfAsics_;tAsic>0;tAsic--)
     {
@@ -367,6 +387,10 @@ int32_t DIFReadout::configureChips(SingleHardrocV2ConfigurationFrame* slow) thro
       //unsigned char vframe[framesize];
       for (int tbyte=0;tbyte<framesize;tbyte++)
 	{
+	
+//slow[tAsic-1][tbyte]=0x40;//tbyte + (((tAsic-1)&0x01)<<7);
+
+
 	  printf("%02x",slow[tAsic-1][tbyte] );
 	  vframe[tbyte]=slow[tAsic-1][tbyte];
 	}
@@ -381,6 +405,8 @@ int32_t DIFReadout::configureChips(SingleHardrocV2ConfigurationFrame* slow) thro
 	  //HardrocCommandSLCWriteSingleSLCFrame(&(theSlowBuffer_[tAsic-1][0]));
 	  if (theAsicType_==2)	CommandSLCWriteSingleSLCFrame(vframe,framesize);
 	  if (theAsicType_==11)	CommandSLCWriteSingleSLCFrame(vframe,framesize);
+	  //printf("apres Frame %d \n",framesize);
+	  // getchar();
 			
 	}
       catch (LocalHardwareException& e)
@@ -390,7 +416,8 @@ int32_t DIFReadout::configureChips(SingleHardrocV2ConfigurationFrame* slow) thro
 	}
 
     }	//for (int tAsic=NbOfASICs;tAsic>0;tAsic--)
-	
+  //  printf("avant CRC\n");
+  // getchar();
 
   CurrentCRC[0]= tCRC>>8;				// MSB first
   CurrentCRC[1]=tCRC&0xFF;
@@ -403,7 +430,14 @@ int32_t DIFReadout::configureChips(SingleHardrocV2ConfigurationFrame* slow) thro
       std::cout<<theName_<<":Unable to send CRC"<<std::endl;	
       throw;
     }
-	
+
+  //  checkReadWrite(0x100,10);
+  //printf("avant Test\n");
+  //getchar();
+  //UsbRegisterRead(2,&regctrl);
+  //printf("Avant SLCStatus  %x \n",regctrl);
+  //getchar();
+
   usleep(400000);// was 500 ms
   //  int tretry=0;
   //  printf ("before slc status\n");

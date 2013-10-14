@@ -72,7 +72,7 @@ start:
 
 
 	uint32_t regctrl=0;
-	if (theProduct_==0x6014) ftdi_set_bitmode(&theFtdi,0,0);
+	
 	//ret=UsbRegisterWrite(2,0x1234567);
 
         //::usleep(100000);
@@ -80,41 +80,72 @@ start:
         //getchar();
 	//ret=UsbRegisterRead(2,&regctrl);
 	ret=ftdi_usb_reset(&theFtdi); 
-	printf("Reset %d %s \n",ret,deviceIdentifier);
+	printf("Reset %d %s %x \n",ret,deviceIdentifier,productid);
 	ftdi_disable_bitbang(&theFtdi); 	
 	ftdi_setflowctrl(&theFtdi,SIO_DISABLE_FLOW_CTRL);
 	ftdi_set_latency_timer(&theFtdi,2); // ca marchait avec0x200 on remet 2
 
 	ftdi_write_data_set_chunksize (&theFtdi,65535);
 	ftdi_read_data_set_chunksize (&theFtdi,65535);
+	if (theProduct_==0x6014) ftdi_set_bitmode(&theFtdi,0,0);
 	ftdi_usb_purge_buffers(&theFtdi);
 	timeOut=100;
 	// Register tests
 
-        for (uint32_t i=0;i<1;i++)
-	{
-	ret=UsbRegisterWrite(2,0x1234567);
-        printf("%d write rte \n");
-        }
-        usleep(100000);
-	printf(" on commence par ecrire read %x \n",regctrl);
-	UsbRegisterWrite(2,0xfedcdead);
-	printf(" Reg read %x \n",regctrl);
-	//getchar();
-	printf(" Reg read %x \n",regctrl);
-	ret=UsbRegisterRead(2,&regctrl);
-	printf(" Reg read %x \n",regctrl);
-	ret=UsbRegisterRead(2,&regctrl);
-	printf(" Reg before read %x \n",regctrl);
-	UsbRegisterWrite(2,0x1234567);
-	ret=UsbRegisterRead(2,&regctrl);
-	printf(" Reg read %x \n",regctrl);
-	UsbRegisterWrite(2,0xfedcdead);
-	ret=UsbRegisterRead(2,&regctrl);
-	printf(" Reg read %x \n",regctrl);
+       //  for (uint32_t i=0;i<1;i++)
+// 	{
+// 	ret=UsbRegisterWrite(2,0x1234567);
+//         printf("ret=%d write 0x1234567 \n",ret);
+//         }
+//         usleep(100);
+// 	ret=UsbRegisterRead(2,&regctrl);
+// 	printf(" \t ret=%d read %x \n",ret,regctrl);
 
+// 	UsbRegisterWrite(2,0xfedcdead);
+//         printf("ret=%d write 0xfedcdead \n",ret);
+// 	//getchar();
+//         usleep(100);
+
+// 	ret=UsbRegisterRead(2,&regctrl);
+// 	printf(" ret=%d  read %x \n",ret,regctrl);
+// 	ret=UsbRegisterRead(2,&regctrl);
+// 	printf(" ret=%d  read %x \n",ret,regctrl);
+	
+	//checkReadWrite(0x100,128);
 }
 
+void FtdiUsbDriver::checkReadWrite(uint32_t start,uint32_t count)
+{
+  int32_t reg=0x1024,ret=0;uint32_t regctrl=0;
+  //     printf("single Writing %x ",reg);
+// 			getchar();
+//       ret=UsbRegisterWrite2(2,reg);
+//       printf(" rc= %d ===>",ret);
+			
+// 			getchar();
+//       ret=UsbRegisterRead(2,&regctrl);
+//       printf("single  Reading %x rc= %d \n",regctrl,ret);
+// 			getchar();
+  bool write=true;
+  for (uint32_t ireg=start;ireg<start+count;ireg++)
+    {
+      if (write)
+	{
+      printf("Writing %x ",ireg);
+      ret=UsbRegisterWrite2(2,ireg);
+      printf(" rc= %d ===>",ret);
+	}
+      if (ireg==start+count-1)
+	{
+      ret=UsbRegisterRead(2,&regctrl);
+      printf(" Reading %x rc= %d \n",regctrl,ret);
+
+      if (regctrl!=ireg)
+	printf(" Error Reading  \n");
+	}
+	       //getchar();
+    }
+} 
 FtdiUsbDriver::~FtdiUsbDriver()     throw (LocalHardwareException)
 
 {
@@ -209,7 +240,7 @@ throw( LocalHardwareException )
 		if (ret==0) 
 		{
 			ntry++;
-			usleep(1000);
+			usleep(1);
 		}
 		if (ret>0) {tbytesread+=ret;ntry=1;}
 		if (ntry>timeOut) break;
@@ -498,14 +529,16 @@ throw (LocalHardwareException)
 	catch (LocalHardwareException& e)
 	{
 		(*data)=0;
-		std::cout<<e.message()<<std::endl;throw (e);
+		std::cout<<e.message()<<std::endl;//throw (e);
 		return -2;
 	}
+
+ 	
 	try	{		readn(ttampon,4);}							  // read data MSB first	
 	catch (LocalHardwareException& e)
 	{
 		(*data)=0;
-		std::cout<<e.message()<<std::endl;throw (e);
+		std::cout<<e.message()<<std::endl;//throw (e);
 		return -1;
 	}
 	//		printf("ttampon[%d]=%02x\n",0,ttampon[0]);
@@ -662,6 +695,25 @@ int32_t FtdiUsbDriver::UsbGetFirmwareRevision(uint32_t *version)  throw (LocalHa
 int32_t FtdiUsbDriver :: UsbCommandWrite(uint32_t command)
 throw (LocalHardwareException)
 {
+
+	uint32_t taddress;
+	unsigned char  ttampon[7];
+
+	taddress=command | 0x8000;						// keep only 14 LSB, write, so bit 14=0,register mode, so bit 15=0
+	ttampon[0] = (taddress>>8)&0xFF;
+	ttampon[1] = taddress&0xFF;
+	
+	try	{		this->MonWritenAmoi(ttampon,2);}		// write address and data all in one
+	catch (LocalHardwareException& e)
+	{
+		std::cout<<e.message()<<std::endl;throw (e);
+		return -2;
+	}
+	
+	return 0;
+
+
+
 	uint32_t tcommand;
 	tcommand = command | 0x8000;					// command mode, so bit 15=1 write so bit 14 =0, BB is at addr 0xBB
 	try	{		write((tcommand>>8)&0xFF);}		// write tcommand MSB

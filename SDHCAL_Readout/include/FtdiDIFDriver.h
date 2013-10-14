@@ -20,7 +20,7 @@
 	class FtdiDIFDriver : public FtdiUsbDriver
 	{
 	public:
-		FtdiDIFDriver(char * deviceIdentifier )     throw (LocalHardwareException);
+	  FtdiDIFDriver(char * deviceIdentifier,uint32_t productid=0x6001)     throw (LocalHardwareException);
 		int32_t NbAsicsWrite(uint32_t tnumber,uint32_t l1,uint32_t l2,uint32_t l3,uint32_t l4 )    throw (LocalHardwareException);
 		int32_t SetControlRegister(int32_t tvalue)    throw (LocalHardwareException);
 		int32_t GetControlRegister(uint32_t *tvalue)    throw (LocalHardwareException);

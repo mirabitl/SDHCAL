@@ -21,15 +21,20 @@ for x in lines:
    info.append(ff[2])
 if (len(info)!=0):
     devices.append(info)
+
+f=os.open("/var/log/pi/ftdi_devices",os.O_RDWR)
 for y in devices:
     print "Device found =>"
     bus=y[0]
     dev=y[1].split(":")[0]
-    vend=y[2].split(":")[0]
-    prod=y[2].split(":")[1]
+    vend="0x"+y[2].split(":")[0]
+    prod="0x"+y[2].split(":")[1]
     ser=y[3]
     command="sudo chmod 666 /dev/bus/usb/"+bus+"/"+dev
     print command
-    os.system(command)
     print vend,prod,ser
+    os.system(command)
+    
+    os.write(f,"%s %s %s\n" % (vend,prod,ser) )
 
+os.close(f)

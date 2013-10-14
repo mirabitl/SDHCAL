@@ -8,10 +8,12 @@
 #include "CCCManager.h"
 #include "CCCServer.h"
 #include "DIFServer.h"
+#include "FtdiUsbDriver.h"
  %}
 
 %include "CCCManager.h"
 %include "CCCServer.h"
 %include "DIFServer.h"
+%include "FtdiUsbDriver.h"
 
 

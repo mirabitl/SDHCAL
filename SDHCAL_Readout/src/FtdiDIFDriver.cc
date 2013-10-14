@@ -35,7 +35,7 @@ int32_t CHardrocRegisterWrite(struct ftdi_context *ftdic,uint32_t address, uint3
 	return ret;
 }	
 
-FtdiDIFDriver::FtdiDIFDriver(char * deviceIdentifier )    throw (LocalHardwareException) : FtdiUsbDriver(deviceIdentifier) 
+FtdiDIFDriver::FtdiDIFDriver(char * deviceIdentifier,uint32_t productid )    throw (LocalHardwareException) : FtdiUsbDriver(deviceIdentifier,productid) 
 {
 
 
@@ -49,7 +49,7 @@ int32_t FtdiDIFDriver :: NbAsicsWrite(uint32_t tnumber,uint32_t l1,uint32_t l2,u
 	
 	tnumber += (l1<<8) + (l2<<14) + (l3<<20)+ (l4<<26);
 	//	printf ("tnumber = %d\n",tnumber);
-	try	{		UsbRegisterWrite(taddress,tnumber);			}
+	try	{		UsbRegisterWrite2(taddress,tnumber);			}
 	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -2; }
 	return 0;
 }	
@@ -160,7 +160,7 @@ int32_t FtdiDIFDriver :: HardrocSLCStatusRead(uint32_t *tstatus)    throw (Local
 	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+	  std::cout<<" HardrocSLCStatusRead "<< e.message()<<std::endl;throw (e);
 		return -2;
 	}
 	return 0;

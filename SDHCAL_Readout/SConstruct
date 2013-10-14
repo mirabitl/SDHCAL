@@ -122,6 +122,8 @@ env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SDHCALReadout)
 env.Install("/opt/dhcal/lib",SDHCALReadout)
 env.Install("/opt/dhcal/bin",dsv)
 env.Install("/opt/dhcal/bin",dsdcc)
+env.Install("/opt/dhcal/bin","#bin/ListDevices.py")
+env.Install("/opt/dhcal/bin","#bin/scan_devices.sh")
 env.Install("/opt/dhcal/include/readout",myinc)
 
 env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/bin","/opt/dhcal/lib","/opt/dhcal/include/rpiccc"])

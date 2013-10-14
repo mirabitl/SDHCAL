@@ -7,7 +7,7 @@ class DIFReadout : public FtdiDIFDriver
 {
 public:
 
-	DIFReadout (std::string name);
+  DIFReadout (std::string name,uint32_t productid=0x6001);
 	void setPowerManagment(uint32_t P2PAReg, uint32_t PA2PDReg,uint32_t PD2DAQReg, uint32_t DAQ2DReg,uint32_t D2AReg);
 	void setAsicType(uint32_t asicType);
 	void setNumberOfAsics(uint32_t NumberOfAsics);

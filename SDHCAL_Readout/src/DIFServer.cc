@@ -14,6 +14,8 @@
 #include <cstdlib>
 #include <cstring>
 #include "ShmProxy.h"
+#include <string.h>
+
 using namespace Ftdi;
 
 DIFServer::DIFServer(std::string host,uint32_t port) : NMServer(host,port)
@@ -41,6 +43,31 @@ void DIFServer::UsbPrepare()
 {
   int vid = 0x0403, pid = 0x6001;
   List* list = List::find_all(vid, pid);
+  for (List::iterator it = list->begin(); it != list->end(); it++)
+    {
+      std::cout << "FTDI (" << &*it << "): "
+		<< it->vendor() << ", "
+		<< it->description() << ", "
+		<< it->serial();
+      
+      // Open test
+      if(it->open() == 0)
+	{
+	  std::cout << " (Open OK)";
+	  it->reset();
+	}       
+      else
+	std::cout << " (Open FAILED)";
+      
+      it->close();
+      
+      std::cout << std::endl;
+      
+    }
+  
+  delete list;
+  pid=0x6014; // Usb2 version
+  list = List::find_all(vid, pid);
   for (List::iterator it = list->begin(); it != list->end(); it++)
     {
       std::cout << "FTDI (" << &*it << "): "
@@ -174,23 +201,42 @@ void DIFServer::initialise(uint32_t difid) throw (LocalHardwareException)
     }
   else
     {
+      std::map<uint32_t,FtdiDeviceInfo>::iterator itf=theFtdiDeviceInfoMap_.find(difid);
+      if (itf==theFtdiDeviceInfoMap_.end())
+	{
+	  std::cout << " No device found \n";
+	  getchar();
+	  std::stringstream errorMessage;
+	  errorMessage << "DIF not found in Device map ("<< difid << ")"<< std::ends;
+	  throw (LocalHardwareException( "DIFRegistration" ,errorMessage.str(), __FILE__, __LINE__, __FUNCTION__ ) );
+	}
       char cmd[16];
       memset(cmd,0,16);
       sprintf(cmd,"FT101%03d",difid);
       // Initialisation is done at instatiation
       DIFReadout* dif=NULL;
       try {
-	DIFReadout* dif = new DIFReadout(cmd);
+	//printf("initialising %s %x \n",itf->second.name,itf->second.productid);
+	std::string s(itf->second.name);
+	dif = new DIFReadout(s,itf->second.productid);
+	//printf("Done \n");
       }
       catch (...)
 	{
 	  std::cout<<"cannot initialize "<<difid<<std::endl;
 				
 	}
+      
+      dif->checkReadWrite(0x1234,100);
+
+      dif->checkReadWrite(0x1234,100);
+      /*
       if (dif!=NULL)
 	delete dif;
       std::cout<<"On re essaie"<<std::endl;
+
       dif = new DIFReadout(cmd);
+      */
       std::pair<uint32_t,DIFReadout*> p(difid,dif);
       theDIFMap_.insert(p);
       std::stringstream s;
@@ -234,8 +280,51 @@ std::vector<uint32_t>& DIFServer::scanDevices()
     }
   std::cout<<ndif<<"List of DIFs is: "<<diflist.str()<<std::endl;
   this->UsbPrepare();
+
+  this->prepareDevices();
   return theListOfDIFFounds_;
 }
+
+
+
+void DIFServer::prepareDevices()
+{
+  theFtdiDeviceInfoMap_.clear();
+  system("/opt/dhcal/bin/ListDevices.py");
+  std::string line;
+  std::ifstream myfile ("/var/log/pi/ftdi_devices");
+  std::stringstream diflist;
+
+
+
+  if (myfile.is_open())
+    {
+      while ( myfile.good() )
+	{
+	  getline (myfile,line);
+	  FtdiDeviceInfo difi;
+	  memset(&difi,0,sizeof(FtdiDeviceInfo));
+	  sscanf(line.c_str(),"%x %x %s",&difi.vendorid,&difi.productid,difi.name);
+	  if (strncmp(difi.name,"FT101",5)==0)
+	    {
+	      sscanf(difi.name,"FT101%d",&difi.id); 
+	      difi.type=0;
+	      std::pair<uint32_t,FtdiDeviceInfo> p(difi.id,difi);
+	      theFtdiDeviceInfoMap_.insert(p);
+	    }
+	  if (strncmp(difi.name,"DCCCCC",6)==0)
+	    {sscanf(difi.name,"DCCCCC%d",&difi.id);difi.type=0x10;}
+
+
+	}
+      myfile.close();
+    }
+  else std::cout << "Unable to open file"<<std::endl; 
+
+  for (std::map<uint32_t,FtdiDeviceInfo>::iterator it=theFtdiDeviceInfoMap_.begin();it!=theFtdiDeviceInfoMap_.end();it++)
+    printf("Device found and register: %d with info %d %d %s type %d \n", it->first,it->second.vendorid,it->second.productid,it->second.name,it->second.type);
+}
+
 
 NetMessage* DIFServer::commandHandler(NetMessage* m)
 {
