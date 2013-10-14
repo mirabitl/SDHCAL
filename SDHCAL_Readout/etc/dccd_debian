@@ -6,7 +6,7 @@ DAEMONUSER="root" #utilisateur du programme
 DEAMON_NAME="dsdcc" #Nom du programme (doit être identique à l'exécutable)
 
 PATH="/sbin:/bin:/usr/sbin:/usr/bin" #Ne pas toucher
-LD_LIBRARY_PATH=/opt/dhcal/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/opt/dhcal/lib:$LD_LIBRARY_PATH
 test -x $DAEMON || exit 0
 
 . /lib/lsb/init-functions
