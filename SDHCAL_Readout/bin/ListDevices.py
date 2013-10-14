@@ -22,7 +22,7 @@ for x in lines:
 if (len(info)!=0):
     devices.append(info)
 
-f=os.open("/var/log/pi/ftdi_devices",os.O_RDWR)
+f=os.open("/var/log/pi/ftdi_devices",os.O_RDWR|os.O_CREAT)
 for y in devices:
     print "Device found =>"
     bus=y[0]
