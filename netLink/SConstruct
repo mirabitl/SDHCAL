@@ -89,7 +89,7 @@ MonServer=env.Program("MonServer",source=["cslm/MonServer.cpp"])
 MonClient=env.Program("MonClient",source=["cslm/MonClient.cpp"])
 
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",[netlink,cslm])
-env.Install("/opt/dhcal/lib",[netlink,cslm])
+###env.Install("/opt/dhcal/lib",[netlink,cslm])
 
 myinc=[]
 for x in Glob("#include/netlink/*.h"):
@@ -97,10 +97,10 @@ for x in Glob("#include/netlink/*.h"):
 cslminc=[]
 for x in Glob("cslm/*.h"):
   cslminc.append("cslm/"+x.name)
-env.Install("/opt/dhcal/include/netlink",myinc)
-env.Install("/opt/dhcal/include/cslm",cslminc)
+###env.Install("/opt/dhcal/include/netlink",myinc)
+###env.Install("/opt/dhcal/include/cslm",cslminc)
 
-env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/lib","/opt/dhcal/include/netlink","/opt/dhcal/include/cslm"])
+###env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/lib","/opt/dhcal/include/netlink","/opt/dhcal/include/cslm"])
 
 
 

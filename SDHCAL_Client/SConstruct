@@ -118,10 +118,10 @@ for x in Glob("#include/*.h"):
   myinc.append("include/"+x.name)
 print myinc
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SDHCALClient)
-env.Install("/opt/dhcal/lib",SDHCALClient)
-env.Install("/opt/dhcal/include/readout",myinc)
+###env.Install("/opt/dhcal/lib",SDHCALClient)
+###env.Install("/opt/dhcal/include/readout",myinc)
 
-env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/lib","/opt/dhcal/include/rpiccc"])
+env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib"])
 
 
 

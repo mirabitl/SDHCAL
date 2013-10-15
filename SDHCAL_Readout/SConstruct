@@ -46,7 +46,7 @@ DHCAL_ROOT=os.path.abspath("..")
 
 Bit64=False
 Bit64=os.uname()[4]=='x86_64'
-
+print Bit64
 
 NetLink="../netLink"
 if ( not os.path.exists(NetLink)):
@@ -119,14 +119,14 @@ for x in Glob("#include/*.h"):
   myinc.append("include/"+x.name)
 print myinc
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SDHCALReadout)
-env.Install("/opt/dhcal/lib",SDHCALReadout)
-env.Install("/opt/dhcal/bin",dsv)
-env.Install("/opt/dhcal/bin",dsdcc)
-env.Install("/opt/dhcal/bin","#bin/ListDevices.py")
-env.Install("/opt/dhcal/bin","#bin/scan_devices.sh")
-env.Install("/opt/dhcal/include/readout",myinc)
+env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SDHCALReadout)
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",dsv)
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",dsdcc)
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin","#bin/ListDevices.py")
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin","#bin/scan_devices.sh")
+env.Install(DHCAL_ROOT+"/opt/dhcal/include/readout",myinc)
 
-env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/bin","/opt/dhcal/lib","/opt/dhcal/include/rpiccc"])
+env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib",DHCAL_ROOT+"/opt/dhcal/bin"])
 
 
 
