@@ -143,9 +143,9 @@ dsdb=env.Program("bin/dsdb",source="src/dsdb.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_L
 
 Default([SDHCALDB,LSDHCALDB])
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SDHCALDB)
-env.Install("/opt/dhcal/lib",SDHCALDB)
-env.Install("/opt/dhcal/bin",dsdb)
-env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/lib","/opt/dhcal/bin"])
+###env.Install("/opt/dhcal/lib",SDHCALDB)
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",dsdb)
+env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib",DHCAL_ROOT+"/opt/dhcal/bin"])
 
 
 
