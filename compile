@@ -1,0 +1,5 @@
+cd netLink;scons -c;scons install;scons;cd -
+cd SDHCAL_common;scons -c;scons install;scons;cd -
+cd SDHCAL_Readout;scons -c;scons install;scons;cd -
+cd SDHCAL_DB;scons -c;scons install;scons;cd -
+cd SDHCAL_Client;scons -c;scons install;scons;cd -
