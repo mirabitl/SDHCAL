@@ -32,7 +32,7 @@ dher.ParseSteering(config.marlin)
 
 
 
-a=dr.ChamberAnalyzer( dher,rootHandler);
+a=dr.ShowerAnalyzer( dher,rootHandler);
 a.presetParameters()
 a.createTrees(config.treeName % (run,ifu))
 a.setrebuild(config.rebuild)

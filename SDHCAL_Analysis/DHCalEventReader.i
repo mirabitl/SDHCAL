@@ -15,6 +15,8 @@
 #include "HTImage.h"
 #include "DHCALAnalyzer.h"
 #include "ChamberAnalyzer.h"
+#include "ShowerAnalyzer.h"
+
 #include "FilterAnalyzer.h"
 #include "IO/LCRunListener.h"
 #include "IO/LCEventListener.h"
@@ -32,6 +34,7 @@
 %include "HTImage.h"
 %include "DHCALAnalyzer.h"
 %include "ChamberAnalyzer.h"
+%include "ShowerAnalyzer.h"
 %include "FilterAnalyzer.h"
 %include "IO/LCRunListener.h"
 %include "IO/LCEventListener.h"
