@@ -10,7 +10,8 @@
 #include <Amas.h>
 
 class RecoHit;
-
+class RecoPoint;
+class HoughTransform;
 #ifdef USE_CULA
 #include <cula_lapack.h>
 #include <cublas.h>
@@ -35,6 +36,7 @@ class Shower
 {
 public:
   Shower(RecoHit&h);
+  ~Shower();
   void clear();
   bool append(RecoHit& h,float dist_cut);
   void Add(RecoHit& h);
@@ -65,6 +67,8 @@ public:
   uint32_t getFirstPlan(){return firstPlan_;}
   uint32_t getLastPlan(){return lastPlan_;}
   bool EdgeDetection();
+  void PointsBuilder(std::vector<RecoHit*> &vrh);
+  void drawDisplay(std::map<uint32_t,RecoPoint*> htpoint);
   inline uint32_t getEdge3(){return ne3_;}
   inline uint32_t getAll3(){return na3_;}
   inline uint32_t getCore3(){return nc3_;}
@@ -87,6 +91,9 @@ private:
   uint32_t ne_[3],nc_[3];
   std::vector <Amas> theAmas_;
   double zfirst_,zlast_;
-
+  HoughTransform* theHTx_;
+  HoughTransform* theHTxp_;
+  HoughTransform* theHTy_;
+  std::vector<RecoPoint> allpoints_;
 };
 #endif

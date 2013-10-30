@@ -1,6 +1,7 @@
 #include "UtilDefs.h"
 #include "Shower.h"
 #include "RecoHit.h"
+#include "RecoPoint.h"
 #include <Eigen/Dense>
 using namespace Eigen;
 
@@ -9,6 +10,7 @@ using namespace Eigen;
 #include <sys/timeb.h>
 #include <float.h>
 #include "ChamberAnalyzer.h"
+#include "HoughTransform.h"
 double getHighResolutionTime(void)
 {
 	struct timeb tp;
@@ -507,7 +509,9 @@ void Shower::computePrincipalComponents(std::vector<RecoHit*> &v, double result[
 	{
 		RecoHit* iht=(*it);
 		if (iht==NULL) continue;
-		//INFO_PRINT("%x \n",iht);
+		//INFO_PRINT("%x %d %d \n",iht,iht->I(),iht->J());
+		//INFO_PRINT("%f %f \n",iht->x(),iht->y());
+		//INFO_PRINT("%f %f \n",iht->X(),iht->Y());
 		double w=1.;
 		int ithr= iht->getAmplitude()&0x3;
 		if (ithr==2) w=1;
@@ -738,7 +742,7 @@ double Shower::closestDistance(Shower& sh)
 	return dist;
 
 }
-Shower::Shower(RecoHit &h) : selected_(false)
+Shower::Shower(RecoHit &h) : selected_(false),theHTx_(NULL),theHTy_(NULL)
 {
 	h.setShower(this);
 	std::vector<RecoHit> v;
@@ -748,6 +752,10 @@ Shower::Shower(RecoHit &h) : selected_(false)
 	firstPlan_=h.chamber();
 	lastPlan_=h.chamber();
 
+}
+Shower::~Shower(){
+  if (theHTx_!=NULL) delete theHTx_;
+  if (theHTy_!=NULL) delete theHTy_;
 }
 void Shower::clear() {thePlans_.clear();}
 bool Shower::append(RecoHit& h,float dist_cut)
@@ -1170,6 +1178,12 @@ bool Shower::EdgeDetection()
   memset(ne_,0,3*sizeof(uint32_t));
   memset(nc_,0,3*sizeof(uint32_t));
   uint32_t nall=0;
+  theHTx_=new HoughTransform(0.,PI,0.,150.,64,64);
+  theHTy_=new HoughTransform(0.,PI,0.,150.,64,64);
+  theHTxp_=new HoughTransform(0.,PI,0.,150.,32,32);
+
+  theHTx_->clear();
+  std::vector<RecoHit*> vrh;
 for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ipl!=thePlans_.end();ipl++)
     {
       for (std::vector<RecoHit>::iterator ih=ipl->second.begin();ih!=ipl->second.end();ih++)
@@ -1179,6 +1193,8 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
 	    nall++;
 	    if (cores.getValue(ih->chamber(),ih->I()/3,ih->J()/3)!=0)
 	      {
+		vrh.push_back(&h);
+
 		bool appended=false;
 		for (std::vector<Amas>::iterator ia=theAmas_.begin();ia!=theAmas_.end();ia++)
 		  {
@@ -1196,6 +1212,8 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
 	      }
 	    else
 	      {
+		//theHTx_->addXPoint(&h);
+		vrh.push_back(&h);
 		if (ithr==1) ne_[1]++;
 		if (ithr==2) ne_[0]++;
 		if (ithr==3) ne_[2]++;
@@ -1203,7 +1221,127 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
 	      }
 	}
     }	 
-  
+ this->PointsBuilder(vrh);
+ printf("adding %d points to the HT \n",allpoints_.size());
+ //std::string str ("There are two needles in this haystack with needles.");
+ std::string str4 ("1111");
+ std::string str5 ("11111");
+ std::string str6 ("111111");
+ std::string sn[64];
+ std::bitset<64> s(0);
+ for (uint32_t i=0;i<64;i++)
+   {s.set(i);sn[i]=s.to_string().substr(63-i,i+1);}
+  // different member versions of find in the same order as above:
+ 
+ std::map<uint32_t,RecoPoint*> htpoints;
+ htpoints.clear();
+
+ // getchar();
+ for (std::vector<RecoPoint>::iterator itp=allpoints_.begin();itp!=allpoints_.end();itp++)
+   {
+     std::vector<RecoHit> *vh=itp->getCluster().getHits();
+     if (vh->size()>=5) continue;
+     theHTx_->addMeasurement(&(*itp),HoughTransform::RECOPOINT,HoughTransform::ZX);
+     // for (std::vector<RecoHit>::iterator ih=vh->begin();ih!=vh->end();ih++)
+     //  theHTx_->addXHit(&(*ih));
+   }
+ if (theHTx_->getVoteMax()>7)
+   {
+     uint32_t nseg=0;
+     for (uint32_t i=0;i<theHTx_->getNbinTheta();i++)
+       for (uint32_t j=0;j<theHTx_->getNbinR();j++)
+	 {
+	   if (!theHTx_->isALocalMaximum(i,j,int(0.8*theHTx_->getVoteMax()))) continue;
+	   // if (theHTx_->getHoughImage(i,j)<0.7*theHTx_->getVoteMax()) continue;
+	   
+	   // bool notmax=false;
+	   // for (int ic=-1;ic<=1;ic++)
+	   //   for (int jc=-1;jc<=1;jc++)
+	   //     {
+	   // 	 if (ic+i<0) continue;
+	   // 	 if (ic+i>=theHTx_->getNbinTheta()) continue;
+	   // 	 if (jc+j<0) continue;
+	   // 	 if (jc+j>=theHTx_->getNbinR()) continue;
+	   // 	 notmax=(theHTx_->getHoughImage(i,j)<theHTx_->getHoughImage(i+ic,j+jc));
+	   // 	 if (notmax) break;
+	   //     }
+	   // if (notmax) continue;
+
+	   if (theHTx_->getHoughPlanes(i,j).count()<4) continue;
+	   
+	   uint32_t nc=0,fp=0,lp=0;
+	   theHTx_->getPattern(i,j,nc,fp,lp);
+	   printf(" NC %d FP %d LP %d \n",nc,fp,lp);
+	   nseg++;
+	   printf("Segment (%d,%d)=%d  %lx  %d  %s \n",i,j,theHTx_->getHoughImage(i,j),theHTx_->getHoughPlanes(i,j).to_ulong(),theHTx_->getHoughPlanes(i,j).count(),theHTx_->getHoughPlanes(i,j).to_string().c_str());
+	   theHTy_->clear();
+	   theHTxp_->clear();
+	   std::vector<void*> v=theHTx_->getHoughMap(i,j);
+
+	   for (std::vector<void*>::iterator ih=v.begin();ih!=v.end();ih++)
+	     {
+	       //RecoHit* h=( RecoHit*) (*ih);
+	       RecoPoint* h=(RecoPoint*) (*ih);
+
+	       //theHTxp_->addMeasurement(h,HoughTransform::RECOPOINT,HoughTransform::ZX);
+	       theHTy_->addMeasurement(h,HoughTransform::RECOPOINT,HoughTransform::ZY);
+	     }
+	   //printf("Segment Y %d \n",theHTy_->getVoteMax());
+	   std::vector< std::pair<uint32_t,uint32_t> > maxval;
+	   maxval.clear();
+	   if (theHTy_->getVoteMax()>4)
+	     {
+	       uint32_t nsegy=0;
+	       printf("Segment Y \n");
+	       
+	       for (uint32_t ii=0;ii<theHTy_->getNbinTheta();ii++)
+		 for (uint32_t jj=0;jj<theHTy_->getNbinR();jj++)
+		   {
+		     if (!theHTy_->isALocalMaximum(ii,jj,int(0.9*theHTy_->getVoteMax()))) continue;
+		    
+		    
+		     if (theHTy_->getHoughPlanes(ii,jj).count()<4) continue;
+		     //std::size_t found1 = theHTy_->getHoughPlanes(ii,jj).to_string().find(str2);
+		     uint32_t ncy=0,fpy=0,lpy=0;
+		     theHTy_->getPattern(ii,jj,ncy,fpy,lpy);
+
+		     if (ncy<4) continue;
+		     printf("  \t ====> Y Segment (%d,%d)=%d  %lx %d %d %d %d\n",ii,jj,theHTy_->getHoughImage(ii,jj),theHTy_->getHoughPlanes(ii,jj).to_ulong(),theHTy_->getHoughPlanes(ii,jj).count(), ncy,fpy,lpy);
+		     std::pair<uint32_t,uint32_t>  p(ii,jj);
+		     maxval.push_back(p);
+		     nsegy++;
+		     //		     printf("  ====> Y Segment (%d,%d)=%d  %lx %d \n",ii,jj,theHTy_->getHoughImage(ii,jj),planezz.to_ulong(),nafter);
+		     std::vector<void*> vv=theHTy_->getHoughMap(ii,jj);
+		     theHTxp_->clear();
+		     for (std::vector<void*>::iterator ih=vv.begin();ih!=vv.end();ih++)
+		       {
+	       //RecoHit* h=( RecoHit*) (*ih);
+			 RecoPoint* h=(RecoPoint*) (*ih);
+			 if (h->chamber()<=lpy && h->chamber()>=fpy)
+			   {
+			     //theHTxp_->addMeasurement(h,HoughTransform::RECOPOINT,HoughTransform::ZX);
+			     if (htpoints.find(h->getPointId())==htpoints.end())
+			       {
+				 std::pair<uint32_t,RecoPoint*> pp(h->getPointId(),h);
+				 htpoints.insert(pp);
+			       }
+			   }
+		       }
+		     // theHTxp_->draw(DCHistogramHandler::instance());
+		   }
+
+	       if (nsegy>0)
+		 {
+		   //theHTy_->draw(DCHistogramHandler::instance(),&maxval);
+		 
+		 }
+	     }
+	 }
+     printf("XZ segments %d  %d  FAIRE LE FIT DES Houghs\n",nseg,htpoints.size());
+     //theHTx_->draw(DCHistogramHandler::instance());
+     this->drawDisplay(htpoints);
+     getchar();
+   }
  double guessEnergy=(nall+nc_[2]*(1.5+1.85E-3*(nall*1.-102.)))*0.052;
  DEBUG_PRINT("E= %f Number of Amas %d : %d Core (%d,%d,%d) Edges (%d,%d,%d) \n",guessEnergy,theAmas_.size(),nall,nc_[0],nc_[1],nc_[2],ne_[0],ne_[1],ne_[2]);
 
@@ -1312,6 +1450,211 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
   if (leak) theTag_+=2;
   if (leakt) theTag_+=4;
   */
-
+  if (theHTx_!=NULL) {delete theHTx_;theHTx_=NULL;}
+  if (theHTxp_!=NULL) {delete theHTxp_;theHTxp_=NULL;}
+  if (theHTy_!=NULL) {delete theHTy_;theHTy_=NULL;}
   return true;
 }
+void Shower::PointsBuilder(std::vector<RecoHit*> &vrh)
+{
+  std::vector<RECOCluster> vCluster;
+  vCluster.clear();
+  for (std::vector<RecoHit*>::iterator ih=vrh.begin();ih!=vrh.end();ih++)
+    {
+      bool append= false;
+      //std::cout<<"Clusters "<<vCluster.size()<<std::endl;
+      RecoHit* hit=(*ih);
+      for (std::vector<RECOCluster>::iterator icl=vCluster.begin();icl!=vCluster.end();icl++)
+	if (icl->Append(*hit))
+	  {
+	    append=true;
+	    break;
+	  }
+      if (append) continue;
+      RECOCluster cl(*hit);
+		
+      vCluster.push_back(cl);
+      // std::cout<<"Apres push Clusters "<<vCluster.size()<<std::endl;
+    }
+
+
+
+
+  // Merge adjacent clusters
+  //std::cout<<"Avant merged Clusters "<<vCluster.size()<<std::endl;
+  bool merged=false;
+  do
+    {
+      merged=false;
+      std::vector<RECOCluster> vNew;
+      vNew.clear();
+      for (uint32_t i=0;i<vCluster.size();i++)
+	{
+	  if (!vCluster[i].isValid()) continue;
+	  for (uint32_t j=i+1;j<vCluster.size();j++)
+	    {
+	      if (!vCluster[j].isValid()) continue;
+	      if (vCluster[i].isAdjacent(vCluster[j]))
+		{
+		  RECOCluster c;
+		  for (std::vector<RecoHit>::iterator iht=vCluster[i].getHits()->begin();iht!=vCluster[i].getHits()->end();iht++)
+		    c.getHits()->push_back((*iht));
+		  for (std::vector<RecoHit>::iterator jht=vCluster[j].getHits()->begin();jht!=vCluster[j].getHits()->end();jht++)
+		    c.getHits()->push_back((*jht));
+		  vCluster[i].setValidity(false);
+		  vCluster[j].setValidity(false);
+					
+					
+		  //DEBUG_PRINT("Merged cluster %d %d \n",i,j);
+		  vNew.push_back(c);
+		  merged=true;
+		  break;
+		}
+				
+	    }
+	}
+      if (merged)
+	{
+	  for (std::vector<RECOCluster>::iterator jc=vCluster.begin();jc!=vCluster.end();)
+	    {
+				
+	      if (!jc->isValid())
+		vCluster.erase(jc);
+	      else
+		{
+					
+		  ++jc;
+		}
+	    }
+	  //DEBUG_PRINT(" vCluster Size %d\n",vCluster.size());
+	  //DEBUG_PRINT(" New clusters found %d\n",vNew.size());
+	  for (std::vector<RECOCluster>::iterator ic=vNew.begin();ic!=vNew.end();ic++)
+	    vCluster.push_back((*ic));
+	  //DEBUG_PRINT(" New clusters found %d\n",vCluster.size());
+	}
+    } while (merged);
+  // std::cout<<"Apres merged Clusters "<<vCluster.size()<<std::endl;
+  //std::cout<<"Apres clean Clusters "<<vCluster.size()<<std::endl;
+
+  // Look for time +15 and time+16
+  allpoints_.clear();
+  uint32_t ptid=0;
+  float posError=0.5;
+  for (std::vector<RECOCluster>::iterator icl=vCluster.begin();icl!=vCluster.end();icl++)
+    {
+      RECOCluster& cl=*icl;
+      // DEBUG_PRINT("%f %f %f \n",cl.X(),cl.Y(),cl.getHits()->begin()->Z());
+      DEBUG_PRINT("nh = %d \n",icl->getHits()->size());
+      //cl.Print();
+      RecoPoint p(cl,cl.getHits()->begin()->chamber(),cl.X(),cl.Y(),cl.getHits()->begin()->Z(),posError,posError);
+      p.setPointId(ptid++);
+      allpoints_.push_back(p);
+		
+    }
+  //std::cout<<"N points ="<<allpoints_.size()<<std::endl;
+  // Now group points per chamber
+  /*  chamberPoints_.clear();
+
+  for (std::vector<RecoPoint>::iterator icl=allpoints_.begin();icl!=allpoints_.end();icl++)
+    {
+      RECOCluster& c= (*icl).getCluster();
+      RecoPoint* p =&(*icl);
+      uint32_t ch=p->getChamberId();
+		
+
+      std::map<uint32_t,std::vector<RecoPoint*> >::iterator itch=chamberPoints_.find(p->getChamberId());
+      if (itch!=chamberPoints_.end())
+	{
+	  itch->second.push_back(p);
+	}
+      else
+	{
+	  std::vector<RecoPoint*> v;
+	  v.push_back(p);
+	  std::pair<uint32_t,std::vector<RecoPoint*> > pa(ch,v);
+	  chamberPoints_.insert(pa);
+			
+	}
+    }
+  // std::cout<<"N points ch ="<<chamberPoints_.size()<<std::endl;
+  */
+  return;
+}
+
+static TCanvas* TCShower=NULL;
+
+void Shower::drawDisplay(std::map<uint32_t,RecoPoint*> htpoint)
+{
+  DCHistogramHandler* rootHandler_=DCHistogramHandler::instance();
+  TH3* hcgposi = rootHandler_->GetTH3("ShowerMap");
+  TH3* hcgposi1 = rootHandler_->GetTH3("HoughMap");
+
+  if (hcgposi==NULL)
+    {
+      hcgposi =rootHandler_->BookTH3("ShowerMap",52,-2.8,145.6,100,0.,100.,100,0.,100.);
+      hcgposi1 =rootHandler_->BookTH3("HoughMap",52,-2.8,145.6,100,0.,100.,100,0.,100.);
+    }
+  else
+    {
+      hcgposi->Reset();
+      hcgposi1->Reset();
+    }
+
+  if (hcgposi!=0 )
+    {
+      hcgposi->Reset();
+      for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ipl!=thePlans_.end();ipl++)
+	{
+	  for (std::vector<RecoHit>::iterator ih=ipl->second.begin();ih!=ipl->second.end();ih++)
+	    {
+	      RecoHit& h = (*ih);
+	      hcgposi->Fill((*ih).Z(),(*ih).X(),(*ih).Y());
+	    }
+	}
+      for (std::map<uint32_t,RecoPoint*>::iterator ip=htpoint.begin();ip!=htpoint.end();ip++)
+	{
+	  RecoPoint* p=ip->second;
+	  RECOCluster& c=p->getCluster();
+	  for (std::vector<RecoHit>::iterator iht=c.getHits()->begin();iht!=c.getHits()->end();iht++)
+	    {
+	      hcgposi1->Fill((*iht).Z(),(*iht).X(),(*iht).Y());
+	    }
+	  
+	}
+
+
+      if (TCShower==NULL)
+	{
+	  TCShower=new TCanvas("TCShower","test1",1300,600);
+	  TCShower->Modified();
+	  TCShower->Draw();
+	  //TCShower->Divide(2,2);
+	}
+      
+      hcgposi->SetMarkerStyle(25);
+      hcgposi1->SetMarkerStyle(21);
+      hcgposi->SetMarkerSize(.2);
+      hcgposi1->SetMarkerSize(.4);
+
+      hcgposi->SetMarkerColor(kRed);
+
+      hcgposi1->SetMarkerColor(kBlack);
+
+      hcgposi->Draw("p");
+      hcgposi1->Draw("pSAME");
+      TCShower->Modified();
+      TCShower->Draw();
+      TCShower->Update();
+      //::usleep(2);
+      //std::stringstream ss("");
+      //ss<<"/tmp/Display_"<<evt_->getRunNumber()<<"_"<<evt_->getEventNumber()<<"_"<<currentTime_<<".png";
+      //TCShower->SaveAs(ss.str().c_str());
+      //char cmd[256];
+      //sprintf(cmd,"display %s",ss.str().c_str());
+      // system(cmd)
+      //delete c;
+    }
+
+}
+
+

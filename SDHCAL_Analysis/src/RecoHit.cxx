@@ -34,3 +34,7 @@ void RecoHit::initialise(DifGeom& d, ChamberGeom& c,IMPL::RawCalorimeterHitImpl*
 	cg_.calculateGlobal(chamberLocalI_,chamberLocalJ_,0,x_,y_,zg);
 
 }
+double RecoHit::X(){return x_;}
+double RecoHit::Y(){return y_;}
+double RecoHit::Z(){ return cg_.getZ();}
+int RecoHit::chamber(){return cg_.getId();}

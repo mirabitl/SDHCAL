@@ -112,9 +112,10 @@ if (USE_CULA or USE_OPENCV):
 
 
 #link flags
-LDFLAGS=commands.getoutput("$ROOTSYS/bin/root-config --ldflags").split(" ")
-LDFLAGS.append("-fPIC -dynamiclib ")
 
+LDFLAGS=commands.getoutput("$ROOTSYS/bin/root-config --ldflags").split(" ")
+LDFLAGS.append(['-fPIC','-dynamiclib','-rdynamic'])
+		      
 # SWIG
 SWIGSF=["-c++","-classic"]
 
