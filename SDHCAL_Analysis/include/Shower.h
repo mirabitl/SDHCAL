@@ -8,9 +8,8 @@
 
 #include <Array3D.h>
 #include <Amas.h>
-
+#include<PlanePoint.h>
 class RecoHit;
-class RecoPoint;
 class HoughTransform;
 #ifdef USE_CULA
 #include <cula_lapack.h>
@@ -19,6 +18,7 @@ class HoughTransform;
 #include <cublas_api.h>
 culaStatus benchSgesvd(int n);
 #endif
+#include "TemplateTk.h"
 
 typedef struct {
   double xm[3];
@@ -68,7 +68,7 @@ public:
   uint32_t getLastPlan(){return lastPlan_;}
   bool EdgeDetection();
   void PointsBuilder(std::vector<RecoHit*> &vrh);
-  void drawDisplay(std::map<uint32_t,RecoPoint*> htpoint);
+  void drawDisplay();
   inline uint32_t getEdge3(){return ne3_;}
   inline uint32_t getAll3(){return na3_;}
   inline uint32_t getCore3(){return nc3_;}
@@ -94,6 +94,8 @@ private:
   HoughTransform* theHTx_;
   HoughTransform* theHTxp_;
   HoughTransform* theHTy_;
-  std::vector<RecoPoint> allpoints_;
+  std::vector<PlanePoint> allpoints_;
+  std::vector<RecoHit*> vcores_,vedges_;
+  std::vector<TemplateTk<PlanePoint> > tklist_;
 };
 #endif

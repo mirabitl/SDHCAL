@@ -1,8 +1,11 @@
 #include "UtilDefs.h"
 #include "Shower.h"
 #include "RecoHit.h"
-#include "RecoPoint.h"
+#include "PlanePoint.h"
+#include "TemplateTk.h"
 #include <Eigen/Dense>
+#include "TPolyLine3D.h"
+#include "TVirtualPad.h"
 using namespace Eigen;
 
 
@@ -1039,35 +1042,44 @@ uint32_t Shower::getNumberOfMips(uint32_t plan)
 }
 
 
+#define BINFACT 3
+#define BINEDGE 96/(BINFACT)
 bool Shower::EdgeDetection()
 {
+  DCHistogramHandler* rh= DCHistogramHandler::instance();
+  TH1F* hweight=(TH1F*) rh->GetTH1("showerweight");
+  if (hweight==NULL)
+    {
+      hweight=(TH1F*) rh->BookTH1("showerweight",45,-40.1,4.9);
+    }
+  hweight->Reset();
   // Initialisation
-  unsigned char bufv[60*32*32];
+  unsigned char bufv[60*BINEDGE*BINEDGE];
   array3D<unsigned char> imagev;
-  imagev.initialise(bufv,60,32,32); imagev.clear();
+  imagev.initialise(bufv,60,BINEDGE,BINEDGE); imagev.clear();
   //printf("A\n");
-  float bufi[60*32*32];
+  float bufi[60*BINEDGE*BINEDGE];
   array3D<float> image3;
-  image3.initialise(bufi,60,32,32); image3.clear();
+  image3.initialise(bufi,60,BINEDGE,BINEDGE); image3.clear();
   //printf("B\n");
-  unsigned char bufc[60*32*32];
+  unsigned char bufc[60*BINEDGE*BINEDGE];
   array3D<unsigned char> cores;
-  cores.initialise(bufc,60,32,32); cores.clear();
+  cores.initialise(bufc,60,BINEDGE,BINEDGE); cores.clear();
   //printf("C\n");
-  unsigned char bufe[60*32*32];
+  unsigned char bufe[60*BINEDGE*BINEDGE];
   array3D<unsigned char> edges;
-  edges.initialise(bufe,60,32,32); edges.clear();
+  edges.initialise(bufe,60,BINEDGE,BINEDGE); edges.clear();
   //printf("D\n");
-  unsigned char adjBuf[60*32*32];
+  unsigned char adjBuf[60*BINEDGE*BINEDGE];
   array3D<unsigned char> adj;
-  adj.initialise(adjBuf,60,32,32);adj.clear();
+  adj.initialise(adjBuf,60,BINEDGE,BINEDGE);adj.clear();
   //printf("E\n");
   // Fill table imagev
   for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ipl!=thePlans_.end();ipl++)
     {
       for (std::vector<RecoHit>::iterator ih=ipl->second.begin();ih!=ipl->second.end();ih++)
 	{
-	  imagev.setValue(ih->chamber(),ih->I()/3,ih->J()/3,1);
+	  imagev.setValue(ih->chamber(),ih->I()/BINFACT,ih->J()/BINFACT,1);
 	}
 	  
     }
@@ -1092,10 +1104,13 @@ bool Shower::EdgeDetection()
 	      if (imagev.getValue(k,i,j)==1) {
 		na3_++;
 		w3+=image3.getValue(k,i,j);
+		hweight->Fill(image3.getValue(k,i,j));
 	      }
-	      if (image3.getValue(k,i,j)>=-20) // -32 si poids -44
+	      //if (image3.getValue(k,i,j)>-20) // -32 si poids -44
+	      if (image3.getValue(k,i,j)>-19) // -32 si poids -44
 		{
-		  if (image3.getValue(k,i,j)>=-2) continue;
+		  //if (image3.getValue(k,i,j)>=-2) continue; // nimporte nawak
+		  if (image3.getValue(k,i,j)>=0) continue; // 0 cést sur les bords du module nimporte nawak
 		  if (imagev.getValue(k,i,j)!=0) {
 		    cores.setValue(k,i,j,1);nc3_++;}
 					
@@ -1111,7 +1126,8 @@ bool Shower::EdgeDetection()
   //printf("na3 %d %d %d\n",na3_,ne3_,nc3_);
   if (ne3_==0 && nc3_==0) {ne3_=na3_;return false;}
   // Add adjacent hit to core
-	
+#define USEADJ	
+#ifdef USEADJ	
   for (uint32_t k=1;k<imagev.getXSize()-1;k++)
     {
       for (uint32_t i=1;i<imagev.getYSize()-1;i++)
@@ -1130,8 +1146,12 @@ bool Shower::EdgeDetection()
 			{
 			  if (cores.getValue(ks,is,js)>0)
 			    {
-			      adj.setValue(ks,is,js,1);
+			      /*adj.setValue(ks,is,js,1);
+				edges.setValue(k,i,j,0);*/
+
+			      adj.setValue(k,i,j,1);
 			      edges.setValue(k,i,j,0);
+			      
 			      break;
 			    }
 			}
@@ -1141,6 +1161,7 @@ bool Shower::EdgeDetection()
 	    }
 	}
     }
+#endif
   //printf("I\n");
   // Merge the adjacents
   nc3_=0;ne3_=0;
@@ -1165,7 +1186,7 @@ bool Shower::EdgeDetection()
   nc3_=na3_-ne3_;
   
   float ratioEdge3= ne3_*100./na3_;
-  DEBUG_PRINT("Ratio of Edge3 / All3  = %f  %d %d %d\n",ratioEdge3,na3_,ne3_,nc3_);
+  INFO_PRINT("Ratio of Edge3 / All3  = %f  %d %d %d\n",ratioEdge3,na3_,ne3_,nc3_);
   //Store the evnt information
   //printf("K\n");
   if (ratioEdge3>95) return false;
@@ -1178,23 +1199,32 @@ bool Shower::EdgeDetection()
   memset(ne_,0,3*sizeof(uint32_t));
   memset(nc_,0,3*sizeof(uint32_t));
   uint32_t nall=0;
-  theHTx_=new HoughTransform(0.,PI,0.,150.,64,64);
-  theHTy_=new HoughTransform(0.,PI,0.,150.,64,64);
-  theHTxp_=new HoughTransform(0.,PI,0.,150.,32,32);
+  theHTx_=new HoughTransform(0.,PI,0.,150.,128,128);
+  theHTy_=new HoughTransform(0.,PI,0.,150.,128,128);
+  theHTxp_=new HoughTransform(0.,PI,0.,150.,64,64);
 
   theHTx_->clear();
   std::vector<RecoHit*> vrh;
+
+  tklist_.clear();
+  vcores_.clear();
+  vedges_.clear();
 for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ipl!=thePlans_.end();ipl++)
     {
       for (std::vector<RecoHit>::iterator ih=ipl->second.begin();ih!=ipl->second.end();ih++)
 	{
 	    RecoHit& h = (*ih);
 	    int ithr=ih->getAmplitude()&0x3;
+	    ih->clearFlag();
+	    if (ithr==1) ih->setFlag(RecoHit::THR1,true);
+	    if (ithr==2) ih->setFlag(RecoHit::THR0,true);
+	    if (ithr==3) ih->setFlag(RecoHit::THR2,true);
 	    nall++;
-	    if (cores.getValue(ih->chamber(),ih->I()/3,ih->J()/3)!=0)
+	    if (cores.getValue(ih->chamber(),ih->I()/BINFACT,ih->J()/BINFACT)!=0)
 	      {
-		vrh.push_back(&h);
-
+		//vrh.push_back(&h);
+		ih->setFlag(RecoHit::CORE,true);
+		vcores_.push_back(&h);
 		bool appended=false;
 		for (std::vector<Amas>::iterator ia=theAmas_.begin();ia!=theAmas_.end();ia++)
 		  {
@@ -1213,7 +1243,11 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
 	    else
 	      {
 		//theHTx_->addXPoint(&h);
-		vrh.push_back(&h);
+		ih->setFlag(RecoHit::EDGE,true);
+		if (edges.getValue(ih->chamber(),ih->I()/BINFACT,ih->J()/BINFACT)==2) ih->setFlag(RecoHit::ISOLATED,true);
+		//if (!ih->getFlag(RecoHit::ISOLATED))
+		  vrh.push_back(&h);
+		vedges_.push_back(&h);
 		if (ithr==1) ne_[1]++;
 		if (ithr==2) ne_[0]++;
 		if (ithr==3) ne_[2]++;
@@ -1233,25 +1267,26 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
    {s.set(i);sn[i]=s.to_string().substr(63-i,i+1);}
   // different member versions of find in the same order as above:
  
- std::map<uint32_t,RecoPoint*> htpoints;
+ std::map<uint32_t,PlanePoint*> htpoints;
  htpoints.clear();
 
  // getchar();
- for (std::vector<RecoPoint>::iterator itp=allpoints_.begin();itp!=allpoints_.end();itp++)
+ for (std::vector<PlanePoint>::iterator itp=allpoints_.begin();itp!=allpoints_.end();itp++)
    {
-     std::vector<RecoHit> *vh=itp->getCluster().getHits();
-     if (vh->size()>=5) continue;
+     std::vector<RecoHit*> *vh=itp->getCluster().getHits();
+     if (vh->size()>=6) continue;
      theHTx_->addMeasurement(&(*itp),HoughTransform::RECOPOINT,HoughTransform::ZX);
      // for (std::vector<RecoHit>::iterator ih=vh->begin();ih!=vh->end();ih++)
      //  theHTx_->addXHit(&(*ih));
    }
- if (theHTx_->getVoteMax()>7)
+ if (theHTx_->getVoteMax()>6)
    {
      uint32_t nseg=0;
      for (uint32_t i=0;i<theHTx_->getNbinTheta();i++)
        for (uint32_t j=0;j<theHTx_->getNbinR();j++)
 	 {
-	   if (!theHTx_->isALocalMaximum(i,j,int(0.8*theHTx_->getVoteMax()))) continue;
+	   int votemax=min(7,int(0.7*theHTx_->getVoteMax()));
+	   if (!theHTx_->isALocalMaximum(i,j,votemax)) continue;
 	   // if (theHTx_->getHoughImage(i,j)<0.7*theHTx_->getVoteMax()) continue;
 	   
 	   // bool notmax=false;
@@ -1272,6 +1307,7 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
 	   uint32_t nc=0,fp=0,lp=0;
 	   theHTx_->getPattern(i,j,nc,fp,lp);
 	   printf(" NC %d FP %d LP %d \n",nc,fp,lp);
+	   if (nc<4) continue;
 	   nseg++;
 	   printf("Segment (%d,%d)=%d  %lx  %d  %s \n",i,j,theHTx_->getHoughImage(i,j),theHTx_->getHoughPlanes(i,j).to_ulong(),theHTx_->getHoughPlanes(i,j).count(),theHTx_->getHoughPlanes(i,j).to_string().c_str());
 	   theHTy_->clear();
@@ -1281,7 +1317,7 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
 	   for (std::vector<void*>::iterator ih=v.begin();ih!=v.end();ih++)
 	     {
 	       //RecoHit* h=( RecoHit*) (*ih);
-	       RecoPoint* h=(RecoPoint*) (*ih);
+	       PlanePoint* h=(PlanePoint*) (*ih);
 
 	       //theHTxp_->addMeasurement(h,HoughTransform::RECOPOINT,HoughTransform::ZX);
 	       theHTy_->addMeasurement(h,HoughTransform::RECOPOINT,HoughTransform::ZY);
@@ -1289,7 +1325,7 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
 	   //printf("Segment Y %d \n",theHTy_->getVoteMax());
 	   std::vector< std::pair<uint32_t,uint32_t> > maxval;
 	   maxval.clear();
-	   if (theHTy_->getVoteMax()>4)
+	   if (theHTy_->getVoteMax()>=4)
 	     {
 	       uint32_t nsegy=0;
 	       printf("Segment Y \n");
@@ -1297,7 +1333,8 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
 	       for (uint32_t ii=0;ii<theHTy_->getNbinTheta();ii++)
 		 for (uint32_t jj=0;jj<theHTy_->getNbinR();jj++)
 		   {
-		     if (!theHTy_->isALocalMaximum(ii,jj,int(0.9*theHTy_->getVoteMax()))) continue;
+		     int votemax1=min(7,int(0.8*theHTy_->getVoteMax()));
+		     if (!theHTy_->isALocalMaximum(ii,jj,votemax1)) continue;
 		    
 		    
 		     if (theHTy_->getHoughPlanes(ii,jj).count()<4) continue;
@@ -1313,20 +1350,25 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
 		     //		     printf("  ====> Y Segment (%d,%d)=%d  %lx %d \n",ii,jj,theHTy_->getHoughImage(ii,jj),planezz.to_ulong(),nafter);
 		     std::vector<void*> vv=theHTy_->getHoughMap(ii,jj);
 		     theHTxp_->clear();
+		     TemplateTk<PlanePoint> tk;
 		     for (std::vector<void*>::iterator ih=vv.begin();ih!=vv.end();ih++)
 		       {
 	       //RecoHit* h=( RecoHit*) (*ih);
-			 RecoPoint* h=(RecoPoint*) (*ih);
+			 PlanePoint* h=(PlanePoint*) (*ih);
 			 if (h->chamber()<=lpy && h->chamber()>=fpy)
 			   {
 			     //theHTxp_->addMeasurement(h,HoughTransform::RECOPOINT,HoughTransform::ZX);
 			     if (htpoints.find(h->getPointId())==htpoints.end())
 			       {
-				 std::pair<uint32_t,RecoPoint*> pp(h->getPointId(),h);
+				 std::pair<uint32_t,PlanePoint*> pp(h->getPointId(),h);
 				 htpoints.insert(pp);
 			       }
+			     tk.addPoint((*h));
 			   }
+			 
 		       }
+		     tk.regression();
+		     tklist_.push_back(tk);
 		     // theHTxp_->draw(DCHistogramHandler::instance());
 		   }
 
@@ -1338,8 +1380,55 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
 	     }
 	 }
      printf("XZ segments %d  %d  FAIRE LE FIT DES Houghs\n",nseg,htpoints.size());
+
+     // Now add nearest points to track segment
+     for (uint32_t ich=1;ich<55;ich++)
+     for (std::vector<PlanePoint>::iterator itp=allpoints_.begin();itp!=allpoints_.end();itp++)
+       {
+	 PlanePoint& p=(*itp);
+	 if (p.chamber()!=ich) continue;
+	 if (p.getCluster().getHits()->size()>4) continue;
+	 if (htpoints.find(p.getPointId())==htpoints.end())
+	    {
+	      for (std::vector<TemplateTk<PlanePoint> >::iterator itk=tklist_.begin();itk!=tklist_.end();itk++)		
+		if (itk->calculateDistance(p)<2 && p.Z()<itk->zmax_+10 && p.Z()>itk->zmin_-10)
+		  {
+		    itk->addPoint(p);
+		    itk->regression();
+		    std::pair<uint32_t,PlanePoint*> pp(p.getPointId(),&p);
+		    htpoints.insert(pp);
+		    break;
+		  }
+	    }
+       }
      //theHTx_->draw(DCHistogramHandler::instance());
-     this->drawDisplay(htpoints);
+
+     for (std::map<uint32_t,PlanePoint*>::iterator ip=htpoints.begin();ip!=htpoints.end();ip++)
+       {
+	 PlanePoint* p=ip->second;
+	 PlaneCluster& c=p->getCluster();
+	 for (std::vector<RecoHit*>::iterator iht=c.getHits()->begin();iht!=c.getHits()->end();iht++)
+	   {
+	   (*iht)->setFlag(RecoHit::HOUGH,true);
+	   //printf("HT hit %d %d %s\n",(*iht)->I(),(*iht)->J(),(*iht)->Flag().to_string().c_str());
+	   }
+       }
+       for (std::vector<RecoHit*>::iterator ih=vrh.begin();ih!=vrh.end();ih++)
+	 {
+	   if ((*ih)->getFlag(RecoHit::HOUGH)) continue;
+	   for (std::vector<TemplateTk<PlanePoint> >::iterator itk=tklist_.begin();itk!=tklist_.end();itk++)
+	     {
+	       if ((*ih)->getFlag(RecoHit::HOUGH)) break;
+	       double xext=itk->ax_*(*ih)->Z()+itk->bx_;
+	       double yext=itk->ay_*(*ih)->Z()+itk->by_;
+	       double dist=sqrt(((*ih)->X()-xext)*((*ih)->X()-xext)+((*ih)->Y()-yext)*((*ih)->Y()-yext));
+	       if (dist<1)
+		 (*ih)->setFlag(RecoHit::HOUGH,true);
+	     }
+	 }
+
+
+     this->drawDisplay();
      getchar();
    }
  double guessEnergy=(nall+nc_[2]*(1.5+1.85E-3*(nall*1.-102.)))*0.052;
@@ -1457,21 +1546,21 @@ for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ip
 }
 void Shower::PointsBuilder(std::vector<RecoHit*> &vrh)
 {
-  std::vector<RECOCluster> vCluster;
+  std::vector<PlaneCluster> vCluster;
   vCluster.clear();
   for (std::vector<RecoHit*>::iterator ih=vrh.begin();ih!=vrh.end();ih++)
     {
       bool append= false;
       //std::cout<<"Clusters "<<vCluster.size()<<std::endl;
       RecoHit* hit=(*ih);
-      for (std::vector<RECOCluster>::iterator icl=vCluster.begin();icl!=vCluster.end();icl++)
-	if (icl->Append(*hit))
+      for (std::vector<PlaneCluster>::iterator icl=vCluster.begin();icl!=vCluster.end();icl++)
+	if (icl->Append(hit))
 	  {
 	    append=true;
 	    break;
 	  }
       if (append) continue;
-      RECOCluster cl(*hit);
+      PlaneCluster cl(hit);
 		
       vCluster.push_back(cl);
       // std::cout<<"Apres push Clusters "<<vCluster.size()<<std::endl;
@@ -1486,7 +1575,7 @@ void Shower::PointsBuilder(std::vector<RecoHit*> &vrh)
   do
     {
       merged=false;
-      std::vector<RECOCluster> vNew;
+      std::vector<PlaneCluster> vNew;
       vNew.clear();
       for (uint32_t i=0;i<vCluster.size();i++)
 	{
@@ -1496,10 +1585,10 @@ void Shower::PointsBuilder(std::vector<RecoHit*> &vrh)
 	      if (!vCluster[j].isValid()) continue;
 	      if (vCluster[i].isAdjacent(vCluster[j]))
 		{
-		  RECOCluster c;
-		  for (std::vector<RecoHit>::iterator iht=vCluster[i].getHits()->begin();iht!=vCluster[i].getHits()->end();iht++)
+		  PlaneCluster c;
+		  for (std::vector<RecoHit*>::iterator iht=vCluster[i].getHits()->begin();iht!=vCluster[i].getHits()->end();iht++)
 		    c.getHits()->push_back((*iht));
-		  for (std::vector<RecoHit>::iterator jht=vCluster[j].getHits()->begin();jht!=vCluster[j].getHits()->end();jht++)
+		  for (std::vector<RecoHit*>::iterator jht=vCluster[j].getHits()->begin();jht!=vCluster[j].getHits()->end();jht++)
 		    c.getHits()->push_back((*jht));
 		  vCluster[i].setValidity(false);
 		  vCluster[j].setValidity(false);
@@ -1515,7 +1604,7 @@ void Shower::PointsBuilder(std::vector<RecoHit*> &vrh)
 	}
       if (merged)
 	{
-	  for (std::vector<RECOCluster>::iterator jc=vCluster.begin();jc!=vCluster.end();)
+	  for (std::vector<PlaneCluster>::iterator jc=vCluster.begin();jc!=vCluster.end();)
 	    {
 				
 	      if (!jc->isValid())
@@ -1528,7 +1617,7 @@ void Shower::PointsBuilder(std::vector<RecoHit*> &vrh)
 	    }
 	  //DEBUG_PRINT(" vCluster Size %d\n",vCluster.size());
 	  //DEBUG_PRINT(" New clusters found %d\n",vNew.size());
-	  for (std::vector<RECOCluster>::iterator ic=vNew.begin();ic!=vNew.end();ic++)
+	  for (std::vector<PlaneCluster>::iterator ic=vNew.begin();ic!=vNew.end();ic++)
 	    vCluster.push_back((*ic));
 	  //DEBUG_PRINT(" New clusters found %d\n",vCluster.size());
 	}
@@ -1540,13 +1629,13 @@ void Shower::PointsBuilder(std::vector<RecoHit*> &vrh)
   allpoints_.clear();
   uint32_t ptid=0;
   float posError=0.5;
-  for (std::vector<RECOCluster>::iterator icl=vCluster.begin();icl!=vCluster.end();icl++)
+  for (std::vector<PlaneCluster>::iterator icl=vCluster.begin();icl!=vCluster.end();icl++)
     {
-      RECOCluster& cl=*icl;
+      PlaneCluster& cl=*icl;
       // DEBUG_PRINT("%f %f %f \n",cl.X(),cl.Y(),cl.getHits()->begin()->Z());
       DEBUG_PRINT("nh = %d \n",icl->getHits()->size());
       //cl.Print();
-      RecoPoint p(cl,cl.getHits()->begin()->chamber(),cl.X(),cl.Y(),cl.getHits()->begin()->Z(),posError,posError);
+      PlanePoint p(cl,(*cl.getHits()->begin())->chamber(),cl.X(),cl.Y(),(*cl.getHits()->begin())->Z(),posError,posError);
       p.setPointId(ptid++);
       allpoints_.push_back(p);
 		
@@ -1555,23 +1644,23 @@ void Shower::PointsBuilder(std::vector<RecoHit*> &vrh)
   // Now group points per chamber
   /*  chamberPoints_.clear();
 
-  for (std::vector<RecoPoint>::iterator icl=allpoints_.begin();icl!=allpoints_.end();icl++)
+  for (std::vector<PlanePoint>::iterator icl=allpoints_.begin();icl!=allpoints_.end();icl++)
     {
-      RECOCluster& c= (*icl).getCluster();
-      RecoPoint* p =&(*icl);
+      PlaneCluster& c= (*icl).getCluster();
+      PlanePoint* p =&(*icl);
       uint32_t ch=p->getChamberId();
 		
 
-      std::map<uint32_t,std::vector<RecoPoint*> >::iterator itch=chamberPoints_.find(p->getChamberId());
+      std::map<uint32_t,std::vector<PlanePoint*> >::iterator itch=chamberPoints_.find(p->getChamberId());
       if (itch!=chamberPoints_.end())
 	{
 	  itch->second.push_back(p);
 	}
       else
 	{
-	  std::vector<RecoPoint*> v;
+	  std::vector<PlanePoint*> v;
 	  v.push_back(p);
-	  std::pair<uint32_t,std::vector<RecoPoint*> > pa(ch,v);
+	  std::pair<uint32_t,std::vector<PlanePoint*> > pa(ch,v);
 	  chamberPoints_.insert(pa);
 			
 	}
@@ -1583,65 +1672,103 @@ void Shower::PointsBuilder(std::vector<RecoHit*> &vrh)
 
 static TCanvas* TCShower=NULL;
 
-void Shower::drawDisplay(std::map<uint32_t,RecoPoint*> htpoint)
+void Shower::drawDisplay()
 {
   DCHistogramHandler* rootHandler_=DCHistogramHandler::instance();
-  TH3* hcgposi = rootHandler_->GetTH3("ShowerMap");
-  TH3* hcgposi1 = rootHandler_->GetTH3("HoughMap");
-
-  if (hcgposi==NULL)
+  TH3* hcgposcore = rootHandler_->GetTH3("ShowerMap");
+  TH3* hcgposedge = rootHandler_->GetTH3("ShowerMapEdge");
+  TH3* hcgpospht = rootHandler_->GetTH3("HoughMap");
+  TH3* hcgposiso = rootHandler_->GetTH3("IsoMap");
+  TH1F* hweight=(TH1F*) rootHandler_->GetTH1("showerweight");
+  if (hcgposcore==NULL)
     {
-      hcgposi =rootHandler_->BookTH3("ShowerMap",52,-2.8,145.6,100,0.,100.,100,0.,100.);
-      hcgposi1 =rootHandler_->BookTH3("HoughMap",52,-2.8,145.6,100,0.,100.,100,0.,100.);
+      hcgposcore =rootHandler_->BookTH3("ShowerMap",52,-2.8,145.6,100,0.,100.,100,0.,100.);
+      hcgposedge =rootHandler_->BookTH3("ShowerMapEdge",52,-2.8,145.6,100,0.,100.,100,0.,100.);
+      hcgpospht =rootHandler_->BookTH3("HoughMap",52,-2.8,145.6,100,0.,100.,100,0.,100.);
+      hcgposiso =rootHandler_->BookTH3("IsoMap",52,-2.8,145.6,100,0.,100.,100,0.,100.);
     }
   else
     {
-      hcgposi->Reset();
-      hcgposi1->Reset();
+      hcgposcore->Reset();
+      hcgposedge->Reset();
+      hcgpospht->Reset();
+      hcgposiso->Reset();
     }
 
-  if (hcgposi!=0 )
+  if (hcgposcore!=0 )
     {
-      hcgposi->Reset();
-      for (std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.begin();ipl!=thePlans_.end();ipl++)
+      hcgposcore->Reset();
+      for (std::vector<RecoHit*>::iterator ih=vcores_.begin();ih!=vcores_.end();ih++)
 	{
-	  for (std::vector<RecoHit>::iterator ih=ipl->second.begin();ih!=ipl->second.end();ih++)
-	    {
-	      RecoHit& h = (*ih);
-	      hcgposi->Fill((*ih).Z(),(*ih).X(),(*ih).Y());
-	    }
+	  if ((*ih)->getFlag(RecoHit::HOUGH))
+      	      hcgpospht->Fill((*ih)->Z(),(*ih)->X(),(*ih)->Y());
+	  else
+      	      hcgposcore->Fill((*ih)->Z(),(*ih)->X(),(*ih)->Y());
+
 	}
-      for (std::map<uint32_t,RecoPoint*>::iterator ip=htpoint.begin();ip!=htpoint.end();ip++)
+      for (std::vector<RecoHit*>::iterator ih=vedges_.begin();ih!=vedges_.end();ih++)
 	{
-	  RecoPoint* p=ip->second;
-	  RECOCluster& c=p->getCluster();
-	  for (std::vector<RecoHit>::iterator iht=c.getHits()->begin();iht!=c.getHits()->end();iht++)
-	    {
-	      hcgposi1->Fill((*iht).Z(),(*iht).X(),(*iht).Y());
-	    }
+	  if ((*ih)->getFlag(RecoHit::HOUGH))
+      	      hcgpospht->Fill((*ih)->Z(),(*ih)->X(),(*ih)->Y());
+	  else 
+	    if ((*ih)->getFlag(RecoHit::ISOLATED))
+      	      hcgposiso->Fill((*ih)->Z(),(*ih)->X(),(*ih)->Y());
+	    else
+	      hcgposedge->Fill((*ih)->Z(),(*ih)->X(),(*ih)->Y());
 	  
+
 	}
-
-
       if (TCShower==NULL)
 	{
-	  TCShower=new TCanvas("TCShower","test1",1300,600);
+	  TCShower=new TCanvas("TCShower","test1",1300,900);
 	  TCShower->Modified();
 	  TCShower->Draw();
-	  //TCShower->Divide(2,2);
+	  TCShower->Divide(1,2);
 	}
-      
-      hcgposi->SetMarkerStyle(25);
-      hcgposi1->SetMarkerStyle(21);
-      hcgposi->SetMarkerSize(.2);
-      hcgposi1->SetMarkerSize(.4);
+      TCShower->cd(1);
+      hcgposcore->SetMarkerStyle(21);
+      hcgposedge->SetMarkerStyle(21);
+      hcgpospht->SetMarkerStyle(21);
+      hcgposiso->SetMarkerStyle(21);
+      hcgposcore->SetMarkerSize(.4);
+      hcgposedge->SetMarkerSize(.4);
+      hcgpospht->SetMarkerSize(.4);
+      hcgposiso->SetMarkerSize(.4);
 
-      hcgposi->SetMarkerColor(kRed);
+      hcgposcore->SetMarkerColor(kRed);
 
-      hcgposi1->SetMarkerColor(kBlack);
+      hcgpospht->SetMarkerColor(kBlack);
+      hcgposedge->SetMarkerColor(kGreen);
+      hcgposiso->SetMarkerColor(kCyan);
 
-      hcgposi->Draw("p");
-      hcgposi1->Draw("pSAME");
+      hcgposcore->Draw("p");
+      hcgposedge->Draw("pSAME");
+      hcgpospht->Draw("pSAME");
+      hcgposiso->Draw("pSAME");
+
+
+      for (std::vector<TemplateTk<PlanePoint> >::iterator itk=tklist_.begin();itk!=tklist_.end();itk++)
+	{
+	  TemplateTk<PlanePoint>& tk =(*itk);
+	  /*	  std::vector<PlanePoint*>& plist=itk->getList();
+	  for (std::vector<PlanePoint*>::iterator ip=plist.begin();ip!=plist.end();ip++)
+	    {
+	      std::vector<RecoHit*>* hlist=(*ip)->getCluster().getHits();
+	      for (std::vector<RecoHit*>::iterator ih=hlist->begin();ih!=hlist->end();ih++)
+		printf("H %d z %f %f %f \n",(*ih)->getFlag(RecoHit::HOUGH),(*ih)->Z(),tk.zmin_,tk.zmax_);
+	    }*/
+      	      TPolyLine3D *pl3d1 = new TPolyLine3D(2);
+	      pl3d1->SetPoint(0, tk.zmin_,tk.ax_*tk.zmin_+tk.bx_,tk.ay_*tk.zmin_+tk.by_);
+	      pl3d1->SetPoint(1, tk.zmax_,tk.ax_*tk.zmax_+tk.bx_,tk.ay_*tk.zmax_+tk.by_);
+				
+	      pl3d1->SetLineWidth(1);
+	      pl3d1->SetLineColor(kMagenta-3);
+	      pl3d1->Draw("SAME");
+	}
+
+
+      TCShower->cd(2);
+      hweight->Draw();
       TCShower->Modified();
       TCShower->Draw();
       TCShower->Update();
