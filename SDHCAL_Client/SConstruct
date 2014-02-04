@@ -47,7 +47,7 @@ DHCAL_ROOT=os.path.abspath("..")
 Bit64=False
 Bit64=os.uname()[4]=='x86_64'
 
-NetLink="/data/online/netLink"
+NetLink=DHCAL_ROOT+"/netLink"
 if ( not os.path.exists(NetLink)):
   NetLink=os.getenv("HOME")+"/netLink"
 
@@ -73,9 +73,9 @@ LIBRARIES=['pthread',  'm', 'stdc++','netlink','boost_system-mt','boost_thread-m
 
 #Library path XDAQ,DHCAL and ROOT + Python
 if (Bit64):
-	LIBRARY_PATHS=["/usr/lib64","/usr/local/lib",NetLink+"/lib","/opt/dhcal/lib"]
+	LIBRARY_PATHS=["/usr/lib64","/usr/local/lib",NetLink+"/lib",DHCAL_ROOT+"/opt/dhcal/lib"]
 else:
-  LIBRARY_PATHS=["/usr/lib","/usr/local/lib",NetLink+"/lib","/opt/dhcal/lib"]
+  LIBRARY_PATHS=["/usr/lib","/usr/local/lib",NetLink+"/lib",DHCAL_ROOT+"/opt/dhcal/lib"]
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
 
 if Use_Dim:

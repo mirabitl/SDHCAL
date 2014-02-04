@@ -67,6 +67,7 @@ INCLUDES=['include',"/usr/include/ILCConfDB",\
 
 if (platform=="SLC5"):
     INCLUDES.append('/usr/include/boost141')
+    INCLUDES.append('/opt/xdaq/include')
 
 #MYSQL and sqlite
 INCLUDES.append("/usr/include/libxml2")
@@ -77,7 +78,7 @@ INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as con
 CPPFLAGS=commands.getoutput("$ROOTSYS/bin/root-config --cflags").split(" ") + ["-O4","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2"]
 
 #Library ROOT + some of XDAQ + DB 
-LIBRARIES=['pthread', 'uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c',  'stdc++','cslm','netlink','boost_system','boost_thread','dl']
+LIBRARIES=['pthread', 'uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c',  'stdc++','cslm','netlink','boost_system-mt','boost_thread-mt','dl']
 
 
 
@@ -86,7 +87,7 @@ if ( platform=="SLC5" and osv=="x86_64"):
     LIBRARY_PATHS=["/usr/lib64/boost141","/usr/lib64","/usr/local/lib"]
 else:
     if ( platform=="SLC5"):
-        LIBRARY_PATHS=["/usr/lib/boost141","/usr/lib","/usr/local/lib"]
+        LIBRARY_PATHS=["/usr/lib/boost141","/usr/lib","/usr/local/lib","/opt/xdaq/lib"]
     else:
         LIBRARY_PATHS=["/usr/lib","/usr/local/lib"]
 
@@ -123,7 +124,7 @@ for i in LIBRARY_SOURCES:
 SDHCALDB=env.SharedLibrary("#lib/SDHCALDB",source=LIBRARY_SOURCES)
 LIBRARIES.append("SDHCALDB")
 #Python module
-LSDHCALDB=env.PythonModule('_LSDHCALDB', ['LSDHCALDB.i'],LIBPATH=["#lib","/opt/dhcal/lib","/usr/lib"],LIBS=LIBRARIES)
+LSDHCALDB=env.PythonModule('_LSDHCALDB', ['LSDHCALDB.i'],LIBPATH=["#lib",DHCAL_ROOT+"/opt/dhcal/lib","/usr/lib","/opt/xdaq/lib"],LIBS=LIBRARIES)
 
 
 #Daemon 
