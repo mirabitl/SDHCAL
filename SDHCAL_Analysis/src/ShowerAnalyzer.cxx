@@ -8236,7 +8236,7 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> vrh)
 
 #ifdef DRAW_HISTOS
   bool doPlot=int(hest1->GetEntries())%30==40;
-  doPlot=false;
+  doPlot=true;
   if (doPlot)
     {
   if (TCCluster==NULL)
