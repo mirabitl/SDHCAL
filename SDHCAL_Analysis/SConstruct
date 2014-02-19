@@ -134,13 +134,15 @@ env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
 # Library source
 #TRACKER_SRC_DIR=os.path.join(DHCAL_ROOT,"TrackerUtils","src/common")
 LIBRARY_SOURCES=Glob("#src/*.cxx")
+LIBRARY_CSOURCES=Glob("#src/*.c")
+#LIBRARY_SOURCES.append
 #LIBRARY_SOURCES.append(TRACKER_SRC_DIR+"/TShare.cc")
 #LIBRARY_SOURCES.append(TRACKER_SRC_DIR+"/LDAShare.cc")
-
+env.Replace(CC = "g++")
 for i in LIBRARY_SOURCES:
   print i 	 
 #Shared library
-DHCEvent=env.SharedLibrary("#lib/DHCEvent",source=LIBRARY_SOURCES)
+DHCEvent=env.SharedLibrary("#lib/DHCEvent",source=[LIBRARY_SOURCES,LIBRARY_CSOURCES])
 
 #Python module
 LDHCEvent=env.PythonModule('_DHCalEventReader', ['DHCalEventReader.i'],LIBPATH="#lib",LIBS="DHCEvent")

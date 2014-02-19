@@ -30,13 +30,14 @@ public:
   void clean();
   void Print();
   std::vector<A*>& getList(){return list_;}
+  uint32_t getNumberOfHits(){return list_.size();}
   std::vector<double>& getChi2(){return dist_;}
   double getXext(double z) { return ax_*z+bx_;}
   double getYext(double z) { return ay_*z+by_;}  
   double calculateDistance(A& p);
   double ax_,bx_,ay_,by_,chi2_;
   double prChi2_;
-  uint32_t firstChamber_,lastChamber_;
+  int32_t firstChamber_,lastChamber_;
   inline bool isValid(){return valid_;}
   inline void setValid(bool t){valid_=t;}
   float zmin_,zmax_;

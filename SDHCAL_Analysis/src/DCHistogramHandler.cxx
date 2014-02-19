@@ -37,7 +37,37 @@ void DCHistogramHandler::UnLock()
 {
   sem_post(&theMutex_);
 }
+TH1* DCHistogramHandler::GetTH1(std::string name) 
+{ 
+  std::map<std::string,TH1*>::iterator ih=mapH1.find(name);
+  
+if (ih!=mapH1.end()) 
+  { 
+    //printf("Histo %s found %x \n",ih->first.c_str(),ih->second);
+    return ih->second; 
+  }
+  else 
+    return NULL;
+} 
 
+
+  //! Return a pointer to the TH2
+ /** 
+      @param name Name of the histogram
+      @return a Th2* ptr
+   */
+TH2* DCHistogramHandler::GetTH2(std::string name) 
+{ 
+ std::map<std::string,TH2*>::iterator ih=mapH2.find(name);
+  
+if (ih!=mapH2.end()) 
+  { 
+    //printf("Histo %s found %x \n",ih->first.c_str(),ih->second);
+      return ih->second; 
+  }
+  else 
+    return NULL;
+}  
 TH1* DCHistogramHandler::BookTH1(std::string name,int nbinx,double xmin,double xmax)
 {
   top->addFullName(name);

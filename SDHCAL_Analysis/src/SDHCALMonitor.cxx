@@ -74,7 +74,8 @@ void SDHCALMonitor::FillTimeAsic(IMPL::LCCollectionVec* rhcol)
 		}
 	}
 	theIntegratedTime_+=(tmax-tmin);
-	std::cout<<tmin<<" "<<tmax<<" => " <<theIntegratedTime_<<std::endl;
+	theEventIntegratedTime_=(tmax-tmin);
+	std::cout<<tmin<<" "<<tmax<<" => Event "<<theEventIntegratedTime_<<" total " <<theIntegratedTime_<<std::endl;
 	for (std::map<uint32_t,uint32_t>::iterator it=theAsicCount_.begin();it!=theAsicCount_.end();it++)
 	{
 		uint32_t chid =(it->first>>16)&0xFF;

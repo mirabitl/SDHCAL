@@ -38,6 +38,8 @@
 #include "Shower.h"
 #include "Amas.h"
 #include "SDHCALMonitor.h"
+#include "libhoughStruct.h"
+#include <ComputerHough.h>
 
 class ShowerAnalyzer : public DHCALAnalyzer
 {
@@ -81,6 +83,8 @@ public:
 	uint32_t NoiseStudy(std::map<uint32_t,std::bitset<255> > timeDif,std::map<uint32_t,std::bitset<61> > timeChamber);
 	void FillTimeAsic(IMPL::LCCollectionVec* rhcol);
 	void DIFStudy(IMPL::RawCalorimeterHitImpl* hit);
+	uint32_t buildClusters(std::vector<RecoHit*> vreco);
+	void buildEdges();
 
 	void ShowerBuilder(std::vector<RecoHit*> vreco);
 	void ImageBuilder(std::vector<RecoHit*> &vreco);
@@ -157,6 +161,7 @@ public:
 	void newHT3(array3D<unsigned char> &core);
 
 	void track2Db(std::vector<RecoCandTk> &tracks,std::vector<RecoPoint> &points);
+	void drawph(houghParam* p);
 
 private:
 
@@ -270,6 +275,9 @@ private:
 	cluster_t theCluster_;
 	hit_t theHit_;
 	shower_t theShower_;
-
+	uint32_t theNbShowers_;
+	ComputerHough* theComputerHough_;
+	unsigned long long theLastBCID_,theIdxSpill_;
+	float theTimeInSpill_[20],theCountSpill_[20],theLastRate_;
 };
 #endif

@@ -13,11 +13,12 @@
 #include "DifGeom.h"
 #include "ChamberGeom.h"
 #include <stdint.h>
+#include <list>
 class Shower;
 class RecoHit
 {
 public:
-  enum Type {THR0=0,THR1=1,THR2=2,CORE=3,EDGE=4,ISOLATED=5,HOUGH=6};
+  enum Type {THR0=0,THR1=1,THR2=2,CORE=3,EDGE=4,ISOLATED=5,HOUGH=6,MIP=7};
 
   RecoHit(){;}
   RecoHit(DifGeom& d, ChamberGeom& c,IMPL::RawCalorimeterHitImpl* h,uint32_t hrtype=2);
@@ -45,6 +46,12 @@ public:
   //inline uint32_t getNext(){return next_;}
   Shower* getShower(){return shower_;}
   void setShower(Shower* s){shower_=s;}
+  //bool addNearby(RecoHit* h,float distcut);
+  void calculateComponents(std::vector<RecoHit*> v);
+  double* Components(){return components_;}
+  //std::list<RecoHit*>& Voisins(){return vnear_;}
+  //uint32_t getNumberOfVoisins(){return nnear_;}
+  void clear();
 private:
   DifGeom dg_;
   ChamberGeom cg_;
@@ -55,5 +62,8 @@ private:
   double x_,y_;
   std::bitset<8> theFlag_;
   Shower* shower_;
+  uint32_t nnear_;
+  //std::list<RecoHit*> vnear_;
+  double components_[21];
 };
 #endif

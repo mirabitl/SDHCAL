@@ -29,13 +29,13 @@ bool RECOCluster::isAdjacent(RECOCluster &c)
 	if (dist((*it),(*jt))<2) return true;
 	return false;
 }
-bool RECOCluster::Append(RecoHit h)
+bool RECOCluster::Append(RecoHit h,double cut)
 {	
 	bool append=false;
 	for (std::vector<RecoHit>::iterator it= hits_.begin();it!=hits_.end();it++)
 	{
 		if (h.chamber()!=it->chamber()) return false;
-		if (dist(h,*it)<2) 
+		if (dist(h,*it)<cut) 
 		{
 			
 
