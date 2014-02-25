@@ -178,6 +178,7 @@ class DCHistogramHandler
 
   AbsTreeNode* top;
   sem_t theMutex_;
+  TFile* theFile_;
   static DCHistogramHandler*  _me ;
 };
 

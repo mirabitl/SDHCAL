@@ -50,7 +50,7 @@ ShowerAnalyzer::ShowerAnalyzer(DHCalEventReader* r,DCHistogramHandler* h) :track
 									     tkMinPoint_(3),tkExtMinPoint_(3),tkBigClusterSize_(32),tkChi2Cut_(0.01),tkDistCut_(5.),tkExtChi2Cut_(0.01),tkExtDistCut_(10.),tkAngularCut_(20.),zLastAmas_(134.),
 									     findTracks_(true),dropFirstSpillEvent_(false),useSynchronised_(true),chamberEdge_(5.),rebuild_(false),oldAlgo_(true),collectionName_("DHCALRawHits"),
 									     tkFirstChamber_(1),tkLastChamber_(61),useTk4_(false),offTimePrescale_(1),houghIndex_(0),theRhcolTime_(0.),theTimeSortTime_(0.),theTrackingTime_(0),
-									   theHistoTime_(0),theSeuil_(0),draw_(false),theSkip_(0),theMonitoring_(r,h),theMonitoringPeriod_(0),theMonitoringPath_("/dev/shm/Monitoring"),ntkbetween(0),theBCIDSpill_(0),theLastBCID_(0)
+									   theHistoTime_(0),theSeuil_(0),draw_(false),theSkip_(0),theMonitoring_(NULL),theMonitoringPeriod_(0),theMonitoringPath_("/dev/shm/Monitoring"),ntkbetween(0),theBCIDSpill_(0),theLastBCID_(0)
 {
   reader_=r;
   rootHandler_ =h;
@@ -59,7 +59,7 @@ ShowerAnalyzer::ShowerAnalyzer(DHCalEventReader* r,DCHistogramHandler* h) :track
 
   theComputerHough_=new ComputerHough(&cuts);
   theComputerHough_->DefaultCuts();
-
+  theMonitoring_=new SDHCALMonitor(r,h);
 }
 
 void ShowerAnalyzer::initialise()
@@ -256,7 +256,7 @@ bool ShowerAnalyzer::decodeTrigger(LCCollection* rhcol, double tcut)
   return true;
 }
 
-uint32_t ShowerAnalyzer::NoiseStudy(std::map<uint32_t,std::bitset<255> > timeDif,std::map<uint32_t,std::bitset<61> > timeChamber)
+uint32_t ShowerAnalyzer::NoiseStudy(std::map<uint32_t,std::bitset<255> > &timeDif,std::map<uint32_t,std::bitset<61> > &timeChamber)
 {
   float n_dif[200],n_chamber[60];
   memset(n_dif,0,200*sizeof(float));
@@ -1174,9 +1174,11 @@ void ShowerAnalyzer::processEvent()
 
   checkTime();
   if (reader_->getEvent()==0) return;
-
+  
   evt_=reader_->getEvent();
   if (evt_->getEventNumber()<=theSkip_) return;
+  //printf("%d \n",evt_->getEventNumber());
+
   IMPL::LCCollectionVec* rhcol=NULL;
   bool rhcoltransient=false;
   if (rebuild_)
@@ -1222,9 +1224,10 @@ void ShowerAnalyzer::processEvent()
   else
     rhcol=(IMPL::LCCollectionVec*) evt_->getCollection(collectionName_);
 
-  
 
-  theMonitoring_.FillTimeAsic(rhcol);
+
+  theMonitoring_->FillTimeAsic(rhcol);
+
   //  LCTOOLS::printParameters(rhcol->parameters());
   //DEBUG_PRINT("Time Stamp %d \n",evt_->getTimeStamp());
   if (rhcol==NULL) return;
@@ -1246,6 +1249,7 @@ void ShowerAnalyzer::processEvent()
   std::sort(vseeds.begin(),vseeds.end(),std::greater<uint32_t>());
 	
   printf("================>  %d  Number of seeds %d \n",evt_->getEventNumber(),(int) vseeds.size());
+
   if (evt_->getEventNumber()%100 == 0)
     rootHandler_->writeXML(theMonitoringPath_);
   if (vseeds.size()==0)  { if (rhcoltransient) delete rhcol;return;}
@@ -1258,6 +1262,8 @@ void ShowerAnalyzer::processEvent()
   array3D<unsigned char> tempim;
   tempim.initialise(temp,60,NX,NY);
   theNbShowers_=0;
+  ShowerParams ish;
+  std::vector<RecoHit*> vrh;
   for (std::vector<uint32_t>::iterator is=vseeds.begin();is!=vseeds.end();is++)
     {
       currentTime_=(*is);
@@ -1266,16 +1272,16 @@ void ShowerAnalyzer::processEvent()
       if (theBCIDSpill_==0) theBCIDSpill_=theAbsoluteTime_;
       if (theAbsoluteTime_-theBCIDSpill_>15/2E-7) theBCIDSpill_=theAbsoluteTime_;
 
-      DEBUG_PRINT("GTC %d DTC %d BCID %llu Current Time %llu Time SPill %f Distance %f \n",theGTC_,theDTC_,theBCID_,currentTime_,theBCIDSpill_*2E-7,(theAbsoluteTime_-theBCIDSpill_)*2E-7);
-      //      continue;
-      
+      INFO_PRINT("GTC %d DTC %d BCID %llu Current Time %llu Time SPill %f Distance %f \n",theGTC_,theDTC_,theBCID_,currentTime_,theBCIDSpill_*2E-7,(theAbsoluteTime_-theBCIDSpill_)*2E-7);
+       
       tempim.clear();
       // DEBUG_PRINT("Building voulume for %d \n",(*is));
       uint32_t nhits=buildVolume(rhcol,(*is));
       // DEBUG_PRINT("Edge detection for %d \n",(*is));
-      buildEdges();
+      //buildEdges();
       theNplans_=0;
-      std::vector<RecoHit*> vrh;vrh.clear();
+
+      vrh.clear();
       for (uint32_t k=0;k<60;k++)
 	{ bool found=false;
 	  for (uint32_t i=0;i<96;i++)
@@ -1290,9 +1296,9 @@ void ShowerAnalyzer::processEvent()
 	}
       
       if (theNplans_<minChambersInTime_) continue;
-
       
-      ShowerParams ish;
+
+
       Shower::computePrincipalComponents(vrh,(double*) &ish);
 
       if (sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1) continue;
@@ -1417,7 +1423,7 @@ void ShowerAnalyzer::processEvent()
 	  theEdge3_=0;theCore3_=0;
 	  INFO_PRINT("%d Tracks!!!! Run %d Event %d Time %d Edge %d core %d Edge3 %d Core3 %d \n",nhits,evt_->getRunNumber(),evt_->getEventNumber(),currentTime_,theNedge_,theNall_,theEdge3_,theCore3_);
 	  this->TracksBuilder();
-	  theMonitoring_.trackHistos(tkgood_,allpoints_);
+	  theMonitoring_->trackHistos(tkgood_,allpoints_);
 	  if (useMysql_) this->track2Db(tkgood_,allpoints_);
 	  ntkbetween+=tkgood_.size();
 #ifdef DRAW_DEBUG
@@ -1492,7 +1498,7 @@ void ShowerAnalyzer::processEvent()
       else 
 	{
 	  this->TracksBuilder();
-	  theMonitoring_.trackHistos(tkgood_,allpoints_);
+	  theMonitoring_->trackHistos(tkgood_,allpoints_);
 	  if (useMysql_) this->track2Db(tkgood_,allpoints_);
 #ifdef DRAW_DEBUG
 	  if (tkgood_.size() == 1 && tkgood_[0].getList().size()<40 
@@ -1532,7 +1538,7 @@ void ShowerAnalyzer::processEvent()
     theIdxSpill_+=1;
 
   theCountSpill_[theIdxSpill_%20] =  theNbShowers_;
-  theTimeInSpill_[theIdxSpill_%20] = theMonitoring_.getEventIntegratedTime()*2E-7;
+  theTimeInSpill_[theIdxSpill_%20] = theMonitoring_->getEventIntegratedTime()*2E-7;
 
   // Integrated 10 last
   float nc=0;
@@ -1545,7 +1551,7 @@ void ShowerAnalyzer::processEvent()
       //printf("%f ",theCountSpill_[i]);
     }
 
-  printf("\n %d Number of showers %d Event time %f -> Absolute bcid  %f-> Rate %f %f %f\n",evt_->getEventNumber(),theNbShowers_,theMonitoring_.getEventIntegratedTime()*2E-7,(theBCID_-theBCIDSpill_)*2E-7,nc,tc,nc/tc);
+  printf("\n %d Number of showers %d Event time %f -> Absolute bcid  %f-> Rate %f %f %f\n",evt_->getEventNumber(),theNbShowers_,theMonitoring_->getEventIntegratedTime()*2E-7,(theBCID_-theBCIDSpill_)*2E-7,nc,tc,nc/tc);
   theLastRate_=nc/tc;
   theLastBCID_=theBCID_;
   //etchar();
@@ -5049,7 +5055,7 @@ void ShowerAnalyzer::HT3D()
     }
 }
 
-void ShowerAnalyzer::ShowerBuilder(std::vector<RecoHit*> vreco)
+void ShowerAnalyzer::ShowerBuilder(std::vector<RecoHit*> &vreco)
 {
   // BUild Plan Hit list
   std::map<uint32_t,std::vector<RecoHit> > Plans;
@@ -7940,7 +7946,7 @@ void ShowerAnalyzer::track2Db(std::vector<RecoCandTk> &tracks,std::vector<RecoPo
 
 }
 
-uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> vrh)
+uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
 {
   
   std::vector<RECOCluster*> clusters;
@@ -8236,7 +8242,7 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> vrh)
 
 #ifdef DRAW_HISTOS
   bool doPlot=int(hest1->GetEntries())%30==40;
-  doPlot=true;
+  doPlot=false;
   if (doPlot)
     {
   if (TCCluster==NULL)

@@ -80,13 +80,13 @@ public:
 	void setClockSynchCut(unsigned int t){clockSynchCut_=t;}
 	void setSpillSize(double t){spillSize_=t;}
 
-	uint32_t NoiseStudy(std::map<uint32_t,std::bitset<255> > timeDif,std::map<uint32_t,std::bitset<61> > timeChamber);
+	uint32_t NoiseStudy(std::map<uint32_t,std::bitset<255> > &timeDif,std::map<uint32_t,std::bitset<61> > &timeChamber);
 	void FillTimeAsic(IMPL::LCCollectionVec* rhcol);
 	void DIFStudy(IMPL::RawCalorimeterHitImpl* hit);
-	uint32_t buildClusters(std::vector<RecoHit*> vreco);
+	uint32_t buildClusters(std::vector<RecoHit*> &vreco);
 	void buildEdges();
 
-	void ShowerBuilder(std::vector<RecoHit*> vreco);
+	void ShowerBuilder(std::vector<RecoHit*> &vreco);
 	void ImageBuilder(std::vector<RecoHit*> &vreco);
 	void sobel_filtering(unsigned char i[60][96], float j[60][96]);
 
@@ -263,7 +263,7 @@ private:
 	float image3Buf_[60*96*96];
 
 	std::vector<Amas> theAmas_;
-	SDHCALMonitor theMonitoring_;
+	SDHCALMonitor* theMonitoring_;
 	uint32_t theMonitoringPeriod_;
 	std::string theMonitoringPath_;
 	

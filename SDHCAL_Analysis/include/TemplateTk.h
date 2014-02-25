@@ -17,15 +17,15 @@ public:
   void addPoint(A& p);
   bool addNearestPoint(A& p);
   bool addPoint(A& p,double xcut, double ycut);
-  bool addPoints(std::vector<A> v, double zref,double xcut, double ycut);
-  bool addPoints(std::vector<A> v, double dcut);
-  bool addChi2Points(std::vector<A> v, double dcut,
+  bool addPoints(std::vector<A> &v, double zref,double xcut, double ycut);
+  bool addPoints(std::vector<A> &v, double dcut);
+  bool addChi2Points(std::vector<A> &v, double dcut,
 		      std::vector< typename std::vector<A>::iterator>* used=NULL);
   void removeDistantPoint(float zcut);
 
   void Refit(TemplateTk &t,float c);
   void regression();
-  void regression1D(std::vector<double> vx,std::vector<double> weight,std::vector<double> y,double &chi2, double &alpha,double &beta);
+  void regression1D(std::vector<double> &vx,std::vector<double> &weight,std::vector<double> &y,double &chi2, double &alpha,double &beta);
   void calculateChi2();
   void clean();
   void Print();

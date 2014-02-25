@@ -6,6 +6,7 @@
 #include "DCUtils.h"
 #include "TSystem.h"
 #include <iomanip>
+#include <new>
 
 
 #include "TBufferXML.h"
@@ -23,6 +24,7 @@ DCHistogramHandler* DCHistogramHandler::instance() {
 
 DCHistogramHandler::DCHistogramHandler()
 {
+  theFile_=0;//new TFile("/dev/shm/DCHistograms.root","RECREATE");
   mapH1.clear();
   mapH2.clear();
   top = new AbsTreeNode("Top");
@@ -71,8 +73,18 @@ if (ih!=mapH2.end())
 TH1* DCHistogramHandler::BookTH1(std::string name,int nbinx,double xmin,double xmax)
 {
   top->addFullName(name);
-  TH1F* h =  new TH1F(name.c_str(),name.c_str(),nbinx,xmin,xmax);
-  h->SetDirectory(0);
+  TH1F* h=NULL;
+  try 
+    {
+      h =  new TH1F(name.c_str(),name.c_str(),nbinx,xmin,xmax);
+    }
+  catch (std::bad_alloc& ba)
+    {
+      std::cerr << "bad_alloc caught: " << ba.what() << '\n';
+      return 0;
+    }
+
+  h->SetDirectory(theFile_);
   std::pair<std::string,TH1*> pr(name,h);
   mapH1.insert(pr);
   //std::cout<<name<<" Booked"<<std::endl;
@@ -82,8 +94,17 @@ TH1* DCHistogramHandler::BookTH1(std::string name,int nbinx,double xmin,double x
 TH2* DCHistogramHandler::BookTH2(std::string name,int nbinx,double xmin,double xmax,int nbiny,double ymin,double ymax)
 {
   top->addFullName(name);
-  TH2F* h =  new TH2F(name.c_str(),name.c_str(),nbinx,xmin,xmax,nbiny,ymin,ymax);
-  h->SetDirectory(0);
+  TH2F* h=NULL;
+  try 
+    {
+      h = new TH2F(name.c_str(),name.c_str(),nbinx,xmin,xmax,nbiny,ymin,ymax);
+    }
+  catch (std::bad_alloc& ba)
+    {
+      std::cerr << "bad_alloc caught: " << ba.what() << '\n';
+      return 0;
+    }
+  h->SetDirectory(theFile_);
   std::pair<std::string,TH2*> pr(name,h);
   mapH2.insert(pr);
   //std::cout<<name<<" Booked"<<std::endl;
@@ -93,8 +114,17 @@ TH2* DCHistogramHandler::BookTH2(std::string name,int nbinx,double xmin,double x
 TH3* DCHistogramHandler::BookTH3(std::string name,int nbinx,double xmin,double xmax,int nbiny,double ymin,double ymax,int nbinz,double zmin,double zmax)
 {
   top->addFullName(name);
-  TH3C* h =  new TH3C(name.c_str(),name.c_str(),nbinx,xmin,xmax,nbiny,ymin,ymax,nbinz, zmin, zmax);
-  h->SetDirectory(0);
+  TH3C* h =  NULL;
+ try 
+    {
+      h = new TH3C(name.c_str(),name.c_str(),nbinx,xmin,xmax,nbiny,ymin,ymax,nbinz, zmin, zmax);
+    }
+  catch (std::bad_alloc& ba)
+    {
+      std::cerr << "bad_alloc caught: " << ba.what() << '\n';
+      return 0;
+    }
+  h->SetDirectory(theFile_);
   std::pair<std::string,TH3*> pr(name,h);
   mapH3.insert(pr);
   //std::cout<<name<<" Booked"<<std::endl;
@@ -104,10 +134,17 @@ TH3* DCHistogramHandler::BookTH3(std::string name,int nbinx,double xmin,double x
 TProfile* DCHistogramHandler::BookProfile(std::string name,int nbinx,double xmin,double xmax,double ymin,double ymax)
 {
   top->addFullName(name);
-  TProfile* h;
-  if (ymin<ymax) h=  new TProfile(name.c_str(),name.c_str(),nbinx,xmin,xmax,ymin,ymax);
-  else  h=  new TProfile(name.c_str(),name.c_str(),nbinx,xmin,xmax);
-  h->SetDirectory(0);
+  TProfile* h=NULL;
+  try {
+    if (ymin<ymax) h=  new TProfile(name.c_str(),name.c_str(),nbinx,xmin,xmax,ymin,ymax);
+    else  h=  new TProfile(name.c_str(),name.c_str(),nbinx,xmin,xmax);
+  }
+   catch (std::bad_alloc& ba)
+    {
+      std::cerr << "bad_alloc caught: " << ba.what() << '\n';
+      return 0;
+    }
+  h->SetDirectory(theFile_);
   h->Sumw2();
   std::pair<std::string,TH1*> pr(name,h);
   //std::cout<<name<<" Booked"<<std::endl;
@@ -117,10 +154,17 @@ TProfile* DCHistogramHandler::BookProfile(std::string name,int nbinx,double xmin
 TProfile2D* DCHistogramHandler::BookProfile2D(std::string name,int nbinx,double xmin,double xmax,int nbiny, double ymin,double ymax, double zmin, double zmax)
 {
   top->addFullName(name);
-  TProfile2D* h;
-  if (zmin<zmax)h=  new TProfile2D(name.c_str(),name.c_str(),nbinx,xmin,xmax,nbiny,ymin,ymax,zmin,zmax);
-  else h=new TProfile2D(name.c_str(),name.c_str(),nbinx,xmin,xmax,nbiny,ymin,ymax);
-  h->SetDirectory(0);
+  TProfile2D* h=NULL;
+  try {
+    if (zmin<zmax)h=  new TProfile2D(name.c_str(),name.c_str(),nbinx,xmin,xmax,nbiny,ymin,ymax,zmin,zmax);
+    else h=new TProfile2D(name.c_str(),name.c_str(),nbinx,xmin,xmax,nbiny,ymin,ymax);
+  }
+   catch (std::bad_alloc& ba)
+    {
+      std::cerr << "bad_alloc caught: " << ba.what() << '\n';
+      return 0;
+    }
+  h->SetDirectory(theFile_);
   h->Sumw2();
   std::pair<std::string,TH2*> pr(name,h);
   //std::cout<<name<<" Booked"<<std::endl;

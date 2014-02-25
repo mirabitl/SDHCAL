@@ -56,7 +56,7 @@ bool TemplateTk<A>::addPoints(std::vector<A> v, double dcut)
 }
 #else
 template <class A>
-bool TemplateTk<A>::addPoints(std::vector<A> v, double dcut)
+bool TemplateTk<A>::addPoints(std::vector<A> &v, double dcut)
 {
 	std::vector<double> zpos;
 	// Loop on point and 
@@ -93,7 +93,7 @@ bool TemplateTk<A>::addPoints(std::vector<A> v, double dcut)
 }
 #endif
 template <class A> 
-bool TemplateTk<A>::addChi2Points(std::vector<A> v, double dcut, std::vector< typename std::vector<A>::iterator>* used)
+bool TemplateTk<A>::addChi2Points(std::vector<A> &v, double dcut, std::vector< typename std::vector<A>::iterator>* used)
 {
 	std::vector<double> zpos;
 	// Loop on point and 
@@ -133,7 +133,7 @@ double TemplateTk<A>::calculateDistance(A& p)
 	return dist1;
 }
 template <class A>
-bool TemplateTk<A>::addPoints(std::vector<A> v, double zref,double xcut, double ycut)
+bool TemplateTk<A>::addPoints(std::vector<A> &v, double zref,double xcut, double ycut)
 {
 	double distmin=9999.; unsigned int imin=999999;
 	double xext = ax_*zref+bx_;
@@ -229,7 +229,7 @@ void TemplateTk<A>::Print()
 
 }
 template <class A>
-void TemplateTk<A>::regression1D(std::vector<double> vx,std::vector<double> weight,std::vector<double> vy,double &chi2, double &alpha,double &beta)
+void TemplateTk<A>::regression1D(std::vector<double> &vx,std::vector<double> &weight,std::vector<double> &vy,double &chi2, double &alpha,double &beta)
 {
 	double x2=0,x=0,xy=0,y=0,w=0;
 	if (vx.size()<2) return;

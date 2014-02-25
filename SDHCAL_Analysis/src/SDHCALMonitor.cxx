@@ -43,7 +43,9 @@ void SDHCALMonitor::FillTimeAsic(IMPL::LCCollectionVec* rhcol)
 
 	double tmin=99999999.;
 	double tmax=0.;
+	//	printf("%d %s\n",__LINE__,__PRETTY_FUNCTION__);
 	this->DIFStudy(rhcol);
+	//	printf("%d %s\n",__LINE__,__PRETTY_FUNCTION__);
 	//IMPL::LCCollectionVec* rhcol=(IMPL::LCCollectionVec*) evt_->getCollection(collectionName_);
 	for (int i=0;i<rhcol->getNumberOfElements();i++)
 	{
@@ -73,6 +75,7 @@ void SDHCALMonitor::FillTimeAsic(IMPL::LCCollectionVec* rhcol)
 			theAsicCount_.insert(p);
 		}
 	}
+	//	printf("%d %s\n",__LINE__,__PRETTY_FUNCTION__);
 	theIntegratedTime_+=(tmax-tmin);
 	theEventIntegratedTime_=(tmax-tmin);
 	std::cout<<tmin<<" "<<tmax<<" => Event "<<theEventIntegratedTime_<<" total " <<theIntegratedTime_<<std::endl;
@@ -106,6 +109,7 @@ void SDHCALMonitor::FillTimeAsic(IMPL::LCCollectionVec* rhcol)
 
 
 	}
+	//	printf("%d %s\n",__LINE__,__PRETTY_FUNCTION__);
 	TH1* htdiff= rootHandler_->GetTH1("TimeDif");
 
 	if (htdiff==NULL)
@@ -154,7 +158,7 @@ void SDHCALMonitor::DIFStudy( IMPL::LCCollectionVec* rhcol)
 		int chamberLocalI=difgeom.toGlobalX(difLocalI);
 		int chamberLocalJ=difgeom.toGlobalY(difLocalJ);
 
-		//DEBUG_PRINT("%d %d %d %d %d %d \n",x,y,difLocalI,difLocalJ,chamberLocalI,chamberLocalJ);
+		//INFO_PRINT("%d %d %d %d %d %d \n",x,y,difLocalI,difLocalJ,chamberLocalI,chamberLocalJ);
 		std::stringstream namec("");
 		namec<<"/Chamber"<<chid<<"/DIF"<<difid;
 
@@ -165,14 +169,17 @@ void SDHCALMonitor::DIFStudy( IMPL::LCCollectionVec* rhcol)
 		TH1* hetdz = rootHandler_->GetTH1(namec.str()+"/EventTimeZoom");
 		
 		if (hhits0==0)
-		{
-			
-			hhits0 =rootHandler_->BookTH1( namec.str()+"/Hits0",48*64,0.1,48*64+0.1);
-			hhits1 =rootHandler_->BookTH1( namec.str()+"/Hits1",48*64,0.1,48*64+0.1);
-			hhits2 =rootHandler_->BookTH1( namec.str()+"/Hits2",48*64,0.1,48*64+0.1);
-			hetd =rootHandler_->BookTH1(namec.str()+"/EventTime",10000,0.,15E6);
-			hetdz =rootHandler_->BookTH1(namec.str()+"/EventTimeZoom",10000,0.,10000);
-		}
+		  {
+		    //		    printf("%s %d %s\n",namec.str().c_str(),__LINE__,__PRETTY_FUNCTION__);
+		    //::sleep(1);
+		    hhits0 =rootHandler_->BookTH1( namec.str()+"/Hits0",48*64,0.1,48*64+0.1);
+		    hhits1 =rootHandler_->BookTH1( namec.str()+"/Hits1",48*64,0.1,48*64+0.1);
+		    hhits2 =rootHandler_->BookTH1( namec.str()+"/Hits2",48*64,0.1,48*64+0.1);
+		    hetd =rootHandler_->BookTH1(namec.str()+"/EventTime",10000,0.,15E6);
+		    hetdz =rootHandler_->BookTH1(namec.str()+"/EventTimeZoom",10000,0.,10000);
+		    //		    printf("%d %s\n",__LINE__,__PRETTY_FUNCTION__);
+
+		  }
 		if (thr[0]||thr[2]) hhits0->SetBinContent((asic-1)*64+channel+1,hhits0->GetBinContent((asic-1)*64+channel+1)+1);
 		if (thr[1]||thr[0]||thr[2]) hhits1->SetBinContent((asic-1)*64+channel+1,hhits1->GetBinContent((asic-1)*64+channel+1)+1);
 		if (thr[2]) hhits2->SetBinContent((asic-1)*64+channel+1,hhits2->GetBinContent((asic-1)*64+channel+1)+1);
