@@ -169,6 +169,7 @@ class DCHistogramHandler
   void UnLock();
 	//! Dump to XML
 	void writeXML(std::string  path);
+	void writeSQL();
 	//! referennce to the instance
   static DCHistogramHandler* instance() ;
  private:

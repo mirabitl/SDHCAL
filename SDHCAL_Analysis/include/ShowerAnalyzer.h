@@ -44,6 +44,7 @@
 class ShowerAnalyzer : public DHCALAnalyzer
 {
 public:
+	ShowerAnalyzer();
 	ShowerAnalyzer(DHCalEventReader* r,DCHistogramHandler* h);
 	virtual ~ShowerAnalyzer(){;}
 	void initialise();
@@ -148,6 +149,7 @@ public:
 
 	void findTimeSeeds( IMPL::LCCollectionVec* rhcol, int32_t nhit_min,std::vector<uint32_t>& candidate);
 	uint32_t buildVolume(IMPL::LCCollectionVec* rhcol,uint32_t seed);
+	void processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed);
 	//void EdgeDetection(unsigned char imagev[60][96][96],unsigned char core[60][96][96],unsigned char edge[60][96][96]);
 	void EdgeDetection(array3D<unsigned char> &i,array3D<unsigned char> &c,array3D<unsigned char> &e);
 	//void sobel_volume(unsigned char *image1,float *image2,uint32_t x_size1,uint32_t y_size1,uint32_t z_size1 );

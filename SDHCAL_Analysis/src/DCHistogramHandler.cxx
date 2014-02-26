@@ -25,6 +25,7 @@ DCHistogramHandler* DCHistogramHandler::instance() {
 DCHistogramHandler::DCHistogramHandler()
 {
   theFile_=0;//new TFile("/dev/shm/DCHistograms.root","RECREATE");
+  TH1::AddDirectory(kFALSE);
   mapH1.clear();
   mapH2.clear();
   top = new AbsTreeNode("Top");
@@ -72,7 +73,7 @@ if (ih!=mapH2.end())
 }  
 TH1* DCHistogramHandler::BookTH1(std::string name,int nbinx,double xmin,double xmax)
 {
-  top->addFullName(name);
+  //@ Test top->addFullName(name);
   TH1F* h=NULL;
   try 
     {
@@ -84,7 +85,7 @@ TH1* DCHistogramHandler::BookTH1(std::string name,int nbinx,double xmin,double x
       return 0;
     }
 
-  h->SetDirectory(theFile_);
+  //h->SetDirectory(theFile_);
   std::pair<std::string,TH1*> pr(name,h);
   mapH1.insert(pr);
   //std::cout<<name<<" Booked"<<std::endl;
@@ -93,7 +94,7 @@ TH1* DCHistogramHandler::BookTH1(std::string name,int nbinx,double xmin,double x
 
 TH2* DCHistogramHandler::BookTH2(std::string name,int nbinx,double xmin,double xmax,int nbiny,double ymin,double ymax)
 {
-  top->addFullName(name);
+  //@ Test top->addFullName(name);
   TH2F* h=NULL;
   try 
     {
@@ -104,7 +105,7 @@ TH2* DCHistogramHandler::BookTH2(std::string name,int nbinx,double xmin,double x
       std::cerr << "bad_alloc caught: " << ba.what() << '\n';
       return 0;
     }
-  h->SetDirectory(theFile_);
+  //  h->SetDirectory(theFile_);
   std::pair<std::string,TH2*> pr(name,h);
   mapH2.insert(pr);
   //std::cout<<name<<" Booked"<<std::endl;
@@ -113,7 +114,7 @@ TH2* DCHistogramHandler::BookTH2(std::string name,int nbinx,double xmin,double x
 
 TH3* DCHistogramHandler::BookTH3(std::string name,int nbinx,double xmin,double xmax,int nbiny,double ymin,double ymax,int nbinz,double zmin,double zmax)
 {
-  top->addFullName(name);
+  //@ Test top->addFullName(name);
   TH3C* h =  NULL;
  try 
     {
@@ -133,7 +134,7 @@ TH3* DCHistogramHandler::BookTH3(std::string name,int nbinx,double xmin,double x
 
 TProfile* DCHistogramHandler::BookProfile(std::string name,int nbinx,double xmin,double xmax,double ymin,double ymax)
 {
-  top->addFullName(name);
+  //@ Test top->addFullName(name);
   TProfile* h=NULL;
   try {
     if (ymin<ymax) h=  new TProfile(name.c_str(),name.c_str(),nbinx,xmin,xmax,ymin,ymax);
@@ -144,7 +145,7 @@ TProfile* DCHistogramHandler::BookProfile(std::string name,int nbinx,double xmin
       std::cerr << "bad_alloc caught: " << ba.what() << '\n';
       return 0;
     }
-  h->SetDirectory(theFile_);
+  //  h->SetDirectory(theFile_);
   h->Sumw2();
   std::pair<std::string,TH1*> pr(name,h);
   //std::cout<<name<<" Booked"<<std::endl;
@@ -153,7 +154,7 @@ TProfile* DCHistogramHandler::BookProfile(std::string name,int nbinx,double xmin
 }
 TProfile2D* DCHistogramHandler::BookProfile2D(std::string name,int nbinx,double xmin,double xmax,int nbiny, double ymin,double ymax, double zmin, double zmax)
 {
-  top->addFullName(name);
+  //@ Test top->addFullName(name);
   TProfile2D* h=NULL;
   try {
     if (zmin<zmax)h=  new TProfile2D(name.c_str(),name.c_str(),nbinx,xmin,xmax,nbiny,ymin,ymax,zmin,zmax);
@@ -164,7 +165,7 @@ TProfile2D* DCHistogramHandler::BookProfile2D(std::string name,int nbinx,double 
       std::cerr << "bad_alloc caught: " << ba.what() << '\n';
       return 0;
     }
-  h->SetDirectory(theFile_);
+  //  h->SetDirectory(theFile_);
   h->Sumw2();
   std::pair<std::string,TH2*> pr(name,h);
   //std::cout<<name<<" Booked"<<std::endl;
@@ -303,9 +304,40 @@ void DCHistogramHandler::writeHistograms(std::string name)
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "TBufferXML.h"
+#include "TSQLFile.h"
 #include <iostream>
 #include <fstream>
+void DCHistogramHandler::writeSQL()
+{
+  /*
+  const char* dbname = "mysql://lyosdhcal11.in2p3.fr:3306/monitoring";
+  const char* username = "mirabito";
+  const char* userpass = "braze1";
 
+  // Clean data base and create primary tables
+  TSQLFile* f = new TSQLFile(dbname, "recreate", username, userpass);
+  // Write with standard I/O functions
+  */
+  TFile* f = new TFile("/dev/shm/Monitroing.root","RECREATE","RAW DATA");
+  f->cd();
+
+  for (std::map<std::string,TH1*>::iterator iter= mapH1.begin();iter!=mapH1.end();iter++)
+    {
+      iter->second->Write(iter->first.c_str());
+	}
+
+  for (std::map<std::string,TH2*>::iterator iter= mapH2.begin();iter!=mapH2.end();iter++)
+    {
+      iter->second->Write(iter->first.c_str());
+    }
+
+  f->Write();
+  f->Close();
+
+
+  // Close connection to DB
+  delete f;
+}
 void DCHistogramHandler::writeXML(std::string  path)
 {
  	std::string curpath=path;

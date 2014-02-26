@@ -45,6 +45,22 @@ void ShowerAnalyzer::initHistograms()
 {
   //  rootHandler_->BookTH1("/Clusters/EST1",100,0.,300.);
 }
+ShowerAnalyzer::ShowerAnalyzer() :trackIndex_(0),nAnalyzed_(0),clockSynchCut_(8), spillSize_(90000),maxHitCount_(500000),
+									     tkMinPoint_(3),tkExtMinPoint_(3),tkBigClusterSize_(32),tkChi2Cut_(0.01),tkDistCut_(5.),tkExtChi2Cut_(0.01),tkExtDistCut_(10.),tkAngularCut_(20.),zLastAmas_(134.),
+									     findTracks_(true),dropFirstSpillEvent_(false),useSynchronised_(true),chamberEdge_(5.),rebuild_(false),oldAlgo_(true),collectionName_("DHCALRawHits"),
+									     tkFirstChamber_(1),tkLastChamber_(61),useTk4_(false),offTimePrescale_(1),houghIndex_(0),theRhcolTime_(0.),theTimeSortTime_(0.),theTrackingTime_(0),
+									   theHistoTime_(0),theSeuil_(0),draw_(false),theSkip_(0),theMonitoring_(NULL),theMonitoringPeriod_(0),theMonitoringPath_("/dev/shm/Monitoring"),ntkbetween(0),theBCIDSpill_(0),theLastBCID_(0)
+{
+  reader_=DHCalEventReader::instance();
+  rootHandler_ =DCHistogramHandler::instance();
+  this->initialise();
+  HoughCut cuts;
+
+  theComputerHough_=new ComputerHough(&cuts);
+  theComputerHough_->DefaultCuts();
+  theMonitoring_=new SDHCALMonitor(reader_,rootHandler_);
+}
+
 
 ShowerAnalyzer::ShowerAnalyzer(DHCalEventReader* r,DCHistogramHandler* h) :trackIndex_(0),nAnalyzed_(0),clockSynchCut_(8), spillSize_(90000),maxHitCount_(500000),
 									     tkMinPoint_(3),tkExtMinPoint_(3),tkBigClusterSize_(32),tkChi2Cut_(0.01),tkDistCut_(5.),tkExtChi2Cut_(0.01),tkExtDistCut_(10.),tkAngularCut_(20.),zLastAmas_(134.),
@@ -616,6 +632,78 @@ void ShowerAnalyzer::findTimeSeeds( IMPL::LCCollectionVec* rhcol, int32_t nhit_m
   return ;
 }
 
+void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
+{
+
+  unsigned char temp[60*NX*NY];
+  array3D<unsigned char> tempim;
+  tempim.initialise(temp,60,NX,NY);
+  theNbShowers_=0;
+  ShowerParams ish;
+  std::vector<RecoHit*> vrh;
+
+  currentTime_=seed;
+  
+  theAbsoluteTime_=theBCID_-currentTime_;
+  if (theBCIDSpill_==0) theBCIDSpill_=theAbsoluteTime_;
+  if (theAbsoluteTime_-theBCIDSpill_>15/2E-7) theBCIDSpill_=theAbsoluteTime_;
+
+  DEBUG_PRINT("GTC %d DTC %d BCID %llu Current Time %llu Time SPill %f Distance %f \n",theGTC_,theDTC_,theBCID_,currentTime_,theBCIDSpill_*2E-7,(theAbsoluteTime_-theBCIDSpill_)*2E-7);
+       
+  tempim.clear();
+  // DEBUG_PRINT("Building voulume for %d \n",seed);
+  uint32_t nhits=buildVolume(rhcol,seed);
+  // DEBUG_PRINT("Edge detection for %d \n",seed);
+  buildEdges();
+  theNplans_=0;
+  
+  vrh.clear();
+  for (uint32_t k=0;k<60;k++)
+    { bool found=false;
+      for (uint32_t i=0;i<96;i++)
+	for (uint32_t j=0;j<96;j++)
+	  if (theImage_.getValue(k,i,j)>0) 
+	    {tempim.setValue(k,i/3,j/3,1);
+	      //printf("%d%d %d %d \n",i,j,hitVolume_[k][i][j].getFlag(RecoHit::EDGE),hitVolume_[k][i][j].getFlag(RecoHit::ISOLATED));
+	      //if ((hitVolume_[k][i][j].getFlag(RecoHit::EDGE)==1||hitVolume_[k][i][j].getFlag(RecoHit::ISOLATED)==1) )
+	      vrh.push_back(&hitVolume_[k][i][j]);
+	      found=true;}
+      if (found) theNplans_++;
+    }
+  
+  if (theNplans_<minChambersInTime_) return;
+      
+
+
+  Shower::computePrincipalComponents(vrh,(double*) &ish);
+  
+  if (sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1) return;
+  if (sqrt((ish.lambda[0])/ish.lambda[2])<0.05) return;
+  if (ish.xm[0]<5) return;
+  
+  double* v=ish.l2;
+  double p[3];
+  for (uint32_t i=0;i<3;i++) p[i]=v[i]/ish.lambda[2];
+  double* x=ish.xm;    
+  RecoCandTk t;
+  t.ax_ =p[0]/p[2];
+  t.ay_ =p[1]/p[2];
+  t.bx_=x[0]-t.ax_*x[2];
+  t.by_=x[1]-t.ay_*x[2];
+  if (t.bx_<5 || t.bx_>95) return;
+  if (t.by_<5 || t.by_>95) return;
+  if (!(abs(x[0]-55)<10&&abs(x[1]-49)<10)) return;
+  std::cout<<t.bx_<<std::endl;
+  uint32_t nshower=buildClusters(vrh);
+  // if (nshower>0) 
+  // 	{
+  // 	  printf("Angles %f %f \n",t.ax_,t.ay_);
+  // 	  INFO_PRINT(" %d Hits Composantes principales %f %f %f => %.2f  and %.2f  \n",vrh.size(),ish.lambda[0],ish.lambda[1],ish.lambda[2], sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2]), sqrt((ish.lambda[0])/ish.lambda[2]));
+  // 	  getchar();
+  // 	}
+  return;
+
+}
 uint32_t ShowerAnalyzer::buildVolume(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 {
   std::bitset<61> planes(0);
@@ -1177,7 +1265,7 @@ void ShowerAnalyzer::processEvent()
   
   evt_=reader_->getEvent();
   if (evt_->getEventNumber()<=theSkip_) return;
-  //printf("%d \n",evt_->getEventNumber());
+  printf("Processing %d - %d \n",evt_->getRunNumber(),evt_->getEventNumber());
 
   IMPL::LCCollectionVec* rhcol=NULL;
   bool rhcoltransient=false;
@@ -1237,8 +1325,11 @@ void ShowerAnalyzer::processEvent()
   if (!decodeTrigger(rhcol,spillSize_)) { if (rhcoltransient) delete rhcol;return;}
 
 
-
-
+  if (evt_->getEventNumber()%100 ==0)
+    rootHandler_->writeSQL();
+  //    rootHandler_->writeXML(theMonitoringPath_);
+ 
+  
 
   // unsigned char image[60][96][96];
   // unsigned char imagew[60][96][96];
@@ -1250,282 +1341,20 @@ void ShowerAnalyzer::processEvent()
 	
   printf("================>  %d  Number of seeds %d \n",evt_->getEventNumber(),(int) vseeds.size());
 
-  if (evt_->getEventNumber()%100 == 0)
-    rootHandler_->writeXML(theMonitoringPath_);
   if (vseeds.size()==0)  { if (rhcoltransient) delete rhcol;return;}
   // getchar();
   array3D<unsigned char> edges;
   edges.initialise(&theImageEdgeBuffer_[0],60,NX,NY);
   array3D<unsigned char> cores;
   cores.initialise(&theImageCoreBuffer_[0],60,NX,NY);
-  unsigned char temp[60*NX*NY];
-  array3D<unsigned char> tempim;
-  tempim.initialise(temp,60,NX,NY);
-  theNbShowers_=0;
-  ShowerParams ish;
-  std::vector<RecoHit*> vrh;
+ 
+
   for (std::vector<uint32_t>::iterator is=vseeds.begin();is!=vseeds.end();is++)
     {
-      currentTime_=(*is);
-
-      theAbsoluteTime_=theBCID_-currentTime_;
-      if (theBCIDSpill_==0) theBCIDSpill_=theAbsoluteTime_;
-      if (theAbsoluteTime_-theBCIDSpill_>15/2E-7) theBCIDSpill_=theAbsoluteTime_;
-
-      INFO_PRINT("GTC %d DTC %d BCID %llu Current Time %llu Time SPill %f Distance %f \n",theGTC_,theDTC_,theBCID_,currentTime_,theBCIDSpill_*2E-7,(theAbsoluteTime_-theBCIDSpill_)*2E-7);
-       
-      tempim.clear();
-      // DEBUG_PRINT("Building voulume for %d \n",(*is));
-      uint32_t nhits=buildVolume(rhcol,(*is));
-      // DEBUG_PRINT("Edge detection for %d \n",(*is));
-      //buildEdges();
-      theNplans_=0;
-
-      vrh.clear();
-      for (uint32_t k=0;k<60;k++)
-	{ bool found=false;
-	  for (uint32_t i=0;i<96;i++)
-	    for (uint32_t j=0;j<96;j++)
-	      if (theImage_.getValue(k,i,j)>0) 
-		{tempim.setValue(k,i/3,j/3,1);
-		  //printf("%d%d %d %d \n",i,j,hitVolume_[k][i][j].getFlag(RecoHit::EDGE),hitVolume_[k][i][j].getFlag(RecoHit::ISOLATED));
-		  //if ((hitVolume_[k][i][j].getFlag(RecoHit::EDGE)==1||hitVolume_[k][i][j].getFlag(RecoHit::ISOLATED)==1) )
-		    vrh.push_back(&hitVolume_[k][i][j]);
-		  found=true;}
-	  if (found) theNplans_++;
-	}
-      
-      if (theNplans_<minChambersInTime_) continue;
-      
-
-
-      Shower::computePrincipalComponents(vrh,(double*) &ish);
-
-      if (sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1) continue;
-      if (sqrt((ish.lambda[0])/ish.lambda[2])<0.05) continue;
-      if (ish.xm[0]<5) continue;
-
-      double* v=ish.l2;
-      double p[3];
-      for (uint32_t i=0;i<3;i++) p[i]=v[i]/ish.lambda[2];
-      double* x=ish.xm;    
-      RecoCandTk t;
-      t.ax_ =p[0]/p[2];
-      t.ay_ =p[1]/p[2];
-      t.bx_=x[0]-t.ax_*x[2];
-      t.by_=x[1]-t.ay_*x[2];
-      if (t.bx_<5 || t.bx_>95) continue;
-      if (t.by_<5 || t.by_>95) continue;
-      if (!(abs(x[0]-55)<10&&abs(x[1]-49)<10)) continue;
-      std::cout<<t.bx_<<std::endl;
-      uint32_t nshower=buildClusters(vrh);
-      // if (nshower>0) 
-      // 	{
-      // 	  printf("Angles %f %f \n",t.ax_,t.ay_);
-      // 	  INFO_PRINT(" %d Hits Composantes principales %f %f %f => %.2f  and %.2f  \n",vrh.size(),ish.lambda[0],ish.lambda[1],ish.lambda[2], sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2]), sqrt((ish.lambda[0])/ish.lambda[2]));
-      // 	  getchar();
-      // 	}
-      continue;
-
-      std::vector<RecoHit*> vrh1;
-      for (std::vector<RecoHit*>::iterator iht=vrh.begin();iht!=vrh.end();iht++)
-	{
-	  double xe=t.ax_*(*iht)->Z()+t.bx_;
-	  double ye=t.ay_*(*iht)->Z()+t.by_;
-	  double dist=sqrt((xe-(*iht)->X())*(xe-(*iht)->X())+(ye-(*iht)->Y())*(ye-(*iht)->Y()));
-	  if (dist<5)
-	    vrh1.push_back((*iht));
-	}
-      if (vrh1.size()>0.9*vrh.size())
-	{
-	  printf(" Une trace sans doute %ld hits near\n",vrh1.size());
-	  continue;
-	}
-      Shower::computePrincipalComponents(vrh1,(double*) &ish);
-      DEBUG_PRINT(" Second fit %d Composantes principales %f %f %f => %f \n",vrh1.size(),ish.lambda[0],ish.lambda[1],ish.lambda[2], sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2]));
-      if (vrh1.size()>0.8*vrh.size() && sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1) continue;
-
-
-      //this->PointsBuilder(vrh);
-      //this->draw(tkgood_,allpoints_);
-      // char c;c=getchar();putchar(c); if (c=='.') exit(0);;
-      if (nAnalyzed_ == 0)
-	{
-#ifdef USE_CULA
-	  culaStatus status = culaInitialize();
-	  printf("CULA is initialized %d \n",status);
-	  benchSgesvd(96);
-#endif
-	  theNtupleFile_= new TFile("theNtuple.root","RECREATE");
-	  theNtupleFile_->cd();
-	  theNtuple_=new TNtuple("nt","Summary ntuple","nall:nedge:ncore1:ncore2:nedge3:ncore3:nbig:zm:zf:zl:pa:w:np");
-
-	  for (uint32_t ipl=0;ipl<61;ipl++)
-	    {
-	      double* c = new double[64];
-	      for (uint32_t ipad=0;ipad<63;ipad++) c[ipad]=1.;
-	      std::pair<uint32_t,double*> p(ipl,c);
-	      theCorreff_.insert(p);
-				
-	    }
-
-	  try {
-	    this->readCalibration(evt_->getRunNumber());
-	  }
-	  catch(std::string s)
-	    {
-	      std::cout<<s<<std::endl;
-	    }
-
-	  if (useSqlite_)
-	    {
-	      std::stringstream sb;
-	      sb<<"/dev/shm/db"<<evt_->getRunNumber()<<".sl3";
-	      openSqlite(sb.str());
-	    }
-	  if (useMysql_)
-	    connect("mirabito/braze1@lyosdhcal11:BEAM_TEST_2012_E");
-
-	  //this->createTrees("./toto.root");
-	}
-      nAnalyzed_++;
-	
-
-      this->ShowerBuilder(vrh);
-      
-      continue;
-	
-      EdgeDetection(tempim,cores,edges);
-      vrh.clear();
-      // Remove isolated hits
-      for (uint32_t k=0;k<60;k++)
-	for (uint32_t i=0;i<96;i++)
-	  for (uint32_t j=0;j<96;j++)
-	    if (theImage_.getValue(k,i,j))
-	      {
-	
-		//		if (edges.getValue(k,i/3,j/3)==2)		  
-		//  theImage_.setValue(k,i,j,10);
-		//	else
-		  {
-		    vrh.push_back(&hitVolume_[k][i][j]);
-		  }
-	      }
-
-      Shower::computePrincipalComponents(vrh,(double*) &ish);
-
-      if (sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1) continue;
-      printf(" Second step %ld Hits Composantes principales %f %f %f => %f \n",vrh.size(),ish.lambda[0],ish.lambda[1],ish.lambda[2], sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2]));
-      uint32_t ng=(theTag_>>16)&0xFFFF;
-#define DRAW_DEBUG
-      if (theNedge_==theNall_ || theAmas_.size()==0 )
-	{
-	  theEdge3_=0;theCore3_=0;
-	  INFO_PRINT("%d Tracks!!!! Run %d Event %d Time %d Edge %d core %d Edge3 %d Core3 %d \n",nhits,evt_->getRunNumber(),evt_->getEventNumber(),currentTime_,theNedge_,theNall_,theEdge3_,theCore3_);
-	  this->TracksBuilder();
-	  theMonitoring_->trackHistos(tkgood_,allpoints_);
-	  if (useMysql_) this->track2Db(tkgood_,allpoints_);
-	  ntkbetween+=tkgood_.size();
-#ifdef DRAW_DEBUG
-	  if (tkgood_.size() == 10 && tkgood_[0].getList().size()<40 
-	      && TMath::Abs(tkgood_[0].ax_)<0.1 
-	      &&TMath::Abs(tkgood_[0].ay_)<0.1 
-	      && TMath::Abs(tkgood_[0].bx_-50)<20 
-	      && TMath::Abs(tkgood_[0].by_-50)<20)
-	    {
-	      this->draw(tkgood_,allpoints_);
-	      char c;c=getchar();putchar(c); if (c=='.') exit(0);;
-	    }
-	  if (0)
-	    {
-	      this->draw(tkgood_,allpoints_);
-	      char c;c=getchar();putchar(c); if (c=='.') exit(0);;
-	    }
-#endif
-	  continue;
-	}		
-      if (theAmas_.size()==0) continue;
-      uint32_t ncore=0,nedge=0,nall=0,ncore1=0,ncore2=0;
-      for (uint32_t k=0;k<60;k++)
-	for (uint32_t i=0;i<96;i++)
-	  for (uint32_t j=0;j<96;j++)
-	    if (theImage_.getValue(k,i,j))
-	      {
-		nall++;
-		int ithr=hitVolume_[k][i][j].getAmplitude()&0x3;
-		//if (ithr==1) 
-		//if (ithr==2) {w=1;nh1[ch]++;}
-		//if (ithr==3) {w=15;nh2[ch]++;}
-		if (cores.getValue(k,i/3,j/3))
-		  {
-		    ncore++;
-		    if (ithr==3) ncore2++;
-		    if (ithr==1) ncore1++;
-		  }
-		else
-		  nedge++;
-	      }
-
-      DEBUG_PRINT("%d amas ALL: %d  EDGE: %d CORE: %d %d %d =====================================> %f Energy: %f \n",ng,nall,nedge,ncore,ncore1,ncore2,nedge*100./nall,(nedge+ncore-ncore2-ncore1)*0.05+ncore1*0.15+ncore2*0.35);
-		
-
-      theBigCore_=mergeAmas(cores,edges);
-      theCore1_=ncore1;
-      theCore2_=ncore2;
-      INFO_PRINT("%d Run %d Event %d Time %llu - %d Edge %d All %d Edge3 %d Core3 %d ==> %d\n",nhits,evt_->getRunNumber(),evt_->getEventNumber(),theBCID_,currentTime_,theNedge_,theNall_,theEdge3_,theCore3_,ntkbetween);
-		
-      if (theNedge_*1./theNall_>0.01 &&theNedge_*1./theNall_<0.8 )
-	{
-	  //newHT3(cores);
-			
-	  //DEBUG_PRINT("1\n");
-	  theNtupleFile_->cd();
-	  theNtuple_->Fill(1.*theNall_,1.*theNedge_,1.*theCore1_,1.*theCore2_,1.*theEdge3_,1.*theCore3_,1.*theBigCore_,theZMax_,theZFirst_,theZLast_,thePlanAfter_,theWeights_*1.,theNplans_*1.);
-	  //DEBUG_PRINT("2\n");
-	  DEBUG_PRINT("En 3x3 %d %d %d \n",theEdge3_,theCore3_,theWeights_);
-	  if (theNedge_*1./theNall_<0.6  && theNall_>150)
-	    ntkbetween=0;
-#ifdef DRAW_DEBUG
-	  if (nAnalyzed_%1!=0 || theBigCore_>=1)
-	    {
-	      printf("DRASWING!!!!!!!!!!!!!!!!!!!!!!! %d %d \n",nAnalyzed_,theBigCore_);
-	      this->draw(theImage_,cores,edges);
-	      char c;c=getchar();putchar(c); if (c=='.') exit(0);;
-	    }
-#endif
-	  //theHTx_->Draw(rootHandler_);theHTy_->Draw(rootHandler_);
-	}
-      else 
-	{
-	  this->TracksBuilder();
-	  theMonitoring_->trackHistos(tkgood_,allpoints_);
-	  if (useMysql_) this->track2Db(tkgood_,allpoints_);
-#ifdef DRAW_DEBUG
-	  if (tkgood_.size() == 1 && tkgood_[0].getList().size()<40 
-	      && TMath::Abs(tkgood_[0].ax_)<0.1 
-	      &&TMath::Abs(tkgood_[0].ay_)<0.1 
-	      && TMath::Abs(tkgood_[0].bx_-50)<20 
-	      && TMath::Abs(tkgood_[0].by_-50)<20)
-	    {
-	      this->draw(tkgood_,allpoints_);
-	      char c;c=getchar();putchar(c); if (c=='.') exit(0);;
-	    }
-
-	  this->draw(tkgood_,allpoints_);
-	  char c;c=getchar();putchar(c); if (c=='.') exit(0);;
-#endif
-	  ntkbetween+=tkgood_.size();
-	}
-      if (theMonitoringPeriod_!=0)
-	if (nAnalyzed_%theMonitoringPeriod_ ==0)	
-	  {
-	    rootHandler_->writeXML(theMonitoringPath_);
-	    //char c;c=getchar();putchar(c); if (c=='.') exit(0);;
-		
-	  }
+      this->processSeed(rhcol,(*is));
     }
 
-  
+  if (rhcoltransient) delete rhcol;return;  
   if ((theBCID_-theLastBCID_)*2E-7>5)
     {
       theBCIDSpill_=theBCID_;
@@ -8700,3 +8529,262 @@ void ShowerAnalyzer::buildEdges()
     }
 #endif
 }
+/*
+      currentTime_=(*is);
+
+      theAbsoluteTime_=theBCID_-currentTime_;
+      if (theBCIDSpill_==0) theBCIDSpill_=theAbsoluteTime_;
+      if (theAbsoluteTime_-theBCIDSpill_>15/2E-7) theBCIDSpill_=theAbsoluteTime_;
+
+      DEBUG_PRINT("GTC %d DTC %d BCID %llu Current Time %llu Time SPill %f Distance %f \n",theGTC_,theDTC_,theBCID_,currentTime_,theBCIDSpill_*2E-7,(theAbsoluteTime_-theBCIDSpill_)*2E-7);
+       
+      tempim.clear();
+      // DEBUG_PRINT("Building voulume for %d \n",(*is));
+      uint32_t nhits=buildVolume(rhcol,(*is));
+      // DEBUG_PRINT("Edge detection for %d \n",(*is));
+      //buildEdges();
+      theNplans_=0;
+
+      vrh.clear();
+      for (uint32_t k=0;k<60;k++)
+	{ bool found=false;
+	  for (uint32_t i=0;i<96;i++)
+	    for (uint32_t j=0;j<96;j++)
+	      if (theImage_.getValue(k,i,j)>0) 
+		{tempim.setValue(k,i/3,j/3,1);
+		  //printf("%d%d %d %d \n",i,j,hitVolume_[k][i][j].getFlag(RecoHit::EDGE),hitVolume_[k][i][j].getFlag(RecoHit::ISOLATED));
+		  //if ((hitVolume_[k][i][j].getFlag(RecoHit::EDGE)==1||hitVolume_[k][i][j].getFlag(RecoHit::ISOLATED)==1) )
+		    vrh.push_back(&hitVolume_[k][i][j]);
+		  found=true;}
+	  if (found) theNplans_++;
+	}
+      
+      if (theNplans_<minChambersInTime_) continue;
+      
+
+
+      Shower::computePrincipalComponents(vrh,(double*) &ish);
+
+      if (sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1) continue;
+      if (sqrt((ish.lambda[0])/ish.lambda[2])<0.05) continue;
+      if (ish.xm[0]<5) continue;
+
+      double* v=ish.l2;
+      double p[3];
+      for (uint32_t i=0;i<3;i++) p[i]=v[i]/ish.lambda[2];
+      double* x=ish.xm;    
+      RecoCandTk t;
+      t.ax_ =p[0]/p[2];
+      t.ay_ =p[1]/p[2];
+      t.bx_=x[0]-t.ax_*x[2];
+      t.by_=x[1]-t.ay_*x[2];
+      if (t.bx_<5 || t.bx_>95) continue;
+      if (t.by_<5 || t.by_>95) continue;
+      if (!(abs(x[0]-55)<10&&abs(x[1]-49)<10)) continue;
+      std::cout<<t.bx_<<std::endl;
+      uint32_t nshower=buildClusters(vrh);
+      // if (nshower>0) 
+      // 	{
+      // 	  printf("Angles %f %f \n",t.ax_,t.ay_);
+      // 	  INFO_PRINT(" %d Hits Composantes principales %f %f %f => %.2f  and %.2f  \n",vrh.size(),ish.lambda[0],ish.lambda[1],ish.lambda[2], sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2]), sqrt((ish.lambda[0])/ish.lambda[2]));
+      // 	  getchar();
+      // 	}
+      continue;
+
+      std::vector<RecoHit*> vrh1;
+      for (std::vector<RecoHit*>::iterator iht=vrh.begin();iht!=vrh.end();iht++)
+	{
+	  double xe=t.ax_*(*iht)->Z()+t.bx_;
+	  double ye=t.ay_*(*iht)->Z()+t.by_;
+	  double dist=sqrt((xe-(*iht)->X())*(xe-(*iht)->X())+(ye-(*iht)->Y())*(ye-(*iht)->Y()));
+	  if (dist<5)
+	    vrh1.push_back((*iht));
+	}
+      if (vrh1.size()>0.9*vrh.size())
+	{
+	  printf(" Une trace sans doute %ld hits near\n",vrh1.size());
+	  continue;
+	}
+      Shower::computePrincipalComponents(vrh1,(double*) &ish);
+      DEBUG_PRINT(" Second fit %d Composantes principales %f %f %f => %f \n",vrh1.size(),ish.lambda[0],ish.lambda[1],ish.lambda[2], sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2]));
+      if (vrh1.size()>0.8*vrh.size() && sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1) continue;
+
+
+      //this->PointsBuilder(vrh);
+      //this->draw(tkgood_,allpoints_);
+      // char c;c=getchar();putchar(c); if (c=='.') exit(0);;
+      if (nAnalyzed_ == 0)
+	{
+#ifdef USE_CULA
+	  culaStatus status = culaInitialize();
+	  printf("CULA is initialized %d \n",status);
+	  benchSgesvd(96);
+#endif
+	  theNtupleFile_= new TFile("theNtuple.root","RECREATE");
+	  theNtupleFile_->cd();
+	  theNtuple_=new TNtuple("nt","Summary ntuple","nall:nedge:ncore1:ncore2:nedge3:ncore3:nbig:zm:zf:zl:pa:w:np");
+
+	  for (uint32_t ipl=0;ipl<61;ipl++)
+	    {
+	      double* c = new double[64];
+	      for (uint32_t ipad=0;ipad<63;ipad++) c[ipad]=1.;
+	      std::pair<uint32_t,double*> p(ipl,c);
+	      theCorreff_.insert(p);
+				
+	    }
+
+	  try {
+	    this->readCalibration(evt_->getRunNumber());
+	  }
+	  catch(std::string s)
+	    {
+	      std::cout<<s<<std::endl;
+	    }
+
+	  if (useSqlite_)
+	    {
+	      std::stringstream sb;
+	      sb<<"/dev/shm/db"<<evt_->getRunNumber()<<".sl3";
+	      openSqlite(sb.str());
+	    }
+	  if (useMysql_)
+	    connect("mirabito/braze1@lyosdhcal11:BEAM_TEST_2012_E");
+
+	  //this->createTrees("./toto.root");
+	}
+      nAnalyzed_++;
+	
+
+      this->ShowerBuilder(vrh);
+      
+      continue;
+	
+      EdgeDetection(tempim,cores,edges);
+      vrh.clear();
+      // Remove isolated hits
+      for (uint32_t k=0;k<60;k++)
+	for (uint32_t i=0;i<96;i++)
+	  for (uint32_t j=0;j<96;j++)
+	    if (theImage_.getValue(k,i,j))
+	      {
+	
+		//		if (edges.getValue(k,i/3,j/3)==2)		  
+		//  theImage_.setValue(k,i,j,10);
+		//	else
+		  {
+		    vrh.push_back(&hitVolume_[k][i][j]);
+		  }
+	      }
+
+      Shower::computePrincipalComponents(vrh,(double*) &ish);
+
+      if (sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1) continue;
+      printf(" Second step %ld Hits Composantes principales %f %f %f => %f \n",vrh.size(),ish.lambda[0],ish.lambda[1],ish.lambda[2], sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2]));
+      uint32_t ng=(theTag_>>16)&0xFFFF;
+#define DRAW_DEBUG
+      if (theNedge_==theNall_ || theAmas_.size()==0 )
+	{
+	  theEdge3_=0;theCore3_=0;
+	  INFO_PRINT("%d Tracks!!!! Run %d Event %d Time %d Edge %d core %d Edge3 %d Core3 %d \n",nhits,evt_->getRunNumber(),evt_->getEventNumber(),currentTime_,theNedge_,theNall_,theEdge3_,theCore3_);
+	  this->TracksBuilder();
+	  theMonitoring_->trackHistos(tkgood_,allpoints_);
+	  if (useMysql_) this->track2Db(tkgood_,allpoints_);
+	  ntkbetween+=tkgood_.size();
+#ifdef DRAW_DEBUG
+	  if (tkgood_.size() == 10 && tkgood_[0].getList().size()<40 
+	      && TMath::Abs(tkgood_[0].ax_)<0.1 
+	      &&TMath::Abs(tkgood_[0].ay_)<0.1 
+	      && TMath::Abs(tkgood_[0].bx_-50)<20 
+	      && TMath::Abs(tkgood_[0].by_-50)<20)
+	    {
+	      this->draw(tkgood_,allpoints_);
+	      char c;c=getchar();putchar(c); if (c=='.') exit(0);;
+	    }
+	  if (0)
+	    {
+	      this->draw(tkgood_,allpoints_);
+	      char c;c=getchar();putchar(c); if (c=='.') exit(0);;
+	    }
+#endif
+	  continue;
+	}		
+      if (theAmas_.size()==0) continue;
+      uint32_t ncore=0,nedge=0,nall=0,ncore1=0,ncore2=0;
+      for (uint32_t k=0;k<60;k++)
+	for (uint32_t i=0;i<96;i++)
+	  for (uint32_t j=0;j<96;j++)
+	    if (theImage_.getValue(k,i,j))
+	      {
+		nall++;
+		int ithr=hitVolume_[k][i][j].getAmplitude()&0x3;
+		//if (ithr==1) 
+		//if (ithr==2) {w=1;nh1[ch]++;}
+		//if (ithr==3) {w=15;nh2[ch]++;}
+		if (cores.getValue(k,i/3,j/3))
+		  {
+		    ncore++;
+		    if (ithr==3) ncore2++;
+		    if (ithr==1) ncore1++;
+		  }
+		else
+		  nedge++;
+	      }
+
+      DEBUG_PRINT("%d amas ALL: %d  EDGE: %d CORE: %d %d %d =====================================> %f Energy: %f \n",ng,nall,nedge,ncore,ncore1,ncore2,nedge*100./nall,(nedge+ncore-ncore2-ncore1)*0.05+ncore1*0.15+ncore2*0.35);
+		
+
+      theBigCore_=mergeAmas(cores,edges);
+      theCore1_=ncore1;
+      theCore2_=ncore2;
+      INFO_PRINT("%d Run %d Event %d Time %llu - %d Edge %d All %d Edge3 %d Core3 %d ==> %d\n",nhits,evt_->getRunNumber(),evt_->getEventNumber(),theBCID_,currentTime_,theNedge_,theNall_,theEdge3_,theCore3_,ntkbetween);
+		
+      if (theNedge_*1./theNall_>0.01 &&theNedge_*1./theNall_<0.8 )
+	{
+	  //newHT3(cores);
+			
+	  //DEBUG_PRINT("1\n");
+	  theNtupleFile_->cd();
+	  theNtuple_->Fill(1.*theNall_,1.*theNedge_,1.*theCore1_,1.*theCore2_,1.*theEdge3_,1.*theCore3_,1.*theBigCore_,theZMax_,theZFirst_,theZLast_,thePlanAfter_,theWeights_*1.,theNplans_*1.);
+	  //DEBUG_PRINT("2\n");
+	  DEBUG_PRINT("En 3x3 %d %d %d \n",theEdge3_,theCore3_,theWeights_);
+	  if (theNedge_*1./theNall_<0.6  && theNall_>150)
+	    ntkbetween=0;
+#ifdef DRAW_DEBUG
+	  if (nAnalyzed_%1!=0 || theBigCore_>=1)
+	    {
+	      printf("DRASWING!!!!!!!!!!!!!!!!!!!!!!! %d %d \n",nAnalyzed_,theBigCore_);
+	      this->draw(theImage_,cores,edges);
+	      char c;c=getchar();putchar(c); if (c=='.') exit(0);;
+	    }
+#endif
+	  //theHTx_->Draw(rootHandler_);theHTy_->Draw(rootHandler_);
+	}
+      else 
+	{
+	  this->TracksBuilder();
+	  theMonitoring_->trackHistos(tkgood_,allpoints_);
+	  if (useMysql_) this->track2Db(tkgood_,allpoints_);
+#ifdef DRAW_DEBUG
+	  if (tkgood_.size() == 1 && tkgood_[0].getList().size()<40 
+	      && TMath::Abs(tkgood_[0].ax_)<0.1 
+	      &&TMath::Abs(tkgood_[0].ay_)<0.1 
+	      && TMath::Abs(tkgood_[0].bx_-50)<20 
+	      && TMath::Abs(tkgood_[0].by_-50)<20)
+	    {
+	      this->draw(tkgood_,allpoints_);
+	      char c;c=getchar();putchar(c); if (c=='.') exit(0);;
+	    }
+
+	  this->draw(tkgood_,allpoints_);
+	  char c;c=getchar();putchar(c); if (c=='.') exit(0);;
+#endif
+	  ntkbetween+=tkgood_.size();
+	}
+      if (theMonitoringPeriod_!=0)
+	if (nAnalyzed_%theMonitoringPeriod_ ==0)	
+	  {
+	    rootHandler_->writeXML(theMonitoringPath_);
+	    //char c;c=getchar();putchar(c); if (c=='.') exit(0);;
+		
+	  }
+*/

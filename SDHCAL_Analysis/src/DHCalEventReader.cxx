@@ -12,6 +12,16 @@ using namespace lcio ;
 
 #define CHECK_BIT(var,pos) ((var)& (1<<(pos)))
 
+DHCalEventReader* DHCalEventReader::_me = 0 ;
+
+
+DHCalEventReader* DHCalEventReader::instance() {
+  
+  if( _me == 0 ) 
+    _me = new DHCalEventReader ;
+  
+  return _me ;
+}  
 //static DCFrame theFrameBuffer[256*48*128];
 DHCalEventReader::DHCalEventReader() :dropFirstRU_(true),theXdaqShift_(92),currentFileName_("NONE")
 {
