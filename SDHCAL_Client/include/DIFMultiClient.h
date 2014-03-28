@@ -28,9 +28,11 @@ public:
   uint32_t Destroy();
   uint32_t createProxy(uint32_t nd,bool onDisk);
   inline void setProxy( ShmProxy* s){ theProxy_=s;}
-	inline CCCClient* getCCCClient() {return theCCCClient_;}
-	inline DIFClient* getDIFClient(uint32_t i){return theDIFClients_[i];}
-	friend std::ostream& operator<<(std::ostream& os, const DIFMultiClient& dt);
+  inline CCCClient* getCCCClient() {return theCCCClient_;}
+  inline DIFClient* getDIFClient(uint32_t i){return theDIFClients_[i];}
+  friend std::ostream& operator<<(std::ostream& os, const DIFMultiClient& dt);
+  inline uint32_t getRunNumber(){return theProxy_->getRunNumber();}
+  inline uint32_t getEventNumber(){return theProxy_->getEventNumber();}
 
  private:
   std::vector<DIFClient*> theDIFClients_;
