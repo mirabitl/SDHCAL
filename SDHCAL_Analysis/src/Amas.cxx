@@ -44,6 +44,12 @@ void Amas::compute()
 		if (ithr==3) nh[2]++;
 	}
 }
+void Amas::Print()
+{
+  printf("-> %d %d %d : %f ==>",nh[0],nh[1],nh[2],getVolume());
+  for (int i=0;i<21;i++) printf("%f ",theComponents_[i]);printf("\n");
+}
+double Amas::getVolume(){return 4/3*3.14159265359*sqrt(theComponents_[3]*theComponents_[4]*theComponents_[5])*10.1/2.8;}
 double Amas::getComponents(uint32_t i) {return theComponents_[i];}
 double* Amas::Components() {return &theComponents_[0];}
 uint32_t* Amas::Hits(){return &nh[0];}

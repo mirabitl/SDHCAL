@@ -56,7 +56,7 @@ bool TemplateTk<A>::addPoints(std::vector<A> v, double dcut)
 }
 #else
 template <class A>
-bool TemplateTk<A>::addPoints(std::vector<A> v, double dcut)
+bool TemplateTk<A>::addPoints(std::vector<A> &v, double dcut)
 {
 	std::vector<double> zpos;
 	// Loop on point and 
@@ -93,7 +93,7 @@ bool TemplateTk<A>::addPoints(std::vector<A> v, double dcut)
 }
 #endif
 template <class A> 
-bool TemplateTk<A>::addChi2Points(std::vector<A> v, double dcut, std::vector< typename std::vector<A>::iterator>* used)
+bool TemplateTk<A>::addChi2Points(std::vector<A> &v, double dcut, std::vector< typename std::vector<A>::iterator>* used)
 {
 	std::vector<double> zpos;
 	// Loop on point and 
@@ -133,7 +133,7 @@ double TemplateTk<A>::calculateDistance(A& p)
 	return dist1;
 }
 template <class A>
-bool TemplateTk<A>::addPoints(std::vector<A> v, double zref,double xcut, double ycut)
+bool TemplateTk<A>::addPoints(std::vector<A> &v, double zref,double xcut, double ycut)
 {
 	double distmin=9999.; unsigned int imin=999999;
 	double xext = ax_*zref+bx_;
@@ -156,6 +156,8 @@ bool TemplateTk<A>::addPoints(std::vector<A> v, double zref,double xcut, double 
 	// if (fabs(v[imin].Y()-yext)> ycut) return false;
 	list_.push_back(&v[imin]);
 	dist_.push_back(0);
+	if (v[imin].Z()<zmin_) zmin_=v[imin].Z();
+	if (v[imin].Z()>zmax_) zmax_=v[imin].Z();
 	regression();
 	return true; 
 
@@ -214,18 +216,20 @@ bool TemplateTk<A>::addPoint(A& p,double xcut, double ycut)
 	if (fabs(p.Y()-yext)> ycut) return false;
 	list_.push_back(&p);
 	dist_.push_back(0);
+	if (p.Z()<zmin_) zmin_=p.Z();
+	if (p.Z()>zmax_) zmax_=p.Z();
 	regression();
 	return true;
 } 
 template <class A>
 void TemplateTk<A>::Print()
 {
-	DEBUG_PRINT("%f %f %f %f %f \n",ax_,bx_,ay_,by_,chi2_);
+  INFO_PRINT("%d hits X (%f,%f)  Y (%f,%f) Chi2 %f \n",list_.size(),ax_,bx_,ay_,by_,chi2_);
 	// for (unsigned int i=0;i<list_.size();i++) list_[i]->Print();
 
 }
 template <class A>
-void TemplateTk<A>::regression1D(std::vector<double> vx,std::vector<double> weight,std::vector<double> vy,double &chi2, double &alpha,double &beta)
+void TemplateTk<A>::regression1D(std::vector<double> &vx,std::vector<double> &weight,std::vector<double> &vy,double &chi2, double &alpha,double &beta)
 {
 	double x2=0,x=0,xy=0,y=0,w=0;
 	if (vx.size()<2) return;
@@ -268,8 +272,8 @@ void TemplateTk<A>::regression()
 	double z2bar =0;
 	double zxbar=0;
 	double zybar=0;
-	firstChamber_=100;
-	lastChamber_=0;
+	firstChamber_=1000;
+	lastChamber_=-1000;
 	double wxt=0;
 	double wyt=0;
 	std::vector<double> vx;

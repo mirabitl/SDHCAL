@@ -1,43 +1,47 @@
-#include "RecoHit.h"
+#include "UtilDefs.h"
+#include "GeoPoint.h"
 #include "Shower.h"
-#include <stdio.h>
-#include <iostream>
 #include <Eigen/Dense>
 using namespace Eigen;
-RecoHit::RecoHit(DifGeom& d, ChamberGeom& c,IMPL::RawCalorimeterHitImpl* h,uint32_t hrtype) : dg_(d),cg_(c),raw_(h),shower_(0)
 
+const double posError=0.5;
+
+const double pad2cm=1.04125;
+
+
+GeoPoint::GeoPoint(unsigned int ch,double x,double y,double z,double dx,double dy) : inTrack_(false)
 {
-	int asicid = (h->getCellID0()&0xFF00)>>8;
-	int channel= (h->getCellID0()&0x3F0000)>>16;
-	int x=0,y=0;
-	DifGeom::PadConvert(asicid,channel,x,y,hrtype);
-	difLocalI_=int(x);
-	difLocalJ_=int(y);
-	chamberLocalI_=dg_.toGlobalX(difLocalI_);
-	chamberLocalJ_=dg_.toGlobalY(difLocalJ_);
-	double zg=0;
-	cg_.calculateGlobal(chamberLocalI_,chamberLocalJ_,0,x_,y_,zg);
-	nnear_=0;
+
+	x_=x*pad2cm;
+	y_=y*pad2cm;
+	dx_=dx*pad2cm;
+	dy_=dy*pad2cm;
+
+	z_=z;
+	chId_=ch;
+	//	vnear_.reserve(100);
 	//	vnear_.clear();
 }
-/*bool RecoHit::addNearby(RecoHit* h,float distcut)
+
+void GeoPoint::Print()
+{
+	printf("%d %f %f %f \n",chId_,x_,y_,z_);
+
+}
+/*
+bool GeoPoint::addNearby(GeoPoint* h,float distcut)
 {
   float x0=X(),y0=Y(),z0=Z(),x1=h->X(),y1=h->Y(),z1=h->Z();
   float dist=sqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0)+(z1-z0)*(z1-z0));
-  if (dist<distcut && nnear_<100) {vnear_.push_back((*h));nnear_++;return true;}
+  if (dist<distcut) {vnear_.push_back(h);return true;}
   return false;
 }
+void GeoPoint::calculateComponents()
 */
-void RecoHit::clear()
-{
-  //  vnear_.clear();
-  nnear_=0;
-}
-void RecoHit::calculateComponents(std::vector<RecoHit*> vnear_)
+  void GeoPoint::calculateComponents(std::vector<GeoPoint*> vnear_)
 {
   memset(components_,0,21*sizeof(double));
-  nnear_=vnear_.size();
-  if (nnear_<3) return;
+  if (vnear_.size()<3) return;
   uint32_t nh=0;
   double xb=0,yb=0,zb=0;
   double wt=0.;
@@ -51,9 +55,9 @@ void RecoHit::calculateComponents(std::vector<RecoHit*> vnear_)
 
   memset(components_,0,21*sizeof(double));
   //INFO_PRINT("%d vector size\n",v.size());
-  for (std::vector<RecoHit*>::iterator it=vnear_.begin();it!=vnear_.end();it++)
+  for (std::vector<GeoPoint*>::iterator it=vnear_.begin();it!=vnear_.end();it++)
     {
-      RecoHit* iht=(*it);
+      GeoPoint* iht=(*it);
       if (iht==NULL) continue;
       //INFO_PRINT("%x %d %d \n",iht,iht->I(),iht->J());
       //INFO_PRINT("%f %f \n",iht->x(),iht->y());
@@ -93,11 +97,9 @@ void RecoHit::calculateComponents(std::vector<RecoHit*> vnear_)
   wt=0.;
 	//firstPlan_=99;
 
- 	  
- 
- for (std::vector<RecoHit*>::iterator it=vnear_.begin();it!=vnear_.end();it++)
+  for (std::vector<GeoPoint*>::iterator it=vnear_.begin();it!=vnear_.end();it++)
     {
-      RecoHit* iht=(*it);
+      GeoPoint* iht=(*it);	  
       m(nh,0)=iht->X()-xb;
       mt(0,nh) =iht->X()-xb;
       m(nh,1)=iht->Y()-yb;
@@ -150,32 +152,4 @@ void RecoHit::calculateComponents(std::vector<RecoHit*> vnear_)
   components_[19]=fy;
   components_[20]=ly;
 
-  //Shower::computePrincipalComponents(vnear_,components_);
 }
-void RecoHit::initialise(DifGeom& d, ChamberGeom& c,IMPL::RawCalorimeterHitImpl* h,uint32_t hrtype) 
-{
-
-	dg_=d;cg_=c;raw_=h;
-	int asicid = (h->getCellID0()&0xFF00)>>8;
-	int channel= (h->getCellID0()&0x3F0000)>>16;
-	int x=0,y=0;
-	DifGeom::PadConvert(asicid,channel,x,y,hrtype);
-	difLocalI_=int(x);
-	difLocalJ_=int(y);
-	chamberLocalI_=dg_.toGlobalX(difLocalI_);
-	chamberLocalJ_=dg_.toGlobalY(difLocalJ_);
-
-	double zg=0;
-	cg_.calculateGlobal(chamberLocalI_,chamberLocalJ_,0,x_,y_,zg);
-
-	
-	//vnear_.clear();
-	nnear_=0;
-	//printf("h4\n");
-
-
-}
-double RecoHit::X(){return x_;}
-double RecoHit::Y(){return y_;}
-double RecoHit::Z(){ return cg_.getZ();}
-int RecoHit::chamber(){return cg_.getId();}

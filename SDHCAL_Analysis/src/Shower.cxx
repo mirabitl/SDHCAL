@@ -996,7 +996,7 @@ uint32_t Shower::getNumberOfHits(uint32_t plan,uint32_t threshold)
 	}
 	return nh[threshold]; 
 }
-double Shower::getCorrectedNumberOfHits(uint32_t plan,uint32_t threshold,std::map<uint32_t,double* > correff)
+double Shower::getCorrectedNumberOfHits(uint32_t plan,uint32_t threshold,std::map<uint32_t,double* > &correff)
 {
 	std::map<uint32_t,std::vector<RecoHit> >::iterator ipl=thePlans_.find(plan);
 	double nh[3];

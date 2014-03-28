@@ -113,8 +113,8 @@ class DCHistogramHandler
       @param name Name of the histogram
       @return a TH1* ptr
    */
-  TH1* GetTH1(std::string name) 
-{ if (mapH1.find(name)!=mapH1.end()) return mapH1[name]; else return 0;} 
+  TH1* GetTH1(std::string name); 
+  //{ if (mapH1.find(name)!=mapH1.end()) return mapH1[name]; else return 0;} 
 
 
   //! Return a pointer to the TH2
@@ -122,8 +122,8 @@ class DCHistogramHandler
       @param name Name of the histogram
       @return a Th2* ptr
    */
-  TH2* GetTH2(std::string name) 
-    { if (mapH2.find(name)!=mapH2.end()) return mapH2[name];else return 0; } 
+  TH2* GetTH2(std::string name); 
+  //{ if (mapH2.find(name)!=mapH2.end()) return mapH2[name];else return 0; } 
   
   //! Return a pointer to the TH3
  /** 
@@ -169,6 +169,7 @@ class DCHistogramHandler
   void UnLock();
 	//! Dump to XML
 	void writeXML(std::string  path);
+	void writeSQL();
 	//! referennce to the instance
   static DCHistogramHandler* instance() ;
  private:
@@ -178,6 +179,7 @@ class DCHistogramHandler
 
   AbsTreeNode* top;
   sem_t theMutex_;
+  TFile* theFile_;
   static DCHistogramHandler*  _me ;
 };
 

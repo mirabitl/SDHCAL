@@ -38,10 +38,13 @@
 #include "Shower.h"
 #include "Amas.h"
 #include "SDHCALMonitor.h"
+#include "libhoughStruct.h"
+#include <ComputerHough.h>
 
 class ShowerAnalyzer : public DHCALAnalyzer
 {
 public:
+	ShowerAnalyzer();
 	ShowerAnalyzer(DHCalEventReader* r,DCHistogramHandler* h);
 	virtual ~ShowerAnalyzer(){;}
 	void initialise();
@@ -78,11 +81,13 @@ public:
 	void setClockSynchCut(unsigned int t){clockSynchCut_=t;}
 	void setSpillSize(double t){spillSize_=t;}
 
-	uint32_t NoiseStudy(std::map<uint32_t,std::bitset<255> > timeDif,std::map<uint32_t,std::bitset<61> > timeChamber);
+	uint32_t NoiseStudy(std::map<uint32_t,std::bitset<255> > &timeDif,std::map<uint32_t,std::bitset<61> > &timeChamber);
 	void FillTimeAsic(IMPL::LCCollectionVec* rhcol);
 	void DIFStudy(IMPL::RawCalorimeterHitImpl* hit);
+	uint32_t buildClusters(std::vector<RecoHit*> &vreco);
+	void buildEdges();
 
-	void ShowerBuilder(std::vector<RecoHit*> vreco);
+	void ShowerBuilder(std::vector<RecoHit*> &vreco);
 	void ImageBuilder(std::vector<RecoHit*> &vreco);
 	void sobel_filtering(unsigned char i[60][96], float j[60][96]);
 
@@ -144,6 +149,7 @@ public:
 
 	void findTimeSeeds( IMPL::LCCollectionVec* rhcol, int32_t nhit_min,std::vector<uint32_t>& candidate);
 	uint32_t buildVolume(IMPL::LCCollectionVec* rhcol,uint32_t seed);
+	void processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed);
 	//void EdgeDetection(unsigned char imagev[60][96][96],unsigned char core[60][96][96],unsigned char edge[60][96][96]);
 	void EdgeDetection(array3D<unsigned char> &i,array3D<unsigned char> &c,array3D<unsigned char> &e);
 	//void sobel_volume(unsigned char *image1,float *image2,uint32_t x_size1,uint32_t y_size1,uint32_t z_size1 );
@@ -157,6 +163,7 @@ public:
 	void newHT3(array3D<unsigned char> &core);
 
 	void track2Db(std::vector<RecoCandTk> &tracks,std::vector<RecoPoint> &points);
+	void drawph(houghParam* p);
 
 private:
 
@@ -258,7 +265,7 @@ private:
 	float image3Buf_[60*96*96];
 
 	std::vector<Amas> theAmas_;
-	SDHCALMonitor theMonitoring_;
+	SDHCALMonitor* theMonitoring_;
 	uint32_t theMonitoringPeriod_;
 	std::string theMonitoringPath_;
 	
@@ -270,6 +277,9 @@ private:
 	cluster_t theCluster_;
 	hit_t theHit_;
 	shower_t theShower_;
-
+	uint32_t theNbShowers_;
+	ComputerHough* theComputerHough_;
+	unsigned long long theLastBCID_,theIdxSpill_;
+	float theTimeInSpill_[20],theCountSpill_[20],theLastRate_;
 };
 #endif

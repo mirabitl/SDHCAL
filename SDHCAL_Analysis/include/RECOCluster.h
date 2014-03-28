@@ -26,7 +26,7 @@ public:
 	RECOCluster(RecoHit h);
 	~RECOCluster();
 	double dist(RecoHit h1,RecoHit h2);
-	bool Append(RecoHit h);
+	bool Append(RecoHit h,double cut=2.);
 	std::vector<RecoHit>* getHits();
 	bool isAdjacent(RECOCluster &c);
 	void setValidity(bool t){valid_=t;}
@@ -35,6 +35,8 @@ public:
 	void Print();
 	double X();
 	double Y();
+	inline double Z(){return hits_[0].Z();}
+	inline uint32_t chamber(){return hits_[0].chamber();} 
 	double dX();
 	double dY();
 private:

@@ -83,7 +83,7 @@ MY_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getoutpu
 OCV_LIBS=[lib[15:len(lib)-3] for lib in filter(lambda x: (x[:15]=="/usr/local/lib/"), commands.getoutput("pkg-config --libs opencv").split(" "))]
 
 
-# cc 2706 LIBRARIES=ROOT_LIBS+['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
+# cc 2706 LIBRARIES=ROOT_LIBS+['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c', 'ftd2xx', 'stdc++','SDHCALAnalysis','ftdi','ftdipp']
 
 #CUDA
 CUDA_LIBS=["cula_core","cula_lapack","cublas","cudart"]
@@ -92,7 +92,7 @@ CUDA_LIBPATH=[os.getenv("CULA_LIB_PATH_64"),"/usr/local/cula/lib"]
 
 # Summary
 
-LIBRARIES=ROOT_LIBS+MY_LIBS+['SDHCALcommon','pthread', 'lcio','xml2','sqlite3','X11']
+LIBRARIES=ROOT_LIBS+MY_LIBS+['SDHCALcommon','pthread', 'lcio','xml2','sqlite3','X11','SQLIO']
 
 if (USE_CULA or USE_OPENCV):
 	LIBRARIES=LIBRARIES+CUDA_LIBS
@@ -134,26 +134,29 @@ env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
 # Library source
 #TRACKER_SRC_DIR=os.path.join(DHCAL_ROOT,"TrackerUtils","src/common")
 LIBRARY_SOURCES=Glob("#src/*.cxx")
+LIBRARY_CSOURCES=Glob("#src/*.c")
+#LIBRARY_SOURCES.append
 #LIBRARY_SOURCES.append(TRACKER_SRC_DIR+"/TShare.cc")
 #LIBRARY_SOURCES.append(TRACKER_SRC_DIR+"/LDAShare.cc")
-
+env.Replace(CC = "g++")
 for i in LIBRARY_SOURCES:
   print i 	 
 #Shared library
-DHCEvent=env.SharedLibrary("#lib/DHCEvent",source=LIBRARY_SOURCES)
+SDHCALAnalysis=env.SharedLibrary("#lib/SDHCALAnalysis",source=[LIBRARY_SOURCES,LIBRARY_CSOURCES])
 
 #Python module
-LDHCEvent=env.PythonModule('_DHCalEventReader', ['DHCalEventReader.i'],LIBPATH="#lib",LIBS="DHCEvent")
+LSDHCALAnalysis=env.PythonModule('_DHCalEventReader', ['DHCalEventReader.i'],LIBPATH="#lib",LIBS="SDHCALAnalysis")
 
-#Test Program
 EXE_LIBPATH=LIBRARY_PATHS
 EXE_LIBPATH.append("#lib")
 EXE_LIBS=LIBRARIES
-EXE_LIBS.append("DHCEvent")
-#TMAIN=env.Program("bin/main",source="src/main.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+EXE_LIBS.append("SDHCALAnalysis")
+EXE_LIBS.append("lcio")
+EXE_LIBS.append("sio")
+sa=env.Program("bin/sa",source="src/sa.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
-Default([DHCEvent,LDHCEvent])
-env.Install("/opt/local/lib",DHCEvent)
+Default([SDHCALAnalysis,LSDHCALAnalysis,sa])
+env.Install("/opt/local/lib",SDHCALAnalysis)
 #env.Install("/opt/dhcal/lib",DIF)
 
 env.Alias('install', ["/opt/local/lib"])

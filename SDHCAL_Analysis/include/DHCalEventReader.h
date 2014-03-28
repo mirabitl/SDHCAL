@@ -419,7 +419,7 @@ int readOneEvent(int run,int event);
   uint32_t getNumberOfEvents(){return lcReader_->getNumberOfEvents();}
   void openFiles(){this->open(filenames_);}
   void findEvent(int run,int event);
-
+  static DHCalEventReader* instance() ;
  private:
   LCReader* lcReader_; /// LCIO Reader
   //  LCSplitWriter* lcWriter_; /// LCIO Writer
@@ -461,6 +461,7 @@ int readOneEvent(int run,int event);
   std::vector<DIFPtr*> theDIFPtrList_;
 
   std::string currentFileName_;
+  static DHCalEventReader* _me;
 };
 
 #endif

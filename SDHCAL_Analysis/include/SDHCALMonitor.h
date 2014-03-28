@@ -46,6 +46,7 @@ public:
 	void setExtrapolationMinimumChi2(float i);
 	void setChamberEdgeCut( float i);
 	void setUseTk4(bool t);
+	int getEventIntegratedTime(){return  theEventIntegratedTime_;}
 private:
 
 	uint32_t theTrackIndex_,theFirstChamber_,theLastChamber_,theExtrapolationMinimumPoint_;
@@ -56,6 +57,7 @@ private:
 	DHCalEventReader* reader_;
 
 	std::map<uint32_t,uint32_t> theAsicCount_;
-  int theIntegratedTime_;	
+	int theIntegratedTime_;	
+	int theEventIntegratedTime_;	
 };
 #endif

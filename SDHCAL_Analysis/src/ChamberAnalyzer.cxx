@@ -6574,8 +6574,8 @@ void ChamberAnalyzer::sobel_volume(array3D<unsigned char> &im1,array3D<float> &i
   int32_t weight[3][3][3];
 
   //  uint32_t MAX_BRIGHTNESS=1;
-  double pixel_value;
-  double min, max;
+  float pixel_value;
+  float min, max;
   uint32_t x, y,z; 
   int32_t i, j,k;  /* Loop variable */
 
@@ -6592,8 +6592,8 @@ void ChamberAnalyzer::sobel_volume(array3D<unsigned char> &im1,array3D<float> &i
       }
   /* Maximum values calculation after filtering*/
   //DEBUG_PRINT("Now, filtering of input image is performed\n\n");
-  min = DBL_MAX;
-  max = -DBL_MAX;
+  float vpmin = 900.;
+  float vpmax = -900;
   /* Generation of image2 after linear transformtion */
   for (y = 1; y < im1.getYSize() - 1; y++) 
     {
@@ -6601,8 +6601,9 @@ void ChamberAnalyzer::sobel_volume(array3D<unsigned char> &im1,array3D<float> &i
 	{
 	  for (z = 1; z < im1.getXSize() - 1; z++) 
 	    {
-
-	      pixel_value = 0.0;
+	      im2.setValue(z,y,x,0);
+	      if(im1.getValue(z,y,x)==0) continue;
+	      volatile float pixel_value = 0.0;
 	      for (j = -1; j <= 1; j++) {
 		for (i = -1; i <= 1; i++) {
 		  for (k=-1;k<=1;k++){
@@ -6613,14 +6614,17 @@ void ChamberAnalyzer::sobel_volume(array3D<unsigned char> &im1,array3D<float> &i
 	      }
 	      //pixel_value = MAX_BRIGHTNESS * (pixel_value - min) / (max - min);
 	      im2.setValue(z,y,x,pixel_value);
-	      if (pixel_value<min) min=pixel_value;
-	      if (pixel_value>max) max=pixel_value;
-	      //DEBUG_PRINT("%d %d %d %f \n",z,y,x,pixel_value);
+	      // if (pixel_value<vpmin)  { printf("->min %f %f \n",pixel_value,vpmin);vpmin=pixel_value;}
+	      // 	if (pixel_value>vpmax) {printf("->max %f %f \n",pixel_value,vpmax);vpmax=pixel_value;}
+	      // if (im1.getValue((z),(y ),(x ))>0) printf("%f \n",pixel_value);
+	      
+	      //if (pixel_value>0) printf("wahou %f %d %d %d =%d\n",pixel_value,z,y,x,im1.getValue(z,y,x));
+
 	    }
 	}
     }
-  //DEBUG_PRINT("MIn %f %f \n",min,max);
-  //getchar();
+  //INFO_PRINT("MIn %f %f \n",vpmin,vpmax);
+  //  getchar();
 
   return;
 }
