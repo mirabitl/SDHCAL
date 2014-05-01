@@ -48,7 +48,7 @@ LOCAL_ROOT="/opt/local"
 DHCAL_ROOT=os.path.abspath("..")
 
 # includes
-INCLUDES=['include',"/usr/include","/usr/local/include","/usr/local/cuda/include","/usr/local/cula/include","/usr/X11R6/include"]
+INCLUDES=['include',"/usr/include","/usr/local/include","/usr/local/cuda/include","/usr/local/cula/include","/usr/X11R6/include","/usr/include/jsoncpp"]
 #LCIO
 INCLUDES.append(os.path.join(os.getenv("LCIODIR"),"include"))
 INCLUDES.append(os.path.join(os.getenv("LCIODIR"),"include","IMPL"))
@@ -92,7 +92,7 @@ CUDA_LIBPATH=[os.getenv("CULA_LIB_PATH_64"),"/usr/local/cula/lib"]
 
 # Summary
 
-LIBRARIES=ROOT_LIBS+MY_LIBS+['SDHCALcommon','pthread', 'lcio','xml2','sqlite3','X11','SQLIO']
+LIBRARIES=ROOT_LIBS+MY_LIBS+['SDHCALcommon','pthread', 'lcio','xml2','sqlite3','X11','jsoncpp']
 
 if (USE_CULA or USE_OPENCV):
 	LIBRARIES=LIBRARIES+CUDA_LIBS

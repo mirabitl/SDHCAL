@@ -167,8 +167,11 @@ void RecoHit::initialise(DifGeom& d, ChamberGeom& c,IMPL::RawCalorimeterHitImpl*
 
 	double zg=0;
 	cg_.calculateGlobal(chamberLocalI_,chamberLocalJ_,0,x_,y_,zg);
-
-	
+	int ithr= h->getAmplitude()&0x3;
+	theFlag_.reset();
+	if (ithr ==1) this->setFlag(RecoHit::THR1,true);
+	if (ithr ==2) this->setFlag(RecoHit::THR0,true);
+	if (ithr ==3) this->setFlag(RecoHit::THR2,true);
 	//vnear_.clear();
 	nnear_=0;
 	//printf("h4\n");

@@ -25,6 +25,10 @@
 #include "DIFSlowControl.h"
 #include "DCType.h"
 #include "ShowerAnalyzer.h"
+#include "StripAnalyzer.h"
+#include "RawAnalyzer.h"
+#include "TApplication.h"
+#include "TCanvas.h"
 using namespace std ;
 using namespace lcio ;
 /** dump the given event to screen
@@ -32,7 +36,6 @@ using namespace lcio ;
 #include "GenericOnlineReader.h"
 
 int main(int argc, char** argv ){
-
 
   char* FILEN ;
   char* FILEO;
@@ -60,8 +63,13 @@ int main(int argc, char** argv ){
     {
       FILEO= argv[2];
     }
+  TApplication theApp("tapp", &argc, argv);
+ 
+  
 
   DHCalEventReader  dher;
+  dher.setXdaqShift(4);
+  dher.setDropFirstRU(false);
   DCHistogramHandler rootHandler;
   //  LMBasicAnalyzer *a= new LMBasicAnalyzer( &dher,&rootHandler);
 
@@ -88,19 +96,28 @@ int main(int argc, char** argv ){
 
 #define USESTREAM
 #ifdef USESTREAM
-  ShowerAnalyzer *a= new ShowerAnalyzer( &dher,&rootHandler);
-  dher.registerAnalysis(a);
+  //ShowerAnalyzer *a= new ShowerAnalyzer( &dher,&rootHandler);
+  RawAnalyzer *ar= new RawAnalyzer();
+  StripAnalyzer *as= new StripAnalyzer();
+  //a->setrebuild(rebuild);
+  dher.registerAnalysis(ar);
+  dher.registerAnalysis(as);
   
   if (writing) 
     {std::string nameo(FILEO);
 
       dher.openOutput(FILEO);
-      a->setWriting(true);
+      as->setWriting(true);
     }
   else
-    a->setWriting(false);
-  dher.readStream();
-  
+    as->setWriting(false);
+  try {
+    dher.readStream(31000);
+    }
+    catch(...)
+      {
+      printf(" Christophe y dit qu'il en a rien a peter \n");
+      }
 #else
 
 
@@ -212,13 +229,13 @@ int main(int argc, char** argv ){
     dher.closeOutput();
   else
     {
-      int runnb=0;
+      int runnb=dher.getEvent()->getRunNumber();
       std::stringstream name("");
-      name<<"./LMNewAnalyzer_"<<runnb<<".root";
+      name<<"/scratch/LMNewAnalyzer_"<<runnb<<".root";
       rootHandler.writeHistograms(name.str());
     }
-  std::cout<<"FINI"<<std::endl;
-  dher.endJob();
+  std::cout<<"FINI ICI"<<std::endl;
+  //dher.endJob();
 
 
 

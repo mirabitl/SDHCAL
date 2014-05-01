@@ -11,17 +11,17 @@ using namespace lcio ;
 #include <iostream>
 
 #define CHECK_BIT(var,pos) ((var)& (1<<(pos)))
-
 DHCalEventReader* DHCalEventReader::_me = 0 ;
 
 
 DHCalEventReader* DHCalEventReader::instance() {
   
   if( _me == 0 ) 
-    _me = new DHCalEventReader ;
+    _me = new DHCalEventReader;
   
   return _me ;
 }  
+
 //static DCFrame theFrameBuffer[256*48*128];
 DHCalEventReader::DHCalEventReader() :dropFirstRU_(true),theXdaqShift_(92),currentFileName_("NONE")
 {
@@ -53,6 +53,7 @@ DHCalEventReader::DHCalEventReader() :dropFirstRU_(true),theXdaqShift_(92),curre
   //framePtr0_= new  DCFrame[256*48*64];
   printf("%d %d %x \n",nGood_,nBad_,nBadTwo_);
   expectedDtc_=0;
+  _me=this;
 }
 
 DHCalEventReader::~DHCalEventReader()
@@ -160,6 +161,7 @@ int DHCalEventReader::readStream(int max_record)
   }
   catch( IOException& e) {
     std::cout << e.what() << std::endl ;
+    throw e;
     return -2;
     //  exit(2) ;
   }
@@ -582,6 +584,201 @@ IMPL::LCCollectionVec* DHCalEventReader::createRawCalorimeterHits(bool useSynch)
   return RawVec;
 }
 
+void DHCalEventReader::findTimeSeeds(int32_t nasic_min)
+{
+  theTimeSeeds_.clear();
+  map<uint32_t,uint32_t> tcount;
+  map<uint32_t,int32_t> tedge;
+  IMPL::LCCollectionVec* rhcol=NULL;
+  try {
+    rhcol=(IMPL::LCCollectionVec*) evt_->getCollection("DHCALRawHits");
+  }
+  catch(...)
+    {
+      // printf("No RHCOL yet \n");
+    }
+  // Tcount is the time histo
+  if (rhcol!=NULL)
+    {
+      for (uint32_t i=0;i<rhcol->getNumberOfElements();i++)
+	{
+	  IMPL::RawCalorimeterHitImpl* hit = (IMPL::RawCalorimeterHitImpl*) rhcol->getElementAt(i);
+	  if (hit==0) continue;
+	  uint32_t bc = hit->getTimeStamp();
+	  map<uint32_t,uint32_t>::iterator it=tcount.find(bc);
+	  if (it!=tcount.end()) 
+	    it->second=it->second+1;
+	  else
+	    {
+	      std::pair<uint32_t,uint32_t> p(bc,1);
+	      tcount.insert(p);
+	    }
+	}
+    }
+  else
+    {
+      for (std::vector<DIFPtr*>::iterator it = theDIFPtrList_.begin();it!=theDIFPtrList_.end();it++)
+	{
+	  DIFPtr* d = (*it);
+     // Loop on frames
+	  for (uint32_t i=0;i<d->getNumberOfFrames();i++)
+	    {
+	      uint32_t bc = d->getFrameTimeToTrigger(i);
+	      map<uint32_t,uint32_t>::iterator it=tcount.find(bc);
+	      if (it!=tcount.end()) 
+		it->second=it->second+1;
+	      else
+		{
+		  std::pair<uint32_t,uint32_t> p(bc,1);
+		  tcount.insert(p);
+		}
+	    }
+	}
+    }
+  std::vector<uint32_t> seed;
+  seed.clear();
+	
+  //d::cout<<"Size =>"<<tcount.size()<<std::endl;
+  // Tedge is convolute with +1 -1 +1 apply to tcount[i-1],tcount[i],tcount[i+1]
+  for (map<uint32_t,uint32_t>::iterator it=tcount.begin();it!=tcount.end();it++)
+    {
+      //std::cout<<it->first<<" "<<it->second<<std::endl;
+		
+      map<uint32_t,uint32_t>::iterator ita=tcount.find(it->first+1);
+      map<uint32_t,uint32_t>::iterator itb=tcount.find(it->first-1);
+      int32_t c=-1*it->second;
+      if (ita!=tcount.end()) c+=ita->second;
+      if (itb!=tcount.end()) c+=itb->second;
+      std::pair<uint32_t,int32_t> p(it->first,c);
+      tedge.insert(p);
+		
+    }
+  //d::cout<<"Size Edge =>"<<tedge.size()<<std::endl;
+  // Now ask for a minimal number of hits
+  uint32_t nshti=0;
+  for (map<uint32_t,int32_t>::iterator it=tedge.begin();it!=tedge.end();)
+    {
+      //std::cout<<it->first<<"====>"<<it->second<<" count="<<tcount[it->first]<<std::endl;
+      if (it->second<-1*(nasic_min-2))
+	{
+			
+	  //std::cout<<it->first<<"====>"<<it->second<<" count="<<tcount[it->first]<<std::endl;
+
+	  seed.push_back(it->first);
+	  it++;
+	}
+      else
+	tedge.erase(it++);
+    }
+	
+  // for (std::vector<uint32_t>::iterator is=seed.begin();is!=seed.end();is++)
+  //   std::cout<<" seed " <<(*is)<<" count "<<tcount[(*is)]<<std::endl      ;
+  // Merge adjacent seeds
+  theTimeSeeds_.clear();
+  for (uint32_t i=0;i<seed.size();)
+    {
+      if ((i+1)<=(seed.size()-1))
+	{
+	  if (seed[i+1]-seed[i]<=5)
+	    {
+	      //theTimeSeeds_.push_back(int((seed[i+1]+seed[i])/2));
+	      uint32_t max_c=0;
+	      uint32_t max_it=0;
+	      uint32_t imin=seed[i];
+	      uint32_t imax=seed[i+1];
+	      if (seed[i+1]>seed[i])
+		{
+		}
+	      for (uint32_t it=imin;it<=imax;it++)
+		{
+		  if (tcount.find(it)==tcount.end()) continue;
+		  if (tcount[it]>max_c) {max_c=tcount[it];max_it=it;}
+		}
+	      if (max_it!=0)
+		theTimeSeeds_.push_back(max_it);
+	      else
+		theTimeSeeds_.push_back(seed[i]);
+	      i+=2;
+	    }
+	  else
+	    {
+	      theTimeSeeds_.push_back(seed[i]);
+	      i++;
+	    }
+	}
+      else
+	{
+	  theTimeSeeds_.push_back(seed[i]);
+	  i++;
+	}
+
+		
+    }
+  //td::cout<<theTimeSeeds_.size()<<" good showers "<< tedge.size()<<std::endl;
+  std::sort(theTimeSeeds_.begin(),theTimeSeeds_.end(),std::greater<uint32_t>());
+
+  /*  
+      for (std::vector<uint32_t>::iterator is=theTimeSeeds_.begin();is!=theTimeSeeds_.end();is++)
+    std::cout<<(*is)<<" ---> "<<tcount[(*is)]<<std::endl;
+  */
+  if (rhcol!=NULL)
+    {
+      // Fill std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> > thePhysicsEventMap_;
+      thePhysicsEventMap_.clear();
+      for (std::vector<uint32_t>::iterator is=theTimeSeeds_.begin();is!=theTimeSeeds_.end();is++)
+	{
+	  std::vector<IMPL::RawCalorimeterHitImpl*> v;
+	  
+	  std::pair<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> > p((*is),v);
+	  thePhysicsEventMap_.insert(p);
+	}
+      std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> >::iterator im=thePhysicsEventMap_.end();
+
+      for (int i=0;i<rhcol->getNumberOfElements();i++)
+	{
+	  IMPL::RawCalorimeterHitImpl* hit = (IMPL::RawCalorimeterHitImpl*) rhcol->getElementAt(i);
+	  if (hit==0) continue;
+	  im=thePhysicsEventMap_.find(hit->getTimeStamp());
+	  if (im!=thePhysicsEventMap_.end()) {im->second.push_back(hit);continue;}
+	  im=thePhysicsEventMap_.find(hit->getTimeStamp()-1);
+	  if (im!=thePhysicsEventMap_.end()) {im->second.push_back(hit);continue;}
+	  im=thePhysicsEventMap_.find(hit->getTimeStamp()+1);
+	  if (im!=thePhysicsEventMap_.end()) {im->second.push_back(hit);continue;}
+	  im=thePhysicsEventMap_.find(hit->getTimeStamp()-2);
+	  if (im!=thePhysicsEventMap_.end()) {im->second.push_back(hit);continue;}
+	  im=thePhysicsEventMap_.find(hit->getTimeStamp()+2);
+	  if (im!=thePhysicsEventMap_.end()) {im->second.push_back(hit);continue;}
+	  im=thePhysicsEventMap_.find(hit->getTimeStamp()-3);
+	  if (im!=thePhysicsEventMap_.end()) {im->second.push_back(hit);continue;}
+	  im=thePhysicsEventMap_.find(hit->getTimeStamp()+3);
+	  if (im!=thePhysicsEventMap_.end()) {im->second.push_back(hit);continue;}
+	  im=thePhysicsEventMap_.find(hit->getTimeStamp()-4);
+	  if (im!=thePhysicsEventMap_.end()) {im->second.push_back(hit);continue;}
+	  im=thePhysicsEventMap_.find(hit->getTimeStamp()+4);
+	  if (im!=thePhysicsEventMap_.end()) {im->second.push_back(hit);continue;}
+	}
+
+      theTimeSeeds_.clear();
+      // Check that at least nasic_min DIfs are hit per seed
+      for( std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> >::iterator im=thePhysicsEventMap_.begin(),im_next=im;im!=thePhysicsEventMap_.end();im=im_next)
+	{
+	  ++im_next;
+	  std::bitset<255> difs;
+	  difs.reset();
+	  for (std::vector<IMPL::RawCalorimeterHitImpl*>::iterator ih=im->second.begin();ih!=im->second.end();ih++)
+	    difs.set((*ih)->getCellID0()&0xFF);
+	  // if (difs.count()>=nasic_min)
+	  //   printf("seed %d ndif  %d \n",im->first,difs.count());
+	  if (difs.count()<nasic_min)
+	    thePhysicsEventMap_.erase(im);
+	  else
+	    theTimeSeeds_.push_back(im->first);
+	}
+      //printf("%s EventMap size %d  \n",__PRETTY_FUNCTION__,thePhysicsEventMap_.size());
+
+    }
+  return ;
+}
 
 IMPL::LCCollectionVec* DHCalEventReader::createRawCalorimeterHits(std::vector<uint32_t> seeds)
 {
@@ -661,7 +858,7 @@ IMPL::LCCollectionVec* DHCalEventReader::createRawCalorimeterHits(std::vector<ui
 
 	  //	  std::cout<<"rebd "<<TTT<<" "<<hit->getCellID1()<<std::endl;
 	   RawVec->addElement(hit);
-	   if (RawVec->getNumberOfElements()>10000) break; //too may noise
+	   if (RawVec->getNumberOfElements()>100000) break; //too may noise
 	}
       }
     }

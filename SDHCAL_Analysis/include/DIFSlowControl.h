@@ -113,6 +113,7 @@ public:
   inline uint32_t getFrameBCID(uint32_t i){return DIFUnpacker::getFrameBCID(theFrames_[i]);}
   inline uint32_t getFrameTimeToTrigger(uint32_t i){return getBCID()-getFrameBCID(i);}
   inline bool getFrameLevel(uint32_t i,uint32_t ipad,uint32_t ilevel){return DIFUnpacker::getFrameLevel(theFrames_[i],ipad,ilevel);}
+  inline uint32_t getFrameData(uint32_t i,uint32_t iword){return DIFUnpacker::getFrameData(theFrames_[i],iword);}
   void dumpDIFInfo()
   {
     printf("DIF %d DTC %d GTC %d ABCID %lld BCID %d Lines %d Temperature %d \n",

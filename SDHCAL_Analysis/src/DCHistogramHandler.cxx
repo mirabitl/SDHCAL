@@ -30,6 +30,7 @@ DCHistogramHandler::DCHistogramHandler()
   mapH2.clear();
   top = new AbsTreeNode("Top");
   sem_init(&theMutex_,0,1);
+  _me=this;
  }
 
 void DCHistogramHandler::Lock()

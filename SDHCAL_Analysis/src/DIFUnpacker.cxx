@@ -119,6 +119,13 @@ bool DIFUnpacker::getFramePAD(unsigned char* framePtr,uint32_t ip)
   return ((iframe[3-ip/32]>>(ip%32)) & 0x1);
 }
 
+uint8_t  DIFUnpacker::getFrameData(unsigned char* framePtr,uint32_t ip)
+{
+  uint8_t* iframe=(uint8_t*) &framePtr[DU_FRAME_DATA_SHIFT];
+  iframe=(uint8_t*) &framePtr[0];
+  return (iframe[ip]);
+}
+
 bool DIFUnpacker::getFrameLevel(unsigned char* framePtr,uint32_t ip,uint32_t level)
 {
   return ((framePtr[DU_FRAME_DATA_SHIFT+((3-ip/16)*4+(ip%16)/4)]>>(7-(((ip%16)%4)*2+level))) & 0x1);

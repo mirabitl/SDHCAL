@@ -36,7 +36,7 @@
 #include "MarlinParameter.h"
 #include <map>
 #include <ext/hash_map>
-
+#include "DHCalJsonParser.h"
 
 using namespace std ;
 /** 
@@ -215,6 +215,9 @@ public:
   //! Destructor 
  
   ~DHCalEventReader();
+
+  // singleton access
+  static DHCalEventReader* instance();
  
   //! Get the current event. It does not read it 
   /** 
@@ -398,6 +401,7 @@ int readOneEvent(int run,int event);
 
 
    void findTimeSeeds(  int32_t nhit_min,std::vector<uint32_t>& candidate);
+  void findTimeSeeds(  int32_t nasic_min);
   //! <i>Internal</i> create the DHCALRawHits collection 
   IMPL::LCCollectionVec* createRawCalorimeterHits(bool usesynch=false);
   IMPL::LCCollectionVec* createRawCalorimeterHits(std::vector<uint32_t> seeds);
@@ -419,7 +423,11 @@ int readOneEvent(int run,int event);
   uint32_t getNumberOfEvents(){return lcReader_->getNumberOfEvents();}
   void openFiles(){this->open(filenames_);}
   void findEvent(int run,int event);
-  static DHCalEventReader* instance() ;
+  DHCalJsonParser* getDHCalJsonParser(){return &theJsonParser_;}
+  void parseJsonConfig(std::string cfg){theJsonParser_.parse(cfg);}
+  std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> >& getPhysicsEventMap(){return thePhysicsEventMap_;}
+  std::vector<uint32_t>& getTimeSeeds(){return theTimeSeeds_;}
+  std::vector<DIFPtr*>& getDIFList(){return  theDIFPtrList_;}
  private:
   LCReader* lcReader_; /// LCIO Reader
   //  LCSplitWriter* lcWriter_; /// LCIO Writer
@@ -428,6 +436,8 @@ int readOneEvent(int run,int event);
   IMPL::LCEventImpl* evtOutput_; /// LCIO Event output ptr
   IMPL::LCRunHeaderImpl* runh_; /// LCIO Run Heder ptr
  
+
+  DHCalJsonParser theJsonParser_;
 
   std::vector<DCDIF*> vdif_; /// <i>Internal </i> to handle DIF
   std::vector<DCFrame*> vframe_; /// <i>Internal </i> to handle Frame
@@ -462,6 +472,10 @@ int readOneEvent(int run,int event);
 
   std::string currentFileName_;
   static DHCalEventReader* _me;
+  std::vector<uint32_t> theTimeSeeds_;
+  
+  std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> > thePhysicsEventMap_;
+
 };
 
 #endif

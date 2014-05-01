@@ -31,16 +31,19 @@ void SDHCALMonitor::FillTimeAsic(IMPL::LCCollectionVec* rhcol)
 	TH1* hoccall= (TH1F*) rootHandler_->GetTH1("AsicOccupancy");
 	TH1* hoccalldif= (TH1F*) rootHandler_->GetTH1("AsicOccupancyDIF");
 	TH1* hoccallchamber= (TH1F*) rootHandler_->GetTH1("AsicOccupancyChamber");
+
+	TH2* hasic2= (TH2F*) rootHandler_->GetTH2("DIFAsicCount");
 	
 	if (hoccall==0)
 	{
 		hoccall=rootHandler_->BookTH1("AsicOccupancy",255*48,0.,255*48.);
 		hoccalldif=rootHandler_->BookTH1("AsicOccupancyDIF",255,0.,255.);
 		hoccallchamber=rootHandler_->BookTH1("AsicOccupancyChamber",61,0.,61.);
+		hasic2=rootHandler_->BookTH2("DIFAsicCount",256,0.1,256.1,48,0.1,48.1);
 	}
 	hoccalldif->Reset();
 	hoccallchamber->Reset();
-
+	hasic2->Reset();
 	double tmin=99999999.;
 	double tmax=0.;
 	//	printf("%d %s\n",__LINE__,__PRETTY_FUNCTION__);
@@ -55,6 +58,7 @@ void SDHCALMonitor::FillTimeAsic(IMPL::LCCollectionVec* rhcol)
 		// Decode
 		unsigned int difid = hit->getCellID0()&0xFF;
 		int asicid = (hit->getCellID0()&0xFF00)>>8;
+		//hasic2->Fill(difid*1.,asicid*1);
 		int channel= (hit->getCellID0()&0x3F0000)>>16;
 		unsigned int bc = hit->getTimeStamp();
 		if (bc>5E6) continue;

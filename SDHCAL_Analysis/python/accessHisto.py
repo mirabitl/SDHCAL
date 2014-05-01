@@ -1,6 +1,6 @@
 from ROOT import *
 import os
-import sqlite 
+import sqlite3 
 import time
 def getth1(fullname):
   directory=os.path.dirname(fullname)

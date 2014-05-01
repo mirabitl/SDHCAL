@@ -84,6 +84,7 @@ void RawAnalyzer::processEvent()
   if (hacqtime==NULL)
     {
       hacqtime =rootHandler_->BookTH1( "AcquisitionTime",2000,0.,2.);
+
       hfr2=rootHandler_->BookTH2("HitFrequency",255,0.1,255.1,48,0.1,48.1);
     }
   printf("4\n");
@@ -107,31 +108,42 @@ void RawAnalyzer::processEvent()
       for (uint32_t i=0;i<d->getNumberOfFrames();i++)
       {
 	double t=d->getFrameTimeToTrigger(i)*2E-7;
+
 	if (t>3.8) {
 	  printf("Wrong Time %f %x \n",t,d->getFrameTimeToTrigger(i));
 	  continue;
 	}
+	//printf("%d %d \n",d->getID(),d->getFrameAsicHeader(i));
 	if (d->getFrameAsicHeader(i)>48) continue;
 	theCount_[d->getID()-1][0]++;
 	theCount_[d->getID()-1][d->getFrameAsicHeader(i)]++;
 	if (t>theEventTotalTime_) theEventTotalTime_=t;
 	// Fill ASICs histogram
-	if (theTotalTime_<1.) continue;
-	if ((theTotalCount_[d->getID()-1][d->getFrameAsicHeader(i)]/theTotalTime_)<700.) continue;
+	//if (theTotalTime_<1.) continue;
+	//if ((theTotalCount_[d->getID()-1][d->getFrameAsicHeader(i)]/theTotalTime_)<700.) continue;
 	std::stringstream s;
 	s<<"/DIF"<<d->getID()<<"/Asic"<<d->getFrameAsicHeader(i);
 	TH1* han=rootHandler_->GetTH1(s.str()+"/Hits");
+	TH1* han20=rootHandler_->GetTH1(s.str()+"/Hits20");
 	TH1* hfr=rootHandler_->GetTH1(s.str()+"/Frequency");
+	TH1* hframetime=rootHandler_->GetTH1(s.str()+"/FrameTime");
+
 	if (han==NULL)
 	  {
 	    printf("booking %s \n",s.str().c_str());
 	    han =rootHandler_->BookTH1(s.str()+"/Hits",64,0.1,64.1);
+	    han20 =rootHandler_->BookTH1(s.str()+"/Hits20",64,0.1,64.1);
 	    hfr =rootHandler_->BookTH1(s.str()+"/Frequency",64,0.1,64.1);
+	    hframetime =rootHandler_->BookTH1(s.str()+"/FrameTime",2000,0.,2000.);
+      
 	  }
+	hframetime->Fill(d->getFrameTimeToTrigger(i)*1.);
 	 for (uint32_t j=0;j<64;j++)
 	   {
 	     if (!(d->getFrameLevel(i,j,0) || d->getFrameLevel(i,j,1))) continue;
 	     han->Fill(j*1.);
+	     if (d->getFrameTimeToTrigger(i)<20)
+	       han20->Fill(j*1.);
 	   }
       }
     }

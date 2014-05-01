@@ -50,6 +50,7 @@ public:
 
   static uint32_t getFrameAsicHeader(unsigned char* framePtr);
   static uint32_t getFrameBCID(unsigned char* framePtr);
+  static uint8_t getFrameData(unsigned char* framePtr,uint32_t ip);
 
   static bool getFramePAD(unsigned char* framePtr,uint32_t ip);
   static bool getFrameLevel(unsigned char* framePtr,uint32_t ip,uint32_t level);

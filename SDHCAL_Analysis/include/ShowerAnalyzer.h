@@ -65,7 +65,8 @@ public:
 	virtual void endRun(){;}
 
 	bool decodeTrigger(LCCollection* rhcol, double tcut);
-
+	void drawHits(std::vector<RecoHit*> vrh);
+  
 	void trackHistos();
 	void findTracks();
 	void findTracks1();
@@ -149,6 +150,7 @@ public:
 
 	void findTimeSeeds( IMPL::LCCollectionVec* rhcol, int32_t nhit_min,std::vector<uint32_t>& candidate);
 	uint32_t buildVolume(IMPL::LCCollectionVec* rhcol,uint32_t seed);
+	uint32_t buildVolume(uint32_t seed);
 	void processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed);
 	//void EdgeDetection(unsigned char imagev[60][96][96],unsigned char core[60][96][96],unsigned char edge[60][96][96]);
 	void EdgeDetection(array3D<unsigned char> &i,array3D<unsigned char> &c,array3D<unsigned char> &e);
