@@ -181,7 +181,7 @@ void DIFClient::Print(std::ostream& os) const
 			std::map<uint32_t,DIFInfo>::const_iterator itd=theDIFMapStatus_.find(theDIFList_[i]);
 		if (itd!=theDIFMapStatus_.end())
 			{
-				os<<theDIFList_[i]<<"|"<<itd->second.status<<"|"<<itd->second.lastReceivedBCID<<"|"<<itd->second.lastReceivedGTC<<"|"<<itd->second.bytesReceived<<std::endl;
+			  os<<theDIFList_[i]<<"|"<<std::hex<<itd->second.status<<std::dec<<"|"<<itd->second.lastReceivedBCID<<"|"<<itd->second.lastReceivedGTC<<"|"<<itd->second.bytesReceived<<std::endl;
 				}
 		}
 }
