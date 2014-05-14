@@ -50,10 +50,23 @@ print Bit64
 
 NetLink="../netLink"
 if ( not os.path.exists(NetLink)):
-  NetLink=os.getenv("HOME")+"/netLink"
+ 	NetLink=os.getenv("HOME")+"/netLink"
+kl=os.uname()[2].split(".")
+platform="UBUNTU"
+if (kl[len(kl)-1][0:3] == 'el5'):
+    platform="SLC5"
+
+if (kl[len(kl)-2][0:3] == 'el6'):
+    platform="SLC6"
 
 
-# includes
+fres=os.popen('uname -p')
+kp=fres.readline()
+osv=kp[0:len(kp)-1]
+
+print platform,osv
+
+#includes
 INCLUDES=['include',"/usr/include/boost141/",DHCAL_ROOT+"/SDHCAL_common/include",NetLink+"/include",NetLink+"/cslm"]
 
 
@@ -65,8 +78,10 @@ CPPFLAGS=["-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "
 
 
 #LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
-LIBRARIES=['pthread',  'm', 'stdc++','ftdi','ftdipp','netlink','boost_system','boost_thread','cslm']
-
+if (platform == "UBUNTU"):
+  LIBRARIES=['pthread',  'm', 'stdc++','ftdi','ftdipp','netlink','boost_system','boost_thread','cslm']
+else:
+  LIBRARIES=['pthread',  'm', 'stdc++','ftdi','ftdipp','netlink','boost_system-mt','boost_thread-mt','cslm']
 
 
 #Library path XDAQ,DHCAL and ROOT + Python

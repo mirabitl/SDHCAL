@@ -1,6 +1,7 @@
 #ifndef _UsbDIFSettings_H
 #define _UsbDIFSettings_H
 #include <stdint.h>
+#include <stdio.h>
 #include <iostream>
 /**
  * \class UsbSettings

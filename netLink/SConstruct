@@ -11,7 +11,9 @@ platform="UBUNTU"
 if (kl[len(kl)-1][0:3] == 'el5'):
     platform="SLC5"
 
-
+if (kl[len(kl)-2][0:3] == 'el6'):
+    platform="SLC6"
+print kl[len(kl)-2][0:3]
 fres=os.popen('uname -p')
 kp=fres.readline()
 osv=kp[0:len(kp)-1]
@@ -52,7 +54,7 @@ netlink=env.SharedLibrary("#lib/netlink",source=LIBRARY_SOURCES)
 CSLM_SOURCES=Glob("#cslm/*.cc")
 
 LIBRARY_PATHS.append("./lib")
-if ( platform=="SLC5"):
+if ( platform=="SLC5" or platform=="SLC6" ):
     LIBRARIES=["pthread","netlink","boost_system-mt","boost_thread-mt"]
 else:
     LIBRARIES=["pthread","netlink","boost_system","boost_thread"]

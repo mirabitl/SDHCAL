@@ -1,3 +1,4 @@
+#include <limits.h>
 #include "TextDIFDBManager.h"
 using namespace std;
 TextDIFDBManager::TextDIFDBManager(std::string sdifs,std::string directory) : DIFDBManager(sdifs)
