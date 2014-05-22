@@ -71,6 +71,7 @@ start:
 	}
 
 
+        memcpy(theName,deviceIdentifier,8);
 	uint32_t regctrl=0;
 	
 	//ret=UsbRegisterWrite(2,0x1234567);
@@ -204,7 +205,7 @@ throw( LocalHardwareException )
 	if( ret<0)
 	{
 		char errorMessage [100];
-		sprintf (errorMessage,"%d usb_bulk_read error = %d",ret);
+		sprintf (errorMessage,"%s %d usb_bulk_read error = %d",theName,ret);
 		resultPtr=0;
 		throw (LocalHardwareException( "FT245" ,errorMessage, __FILE__, __LINE__, __FUNCTION__ ) );    
 	}
