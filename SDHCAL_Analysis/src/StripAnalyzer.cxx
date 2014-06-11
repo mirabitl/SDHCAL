@@ -108,8 +108,8 @@ public:
   uint16_t timeid[2];
   uint16_t asictime[2];
   uint32_t coarse[2];
-  uint32_t time0_0[2];
-  uint32_t time0_1[2];
+  float time0_0[2];
+  float time0_1[2];
   std::vector<StripCluster> clusters;
   void buildClusters()
   {
@@ -183,7 +183,13 @@ float CalibDeltaT_1 =0.0996;
   
   memset(theCount_,0,255*49*sizeof(uint32_t));
    for (int ich=0;ich<2;ich++)
-     memset(chambers[ich].strips,0,128*sizeof(uint16_t));
+     {
+       memset(chambers[ich].strips,0,128*sizeof(uint16_t));
+       chambers[ich].time0_0[0]=0;
+       chambers[ich].time0_0[1]=0;
+       chambers[ich].time0_1[0]=0;
+       chambers[ich].time0_1[1]=0;
+     }
   for (std::vector<DIFPtr*>::iterator it = reader_->getDIFList().begin();it!=reader_->getDIFList().end();it++)
     {
       DIFPtr* d = (*it);
@@ -218,30 +224,35 @@ float CalibDeltaT_1 =0.0996;
 			  else
 			    istrip=(j+1)*2;
 				    
-			  //printf("DIF %d ASIC %d Time %d  pad %d strip %d\n",d->getID(),d->getFrameAsicHeader(i),d->getFrameTimeToTrigger(i),j,istrip);
+			  //			  printf("DIF %d ASIC %d Time %d  pad %d strip %d\n",d->getID(),d->getFrameAsicHeader(i),d->getFrameTimeToTrigger(i),j,istrip);
 			  if (ich==1 && istrip==128) continue ; //noisy
+			  if (ich==1 && istrip==127) continue ; //noisy
+			  if (ich==1 && istrip==68) continue ; //noisy
 			  if (d->getFrameLevel(i,j,0)) chambers[ich].strips[istrip-1]= 2;
 			  if (d->getFrameLevel(i,j,1)) chambers[ich].strips[istrip-1]+= 1;
 			}
 		    }
 		if ((d->getID() == chambers[ich].timeid[iasic]) &&  (d->getFrameAsicHeader(i) == chambers[ich].asictime[iasic]))
 		    {
-		      printf("DIF %d ASIC %d Time %d  \n",d->getID(),d->getFrameAsicHeader(i),d->getFrameTimeToTrigger(i));
-		      int32_t i1=(d->getFrameData(i,18)) |(d->getFrameData(i,17)<<8) ;
-		      int32_t i0=(d->getFrameData(i,16)) |(d->getFrameData(i,15)<<8) ;
+		      //printf("DIF %d ASIC %d Time %d  \n",d->getID(),d->getFrameAsicHeader(i),d->getFrameTimeToTrigger(i));
+		      int32_t i0=(d->getFrameData(i,18)) |(d->getFrameData(i,17)<<8) ;
+		      int32_t i1=(d->getFrameData(i,16)) |(d->getFrameData(i,15)<<8) ;
 		      int32_t c0=(d->getFrameData(i,19)) &0x7;
-		      for (int iw=0;iw<22;iw++)
-			printf("%.2x ",d->getFrameData(i,iw));
+		      //for (int iw=0;iw<22;iw++)
+		      //printf("%.2x ",d->getFrameData(i,iw));
 
 		      if (iasic==0)
 			{
 			  float Time0_6 =       (i0 -i1)*CalibT0_0+i1*CalibDeltaT_0;
-			  printf("=> %d %d %d-> %f %f ns\n",c0,i0,i1,Time0_6,c0*25+Time0_6);			  
+			  printf("Chamber %d Side %d => %d %d %d-> %f %f ns\n",ich,iasic,c0,i0,i1,Time0_6,c0*25+Time0_6);		 
+			  chambers[ich].time0_0[iasic]=c0*25+Time0_6;
 			}
 		      else
 			{
 			  float Time0_6 =       (i0 -i1)*CalibT0_1+i1*CalibDeltaT_1;
-			  printf("=> %d %d %d-> %f %f ns\n",c0,i0,i1,Time0_6,c0*25+Time0_6);			  
+			  //  printf("Chamber %d Side %d => %d %d %d-> %f %f ns\n",ich,iasic,c0,i0,i1,Time0_6,c0*25+Time0_6);		 
+
+			  chambers[ich].time0_0[iasic]=c0*25+Time0_6;
 			}
 		    }
 		  }
@@ -292,14 +303,29 @@ float CalibDeltaT_1 =0.0996;
       TH1* hsize=rootHandler_->GetTH1(s.str()+"/clustersize");
       TH1* hpos=rootHandler_->GetTH1(s.str()+"/pos");
 
+      TH1* hdt=rootHandler_->GetTH1(s.str()+"/dt");
+      TH2* hdt2=rootHandler_->GetTH2(s.str()+"/dt2");
+      TH1* hst=rootHandler_->GetTH1(s.str()+"/st");
+      
+
       if (hncl==NULL)
 	{
 	  hncl =rootHandler_->BookTH1(s.str()+"/nbclusters" ,30,0.,30.);
 	  hsize =rootHandler_->BookTH1(s.str()+"/clustersize" ,30,0.,30.);
 	  hpos =rootHandler_->BookTH1(s.str()+"/pos" ,128,0.,128.);
+	  hdt =rootHandler_->BookTH1(s.str()+"/dt" ,1280,-640,640.);
+	  hdt2 =rootHandler_->BookTH2(s.str()+"/dt2" ,200,0,200.,200,0,200);
+	  hst =rootHandler_->BookTH1(s.str()+"/st" ,1280,-640,640.);
 	}
       /*for (int j=0;j<128;j++) printf("%1d",chambers[ich].strips[j]);
 	printf("\n"); */
+      //printf("Chamber %d : %f %f delta %f \n",ich,chambers[ich].time0_0[1],chambers[ich].time0_0[0],chambers[ich].time0_0[1]-chambers[ich].time0_0[0]);
+       if (chambers[ich].time0_0[1]!=0 && chambers[ich].time0_0[0]!=0)
+	 hdt2->Fill(chambers[ich].time0_0[1],chambers[ich].time0_0[0]);
+      if (chambers[ich].time0_0[1]!=0 && chambers[ich].time0_0[0]!=0)
+	hdt->Fill(chambers[ich].time0_0[1]-chambers[ich].time0_0[0]);
+      if (chambers[ich].time0_0[1]!=0 && chambers[ich].time0_0[0]!=0)
+	hst->Fill(chambers[ich].time0_0[1]+chambers[ich].time0_0[0]);
       chambers[ich].buildClusters();
       //printf("N cluster %d \n",chambers[ich].clusters.size());
       hncl->Fill(chambers[ich].clusters.size());
@@ -310,8 +336,18 @@ float CalibDeltaT_1 =0.0996;
 	  hpos->Fill(it->getXLocal());
 	}
     }
-  
-  getchar();
+   TH1* hdt0=rootHandler_->GetTH1("dt0");
+   TH1* hdt1=rootHandler_->GetTH1("dt1");
+   if (hdt0==0)
+     {
+        hdt0 =rootHandler_->BookTH1("dt0" ,1280,-640,640.);
+        hdt1 =rootHandler_->BookTH1("dt1" ,1280,-640,640.);
+     }
+   if (chambers[0].time0_0[0]!=0 && chambers[1].time0_0[0]!=0)
+	hdt0->Fill(chambers[0].time0_0[0]-chambers[1].time0_0[0]);
+   if (chambers[0].time0_0[1]!=0 && chambers[1].time0_0[1]!=0)
+	hdt1->Fill(chambers[0].time0_0[1]-chambers[1].time0_0[1]);
+  //getchar();
 
   // Now loop on DIF
   // for (uint32_t i=0;i<255;i++)

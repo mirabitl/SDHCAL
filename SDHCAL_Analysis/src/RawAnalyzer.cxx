@@ -166,7 +166,7 @@ void RawAnalyzer::processEvent()
 	{
 	  hfr2->SetBinContent(i+1,j,theTotalCount_[i][j]/theTotalTime_);
 	  if (theTotalTime_<1.) continue;
-	  if ((theTotalCount_[i][j]/theTotalTime_)<700.) continue;
+	  if ((theTotalCount_[i][j]/theTotalTime_)<0.) continue;
 	  std::stringstream s;
 	  s<<"/DIF"<<i+1<<"/Asic"<<j;
 	  TH1* han=rootHandler_->GetTH1(s.str()+"/Hits");

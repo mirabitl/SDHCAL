@@ -640,7 +640,7 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   tempim.initialise(temp,60,NX,NY);
 
   ShowerParams ish;
-  std::vector<RecoHit*> vrh;
+  //std::vector<RecoHit*> vrh;
 
   currentTime_=seed;
   
@@ -648,7 +648,7 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   if (theBCIDSpill_==0) theBCIDSpill_=theAbsoluteTime_;
   if (theAbsoluteTime_-theBCIDSpill_>15/2E-7) theBCIDSpill_=theAbsoluteTime_;
  
-    INFO_PRINT("GTC %d DTC %d BCID %llu Current Time %llu Time SPill %f Distance %f \n",theGTC_,theDTC_,theBCID_,currentTime_,theBCIDSpill_*2E-7,(theAbsoluteTime_-theBCIDSpill_)*2E-7);
+    DEBUG_PRINT("GTC %d DTC %d BCID %llu Current Time %llu Time SPill %f Distance %f \n",theGTC_,theDTC_,theBCID_,currentTime_,theBCIDSpill_*2E-7,(theAbsoluteTime_-theBCIDSpill_)*2E-7);
        
   tempim.clear();
   // DEBUG_PRINT("Building voulume for %d \n",seed);
@@ -656,12 +656,12 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 
   uint32_t nhits=buildVolume(seed);
   //return;
-  // DEBUG_PRINT("Edge detection for %d \n",seed);
-  buildEdges();
+  //DEBUG_PRINT("Edge detection for %d \n",seed);
+  //  buildEdges();
   theNplans_=0;
   std::bitset<48> asics[255];
   for (int ii=0;ii<255;ii++) asics[ii].reset();
-  vrh.clear();
+  theHitVector_.clear();
   for (uint32_t k=0;k<60;k++)
     { bool found=false;
       for (uint32_t i=0;i<96;i++)
@@ -670,25 +670,33 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 	    {tempim.setValue(k,i/3,j/3,1);
 	      //printf("%d%d %d %d \n",i,j,hitVolume_[k][i][j].getFlag(RecoHit::EDGE),hitVolume_[k][i][j].getFlag(RecoHit::ISOLATED));
 	      //if ((hitVolume_[k][i][j].getFlag(RecoHit::EDGE)==1||hitVolume_[k][i][j].getFlag(RecoHit::ISOLATED)==1) )
-	      vrh.push_back(&hitVolume_[k][i][j]);
+	      theHitVector_.push_back(&hitVolume_[k][i][j]);
 	      asics[hitVolume_[k][i][j].dif()].set(hitVolume_[k][i][j].getAsic()-1);
 	      found=true;}
       if (found) theNplans_++;
     }
 
-  
-  if (currentTime_<0 || (theBCID_==6873405 && vrh.size()>50 ))
-    {
-      printf("Number of Hits %d \n",vrh.size());
-    this->drawHits(vrh);getchar();
-    }
+  /*
+  if (currentTime_<0 || (theBCID_==6873405 && theHitVector_.size()>50 ))
+   {
+      printf("Number of Hits %d \n",theHitVector_.size());
+    this->drawHits(theHitVector_);getchar();
+   }
+  */
   if (theNplans_<minChambersInTime_) return;
-      
-
-
-  Shower::computePrincipalComponents(vrh,(double*) &ish);
   
-  if (sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1) return;
+  Shower::computePrincipalComponents(theHitVector_,(double*) &ish);
+#undef KEEPTRACK
+#ifndef KEEPTRACK  
+  if (sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1)
+    {
+      //printf("%d -> %d \n",theNplans_,minChambersInTime_);
+  
+      this->buildTracks(theHitVector_);
+      //      this->drawHits(theHitVector_);getchar();
+      return;
+    }
+  //return;
   if (sqrt((ish.lambda[0])/ish.lambda[2])<0.05) return;
   if (ish.xm[0]<5) return;
   
@@ -705,12 +713,16 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   if (t.by_<5 || t.by_>95) return;
   if (!(abs(x[0]-55)<10&&abs(x[1]-49)<10)) return;
   std::cout<<t.bx_<<std::endl;
-  uint32_t nshower=buildClusters(vrh);
+#endif
+      DEBUG_PRINT("Edge detection for %d \n",seed);
+      buildEdges();
+
+  uint32_t nshower=buildClusters(theHitVector_);
 
   uint32_t counts[3][5];
   uint32_t ir;
   memset(counts,0,15*sizeof(uint32_t));
-  for (std::vector<RecoHit*>::iterator ih=vrh.begin();ih!=vrh.end();ih++)
+  for (std::vector<RecoHit*>::iterator ih=theHitVector_.begin();ih!=theHitVector_.end();ih++)
     {
       if ((*ih)->getFlag(RecoHit::THR0)) ir=0;
       if ((*ih)->getFlag(RecoHit::THR1)) ir=1;
@@ -1494,6 +1506,7 @@ void ShowerAnalyzer::processEvent()
   cores.initialise(&theImageCoreBuffer_[0],60,NX,NY);
  
   theNbShowers_=0;
+  theNbTracks_=0;
   for (std::vector<uint32_t>::iterator is=vseeds.begin();is!=vseeds.end();is++)
     {
       this->processSeed(rhcol,(*is));
@@ -1511,13 +1524,13 @@ void ShowerAnalyzer::processEvent()
   else
     theIdxSpill_+=1;
 
-  theCountSpill_[theIdxSpill_%20] =  theNbShowers_;
+  theCountSpill_[theIdxSpill_%20] =  theNbShowers_+theNbTracks_;
   theTimeInSpill_[theIdxSpill_%20] = theMonitoring_->getEventIntegratedTime()*2E-7;
 
   // Integrated 10 last
   float nc=0;
   float tc=0;
-  //printf("showers %uud ",theIdxSpill_ );
+  printf("showers %uud %d %d ",theIdxSpill_,theNbShowers_,theNbTracks_);
   for (int i=0;i<20;i++)
     {
       nc+=theCountSpill_[i];
@@ -8129,6 +8142,7 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
   TH1* hest1 = rootHandler_->GetTH1("/Clusters/EST1");
   TH1* hest2 = rootHandler_->GetTH1("/Clusters/EST2");
   TH1* hest3 = rootHandler_->GetTH1("/Clusters/EST3");
+  TH1* hlom = rootHandler_->GetTH1("/Clusters/LOM");
   TProfile* hrate=(TProfile*) rootHandler_->GetTH1("/Clusters/RATE");
   TProfile* hspill=(TProfile*) rootHandler_->GetTH1("/Clusters/SPILL");
   if (hest1==NULL)
@@ -8137,8 +8151,8 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
       hest1 =rootHandler_->BookTH1("/Clusters/EST1",1000,0.,3000.);
       hest2 =rootHandler_->BookTH1("/Clusters/EST2",1000,0.,3000.);
       hest3 =rootHandler_->BookTH1("/Clusters/EST3",1000,0.,3000.);
-      hrate =rootHandler_->BookProfile("/Clusters/RATE",20,0.,100.,0.,2000.);
-      hspill =rootHandler_->BookProfile("/Clusters/SPILL",50,0.,10.,0.,2000.);
+      hrate =rootHandler_->BookProfile("/Clusters/RATE",200,0.,1000.,0.,2000.);
+      hspill =rootHandler_->BookProfile("/Clusters/SPILL",150,0.,20.,0.,2000.);
   
       hzx =(TH2F*)rootHandler_->BookTH2("/Clusters/HZXPOS",120,0.,170.,120,-10.,110.);
 
@@ -8152,6 +8166,7 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
       izy =(TH2F*)rootHandler_->BookTH2("/Clusters/IZY",120,0.,170.,120,-10.,110.);
       izx =(TH2F*)rootHandler_->BookTH2("/Clusters/IZX",120,0.,170.,120,-10.,110.);
       hest = rootHandler_->BookTH1("/Clusters/EST",120,-0.1,1.1);
+      hlom = rootHandler_->BookTH1("/Clusters/LOM",1100,-0.1,2.1);
 
       
     }
@@ -8244,10 +8259,14 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
 		}
 	    }
 	}
-   printf("==> MIPS hit %d -> %.2f\n",nmip,nmip*100./vrh.size()); 
+   printf("==> MIPS hit %d -> %.2f Length %f \n",nmip,nmip*100./vrh.size(),theComputerHough_->Length()); 
+   float lom=theComputerHough_->Length()*1./vrh.size();
+   hlom->Fill(lom);
    bool electron=(theComputerHough_->Length()<5. || nmip*100./vrh.size()<1);
    bool muon=nmip*100./vrh.size()>60.;
-   if (electron || muon) 
+   //if (false && (electron || muon) )
+   if (lom<1E-4 || lom>0.75)
+   //if (lom>1E-4) //select electrons
     {
        for (std::vector<RECOCluster*>::iterator ic=clusters.begin();ic!=clusters.end();ic++)
 	 delete (*ic);
@@ -8293,7 +8312,7 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
 
 #ifdef DRAW_HISTOS
   bool doPlot=int(hest1->GetEntries())%30==40;
-  doPlot=false;
+  doPlot=true;
   if (doPlot)
     {
   if (TCCluster==NULL)
@@ -8425,7 +8444,7 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
   if (hest!=NULL) hest->Fill(nmip*1./vrh.size());
   hest1->Fill(1.*vrh.size());
   hrate->Fill(theLastRate_,1.*vrh.size());
-  hspill->Fill((theBCID_-currentTime_-theBCIDSpill_)*2E-7,1.*vrh.size());
+  hspill->Fill((theBCID_-currentTime_-theBCIDSpill_)*2E-7,theLastRate_);
   if (theLastRate_<20.) 
     hest2->Fill(1.*vrh.size());
   else
@@ -8512,13 +8531,14 @@ void ShowerAnalyzer::buildEdges()
   if (hweight==NULL)
     {
       //hweight=(TH1F*) rootHandler_->BookTH1("showerweight",100,0.,2.);
-      hweight= rootHandler_->BookTH1("showerweight",100,-0.1,0.9);
+      hweight= rootHandler_->BookTH1("showerweight",110,-0.1,0.99);
       hweight2= rootHandler_->BookTH1("showerweight2",120,-0.1,1.1);
     }
-  hweight->Reset();
+  //hweight->Reset();
 #endif
   uint32_t nmax=0;
   uint32_t nedge=0,ncore=0,niso=0;
+  int32_t ixmin=-6,ixmax=6; // 6 avant
   for (uint32_t k=0;k<theImage_.getXSize();k++)
     {
 
@@ -8541,11 +8561,11 @@ void ShowerAnalyzer::buildEdges()
 		    {
 		      if (z+k<0) continue;
 		      if (z+k>=theImage_.getXSize()) continue;
-		      for (int x=-6;x<=6;x++)
+		      for (int x=ixmin;x<=ixmax;x++)
 			{
 			  if (x+i<0) continue;
 			  if (x+i>=theImage_.getYSize()) continue;
-			for (int y=-6;y<=6;y++)
+			for (int y=ixmin;y<=ixmax;y++)
 			  {
 			    if (y+j<0) continue;
 			    if (y+j>=theImage_.getZSize()) continue;
@@ -8553,7 +8573,7 @@ void ShowerAnalyzer::buildEdges()
 			    RecoHit* h1=&hitVolume_[k+z][i+x][j+y];
 			    float x0=h0->X(),y0=h0->Y(),z0=h0->Z(),x1=h1->X(),y1=h1->Y(),z1=h1->Z();
 			    float dist=sqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0)+(z1-z0)*(z1-z0));
-			    if (dist<6.) vnear_.push_back(h1);
+			    if (dist<6.) vnear_.push_back(h1); // was 6
 
 			    nv++;
 			  }
@@ -8571,7 +8591,7 @@ void ShowerAnalyzer::buildEdges()
 		  if (c->l2==0)
 		    {hitVolume_[k][i][j].setFlag(RecoHit::ISOLATED,true);niso++;}
 		  else 
-		    if (w<0.3) // 0.4 before  
+		    if (w<0.3) // 0.3 before  
 		      {hitVolume_[k][i][j].setFlag(RecoHit::EDGE,true);nedge++;}
 		    else
 		      {hitVolume_[k][i][j].setFlag(RecoHit::CORE,true);ncore++;}
@@ -9014,3 +9034,226 @@ void ShowerAnalyzer::buildEdges()
 		
 	  }
 */
+
+
+uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
+{
+  
+  std::vector<RECOCluster*> clusters;
+  std::vector<RECOCluster*> realc;
+  std::vector<RECOCluster*> intc;
+  clusters.clear();
+  realc.clear();
+  intc.clear();
+  HoughCut cuts;
+  float *h_x=(float *) malloc(1024*sizeof(float));
+  float *h_y= (float *) malloc(1024*sizeof(float));
+  float *h_z=(float *) malloc(1024*sizeof(float));
+  unsigned int *h_layer=(unsigned int *) malloc(1024*sizeof(unsigned int));
+  uint32_t nshower=0;
+  //ComputerHough ch(&cuts);
+  //ch.DefaultCuts();
+
+  for (std::vector<RecoHit*>::iterator ih=vrh.begin();ih<vrh.end();ih++)
+    {
+      if ((*ih)->getFlag(RecoHit::CORE)==1) continue;
+      bool merged=false;
+      for (std::vector<RECOCluster*>::iterator ic=realc.begin();ic!=realc.end();ic++)
+	{
+	  if ((*ih)->chamber()!=(*ic)->chamber()) continue;
+	  merged=(*ic)->Append((*(*ih)),2.); // avant 4 et normalement 2
+	  if (merged) break;
+	}
+      if (merged) continue;
+      RECOCluster* c= new RECOCluster((*(*ih)));
+      realc.push_back(c);
+      clusters.push_back(c);
+    }
+  uint32_t fpi=99,lpi=0;
+  for (std::vector<RecoHit*>::iterator ih=vrh.begin();ih<vrh.end();ih++)
+    {
+      if ((*ih)->getFlag(RecoHit::CORE)!=1) continue;
+      bool merged=false;
+      for (std::vector<RECOCluster*>::iterator ic=intc.begin();ic!=intc.end();ic++)
+	{
+	  if ((*ih)->chamber()!=(*ic)->chamber()) continue;
+	  merged=(*ic)->Append((*(*ih)),4.); // avant 4 et normalement 2
+	  if (merged) break;
+	}
+      if (merged) continue;
+      RECOCluster* c= new RECOCluster((*(*ih)));
+      intc.push_back(c);
+      clusters.push_back(c);
+    }
+
+  // Move small cluster from intc to realc
+  for (std::vector<RECOCluster*>::iterator ic=intc.begin();ic!=intc.end();)
+    {
+      if ((*ic)->getHits()->size()>=5) 
+	++ic;
+      else
+	{
+	  realc.push_back((*ic));
+	  intc.erase(ic);
+	}
+    }
+  for (std::vector<RECOCluster*>::iterator ic=realc.begin();ic!=realc.end();)
+    {
+      if ((*ic)->getHits()->size()<5) 
+	++ic;
+      else
+	{
+	  intc.push_back((*ic));
+	  realc.erase(ic);
+	}
+    }
+  // Now clear clusters >6
+
+   for (std::vector<RECOCluster*>::iterator ic=intc.begin();ic!=intc.end();ic++)
+	{
+	      uint32_t ch=(*ic)->chamber();
+	      if (lpi<ch) lpi=ch;
+	      if (fpi>ch) fpi=ch;
+	}
+
+
+   
+   
+   // 2D draw of Hits and real clusters
+
+   //#define BOOK_HISTOS
+
+
+   printf(" Number of clusters %d REALC %d INTC %d Hits %d \n",clusters.size(),realc.size(),intc.size(),vrh.size());
+
+  uint32_t nstub=0;
+  for (std::vector<RECOCluster*>::iterator ic=realc.begin();ic!=realc.end();ic++)
+    {
+
+      h_x[nstub]=(*ic)->X();
+      h_y[nstub]=(*ic)->Y();
+      h_z[nstub]=(*ic)->Z();
+      h_layer[nstub]=(*ic)->chamber();
+      nstub++;
+    }
+  theComputerHough_->associate(nstub,h_x,h_y,h_z,h_layer);
+ 
+
+  if (theComputerHough_->getCandidates().size()>0) theNbTracks_++;
+  uint32_t nmip=0;
+   for (unsigned int i=0;i<theComputerHough_->getCandidates().size();i++)
+	{
+	  RecoCandTk& tk = theComputerHough_->getCandidates()[i];
+	  tk.ax_/=1.04125;
+	  tk.bx_/=1.04125;
+	  tk.ay_/=1.04125;
+	  tk.by_/=1.04125;
+
+	  uint32_t fch=int(ceil(tk.zmin_*10))/28+1;
+	  uint32_t lch=int(ceil(tk.zmax_*10))/28+1;
+
+	  printf("Track cand tk: %f %f %f %f ZMIN %d ZMAX %d \n",tk.ax_,tk.bx_,tk.ay_,tk.by_,int(ceil(tk.zmin_*10))/28+1,int(ceil(tk.zmax_*10))/28+1);
+// 	  for (std::vector<RecoHit*>::iterator ic=vrh.begin();ic!=vrh.end();ic++)
+// 	    {
+// 	      float dx=tk.getXext((*ic)->Z())-(*ic)->X();
+// 	      float dy=tk.getYext((*ic)->Z())-(*ic)->Y();
+// 	      if (sqrt(dx*dx+dy*dy)<2.)
+// 		{
+// 		  (*ic)->setFlag(RecoHit::MIP,true);
+// 		  (*ic)->setFlag(RecoHit::ISOLATED,false);
+// #ifdef FILL_HISTOS
+// 		  mzx->Fill((*ic)->Z(),(*ic)->X());
+// 		  mzy->Fill((*ic)->Z(),(*ic)->Y());
+// #endif
+// 		}
+// 	    }
+	  for (std::vector<RECOCluster*>::iterator ic=realc.begin();ic!=realc.end();ic++)
+	    {
+	      float dx=tk.getXext((*ic)->Z())-(*ic)->X();
+	      float dy=tk.getYext((*ic)->Z())-(*ic)->Y();
+	      if (sqrt(dx*dx+dy*dy)<2.)
+		{
+		  //printf("Point (%f,%f,%f) dist %f %f -> %f  \n",(*ic)->X(),(*ic)->Y(),(*ic)->Z(),dx,dy,sqrt(dx*dx+dy*dy));
+		for (std::vector<RecoHit>::iterator ih=(*ic)->getHits()->begin();ih!=(*ic)->getHits()->end();ih++)
+		  {
+		    if ((*ih).getFlag(RecoHit::MIP)==0)
+		      {
+			//printf("Point (%f,%f,%f) dist %f %f -> %f  \n",(*ic)->X(),(*ic)->Y(),(*ic)->Z(),dx,dy,sqrt(dx*dx+dy*dy));
+			(*ih).setFlag(RecoHit::MIP,true);
+			hitVolume_[ih->chamber()-1][ih->I()-1][ih->J()-1].setFlag(RecoHit::MIP,true);
+
+			nmip++;
+		      }
+		  }
+		}
+	    }
+	  // Calcul de l'efficacite
+	  
+	  for (uint32_t ip=fch+1;ip<lch;ip++)
+	    {
+	      
+	      std::stringstream s;
+	      s<<"/Plan"<<ip<<"/";
+	      
+	      TH2* hext= rootHandler_->GetTH2(s.str()+"ext");
+	      TH2* hfound= rootHandler_->GetTH2(s.str()+"found");
+	      TH2* hfound1= rootHandler_->GetTH2(s.str()+"found1");
+	      TH2* hfound2= rootHandler_->GetTH2(s.str()+"found2");
+
+	      if (hext==NULL)
+		{
+
+		  hext= rootHandler_->BookTH2(s.str()+"ext",16,0.,100.,16,0.,100.);
+		  hfound= rootHandler_->BookTH2(s.str()+"found",16,0.,100.,16,0.,100.);
+		  hfound1= rootHandler_->BookTH2(s.str()+"found1",16,0.,100.,16,0.,100.);
+		  hfound2= rootHandler_->BookTH2(s.str()+"found2",16,0.,100.,16,0.,100.);
+   
+		}
+	      float xext=tk.getXext((ip-1)*2.8);
+	      float yext =tk.getYext((ip-1)*2.8);
+	      hext->Fill(xext,yext);
+	      float dist=1E9;
+	      bool th1=false,th2=false;
+	      for (std::vector<RECOCluster*>::iterator ic=clusters.begin();ic!=clusters.end();ic++)
+		{
+		  if ((*ic)->chamber()!=ip) continue;
+		  float dx=tk.getXext((*ic)->Z())-(*ic)->X();
+		  float dy=tk.getYext((*ic)->Z())-(*ic)->Y();
+		  if (sqrt(dx*dx+dy*dy)<dist)
+		    {
+		      dist=sqrt(dx*dx+dy*dy);
+
+		      th1=false,th2=false;
+		      for (std::vector<RecoHit>::iterator ih=(*ic)->getHits()->begin();ih!=(*ic)->getHits()->end();ih++)
+			{
+			  if ((*ih).getFlag(RecoHit::THR1)!=0) th1=true;
+			  if ((*ih).getFlag(RecoHit::THR2)!=0) th2=true;
+			}
+
+		    }
+
+		}
+	      if (dist<2.)
+		{
+		  hfound->Fill(xext,yext);
+		  if (th1)  hfound1->Fill(xext,yext);
+		  if (th2)  hfound2->Fill(xext,yext);
+		}
+	    }
+
+
+
+
+
+	}
+   printf("==> MIPS hit %d -> %.2f\n",nmip,nmip*100./vrh.size()); 
+ 
+ 
+   for (std::vector<RECOCluster*>::iterator ic=clusters.begin();ic!=clusters.end();ic++)
+     delete (*ic);
+   free(h_x);
+   free(h_y);
+   free(h_z);
+   free(h_layer);
+   return nshower;
+}
