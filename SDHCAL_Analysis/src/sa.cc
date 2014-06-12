@@ -96,27 +96,28 @@ int main(int argc, char** argv ){
 
 #define USESTREAM
 #ifdef USESTREAM
-  //ShowerAnalyzer *a= new ShowerAnalyzer( &dher,&rootHandler);
+  ShowerAnalyzer *a= new ShowerAnalyzer( &dher,&rootHandler);
   RawAnalyzer *ar= new RawAnalyzer();
-  StripAnalyzer *as= new StripAnalyzer();
-  //a->setrebuild(rebuild);
+  //StripAnalyzer *as= new StripAnalyzer();
+  a->setrebuild(rebuild);
   dher.registerAnalysis(ar);
-  dher.registerAnalysis(as);
-  
+  dher.registerAnalysis(a);
+  dher.initJob();
   if (writing) 
     {std::string nameo(FILEO);
 
       dher.openOutput(FILEO);
-      as->setWriting(true);
+      a->setWriting(true);
     }
   else
-    as->setWriting(false);
+    a->setWriting(false);
   try {
-    dher.readStream(31000);
+    dher.readStream(0);
     }
     catch(...)
       {
       printf(" Christophe y dit qu'il en a rien a peter \n");
+      goto end;
       }
 #else
 
@@ -225,6 +226,7 @@ int main(int argc, char** argv ){
       if (nevt==100) break;
     }
 #endif
+ end:
   if (writing) 
     dher.closeOutput();
   else

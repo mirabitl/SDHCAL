@@ -319,8 +319,127 @@ void DCHistogramHandler::writeSQL()
   TSQLFile* f = new TSQLFile(dbname, "recreate", username, userpass);
   // Write with standard I/O functions
   */
-  TFile* f = new TFile("/dev/shm/Monitroing.root","RECREATE","RAW DATA");
+  TFile* f = new TFile("/dev/shm/Monitoring.root","RECREATE","RAW DATA");
   f->cd();
+
+ 
+  for (std::map<std::string,TH1*>::iterator iter= mapH1.begin();iter!=mapH1.end();iter++)
+    {
+      f->cd();
+     //std::cout<<" writing "<<iter->first<<std::endl;
+     std::vector<std::string> vdir;
+     DCUtils::String2Vector(iter->first,vdir,"/");
+     std::string dirname(""),lastname("");
+     if (vdir.size()>0)
+       {
+       for (unsigned int i=1;i<vdir.size()-1;i++)
+	 {
+
+
+	   dirname+="/"+vdir[i];
+	   f->cd();
+	   TDirectory* det=f->GetDirectory(dirname.c_str());
+	   if (det==0)
+	     {
+	       f->cd(lastname.c_str());
+	       gDirectory->cd();
+	       TDirectory* detn = gDirectory->mkdir(vdir[i].c_str(),vdir[i].c_str());
+	       if (detn!=0) detn->cd();
+	       det=f->GetDirectory(dirname.c_str());
+	     }
+	   if (det!=0) det->cd();
+	   lastname=dirname;
+	 }
+       iter->second->SetName(vdir[vdir.size()-1].c_str());       
+       }
+
+
+     iter->second->Write();
+    }
+
+  for (std::map<std::string,TH2*>::iterator iter= mapH2.begin();iter!=mapH2.end();iter++)
+    {
+
+      f->cd();
+     //std::cout<<" writing "<<iter->first<<std::endl;
+     std::vector<std::string> vdir;
+     DCUtils::String2Vector(iter->first,vdir,"/");
+     std::string dirname(""),lastname("");
+     if (vdir.size()>0)
+       {
+       for (unsigned int i=1;i<vdir.size()-1;i++)
+	 {
+
+
+	   dirname+="/"+vdir[i];
+	   f->cd();
+	   TDirectory* det=f->GetDirectory(dirname.c_str());
+	   if (det==0)
+	     {
+	       f->cd(lastname.c_str());
+	       gDirectory->cd();
+	       TDirectory* detn = gDirectory->mkdir(vdir[i].c_str(),vdir[i].c_str());
+	       if (detn!=0) detn->cd();
+	       det=f->GetDirectory(dirname.c_str());
+	     }
+	   if (det!=0) det->cd();
+	   lastname=dirname;
+	 }
+       iter->second->SetName(vdir[vdir.size()-1].c_str());
+       }    
+     iter->second->Write();
+
+    }
+
+  for (std::map<std::string,TH3*>::iterator iter= mapH3.begin();iter!=mapH3.end();iter++)
+    {
+
+      f->cd();
+     //std::cout<<" writing "<<iter->first<<std::endl;
+     std::vector<std::string> vdir;
+     DCUtils::String2Vector(iter->first,vdir,"/");
+     std::string dirname(""),lastname("");
+     if (vdir.size()>0)
+       {
+       for (unsigned int i=1;i<vdir.size()-1;i++)
+	 {
+
+
+	   dirname+="/"+vdir[i];
+	   f->cd();
+	   TDirectory* det=f->GetDirectory(dirname.c_str());
+	   if (det==0)
+	     {
+	       f->cd(lastname.c_str());
+	       gDirectory->cd();
+	       TDirectory* detn = gDirectory->mkdir(vdir[i].c_str(),vdir[i].c_str());
+	       if (detn!=0) detn->cd();
+	       det=f->GetDirectory(dirname.c_str());
+	     }
+	   if (det!=0) det->cd();
+	   lastname=dirname;
+	 }
+       }
+
+
+
+
+
+
+
+      iter->second->Write();
+
+    }
+
+
+
+
+
+
+  f->Write();
+  f->Close();
+
+#ifdef OLDWAY
 
   for (std::map<std::string,TH1*>::iterator iter= mapH1.begin();iter!=mapH1.end();iter++)
     {
@@ -334,7 +453,7 @@ void DCHistogramHandler::writeSQL()
 
   f->Write();
   f->Close();
-
+#endif
 
   // Close connection to DB
   delete f;

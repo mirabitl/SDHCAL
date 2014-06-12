@@ -85,6 +85,7 @@ public:
 	uint32_t NoiseStudy(std::map<uint32_t,std::bitset<255> > &timeDif,std::map<uint32_t,std::bitset<61> > &timeChamber);
 	void FillTimeAsic(IMPL::LCCollectionVec* rhcol);
 	void DIFStudy(IMPL::RawCalorimeterHitImpl* hit);
+	uint32_t buildTracks(std::vector<RecoHit*> &vreco);
 	uint32_t buildClusters(std::vector<RecoHit*> &vreco);
 	void buildEdges();
 
@@ -265,6 +266,8 @@ private:
 	unsigned char theImageCoreBuffer_[60*96*96];
 	unsigned char theImageEdgeBuffer_[60*96*96];
 	float image3Buf_[60*96*96];
+	std::vector<RecoHit*> theHitVector_;
+	  
 
 	std::vector<Amas> theAmas_;
 	SDHCALMonitor* theMonitoring_;
@@ -279,7 +282,7 @@ private:
 	cluster_t theCluster_;
 	hit_t theHit_;
 	shower_t theShower_;
-	uint32_t theNbShowers_;
+	uint32_t theNbShowers_,theNbTracks_;
 	ComputerHough* theComputerHough_;
 	unsigned long long theLastBCID_,theIdxSpill_;
 	float theTimeInSpill_[20],theCountSpill_[20],theLastRate_;

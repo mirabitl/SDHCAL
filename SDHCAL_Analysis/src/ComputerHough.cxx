@@ -348,6 +348,7 @@ void ComputerHough::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
 
   TH1F* hweight=new TH1F("Weight","weight",100,-0.1,0.9);
   TH2F* hxy=new TH2F("xz","xz",150,0.,150.,120,-10.,110.);
+  TH2F* hxyb=new TH2F("xzb","xzb",150,0.,150.,120,-10.,110.);
   for (uint32_t ipl=0;ipl<64;ipl++)
     {
       std::map<uint32_t,std::vector<GeoPoint> >::iterator ich=chmap.find(ipl);
@@ -356,6 +357,10 @@ void ComputerHough::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
 	{
 	  int izmin=ipl-2;
 	  int izmax=ipl+2;
+	  if (ipl==0) {izmin=0;izmax=4;}
+	  if (ipl==1) {izmin=0;izmax=4;}
+	  izmin=ipl-2;
+	  izmax=ipl+2;
 	  if (ipl==0) {izmin=0;izmax=4;}
 	  if (ipl==1) {izmin=0;izmax=4;}
 	  std::vector<GeoPoint*> vnear_;vnear_.clear();
@@ -367,7 +372,10 @@ void ComputerHough::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
 	      for (std::vector<GeoPoint>::iterator ipn=ichn->second.begin();ipn!=ichn->second.end();ipn++)
 		{
 		  float dx=ip->X()-ipn->X(),dy=ip->Y()-ipn->Y(),dz=ip->Z()-ipn->Z();
-		  if (2*(abs(dx)+abs(dy))+abs(dz)/2.8>7) continue;
+		  // if (2*(abs(dx)+abs(dy))+abs(dz)/2.8>7) continue; // On etait a 7
+		  if (dz==0 && sqrt(dx*dx+dy*dy)>6) continue;
+		  /////if (sqrt(dx*dx+dy*dy+dz*dz)>15) continue;
+		  if (sqrt(dx*dx+dy*dy+dz*dz)>9) continue;
 		  //ip->addNearby(&(*ipn),12.);
 		  vnear_.push_back(&(*ipn));
 		}
@@ -376,9 +384,13 @@ void ComputerHough::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
 	  Components* c=(Components*) ip->Components();
 	  double w=0;
 	  if (c->l2!=0) w=sqrt((c->l1)/c->l2);
-	  //printf("Voisins %ld l2=> %f  w=> %f\n",ip->Voisins().size(),c->l2,w);
+	  printf("Voisins %ld l2=> %f %f %f  w=> %f\n",vnear_.size(),c->l0,c->l1,c->l2,w);
 	  if (hweight!=NULL) hweight->Fill(w);
-	  if (w<0.35) hxy->Fill(ip->Z(),ip->X());
+	  if (w<0.3 && w!=0) 
+	    hxy->Fill(ip->Z(),ip->X());
+	  else
+	    if (w!=0)
+	      hxyb->Fill(ip->Z(),ip->X());
 	  c->ymax=w;
 	}
     }
@@ -393,7 +405,7 @@ void ComputerHough::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
 	{
 	  // first loop on tracks 
 	  Components* c=(Components*) ip->Components();
-	  if (c->ymax>0.35) continue;
+	  ////@ Un test if (c->ymax>0.35) continue;
 	  std::vector<TemplateTk<GeoPoint> >::iterator itk_assoc=tracks.end();
 	  float distmax=9999;
 	  for (std::vector<TemplateTk<GeoPoint> >::iterator itk=tracks.begin();itk!=tracks.end();itk++)
@@ -406,6 +418,7 @@ void ComputerHough::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
 		  float dx=(itk->getXext(ip->Z())-ip->X()),dy=(itk->getYext(ip->Z())-ip->Y());
 		  float dist=sqrt(dx*dx+dy*dy);
 		  float err=5*0.5/sqrt(itk->getList().size());
+		  //err=4.;
 		  if (dist<distmax && dist<err) //4 before
 		    {
 		      distmax=dist;itk_assoc=itk;
@@ -570,7 +583,7 @@ void ComputerHough::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
       }
     for (std::vector<TemplateTk<GeoPoint> >::iterator itk=tracks.begin();itk!=tracks.end();)
     {
-      if (itk->getNumberOfHits()>=3 && abs(itk->zmax_-itk->zmin_)>3*2.7) 
+      if (itk->getNumberOfHits()>=3 && abs(itk->zmax_-itk->zmin_)>3*2.7) // 3 avant
 	{
 	  std::vector<GeoPoint*> v=itk->getList();
 	  for (std::vector<GeoPoint*>::iterator ip=v.begin();ip!=v.end();ip++)
@@ -594,8 +607,8 @@ void ComputerHough::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
 #ifdef DRAW_IT
   if (CanvasGPU1==NULL)
     {
-      CanvasGPU1=new TCanvas("CanvasGPU11","hough1",800,400);
-      CanvasGPU1->Divide(2,1);
+      CanvasGPU1=new TCanvas("CanvasGPU11","hough1",800,600);
+      CanvasGPU1->Divide(2,2);
       CanvasGPU1->Modified();
       CanvasGPU1->Draw();
     }
@@ -681,7 +694,9 @@ void ComputerHough::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
 #ifdef DRAW_IT
   CanvasGPU1->cd(1);
   hxy->Draw("BOX");
-  CanvasGPU1->cd(2);
+ CanvasGPU1->cd(2);
+  hxyb->Draw("BOX");
+  CanvasGPU1->cd(3);
   hweight->Draw();
   CanvasGPU1->Modified();
   CanvasGPU1->Draw();
@@ -704,6 +719,7 @@ void ComputerHough::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
 #endif
   delete hweight;
   delete hxy;
+  delete hxyb;
   printf("Total lengh %f\n",theLength_);
 
 }
