@@ -1,0 +1,17 @@
+sudo apt-get install git g++ scons subversion
+sudo apt-get install cmake
+sudo apt-get install libboost-dev
+sudo apt-get install libboost-system-dev
+sudo apt-get install libboost-thread-dev
+sudo apt-get install swig
+sudo apt-get install python-dev
+sudo apt-get install libftdi-dev libftdipp-dev
+sudo apt-get install libxerces-c3.1
+sudo apt-get install libxerces-c-dev
+sudo apt-get install libaio1
+sudo apt-get install uuid-dev libdbi-dev
+sudo apt-get install libxml2-dev
+sudo apt-get install libjsoncpp-dev
+sudo apt-get install libsqlite3-dev
+sudo apt-get install libmysqld-dev
+
