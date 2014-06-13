@@ -39,7 +39,7 @@
 #include "Amas.h"
 #include "SDHCALMonitor.h"
 #include "libhoughStruct.h"
-#include <ComputerHough.h>
+#include <ComputerTrack.h>
 
 class ShowerAnalyzer : public DHCALAnalyzer
 {
@@ -283,7 +283,7 @@ private:
 	hit_t theHit_;
 	shower_t theShower_;
 	uint32_t theNbShowers_,theNbTracks_;
-	ComputerHough* theComputerHough_;
+	ComputerTrack* theComputerTrack_;
 	unsigned long long theLastBCID_,theIdxSpill_;
 	float theTimeInSpill_[20],theCountSpill_[20],theLastRate_;
 };

@@ -56,11 +56,10 @@ ShowerAnalyzer::ShowerAnalyzer() :trackIndex_(0),nAnalyzed_(0),clockSynchCut_(8)
   this->initialise();
   HoughCut cuts;
 
-  theComputerHough_=new ComputerHough(&cuts);
-  theComputerHough_->DefaultCuts();
+  theComputerTrack_=new ComputerTrack(&cuts);
+  theComputerTrack_->DefaultCuts();
   theMonitoring_=new SDHCALMonitor(reader_,rootHandler_);
 }
-
 
 ShowerAnalyzer::ShowerAnalyzer(DHCalEventReader* r,DCHistogramHandler* h) :trackIndex_(0),nAnalyzed_(0),clockSynchCut_(8), spillSize_(90000),maxHitCount_(500000),
 									     tkMinPoint_(3),tkExtMinPoint_(3),tkBigClusterSize_(32),tkChi2Cut_(0.01),tkDistCut_(5.),tkExtChi2Cut_(0.01),tkExtDistCut_(10.),tkAngularCut_(20.),zLastAmas_(134.),
@@ -71,10 +70,11 @@ ShowerAnalyzer::ShowerAnalyzer(DHCalEventReader* r,DCHistogramHandler* h) :track
   reader_=r;
   rootHandler_ =h;
   this->initialise();
-  HoughCut cuts;
 
-  theComputerHough_=new ComputerHough(&cuts);
-  theComputerHough_->DefaultCuts();
+  HoughCut cuts;
+  theComputerTrack_=new ComputerTrack(&cuts);
+
+  theComputerTrack_->DefaultCuts();
   theMonitoring_=new SDHCALMonitor(r,h);
 }
 
@@ -8008,7 +8008,7 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
   float *h_z=(float *) malloc(1024*sizeof(float));
   unsigned int *h_layer=(unsigned int *) malloc(1024*sizeof(unsigned int));
   uint32_t nshower=0;
-  //ComputerHough ch(&cuts);
+  //ComputerTrack ch(&cuts);
   //ch.DefaultCuts();
 #ifdef CLUSTER_SIZE_METHOD
   for (std::vector<RecoHit*>::iterator ih=vrh.begin();ih<vrh.end();ih++)
@@ -8210,12 +8210,12 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
       h_layer[nstub]=(*ic)->chamber();
       nstub++;
     }
-  theComputerHough_->associate(nstub,h_x,h_y,h_z,h_layer);
+  theComputerTrack_->associate(nstub,h_x,h_y,h_z,h_layer);
  
   uint32_t nmip=0;
-   for (unsigned int i=0;i<theComputerHough_->getCandidates().size();i++)
+   for (unsigned int i=0;i<theComputerTrack_->getCandidates().size();i++)
 	{
-	  RecoCandTk& tk = theComputerHough_->getCandidates()[i];
+	  RecoCandTk& tk = theComputerTrack_->getCandidates()[i];
 	  tk.ax_/=1.04125;
 	  tk.bx_/=1.04125;
 	  tk.ay_/=1.04125;
@@ -8259,10 +8259,10 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
 		}
 	    }
 	}
-   printf("==> MIPS hit %d -> %.2f Length %f \n",nmip,nmip*100./vrh.size(),theComputerHough_->Length()); 
-   float lom=theComputerHough_->Length()*1./vrh.size();
+   printf("==> MIPS hit %d -> %.2f Length %f \n",nmip,nmip*100./vrh.size(),theComputerTrack_->Length()); 
+   float lom=theComputerTrack_->Length()*1./vrh.size();
    hlom->Fill(lom);
-   bool electron=(theComputerHough_->Length()<5. || nmip*100./vrh.size()<1);
+   bool electron=(theComputerTrack_->Length()<5. || nmip*100./vrh.size()<1);
    bool muon=nmip*100./vrh.size()>60.;
    //if (false && (electron || muon) )
    if (lom<1E-4 || lom>0.75)
@@ -8417,9 +8417,9 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
 
   
   
-  for (unsigned int i=0;i<theComputerHough_->getCandidates().size();i++)
+  for (unsigned int i=0;i<theComputerTrack_->getCandidates().size();i++)
 	{
-	  RecoCandTk& tk = theComputerHough_->getCandidates()[i];
+	  RecoCandTk& tk = theComputerTrack_->getCandidates()[i];
 	  DEBUG_PRINT("%f %d \n",tk.chi2_,tk.getList().size());
 	  TCCluster->cd(3);
 	  l[i] = new TLine(tk.zmin_,tk.getXext(tk.zmin_),tk.zmax_,tk.getXext(tk.zmax_));
@@ -9051,7 +9051,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
   float *h_z=(float *) malloc(1024*sizeof(float));
   unsigned int *h_layer=(unsigned int *) malloc(1024*sizeof(unsigned int));
   uint32_t nshower=0;
-  //ComputerHough ch(&cuts);
+  //ComputerTrack ch(&cuts);
   //ch.DefaultCuts();
 
   for (std::vector<RecoHit*>::iterator ih=vrh.begin();ih<vrh.end();ih++)
@@ -9136,14 +9136,14 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
       h_layer[nstub]=(*ic)->chamber();
       nstub++;
     }
-  theComputerHough_->associate(nstub,h_x,h_y,h_z,h_layer);
+  theComputerTrack_->associate(nstub,h_x,h_y,h_z,h_layer);
  
 
-  if (theComputerHough_->getCandidates().size()>0) theNbTracks_++;
+  if (theComputerTrack_->getCandidates().size()>0) theNbTracks_++;
   uint32_t nmip=0;
-   for (unsigned int i=0;i<theComputerHough_->getCandidates().size();i++)
+   for (unsigned int i=0;i<theComputerTrack_->getCandidates().size();i++)
 	{
-	  RecoCandTk& tk = theComputerHough_->getCandidates()[i];
+	  RecoCandTk& tk = theComputerTrack_->getCandidates()[i];
 	  tk.ax_/=1.04125;
 	  tk.bx_/=1.04125;
 	  tk.ay_/=1.04125;

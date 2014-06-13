@@ -156,10 +156,10 @@ EXE_LIBS.append("sio")
 sa=env.Program("bin/sa",source="src/sa.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
 Default([SDHCALAnalysis,LSDHCALAnalysis,sa])
-env.Install("/opt/local/lib",SDHCALAnalysis)
+env.Install("/opt/dhcal/lib",SDHCALAnalysis)
 #env.Install("/opt/dhcal/lib",DIF)
 
-env.Alias('install', ["/opt/local/lib"])
+env.Alias('install', ["/opt/dhcal/lib"])
 
 
 
