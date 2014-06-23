@@ -94,7 +94,8 @@ public:
   }
   ~Zup()
   {
-    close(fd1);
+    if (fd1>0)
+      close(fd1);
   }
   void ON()
   {

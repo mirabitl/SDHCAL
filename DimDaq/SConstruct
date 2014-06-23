@@ -121,6 +121,7 @@ EXE_LIBS=LIBRARIES
 EXE_LIBS.append("SDHCALDimDaq")
 dss=env.Program("bin/dss",source="src/dss.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 dss=env.Program("bin/dcc",source="src/dcc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+dzup=env.Program("bin/dzup",source="src/dzup.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
 #Python module
 _SDHCALDimDaq=env.PythonModule('_LSDHCALDimDaq', ['LSDHCALDimDaq.i'],LIBPATH="#lib",LIBS="SDHCALDimDaq")
