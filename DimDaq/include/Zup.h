@@ -120,6 +120,31 @@ public:
     wr=write(fd1,":CUR?;",6);usleep(50000);
     memset(buff,0,100);rd=read(fd1,buff,100); printf("%s \n",buff);
   }
+  float ReadVoltageSet()
+  {
+    wr=write(fd1,":VOL!;",6);usleep(50000);
+    memset(buff,0,100);rd=read(fd1,buff,100); printf("%s \n",buff);
+    float v;
+    sscanf(buff,"SV%f",&v);
+    return v;
+  }
+  float ReadVoltageUsed()
+  {
+    wr=write(fd1,":VOL?;",6);usleep(50000);
+    memset(buff,0,100);rd=read(fd1,buff,100); printf("%s \n",buff);
+    float v;
+    sscanf(buff,"AV%f",&v);
+    return v;
+  }
+  float ReadCurrentUsed()
+  {
+    wr=write(fd1,":CUR?;",6);usleep(50000);
+    memset(buff,0,100);rd=read(fd1,buff,100); printf("%s \n",buff);
+    float v;
+    sscanf(buff,"AA%f",&v);
+    return v;
+  }
+
 private:
 
 
@@ -132,9 +157,9 @@ private:
 #ifdef _USE_MAIN_EXAMPLE_
 int main()
 {
-//
-// Open the serial port. 
-//
+  //
+  // Open the serial port. 
+  //
   Zup z("/dev/ttyUSB0",1);
   z.INFO();
   //getchar();
