@@ -13,7 +13,8 @@ class WebDIFDBServer: public NMServer
 public:
   WebDIFDBServer(std::string host,uint32_t port);
   NetMessage* commandHandler(NetMessage* m);
- 
+  void doDownload(std::string state);
+
  
  
 private:

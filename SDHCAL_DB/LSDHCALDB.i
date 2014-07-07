@@ -8,9 +8,10 @@
 #include "DIFDBManager.h"
 #include "TextDIFDBManager.h"
 #include "OracleDIFDBManager.h"
+#include "WebDIFDBServer.h"
  %}
 
 %include "DIFDBManager.h"
 %include "TextDIFDBManager.h"
 %include "OracleDIFDBManager.h"
-
+%include "WebDIFDBServer.h"

@@ -11,6 +11,13 @@ WebDIFDBServer::WebDIFDBServer(std::string host,uint32_t port) : NMServer(host,p
   running_=false;
   theManager_=NULL;
 }
+void WebDIFDBServer::doDownload(std::string state)
+{
+   if (theManager_!=NULL) delete theManager_;
+   theManager_= new OracleDIFDBManager("74",state);
+   theManager_->initialize();
+   theManager_->download();
+}
 NetMessage* WebDIFDBServer::commandHandler(NetMessage* m)
 {
   printf(" J'ai recu %s COMMAND  \n",m->getName().c_str());
@@ -18,10 +25,11 @@ NetMessage* WebDIFDBServer::commandHandler(NetMessage* m)
     {
       std::string state((const char*) m->getPayload());
       state.erase(m->getPayloadSize(),-1);
-      if (theManager_!=NULL) delete theManager_;
+      this->doDownload(state);
+      /*if (theManager_!=NULL) delete theManager_;
       theManager_= new OracleDIFDBManager("74",state);
       theManager_->initialize();
-      theManager_->download();
+      theManager_->download();*/
       NetMessage* mrep = new NetMessage("DOWNLOAD",NetMessage::COMMAND_ACKNOWLEDGE,4);
       return mrep;
     }
