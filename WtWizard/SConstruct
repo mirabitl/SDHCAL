@@ -1,0 +1,116 @@
+import sys,os,commands
+import  os
+import re
+import sys
+
+def SWIGSharedLibrary(env, library, sources, **args):
+  swigre = re.compile('(.*).i')
+  if env.WhereIs('swig') is None:
+    sourcesbis = []
+    for source in sources:
+      cName = swigre.sub(r'\1_wrap.c', source)
+      cppName = swigre.sub(r'\1_wrap.cc', source)
+      if os.path.exists(cName):
+        sourcesbis.append(cName)
+      elif os.path.exists(cppName):
+        sourcesbis.append(cppName)
+      else:
+        sourcesbis.append(source)
+  else:
+    sourcesbis = sources
+ 
+  if 'SWIGFLAGS' in args:
+    args['SWIGFLAGS'] += ['-python']
+  else:
+    args['SWIGFLAGS'] = ['-python'] + env['SWIGFLAGS']
+  args['SHLIBPREFIX']=""
+  if sys.version >= '2.5':
+    args['SHLIBSUFFIX']=".pyd"
+ 
+  cat=env.SharedLibrary(library, sourcesbis, **args)
+  return cat
+ 
+
+
+# environment
+#import xdaq
+#print xdaq.INCLUDES
+#print xdaq.LIBRARY_PATHS
+#print xdaq.LIBRARIES
+
+#print "----------------------------------------------"
+Decider('MD5-timestamp')
+XDAQ_ROOT="/opt/xdaq"
+DHCAL_ROOT=os.path.abspath("./SDHCAL/")
+
+
+Bit64=False
+Bit64=os.uname()[4]=='x86_64'
+
+NetLink=DHCAL_ROOT+"/netLink"
+if ( not os.path.exists(NetLink)):
+  NetLink=os.getenv("HOME")+"/netLink"
+
+
+Use_Dim=False
+#os.environ.has_key("DIM_DNS_NODE")
+
+# includes
+INCLUDES=['include',"/usr/include/libxml2/","/usr/include/boost141/","/usr/include/jsoncpp","/usr/include/ILCConfDB/","/usr/include/boost/",DHCAL_ROOT+"/SDHCAL_common/include",DHCAL_ROOT+"/SDHCAL_Client/include",DHCAL_ROOT+"/SDHCAL_DB/include",DHCAL_ROOT+"/SDHCAL_Analysis/include",NetLink+"/include",NetLink+"/cslm",os.getenv("LCIODIR")+"/include"]
+
+
+INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
+
+CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2"]
+
+#Library ROOT + some of XDAQ + DB 
+#Library ROOT + some of XDAQ + DB 
+ROOT_LIBS=[lib[2:] for lib in filter(lambda x: (x[:2]=="-l"), commands.getoutput("$ROOTSYS/bin/root-config --libs --ldflags --glibs").split(" "))
+]
+ROOT_LIBS.append('XMLIO')
+ROOT_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getoutput("$ROOTSYS/bin/root-config --libs ").split(" "))]
+
+#LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
+LIBRARIES=ROOT_LIBS+['jsoncpp','pthread',  'm', 'stdc++','netlink','boost_system-mt','boost_thread-mt','cslm','SDHCALcommon','SDHCALDB','SDHCALClient','SDHCALAnalysis','wthttp','wt','boost_regex','boost_signals','boost_system','boost_thread','boost_filesystem','boost_date_time','wtdbo','wtdbosqlite3','xerces-c','lcio','ilcconfdb']
+
+
+
+#Library path XDAQ,DHCAL and ROOT + Python
+if (Bit64):
+	LIBRARY_PATHS=ROOT_LIBPATH+["/usr/lib64","/usr/local/lib",NetLink+"/lib",DHCAL_ROOT+"/opt/dhcal/lib"]
+else:
+  LIBRARY_PATHS=ROOT_LIBPATH+["/opt/dhcal/lib","/usr/lib","/usr/local/lib",NetLink+"/lib",DHCAL_ROOT+"/opt/dhcal/lib"]
+LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
+
+if Use_Dim:
+   CPPFLAGS.append("-DUSE_DIM")
+   INCLUDES.append("/opt/xdaq/include/dim")
+   LIBRARIES.append("dim")
+   LIBRARY_PATHS.append("/opt/xdaq/lib")
+
+
+#link flags
+LDFLAGS=[]
+LDFLAGS.append("-fPIC -dynamiclib -Wl,--no-as-needed  ")
+
+# SWIG
+SWIGSF=["-c++","-classic"]
+
+for i in INCLUDES:
+    SWIGSF.append("-I"+i)
+print SWIGSF
+
+# Create the Environment
+env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS,SWIGFLAGS=SWIGSF)
+
+#print "CC is:",env.subst('$CPPPATH')
+
+env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
+
+StandaloneDataAcquisition=env.Program("StandaloneDataAcquisition",source=["StandaloneDataAcquisition.C","Tokenizer.cpp"])
+
+Default([StandaloneDataAcquisition])
+
+
+
+
