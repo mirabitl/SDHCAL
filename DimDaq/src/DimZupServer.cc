@@ -65,7 +65,14 @@ void DimZupServer::commandHandler()
   if (currCmd==onCommand_)
     {
       if (theZup_!=NULL)
+	{
 	theZup_->ON();
+	sleep((unsigned int) 1);
+	  readValues_[0]=theZup_->ReadVoltageSet();
+	  readValues_[1]=theZup_->ReadVoltageUsed();
+	  readValues_[2]=theZup_->ReadCurrentUsed();
+	  readService_->updateService();
+	}
       processStatus_=DimZupServer::ON;
       aliveService_->updateService();
 
@@ -73,7 +80,14 @@ void DimZupServer::commandHandler()
   if (currCmd==offCommand_)
     {
       if (theZup_!=NULL)
+	{
 	theZup_->OFF();
+	sleep((unsigned int) 1);
+	  readValues_[0]=theZup_->ReadVoltageSet();
+	  readValues_[1]=theZup_->ReadVoltageUsed();
+	  readValues_[2]=theZup_->ReadCurrentUsed();
+	  readService_->updateService();
+	}
       processStatus_=DimZupServer::OFF;
       aliveService_->updateService();
 
