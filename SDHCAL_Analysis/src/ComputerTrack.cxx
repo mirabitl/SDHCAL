@@ -36,6 +36,107 @@ void ComputerTrack::DefaultCuts()
   theCuts_->NLayerHigh=5;
   theCuts_->NStubHighCandidate=5;
 }
+void ComputerTrack::telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t* layer,uint32_t nplans)
+{
+
+  std::vector<TemplateTk<GeoPoint> > tracks;
+  /*
+  std::map<uint32_t,std::vector<GeoPoint> > chmap;
+  for (uint32_t i=0;i<nstub;i++)
+    {
+      if (layer[i]>nplans) continue;
+      GeoPoint p(layer[i],x[i],y[i],z[i]);
+      // printf("%d %d %f %f %f \n",i,layer[i],x[i],y[i],z[i]);
+      p.setUsed(false);
+      std::map<uint32_t,std::vector<GeoPoint> >::iterator ich=chmap.find(layer[i]);
+      if (ich==chmap.end())
+	{
+	  std::vector<GeoPoint> v;
+	  v.push_back(p);
+	  std::pair<uint32_t,std::vector<GeoPoint> > pm(layer[i],v);
+	  chmap.insert(pm);
+	}
+      else
+	ich->second.push_back(p);
+    }
+  */
+  bool used[1024];memset(used,0,1024*sizeof(bool));
+  for (uint32_t ip1=1;ip1<=nplans/2;ip1++)
+    {
+      for (uint32_t ip2=nplans;ip2>nplans/2;ip2--)
+	{
+	  if (ip2==ip1) continue;
+	  for (uint32_t i=0;i<nstub;i++)
+	    {
+	      if (used[i]) continue;
+	      if (layer[i]!=ip1) continue;
+
+	    
+	      for (uint32_t j=0;j<nstub;j++)
+		{
+		  if (used[j]) continue;
+		  if (layer[j]!=ip2) continue;
+		  TemplateTk<GeoPoint> t;
+		  GeoPoint p0(layer[i],x[i],y[i],z[i]);
+		  GeoPoint p1(layer[j],x[j],y[j],z[j]);
+		  t.addPoint(p0);
+		  t.addPoint(p1);
+		  t.regression();
+		  //printf(" (%d,%f,%f,%f)  (%d,%f,%f,%f) ==> %f %f %f %f  \n",layer[i],x[i],y[i],z[i],layer[j],x[j],y[j],z[j],t.ax_,t.bx_,t.ay_,t.by_);
+		  for (uint32_t k=0;k<nstub;k++)
+		    {
+		      if (used[k]) continue;
+		      if (layer[k]==ip1) continue;
+		      if (layer[k]==ip2) continue;
+		      GeoPoint p2(layer[k],x[k],y[k],z[k]);
+		      if (t.calculateDistance(p2)<3.)
+			{
+			  // 3 hits on tag
+			  used[i]=true;
+			  used[j]=true;
+			  used[k]=true;
+			  t.addPoint(p2);
+			  t.regression();
+			}
+		    }
+		  
+		  if (t.getNumberOfHits()>=3)
+		    {
+		      //t.tagPoints();
+		      tracks.push_back(t);
+		    }
+		}
+	    }
+	}
+    }
+  theCandidateVector_.clear();
+  for (std::vector<TemplateTk<GeoPoint> >::iterator itk=tracks.begin();itk!=tracks.end();itk++)
+    {
+      if (itk->getNumberOfHits()<3) {
+	//printf("small tk %ld \n",itk->getList().size());
+	continue;
+      }
+      //printf("tracks %d %f %f \n",itk->getList().size(),itk->zmin_,itk->zmax_);
+      float xmin=itk->getXext(itk->zmin_);
+      float xmax=itk->getXext(itk->zmax_);
+      float ymin=itk->getYext(itk->zmin_);
+      float ymax=itk->getYext(itk->zmax_);
+      float l=sqrt((xmax-xmin)*(xmax-xmin)+(ymax-ymin)*(ymax-ymin)+(itk->zmax_-itk->zmin_)*(itk->zmax_-itk->zmin_));
+      //printf(" l %f \n ",l);
+      theLength_+=l;
+      //itk->Print();
+        RecoCandTk tk;
+	tk.ax_=itk->ax_;
+	tk.bx_=itk->bx_;
+	tk.ay_=itk->ay_;
+	tk.by_=itk->by_;
+	tk.zmin_=itk->zmin_;
+	tk.zmax_=itk->zmax_;
+	tk.chi2_=itk->chi2_;
+	theCandidateVector_.push_back(tk);
+    }
+
+}
  
 void ComputerTrack::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t* layer)
 {

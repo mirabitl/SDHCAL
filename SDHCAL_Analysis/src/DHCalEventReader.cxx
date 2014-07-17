@@ -2019,8 +2019,28 @@ void DHCalEventReader::ParseSteering(std::string filename)
    */
   xmlCleanupParser();
 
+  // Correct geometry map
+  this->correctGeometry();
+
   return ;
 
+}
+
+void DHCalEventReader::correctGeometry()
+{
+  for (std::map<uint32_t,ChamberPos>::iterator ic=poschambermap_.begin();ic!=poschambermap_.end();ic++)
+    {
+      std::map<uint32_t,PlanShift>::iterator ip=planshiftmap_.find(ic->second.getPlan());
+      if (ip!=planshiftmap_.end())
+	{
+ 	  ic->second.setX0(ic->second.getX0()+ip->second.getX0());
+	  ic->second.setY0(ic->second.getY0()+ip->second.getY0());
+	  ic->second.setZ0(ic->second.getZ0()+ip->second.getZ0());
+	  ic->second.setX1(ic->second.getX1()+ip->second.getX0());
+	  ic->second.setY1(ic->second.getY1()+ip->second.getY0());
+	  ic->second.setZ1(ic->second.getZ1()+ip->second.getZ0());
+	}
+    }
 }
 
 void DHCalEventReader::ParseElement(xmlNode * a_node)
@@ -2126,7 +2146,20 @@ void DHCalEventReader::ParseElement(xmlNode * a_node)
 			  float ang = atof(tokens[4].c_str());
 
 			  std::cout<<xs<<" "<<ys<<" "<<zs<<std::endl;
-			  ChamberGeom chg(id,xs,ys,zs,ang);
+			  ChamberGeom chg(id,xs,ys,zs,ang,id);
+			  std::pair<uint32_t,ChamberGeom> p(id,chg);
+			  geochambermap_.insert(p);
+			}
+		      if (tokens.size()==6)
+			{
+			  int id = atoi(tokens[0].c_str());
+			  float xs = atof(tokens[1].c_str());
+			  float ys = atof(tokens[2].c_str());
+			  float zs = atof(tokens[3].c_str());
+			  float ang = atof(tokens[4].c_str());
+			  int plan = atoi(tokens[5].c_str());
+			  std::cout<<xs<<" "<<ys<<" "<<zs<<"----> plan "<<plan<<std::endl;
+			  ChamberGeom chg(id,xs,ys,zs,ang,plan);
 			  std::pair<uint32_t,ChamberGeom> p(id,chg);
 			  geochambermap_.insert(p);
 			}
@@ -2136,7 +2169,100 @@ void DHCalEventReader::ParseElement(xmlNode * a_node)
 
 	    }
 
+	  if (strcmp((const char*) name,(const char*)"ChamberPos")==0)
+	    {
+	      printf("%s \n",name);
+	      //getchar();
+	      xmlChar* xc=cur_node->content;
+	      if (cur_node->children)
+		{
+		  printf("%s \n",cur_node->children->content);
+		  char *str1, *str2, *token, *subtoken;
+		  char *saveptr1, *saveptr2;
+		  str1 =( char*) cur_node->children->content;
+		  for (int j = 1 ; ; j++) 
+		    {
+			  
+		      token = strtok_r(str1,"\n", &saveptr1);
+		      if (token == NULL)
+			break;
+		      printf("%d: %s\n", j, token);
+
+			  
+		      std::string schgeo(token);
+		      std::vector<std::string> tokens ;
+		      LCTokenizer t( tokens ,',') ;
+		      std::for_each( schgeo.begin(), schgeo.end(), t ) ;
+		      std::cout<<tokens.size()<<" "<<tokens[0]<<std::endl;
+		      if (tokens.size()==9)
+			{
+			  int id = atoi(tokens[0].c_str());
+			  float x0 = atof(tokens[1].c_str());
+			  float y0 = atof(tokens[2].c_str());
+			  float z0 = atof(tokens[3].c_str());
+			  float x1 = atof(tokens[4].c_str());
+			  float y1 = atof(tokens[5].c_str());
+			  float z1 = atof(tokens[6].c_str());
+			  int plan = atoi(tokens[7].c_str());
+			  int type = atoi(tokens[8].c_str());
+
+			  std::cout<<x0<<" "<<y0<<" "<<z0<<std::endl;
+			  std::cout<<x1<<" "<<y1<<" "<<z1<<std::endl;
+			  ChamberPos chg(id,x0,y0,z0,x1,y1,z1,plan,type);
+			  std::pair<uint32_t,ChamberPos> p(id,chg);
+			  poschambermap_.insert(p);
+			}
+		      str1=NULL;
+		    }
+		}
+
+	    }
+	  if (strcmp((const char*) name,(const char*)"PlanShift")==0)
+	    {
+	      printf("%s \n",name);
+	      //getchar();
+	      xmlChar* xc=cur_node->content;
+	      if (cur_node->children)
+		{
+		  printf("%s \n",cur_node->children->content);
+		  char *str1, *str2, *token, *subtoken;
+		  char *saveptr1, *saveptr2;
+		  str1 =( char*) cur_node->children->content;
+		  for (int j = 1 ; ; j++) 
+		    {
+			  
+		      token = strtok_r(str1,"\n", &saveptr1);
+		      if (token == NULL)
+			break;
+		      printf("%d: %s\n", j, token);
+
+			  
+		      std::string schgeo(token);
+		      std::vector<std::string> tokens ;
+		      LCTokenizer t( tokens ,',') ;
+		      std::for_each( schgeo.begin(), schgeo.end(), t ) ;
+		      std::cout<<tokens.size()<<" "<<tokens[0]<<std::endl;
+		      if (tokens.size()==4)
+			{
+			  int id = atoi(tokens[0].c_str());
+			  float dx0 = atof(tokens[1].c_str());
+			  float dy0 = atof(tokens[2].c_str());
+			  float dz0 = atof(tokens[3].c_str());
+			  std::cout<<dx0<<" "<<dy0<<" "<<dz0<<std::endl;
+			  PlanShift chg(id,dx0,dy0,dz0);
+			  std::pair<uint32_t,PlanShift> p(id,chg);
+			  planshiftmap_.insert(p);
+			}
+		      str1=NULL;
+		    }
+		}
+
+	    }
+
+
 	  if (strcmp((const char*) name,(const char*)"ChamberGeom")!=0 &&
+	      strcmp((const char*) name,(const char*)"ChamberPos")!=0 &&
+	      strcmp((const char*) name,(const char*)"PlanShift")!=0 &&
 	      strcmp((const char*) name,(const char*)"DifGeom")!=0)
 	    {
 	      //std::cout<<name<<std::endl;

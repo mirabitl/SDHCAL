@@ -2,7 +2,7 @@
 //#include "TemplateTk.h"
 #include "TMath.h"
 template <class A>
-TemplateTk<A>::TemplateTk() : ax_(0),bx_(0),ay_(0),by_(0),valid_(true),zmin_(150),zmax_(0.)
+TemplateTk<A>::TemplateTk() : ax_(0),bx_(0),ay_(0),by_(0),valid_(true),zmin_(1500),zmax_(-1500.)
 {
 	list_.clear();
 	for (uint32_t i=0;i<=61;i++) dmin_[i]=1E9;
@@ -182,7 +182,7 @@ bool TemplateTk<A>::addNearestPoint( A& p)
 template <class A>
 void TemplateTk<A>::addPoint( A& p)
 {
-	//  std::cout<<__PRETTY_FUNCTION__<<p.X()<<" "<<p.Y()<<" "<<p.Z()<<std::endl;
+  //std::cout<<__PRETTY_FUNCTION__<<p.X()<<" "<<p.Y()<<" "<<p.Z()<<" min "<<zmin_<<" max "<<zmax_<<std::endl;
 	if (p.Z()<zmin_) zmin_=p.Z();
 	if (p.Z()>zmax_) zmax_=p.Z();
 	list_.push_back(&p);
@@ -235,6 +235,7 @@ void TemplateTk<A>::regression1D(std::vector<double> &vx,std::vector<double> &we
 	if (vx.size()<2) return;
 	for (uint32_t i=0;i<vx.size();i++)
 	{
+	  weight[i]=1.;
 		x+=vx[i]*weight[i];
 		x2+=vx[i]*vx[i]*weight[i];
 		xy+=vx[i]*vy[i]*weight[i];
@@ -380,6 +381,23 @@ void TemplateTk<A>::calculateChi2()
 
 	prChi2_=TMath::Prob(chi2_,2*n-4);
 }
+
+
+template <class A>
+void TemplateTk<A>::tagPoints()
+{
+	//  unsigned int n = list_.size();
+
+
+	for (typename std::vector<A*>::iterator it=list_.begin();it!=list_.end();it++)
+	{
+	  
+	  (*it)->setUsed(true);
+		
+	}
+
+}
+
 template <class A>
 void TemplateTk<A>::clean()
 {

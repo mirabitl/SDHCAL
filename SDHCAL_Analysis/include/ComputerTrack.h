@@ -39,6 +39,7 @@ public:
   ~ComputerTrack();
   void DefaultCuts();
   void associate(uint32_t nstub,float* x,float* y,float* z,uint32_t* layer);
+  void telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t* layer,uint32_t nplans);
 
   std::vector<RecoCandTk> &getCandidates(){return theCandidateVector_;}
   float Length(){return theLength_;}

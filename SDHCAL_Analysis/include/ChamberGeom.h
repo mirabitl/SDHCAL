@@ -11,13 +11,14 @@
 class ChamberGeom
 {
  public:
- ChamberGeom(unsigned int id=0,double x=0,double y=0, double z=0,double angle=0) : id_(id),x_(x),y_(y),z_(z),angle_(angle) 
+ ChamberGeom(unsigned int id=0,double x=0,double y=0, double z=0,double angle=0,unsigned int plan=0) : id_(id),x_(x),y_(y),z_(z),angle_(angle) ,plan_(plan)
   {
     double ang=  acos(-1)/180.*angle;
     cos_=cos(ang);
     sin_=sin(ang);
   }
   inline  unsigned int getId(){return id_;}
+  inline  unsigned int getPlan(){return plan_;}
   inline  double getX(){return x_;}
   inline  double getY(){return y_;}
   inline  double getZ(){return z_;}
@@ -44,7 +45,7 @@ class ChamberGeom
   inline  double toLocalX(double x){return x-x_;}
   inline  double toLocalY(double x){return x-y_;}
  private:
-  unsigned int id_;
+  unsigned int id_,plan_;
   double x_,y_,z_,angle_,cos_,sin_;
 
 };

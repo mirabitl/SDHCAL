@@ -73,7 +73,7 @@ int main(int argc, char** argv ){
   DCHistogramHandler rootHandler;
   //  LMBasicAnalyzer *a= new LMBasicAnalyzer( &dher,&rootHandler);
 
-  bool rebuild=false;
+  bool rebuild=true;
   // if (rebuild)
   //   a->setCollectionName("DHCALRawHitsNew");
   // a->registerDIF(23);
@@ -92,7 +92,7 @@ int main(int argc, char** argv ){
 
 
 
-  dher.ParseSteering("can37.xml");
+  dher.ParseSteering("tomuvol_0714.xml");
 
 #define USESTREAM
 #ifdef USESTREAM

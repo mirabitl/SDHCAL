@@ -6,7 +6,7 @@ using namespace Eigen;
 
 const double posError=0.5;
 
-const double pad2cm=1.04125;
+const double pad2cm=1.;//1.04125;
 
 
 GeoPoint::GeoPoint(unsigned int ch,double x,double y,double z,double dx,double dy) : inTrack_(false)

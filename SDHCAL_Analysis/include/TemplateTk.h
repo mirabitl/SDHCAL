@@ -28,6 +28,7 @@ public:
   void regression1D(std::vector<double> &vx,std::vector<double> &weight,std::vector<double> &y,double &chi2, double &alpha,double &beta);
   void calculateChi2();
   void clean();
+  void tagPoints();
   void Print();
   std::vector<A*>& getList(){return list_;}
   uint32_t getNumberOfHits(){return list_.size();}

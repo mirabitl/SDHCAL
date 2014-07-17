@@ -41,7 +41,6 @@ public:
   void Compute(uint32_t nstub,float* x,float* y,float* z,uint32_t* layer);
   void ComputeOneShot(uint32_t nstub,float* x,float* y,float* z,uint32_t* layer);
   void associate(uint32_t nstub,float* x,float* y,float* z,uint32_t* layer);
-
   std::vector<RecoCandTk> &getCandidates(){return theCandidateVector_;}
   houghParam* getPh(){return &ph_;}
   houghParam* getPhcand(int i){return &phcand_[i];}

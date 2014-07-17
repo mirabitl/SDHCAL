@@ -27,6 +27,7 @@ public:
   double Y();
   double Z();
   int chamber();
+  int plan();
   std::bitset<8> Flag(){return theFlag_;}
   void setFlag(RecoHit::Type t,bool v){theFlag_.set(t,v);}
   bool getFlag(RecoHit::Type t){return theFlag_[t];}
@@ -52,6 +53,8 @@ public:
   //std::list<RecoHit*>& Voisins(){return vnear_;}
   //uint32_t getNumberOfVoisins(){return nnear_;}
   void clear();
+  static const double pad2cm=1.04125;
+
 private:
   DifGeom dg_;
   ChamberGeom cg_;

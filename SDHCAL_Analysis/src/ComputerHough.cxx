@@ -321,7 +321,6 @@ void ComputerHough::drawphcand(uint32_t ic)
   delete g_houghxz;
   delete g_houghyz;
 }
- 
 void ComputerHough::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t* layer)
 {
   std::map<uint32_t,std::vector<GeoPoint> > chmap;

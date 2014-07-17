@@ -33,6 +33,8 @@
 #include "FlagTime.h"
 #include "DifGeom.h"
 #include "ChamberGeom.h"
+#include "ChamberPos.h"
+#include "PlanShift.h"
 #include "MarlinParameter.h"
 #include <map>
 #include <ext/hash_map>
@@ -414,6 +416,8 @@ int readOneEvent(int run,int event);
   void fastFlag2(std::vector<uint32_t> &seed,uint32_t seedCut=2,uint32_t minChamberInTime=5);
   std::map<uint32_t,DifGeom>& getDifMap(){return geodifmap_;}
   std::map<uint32_t,ChamberGeom>& getChamberMap(){return geochambermap_;}
+  std::map<uint32_t,ChamberPos>& getPositionMap(){return poschambermap_;}
+  ChamberPos& getPosition(uint32_t id){ return poschambermap_[id];} 
   void setDropFirstRU(bool t){dropFirstRU_=t;}
   std::map<std::string,MarlinParameter>& getMarlinParameterMap(){return  theMarlinParameterMap_;}
   void setXdaqShift(unsigned int s){theXdaqShift_=s;}
@@ -428,6 +432,7 @@ int readOneEvent(int run,int event);
   std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> >& getPhysicsEventMap(){return thePhysicsEventMap_;}
   std::vector<uint32_t>& getTimeSeeds(){return theTimeSeeds_;}
   std::vector<DIFPtr*>& getDIFList(){return  theDIFPtrList_;}
+  void correctGeometry();
  private:
   LCReader* lcReader_; /// LCIO Reader
   //  LCSplitWriter* lcWriter_; /// LCIO Writer
@@ -464,6 +469,8 @@ int readOneEvent(int run,int event);
 
   std::map<uint32_t,DifGeom> geodifmap_; 
   std::map<uint32_t,ChamberGeom> geochambermap_; 
+  std::map<uint32_t,ChamberPos> poschambermap_; 
+  std::map<uint32_t,PlanShift> planshiftmap_; 
   std::map<std::string,MarlinParameter>  theMarlinParameterMap_;
   bool dropFirstRU_;
   uint32_t theXdaqShift_;

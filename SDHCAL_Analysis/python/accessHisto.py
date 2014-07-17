@@ -126,6 +126,37 @@ def DrawEff(plan):
   print plan,heffsum.GetMean()
   return l
  
+def GetEff(plan):
+  l=[]
+  dirname='/Plan%d' % plan
+  extname= dirname+'/ext'
+  nearname= dirname+'/found'
+  hext = getth2(extname)
+  hnear = getth2(nearname)
+  hext.Draw("TEXT")
+  
+  hnear.Draw("TEXT")
+ 
+  heff = hnear.Clone("heff")
+  heff.SetDirectory(0)
+  heff.Divide(hnear,hext,100.,1.)
+  heff.Draw("TEXT")
+ 
+  l.append(hnear)
+  l.append(hext)
+  l.append(heff)
+  heffsum=TH1F("Summary%d" % plan ,"Summary for plan %d " % plan,404,05.,101.)
+  st = ''
+  for i in range(heff.GetXaxis().GetNbins()):
+    for j in range(heff.GetYaxis().GetNbins()):
+      st = st + '%f ' % heff.GetBinContent(i+1,j+1)
+      if (hext.GetBinContent(i+1,j+1)>25):
+        heffsum.Fill(heff.GetBinContent(i+1,j+1))
+  #print '%s' % st
+  l.append(heffsum)
+  print plan,heffsum.GetMean()
+  return l
+ 
 
 def getDifList(chamber):
   difl={}
