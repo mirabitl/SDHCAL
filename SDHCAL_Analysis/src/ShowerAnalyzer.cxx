@@ -9215,6 +9215,21 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 		}
 	    }
 	  // Calcul de l'efficacite
+
+	  // Track info
+	  TH1* hnp= rootHandler_->GetTH1("/Track/Npoints");
+	  TH1* hax= rootHandler_->GetTH1("/Track/ax");
+	  TH1* hay= rootHandler_->GetTH1("/Track/ay");
+	  if (hnp==NULL)
+	    {
+	       hnp=  rootHandler_->BookTH1("/Track/Npoints",51,-0.1,50.9);
+	       hax=  rootHandler_->BookTH1("/Track/ax",100,-2.,2.);
+	       hay=  rootHandler_->BookTH1("/Track/ay",100,-2.,2.);
+
+	    }
+	  hnp->Fill(tk.np_*1.);
+	  hax->Fill(tk.ax_);
+	  hay->Fill(tk.ay_);
 	  fch=0;lch=5;
 	  for (uint32_t ip=fch+1;ip<lch;ip++)
 	    {
@@ -9224,15 +9239,25 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	      
 	      TH2* hext= rootHandler_->GetTH2(s.str()+"ext");
 	      TH2* hfound= rootHandler_->GetTH2(s.str()+"found");
+	      TH2* hnear= rootHandler_->GetTH2(s.str()+"near");
 	      TH2* hfound1= rootHandler_->GetTH2(s.str()+"found1");
 	      TH2* hfound2= rootHandler_->GetTH2(s.str()+"found2");
 	      TH1* hdx= rootHandler_->GetTH1(s.str()+"dx");
 	      TH1* hdy= rootHandler_->GetTH1(s.str()+"dy");
-	      
-
+	      float dz0=0.,distz=60.; // 2.8
+	      float xext=tk.getXext(dz0+(ip-1)*distz);
+	      float yext =tk.getYext(dz0+(ip-1)*distz);
+	       std::map<uint32_t,ChamberPos>& pos= reader_->getPositionMap();
+	      for (std::map<uint32_t,ChamberPos>::iterator ich=pos.begin();ich!=pos.end();ich++)
+		{
+		  if ((*ich).second.getPlan()!=ip) continue;
+		   xext=tk.getXext((*ich).second.getZ0());
+		   yext =tk.getYext((*ich).second.getZ0());
+		   break;
+		}
 	      if (hext==NULL)
 		{
-		  std::map<uint32_t,ChamberPos>& pos= reader_->getPositionMap();
+		  
 		  double xi=1000,xa=-1000,yi=1000,ya=-1000;
 		  for (std::map<uint32_t,ChamberPos>::iterator ich=pos.begin();ich!=pos.end();ich++)
 		    {
@@ -9245,23 +9270,25 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 		      if ((*ich).second.getY1()<yi) yi= (*ich).second.getY1();
 		      if ((*ich).second.getX1()>xa) xa= (*ich).second.getX1();
 		      if ((*ich).second.getY1()>ya) ya= (*ich).second.getY1();
+		      
 		    }
 
 		  hext= rootHandler_->BookTH2(s.str()+"ext",17,xi,xa,17,yi,ya);
 		  hfound= rootHandler_->BookTH2(s.str()+"found",17,xi,xa,17,yi,ya);
+		  int nx=int(xa-xi)/4;
+		  int ny=int(ya-yi)/4;
+		  hnear= rootHandler_->BookTH2(s.str()+"near",nx,xi,xa,ny,yi,ya);
 		  hfound1= rootHandler_->BookTH2(s.str()+"found1",17,xi,xa,17,yi,ya);
 		  hfound2= rootHandler_->BookTH2(s.str()+"found2",17,xi,xa,17,yi,ya);
 		  hdx=  rootHandler_->BookTH1(s.str()+"dx",100,-8.,8.);
 		  hdy=  rootHandler_->BookTH1(s.str()+"dy",100,-8.,8.);
 		}
-	      float dz0=0.,distz=35.; // 2.8
-	      float xext=tk.getXext(dz0+(ip-1)*distz);
-	      float yext =tk.getYext(dz0+(ip-1)*distz);
+	   
 	      hext->Fill(xext,yext);
 	      //bool 
 	      float dist=1E9;
 	      bool th1=false,th2=false;
-	      float dxi,dyi;
+	      float dxi,dyi,xn,yn;
 	      for (std::vector<RECOCluster*>::iterator ic=clusters.begin();ic!=clusters.end();ic++)
 		{
 		  if ((*ic)->plan()!=ip) continue;
@@ -9270,16 +9297,20 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	  //	 cp.getId(),cp.getX0(),cp.getY0(),cp.getZ0(),cp.getX1(),cp.getY1(),cp.getZ1(),cp.getXsize(),cp.getYsize());
 		  double x,y,z;
 		  cp.calculateGlobal((*ic)->X(),(*ic)->Y(),x,y,z);
-		  
+		  xext=tk.getXext(z);
+		  yext=tk.getYext(z);
 		  float dx=tk.getXext(z)-x;
 		  float dy=tk.getYext(z)-y;
 		  //printf(" (%f,%f,%f) %f %f \n",x,y,z,tk.getXext(z),tk.getYext(z));
 		  //getchar();
 		  if (sqrt(dx*dx+dy*dy)<dist)
 		    {
+		      
 		      dist=sqrt(dx*dx+dy*dy);
 		      dxi=dx;
 		      dyi=dy;
+		      xn=x;
+		      yn=y;
 		      th1=false,th2=false;
 		      for (std::vector<RecoHit>::iterator ih=(*ic)->getHits()->begin();ih!=(*ic)->getHits()->end();ih++)
 			{
@@ -9296,6 +9327,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 		  hdy->Fill(dyi);
 		  
 		  hfound->Fill(xext,yext);
+		  hnear->Fill(xn,yn);
 		  if (th1)  hfound1->Fill(xext,yext);
 		  if (th2)  hfound2->Fill(xext,yext);
 		}

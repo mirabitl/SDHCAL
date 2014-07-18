@@ -130,6 +130,7 @@ void ComputerTrack::telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t
 	tk.bx_=itk->bx_;
 	tk.ay_=itk->ay_;
 	tk.by_=itk->by_;
+	tk.np_=itk->getNumberOfHits();
 	tk.zmin_=itk->zmin_;
 	tk.zmax_=itk->zmax_;
 	tk.chi2_=itk->chi2_;

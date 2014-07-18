@@ -150,7 +150,7 @@ def GetEff(plan):
   for i in range(heff.GetXaxis().GetNbins()):
     for j in range(heff.GetYaxis().GetNbins()):
       st = st + '%f ' % heff.GetBinContent(i+1,j+1)
-      if (hext.GetBinContent(i+1,j+1)>25):
+      if (hext.GetBinContent(i+1,j+1)>10):
         heffsum.Fill(heff.GetBinContent(i+1,j+1))
   #print '%s' % st
   l.append(heffsum)

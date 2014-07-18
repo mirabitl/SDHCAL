@@ -34,7 +34,7 @@ public:
 	double calculateDistance(RecoPoint& p);
 	double ax_,bx_,ay_,by_,chi2_;
 	double prChi2_;
-	uint32_t firstChamber_,lastChamber_;
+	uint32_t firstChamber_,lastChamber_,np_;
 	inline bool isValid(){return valid_;}
 	inline void setValid(bool t){valid_=t;}
 	float zmin_,zmax_;
