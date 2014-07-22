@@ -11,6 +11,9 @@ using namespace std;
 #include <sstream>
 #include <map>
 #include <vector>
+#include <boost/function.hpp>
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
 
 typedef struct 
 {
@@ -32,7 +35,7 @@ typedef struct
 
 
 
-class DimDIFServer: public DimDIFServer
+class DimDIFServer: public DimServer
 {
 public:
   DimDIFServer();
@@ -46,14 +49,14 @@ public:
   std::vector<uint32_t>& scanDevices();
   void prepareDevices();
   void UsbPrepare();
-  void startServices();
+  //  void startServices();
   void startReadout();
   void readout(uint32_t difid);
 
-  void joinServices();
+  void clearServices();
 
-  void services();
-  enum State {ALIVED=0,SCANNED=1,INITIALISED=2,CONFIGURED=3,RUNNING=4,STOPPED=5};
+  void allocateServices(int32_t id);
+  enum State {ALIVED=0,SCANNED=1,INITIALISED=2,PRECONFIGURED=3,CONFIGURED=4,RUNNING=5,STOPPED=6,DESTROYED=7};
 private:
   bool running_,readoutStarted_;
   boost::thread    m_Thread_s;
@@ -65,19 +68,24 @@ private:
   
   // Dim Part
   int32_t processStatus_;
-  DimService* aliveService_; //State of the process 
-  DimCommand *scanCommand_;
-  int32_t devicesStatus_[255];
-  DimService* devicesService_; // List of difid (int)
-  DimCommand *initialiseCommand_;
-
-  DimCommand *configureCommand_;
-  
+	int32_t devicesStatus_[255];
   DIFStatus difStatus_[255];
-  DimService* infoServicesMap_[255]; //FtdiDeviceInfo services map
-  DimCommand *startCommand_;
   uint32_t difData_[255*32*1024];
-  DimServices dataServicesMap_[255]; // data services map
+
+  DimService* aliveService_; //State of the process 
+  DimService* devicesService_; // List of FTDI devices
+
+	DimService* infoServicesMap_[255]; //FtdiDeviceInfo services map
+	DimService* dataServicesMap_[255]; // data services map
+
+  DimCommand *scanCommand_;
+  DimCommand *initialiseCommand_;
+  uint32_t theSlowBuffer_[8192];
+  DimCommand *preconfigureCommand_;
+  DimCommand *configurechipsCommand_;
+  
+  
+  DimCommand *startCommand_;
   DimCommand *stopCommand_;
   DimCommand *destroyCommand_;
   

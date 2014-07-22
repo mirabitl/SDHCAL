@@ -20,21 +20,7 @@ using namespace Ftdi;
 
 DimDIFServer::DimDIFServer()  
 {
-  this->registerCommand("SCANDEVICES",boost::bind(&DimDIFServer::commandHandler,this,_1));
-  this->registerCommand("INITIALISE",boost::bind(&DimDIFServer::commandHandler,this,_1));
-  this->registerCommand("PRECONFIGURE",boost::bind(&DimDIFServer::commandHandler,this,_1));
-  this->registerCommand("CONFIGURECHIPS",boost::bind(&DimDIFServer::commandHandler,this,_1));
-  this->registerCommand("CONFIGUREDIF",boost::bind(&DimDIFServer::commandHandler,this,_1));
-
-  this->registerCommand("SETDIFPARAM",boost::bind(&DimDIFServer::commandHandler,this,_1));
-
-  this->registerCommand("START",boost::bind(&DimDIFServer::commandHandler,this,_1));
-  this->registerCommand("STOP",boost::bind(&DimDIFServer::commandHandler,this,_1));
-  this->registerCommand("DESTROY",boost::bind(&DimDIFServer::commandHandler,this,_1));
-
-  this->registerService("UNESSAI");
-  this->start();
-  //this->startServices();
+  
   running_=false;
   readoutStarted_=false;
 
@@ -42,11 +28,17 @@ DimDIFServer::DimDIFServer()
   char hname[80];
   gethostname(hname,80);
   s0<<"/DSS/"<<hname<<"/STATUS";
-  aliveService_ = new DimService(s0.str().c_str(),"I",this);
-  aliveService_->updateService(DIMDifServer::ALIVED);
+  aliveService_ = new DimService(s0.str().c_str(),"I:1",this);
+  s0.str(std::string());
+  memset(devicesStatus_,0,255*sizeof(int32_t));
+  s0<<"/DSS/"<<hname<<"/DEVICES";
+  devicesService_= new DimService(s0.str().c_str(),"I:255",devicesStatus_,255*sizeof(int32_t));
+  processStatus_=DimDIFServer::ALIVED;
+  aliveService_->updateService(processStatus_);
   allocateCommands();
-  memset(infoServiceMap_,0,255*sizeof(DimService*));
-  memset(dataServiceMap_,0,255*sizeof(DimService*));
+  DimServer::start("TheServer"); 
+  memset(infoServicesMap_,0,255*sizeof(DimService*));
+  memset(dataServicesMap_,0,255*sizeof(DimService*));
 }
 
 void DimDIFServer::allocateCommands()
@@ -55,32 +47,32 @@ void DimDIFServer::allocateCommands()
   char hname[80];
   gethostname(hname,80);
   s0<<"/DSS/"<<hname<<"/SCANDEVICES";
-  scanCommand_=new DimCommand(s0.str().c_str(),"I",this);
+  scanCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
   s0<<"/DSS/"<<hname<<"/INITIALISE";
-  initialiseCommand_=new DimCommand(s0.str().c_str(),"I",this);
+  initialiseCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
   s0<<"/DSS/"<<hname<<"/PRECONFIGURE";
-  preconfigureCommand_=new DimCommand(s0.str().c_str(),"I",this);
+  preconfigureCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
   s0<<"/DSS/"<<hname<<"/CONFIGURECHIPS";
-  configurechipsCommand_=new DimCommand(s0.str().c_str(),"*I",theSLowBuffer_,8192,this);
+  configurechipsCommand_=new DimCommand(s0.str().c_str(),"I",this);
 
   s0.str(std::string());
   s0<<"/DSS/"<<hname<<"/START";
-  startCommand_=new DimCommand(s0.str().c_str(),"I",this);
+  startCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
   s0<<"/DSS/"<<hname<<"/STOP";
-  stopCommand_=new DimCommand(s0.str().c_str(),"I",this);
+  stopCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
   s0<<"/DSS/"<<hname<<"/DESTROY";
-  destroyCommand_=new DimCommand(s0.str().c_str(),"I",this);
+  destroyCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
 
 }
 
 void DimDIFServer::clearServices()
 {
-  for (i=0;i<255;i++)
+  for (int i=0;i<255;i++)
     {
       if (infoServicesMap_[i]!=NULL) {delete infoServicesMap_[i]; infoServicesMap_[i]=NULL;} 
       if (dataServicesMap_[i]!=NULL) {delete dataServicesMap_[i]; dataServicesMap_[i]=NULL;} 
@@ -95,14 +87,14 @@ void DimDIFServer::allocateServices(int32_t dif)
   char hname[80];
   gethostname(hname,80);
 
-     s0.str(std::string());
-     s0<<"/DSS/"<<hname<<"/DIF"<<dif<<"/INFO";
-     // id,Status,GTC,BCID,Bytes
-     infoServiceMap_[dif] = new DimService(s0.str().c_str(),"I:3,L:2",&difStatus_[dif],sizeof(DIFStatus),this);
-     s0.str(std::string());
-     s0<<"/DSS/"<<hname<<"/DIF"<<dif<<"/DATA";
-     // DIF buffer
-     dataServiceMap_[dif] = new DimService(s0.str().c_str(),"*I",&difData[dif*32*1024],sizeof(128*1024),this);
+  s0.str(std::string());
+  s0<<"/DSS/"<<hname<<"/DIF"<<dif<<"/INFO";
+  // id,Status,GTC,BCID,Bytes
+  infoServicesMap_[dif] = new DimService(s0.str().c_str(),"I:3,L:2",&difStatus_[dif],sizeof(DIFStatus));
+  s0.str(std::string());
+  s0<<"/DSS/"<<hname<<"/DIF"<<dif<<"/DATA";
+  // DIF buffer
+  dataServicesMap_[dif] = new DimService(s0.str().c_str(),"I",&difData_[dif*32*1024],sizeof(uint32_t)*32*1024);
 
 }
 
@@ -307,11 +299,10 @@ void DimDIFServer::initialise(uint32_t difid) throw (LocalHardwareException)
       */
       std::pair<uint32_t,DIFReadout*> p(difid,dif);
       theDIFMap_.insert(p);
-      std::stringstream s;
-      s<<"DIF"<<difid;
-      this->registerService(s.str());
+     
+			this->allocateServices(difid);
 
-      std::cout<<" The DIF "<<difid<<" is initialized  -> Service "<<s.str()<<std::endl;
+      std::cout<<" The DIF "<<difid<<" is initialized  -> Service "<<std::endl;
 
 		
     }
@@ -396,36 +387,39 @@ void DimDIFServer::prepareDevices()
 
 void DimDIFServer::commandHandler()
 {
-  DimCommand *currCmnd = getCommand();
+  DimCommand *currCmd = getCommand();
   printf(" J'ai recu %s COMMAND  \n",currCmd->getName());
   if (currCmd==scanCommand_)
     {
       std::vector<uint32_t> v=scanDevices();
-      memset(deviceStatus_,0,255*sizeof(int32_t));
-      for (std::vector<uint32_t>::iterator i=v.begin()i!=v.end();i++)
+      memset(devicesStatus_,0,255*sizeof(int32_t));
+      for (std::vector<uint32_t>::iterator i=v.begin();i!=v.end();i++)
 	{
 	  devicesStatus_[(*i)]=(*i);
 	}
-      devicesServices_->updateService(devicesStatus_,255*sizeof(uint32_t));
+      devicesService_->updateService(devicesStatus_,255*sizeof(uint32_t));
+      processStatus_=DimDIFServer::SCANNED;
+      aliveService_->updateService(processStatus_);
+
     }
   if (currCmd==initialiseCommand_)
     {
       uint32_t difid=currCmd->getInt();
       difStatus_[difid].id=difid;
       this->allocateServices(difid);
-      int rc=0;
+      int rc=1;
       try 
 	{
 	  this->initialise(difid);
-	  rc=1;
+	  rc=difid;
 	}
       catch (LocalHardwareException e)
 	{
 	  std::cout<<e.what()<<std::endl;
 	  rc=-1;
 	}
-      difStatus_[difid].id=difid;
-      infoServicesMap_[difid]->updateService(&difStatus_[difid],sizeof(DifStatus));
+      difStatus_[difid].id=rc*DimDIFServer::INITIALISED;
+      infoServicesMap_[difid]->updateService(&difStatus_[difid],sizeof(DIFStatus));
 
     }
 
@@ -472,14 +466,16 @@ void DimDIFServer::commandHandler()
 	    }
 
 
-	  difStatus_[itd->first].slc=rc;
-	  infoServicesMap_[itd->first]->updateService(&difStatus_[itd->first],sizeof(DifStatus));
+	  difStatus_[itd->first].slc=rc*DimDIFServer::PRECONFIGURED;
+	  infoServicesMap_[itd->first]->updateService(&difStatus_[itd->first],sizeof(DIFStatus));
 
 	}
 
+      processStatus_=DimDIFServer::PRECONFIGURED;
+      aliveService_->updateService(processStatus_);
     }
 	
-  if (m->getName().compare("DESTROY")==0)
+  if (currCmd==destroyCommand_)
     {
       readoutStarted_=false;
       g_d.join_all();
@@ -494,15 +490,16 @@ void DimDIFServer::commandHandler()
 	  std::stringstream s;
 	  s<<"DIF"<<itd->first;
 	  std::cout<<s.str()<<" beiing destroyed"<<std::endl;
-	  this->destroyService(s.str());
+	  //this->destroyService(s.str());
 			
 	}
+      this->clearServices();
       theDIFMap_.clear();
-      NetMessage* mrep = new NetMessage("DESTROY",NetMessage::COMMAND_ACKNOWLEDGE,4);
-      return mrep;
+      processStatus_=DimDIFServer::DESTROYED;
+      aliveService_->updateService(processStatus_);
     }
 	
-  if (m->getName().compare("START")==0)
+  if (currCmd==startCommand_)
     {
       running_=true;
       this->startReadout();
@@ -517,10 +514,11 @@ void DimDIFServer::commandHandler()
 	      std::cout<<itd->first<<" is not started "<<e.what()<<std::endl;
 	    }
 	}
-      NetMessage* mrep = new NetMessage("START",NetMessage::COMMAND_ACKNOWLEDGE,4);
-      return mrep;
+
+      processStatus_=DimDIFServer::RUNNING;
+      aliveService_->updateService(processStatus_);
     }
-  if (m->getName().compare("STOP")==0)
+  if (currCmd==stopCommand_)
     {
       running_=false;
       for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
@@ -535,42 +533,25 @@ void DimDIFServer::commandHandler()
 	    }
 	}
 
-      NetMessage* mrep = new NetMessage("STOP",NetMessage::COMMAND_ACKNOWLEDGE,4);
-      return mrep;
+      processStatus_=DimDIFServer::STOPPED;
+      aliveService_->updateService(processStatus_);
+    
     }
 
-  if (m->getName().compare("CONFIGURECHIPS")==0)
+  if (currCmd==configurechipsCommand_)
     {
       uint32_t difid;
-      memcpy(&difid,m->getPayload(),sizeof(uint32_t));
-      uint32_t nasic=(m->getPayloadSize()-sizeof(uint32_t))/sizeof(SingleHardrocV2ConfigurationFrame);
+			memcpy(theSlowBuffer_,currCmd->getData(),currCmd->getSize());
+      memcpy(&difid,theSlowBuffer_,sizeof(uint32_t));
+      uint32_t nasic=(currCmd->getSize()-sizeof(uint32_t))/sizeof(SingleHardrocV2ConfigurationFrame);
       printf("I found DIF %d asics %d \n",difid,nasic);
-      SingleHardrocV2ConfigurationFrame* slow =(SingleHardrocV2ConfigurationFrame*) &(m->getPayload())[4];
+      SingleHardrocV2ConfigurationFrame* slow =(SingleHardrocV2ConfigurationFrame*) &theSlowBuffer_[4];
       uint32_t slc=this->configureChips(difid,slow,nasic);
-      NetMessage* mrep = new NetMessage("CONFIGURECHIPS",NetMessage::COMMAND_ACKNOWLEDGE,4);
-      uint32_t* ipay=(uint32_t*) mrep->getPayload();
-      ipay[0]=slc;
-      return mrep;
+      difStatus_[difid].slc=slc;
+      infoServicesMap_[difid]->updateService(&difStatus_[difid],sizeof(DIFStatus));
     }
-  if (m->getName().compare("CONFIGUREDIF")==0)
-    {
-      uint32_t difid;
-      memcpy(&difid,m->getPayload(),sizeof(uint32_t));
-      std::string setupname( (const char*) &(m->getPayload())[4],(m->getPayloadSize()-4));
-		
-		
-      printf("I found DIF %d Setup %s \n",difid,setupname.c_str());
-      uint32_t slc=this->configureChips(setupname,difid);
-      NetMessage* mrep = new NetMessage("CONFIGUREDIF",NetMessage::COMMAND_ACKNOWLEDGE,4);
-      uint32_t* ipay=(uint32_t*) mrep->getPayload();
-      ipay[0]=slc;
-      return mrep;
-    }
-  return NULL;
-}
-void DimDIFServer::startServices()
-{
-  m_Thread_s = boost::thread(&DimDIFServer::services, this);  
+ 
+  return ;
 }
 
 void DimDIFServer::startReadout()
@@ -614,13 +595,14 @@ void DimDIFServer::readout(uint32_t difid)
 				   ShmProxy::getBufferDIF(cbuf));
 #endif
 
-	  std::stringstream s;
-	  s<<"DIF"<<itd->first;
-	  NetMessage m(s.str(),NetMessage::SERVICE,nread);
-	  memcpy(m.getPayload(),cbuf,nread);
-	  this->updateService(s.str(),&m);
-	  DEBUG(" J'update %s \n",s.str().c_str());
-	
+	 
+	  memcpy(&difData_[itd->first*32*1024],cbuf,nread);
+		dataServicesMap_[itd->first]->updateService(&difData_[itd->first*32*1024],nread);
+	  difStatus_[itd->first].gtc=ShmProxy::getBufferDTC(cbuf);
+	  difStatus_[itd->first].bcid=ShmProxy::getBufferABCID(cbuf);
+	  difStatus_[itd->first].bytes+=nread;
+	  infoServicesMap_[itd->first]->updateService(&difStatus_[itd->first],sizeof(DIFStatus));
+
 	}
       catch (LocalHardwareException e)
 	{
@@ -632,44 +614,3 @@ void DimDIFServer::readout(uint32_t difid)
 }
 
 
-void DimDIFServer::joinServices()
-{
-  m_Thread_s.join();  
-}
-void DimDIFServer::services()
-{
-  unsigned char cbuf[MAX_EVENT_SIZE];
-  while (true)
-    {
-      if (!running_) {usleep((uint32_t) 100000);continue;}
-      usleep((uint32_t) 100);
-		
-      for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
-	{
-	  try 
-	    {
-				
-	      uint32_t nread=itd->second->DoHardrocV2ReadoutDigitalData(cbuf);
-	      if (nread==0) continue;
-	      std::stringstream s;
-	      s<<"DIF"<<itd->first;
-	      NetMessage m(s.str(),NetMessage::SERVICE,nread);
-	      memcpy(m.getPayload(),cbuf,nread);
-	      this->updateService(s.str(),&m);
-	      printf(" J'update %s \n",s.str().c_str());
-	
-	    }
-	  catch (LocalHardwareException e)
-	    {
-	      std::cout<<itd->first<<" is not started "<<e.what()<<std::endl;
-	    }
-	}
-		
-		
-		
-		
-		
-		
-    }
-
-}
