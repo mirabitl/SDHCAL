@@ -28,13 +28,13 @@ DimDIFServer::DimDIFServer()
   char hname[80];
   gethostname(hname,80);
   s0<<"/DSS/"<<hname<<"/STATUS";
-  aliveService_ = new DimService(s0.str().c_str(),"I:1",this);
+  aliveService_ = new DimService(s0.str().c_str(),processStatus_);
   s0.str(std::string());
   memset(devicesStatus_,0,255*sizeof(int32_t));
   s0<<"/DSS/"<<hname<<"/DEVICES";
   devicesService_= new DimService(s0.str().c_str(),"I:255",devicesStatus_,255*sizeof(int32_t));
   processStatus_=DimDIFServer::ALIVED;
-  aliveService_->updateService(processStatus_);
+  aliveService_->updateService();
   allocateCommands();
   DimServer::start("TheServer"); 
   memset(infoServicesMap_,0,255*sizeof(DimService*));
@@ -300,7 +300,6 @@ void DimDIFServer::initialise(uint32_t difid) throw (LocalHardwareException)
       std::pair<uint32_t,DIFReadout*> p(difid,dif);
       theDIFMap_.insert(p);
      
-			this->allocateServices(difid);
 
       std::cout<<" The DIF "<<difid<<" is initialized  -> Service "<<std::endl;
 
@@ -399,7 +398,7 @@ void DimDIFServer::commandHandler()
 	}
       devicesService_->updateService(devicesStatus_,255*sizeof(uint32_t));
       processStatus_=DimDIFServer::SCANNED;
-      aliveService_->updateService(processStatus_);
+      aliveService_->updateService();
 
     }
   if (currCmd==initialiseCommand_)
@@ -472,7 +471,7 @@ void DimDIFServer::commandHandler()
 	}
 
       processStatus_=DimDIFServer::PRECONFIGURED;
-      aliveService_->updateService(processStatus_);
+      aliveService_->updateService();
     }
 	
   if (currCmd==destroyCommand_)
@@ -496,7 +495,7 @@ void DimDIFServer::commandHandler()
       this->clearServices();
       theDIFMap_.clear();
       processStatus_=DimDIFServer::DESTROYED;
-      aliveService_->updateService(processStatus_);
+      aliveService_->updateService();
     }
 	
   if (currCmd==startCommand_)
@@ -516,7 +515,7 @@ void DimDIFServer::commandHandler()
 	}
 
       processStatus_=DimDIFServer::RUNNING;
-      aliveService_->updateService(processStatus_);
+      aliveService_->updateService();
     }
   if (currCmd==stopCommand_)
     {
@@ -534,7 +533,7 @@ void DimDIFServer::commandHandler()
 	}
 
       processStatus_=DimDIFServer::STOPPED;
-      aliveService_->updateService(processStatus_);
+      aliveService_->updateService();
     
     }
 
