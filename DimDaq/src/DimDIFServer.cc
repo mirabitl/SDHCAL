@@ -480,6 +480,7 @@ void DimDIFServer::commandHandler()
   if (currCmd==destroyCommand_)
     {
       readoutStarted_=false;
+      printf("%s %d \n",__PRETTY_FUNCTION__,__LINE__);
       g_d.join_all();
       for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
 	{
