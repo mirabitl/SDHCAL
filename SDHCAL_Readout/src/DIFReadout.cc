@@ -6,7 +6,10 @@ DIFReadout::DIFReadout (std::string name,uint32_t productid) : FtdiDIFDriver ((c
 {
   sscanf(name.c_str(),"FT101%d",&theDIFId_);
 }
-
+DIFReadout::~DIFReadout()
+{
+printf("%s %n\n",__PRETTY_FUNCTION__,__LINE__);
+}
 void DIFReadout::setPowerManagment(uint32_t P2PAReg, uint32_t PA2PDReg,uint32_t PD2DAQReg, uint32_t DAQ2DReg,uint32_t D2AReg)
 {
 
