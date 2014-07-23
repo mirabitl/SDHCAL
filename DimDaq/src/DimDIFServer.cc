@@ -90,7 +90,7 @@ void DimDIFServer::allocateServices(int32_t dif)
   s0.str(std::string());
   s0<<"/DSS/"<<hname<<"/DIF"<<dif<<"/INFO";
   // id,Status,GTC,BCID,Bytes
-  infoServicesMap_[dif] = new DimService(s0.str().c_str(),"I:3,L:2",&difStatus_[dif],sizeof(DIFStatus));
+  infoServicesMap_[dif] = new DimService(s0.str().c_str(),"I:4,L:2",&difStatus_[dif],sizeof(DIFStatus));
   s0.str(std::string());
   s0<<"/DSS/"<<hname<<"/DIF"<<dif<<"/DATA";
   // DIF buffer
@@ -416,9 +416,12 @@ void DimDIFServer::commandHandler()
 	{
 	  std::cout<<e.what()<<std::endl;
 	  rc=-1;
+	  difStatus_[difid].status=DimDIFServer::FAILED;
 	}
-      difStatus_[difid].id=rc*DimDIFServer::INITIALISED;
+      difStatus_[difid].status=DimDIFServer::INITIALISED;
       infoServicesMap_[difid]->updateService(&difStatus_[difid],sizeof(DIFStatus));
+      processStatus_=DimDIFServer::INITIALISED;
+      aliveService_->updateService();
 
     }
 
