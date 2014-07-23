@@ -27,6 +27,7 @@ typedef struct
 typedef struct
 {
   uint32_t id;
+  uint32_t status;
   uint32_t slc;
   uint32_t gtc;
   uint64_t bcid;
@@ -56,7 +57,7 @@ public:
   void clearServices();
 
   void allocateServices(int32_t id);
-  enum State {ALIVED=0,SCANNED=1,INITIALISED=2,PRECONFIGURED=3,CONFIGURED=4,RUNNING=5,STOPPED=6,DESTROYED=7};
+  enum State {ALIVED=1,SCANNED=2,INITIALISED=3,PRECONFIGURED=4,CONFIGURED=5,RUNNING=6,STOPPED=7,DESTROYED=8,FAILED=99};
 private:
   bool running_,readoutStarted_;
   boost::thread    m_Thread_s;
