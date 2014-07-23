@@ -41,7 +41,7 @@ def SWIGSharedLibrary(env, library, sources, **args):
 #print "----------------------------------------------"
 Decider('MD5-timestamp')
 XDAQ_ROOT="/opt/xdaq"
-DIM_ROOT="../../dim/dim_v20r7"
+DIM_ROOT="/usr/local/dim"
 DHCAL_ROOT=os.path.abspath("..")
 
 
