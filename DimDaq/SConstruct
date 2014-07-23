@@ -112,6 +112,15 @@ LIBRARY_SOURCES=Glob("#src/*.cc")
 #Shared library
 SDHCALDimDaq=env.SharedLibrary("#lib/SDHCALDimDaq",LIBRARY_SOURCES)
 
+
+
+#Daemon 
+EXE_LIBPATH=LIBRARY_PATHS
+EXE_LIBPATH.append("#lib")
+EXE_LIBS=LIBRARIES
+EXE_LIBS.append("SDHCALDimDaq")
+dss=env.Program("bin/dss",source="src/main.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+
 #Python module
 _SDHCALDimDaq=env.PythonModule('_LSDHCALDimDaq', ['LSDHCALDimDaq.i'],LIBPATH="#lib",LIBS="SDHCALDimDaq")
 
