@@ -482,21 +482,25 @@ void DimDIFServer::commandHandler()
       readoutStarted_=false;
       printf("%s %d \n",__PRETTY_FUNCTION__,__LINE__);
       g_d.join_all();
+      printf("%s %d \n",__PRETTY_FUNCTION__,__LINE__);
       for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
 	{
 
 
 	  //m_Thread_d[itd->first].join();
-
- 
-	  delete itd->second;
+	  printf("%s %d \n",__PRETTY_FUNCTION__,__LINE__);
+	  if (itd->second!=NULL)
+	    delete itd->second;
+	  printf("%s %d \n",__PRETTY_FUNCTION__,__LINE__);
 	  std::stringstream s;
 	  s<<"DIF"<<itd->first;
 	  std::cout<<s.str()<<" beiing destroyed"<<std::endl;
 	  //this->destroyService(s.str());
 			
 	}
+      printf("%s %d \n",__PRETTY_FUNCTION__,__LINE__);
       this->clearServices();
+      printf("%s %d \n",__PRETTY_FUNCTION__,__LINE__);
       theDIFMap_.clear();
       processStatus_=DimDIFServer::DESTROYED;
       aliveService_->updateService();
