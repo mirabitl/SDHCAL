@@ -39,6 +39,7 @@ DimDIFServer::DimDIFServer()
   DimServer::start("TheServer"); 
   memset(infoServicesMap_,0,255*sizeof(DimService*));
   memset(dataServicesMap_,0,255*sizeof(DimService*));
+  memset(theDBDimInfo_,0,255*sizeof(DimInfo*));
 }
 
 void DimDIFServer::allocateCommands()
@@ -54,6 +55,9 @@ void DimDIFServer::allocateCommands()
   s0.str(std::string());
   s0<<"/DSS/"<<hname<<"/PRECONFIGURE";
   preconfigureCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
+  s0.str(std::string());
+  s0<<"/DSS/"<<hname<<"/REGISTERSTATE";
+  registerstateCommand_=new DimCommand(s0.str().c_str(),"C",this);
   s0.str(std::string());
   s0<<"/DSS/"<<hname<<"/CONFIGURECHIPS";
   configurechipsCommand_=new DimCommand(s0.str().c_str(),"I",this);
@@ -447,6 +451,12 @@ void DimDIFServer::commandHandler()
       return mrep;
     }
 */
+    if (currCmd==registerstateCommand_)
+    {
+
+      // First allocate services
+      this->registerDBService(currCmd->getString());
+    }
   if (currCmd==preconfigureCommand_)
     {
 
@@ -614,4 +624,27 @@ void DimDIFServer::readout(uint32_t difid)
   std::cout<<"Thread of dif "<<difid<<" is stopped"<<readoutStarted_<<std::endl;
 }
 
+void DimDIFServer::registerDBService(const char* state)
+{
+  memset(theDIFDbInfo_,0,255*sizeof(DIFDbInfo));
+  for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
+    {
+      if (theDBDimInfo_[itd->first]!=NULL) delete theDBDimInfo_[itd->first];
+      std::stringstream s;
+      s<<"/DB/"<<state<<"/DIF"<<itd->first;
+      theDBDimInfo_[itd->first] = new DimInfo(s.str().c_str(),&theDIFDbInfo_[itd->first],sizeof(DIFDbInfo),this);
+    }
+}
 
+void  DimDIFServer::infoHandler( ) 
+{
+  
+    DimInfo *curr = (DimInfo*) getInfo(); // get current DimStampedInfo address
+    std::cout<<curr->getName()<<std::endl;
+    for (int i=0;i<255;i++)
+      {
+	if (curr!=theDBDimInfo_[i]) continue;
+	memcpy(&theDIFDbInfo_[i],curr->getData(),sizeof(DIFDbInfo));
+	printf("Dim info read %d %d \n",theDIFDbInfo_[i].id,theDIFDbInfo_[i].nbasic);
+      }
+}

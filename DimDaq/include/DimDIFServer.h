@@ -6,7 +6,9 @@
 #include <string.h>
 #include<stdio.h>
 #include "dis.hxx"
+#include "dic.hxx"
 #include "DIFReadout.h"
+#include "DIFReadoutConstant.h"
 using namespace std;
 #include <sstream>
 #include <map>
@@ -36,7 +38,7 @@ typedef struct
 
 
 
-class DimDIFServer: public DimServer
+class DimDIFServer: public DimServer,public DimClient
 {
 public:
   DimDIFServer();
@@ -57,6 +59,9 @@ public:
   void clearServices();
 
   void allocateServices(int32_t id);
+  void registerDBService(const char* state);
+
+  void infoHandler();
   enum State {ALIVED=1,SCANNED=2,INITIALISED=3,PRECONFIGURED=4,CONFIGURED=5,RUNNING=6,STOPPED=7,DESTROYED=8,FAILED=99};
 private:
   bool running_,readoutStarted_;
@@ -83,13 +88,16 @@ private:
   DimCommand *initialiseCommand_;
   uint32_t theSlowBuffer_[8192];
   DimCommand *preconfigureCommand_;
+  DimCommand *registerstateCommand_;
   DimCommand *configurechipsCommand_;
   
   
   DimCommand *startCommand_;
   DimCommand *stopCommand_;
   DimCommand *destroyCommand_;
-  
+
+  DimInfo* theDBDimInfo_[255];
+  DIFDbInfo theDIFDbInfo_[255];
 };
 #endif
 
