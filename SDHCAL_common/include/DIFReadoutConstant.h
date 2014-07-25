@@ -104,6 +104,15 @@ const U16 DHCAL_I2O_DATA_REPLY = 0XAC;
 
 typedef unsigned char SingleHardrocV2ConfigurationFrame[HARDROCV2_SLC_FRAME_SIZE];		
 
+typedef struct {
+  uint32_t id;
+  uint32_t nbasic;
+  SingleHardrocV2ConfigurationFrame slow[48];
+
+} DIFDbInfo;
+
+
+
 
 #define SHM_NDIF_MAX 127
 #define SHM_FREE 0

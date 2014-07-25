@@ -80,5 +80,4 @@ const U16 DHCAL_I2O_DATA_REPLY = 0XAC;
 
 #define REINIT_RECV_TIMEOUT_MS 				1000
 
-
 #endif  //_xdaqDHCALDefs_H
