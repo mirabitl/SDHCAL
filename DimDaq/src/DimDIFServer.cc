@@ -481,6 +481,13 @@ void DimDIFServer::commandHandler()
 	  difStatus_[itd->first].slc=rc*DimDIFServer::PRECONFIGURED;
 	  infoServicesMap_[itd->first]->updateService(&difStatus_[itd->first],sizeof(DIFStatus));
 
+	  uint32_t difid=itd->first;
+	  if (theDIFDbInfo_[difid].id==difid)
+	    {
+	      uint32_t slc=this->configureChips(difid,theDIFDbInfo_[difid].slow,theDIFDbInfo_[difid].nbasic);
+	      difStatus_[difid].slc=slc;
+	      infoServicesMap_[difid]->updateService(&difStatus_[difid],sizeof(DIFStatus));
+	    }
 	}
 
       processStatus_=DimDIFServer::PRECONFIGURED;
