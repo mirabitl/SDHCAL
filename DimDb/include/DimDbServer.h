@@ -7,6 +7,8 @@
 #include<stdio.h>
 #include "dis.hxx"
 #include "OracleDIFDBManager.h"
+#include "DIFReadoutConstant.h"
+
 using namespace std;
 #include <sstream>
 
