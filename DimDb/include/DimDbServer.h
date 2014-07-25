@@ -10,12 +10,6 @@
 using namespace std;
 #include <sstream>
 
-typedef struct {
-  uint32_t id;
-  uint32_t nbasic;
-  SingleHardrocV2ConfigurationFrame slow[48];
-
-} DIFDbInfo;
 
 class DimDbServer: public DimServer
 {
