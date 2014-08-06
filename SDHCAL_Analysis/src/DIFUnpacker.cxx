@@ -171,7 +171,10 @@ uint32_t DIFUnpacker::getFramePtr(std::vector<unsigned char*> &vFrame,std::vecto
   //}
   if (cb[fshift]!=DU_START_OF_FRAME) 
     {
-      printf("This is not a start of frame %02x \n",cb[fshift]);
+      printf("This is not a start of frame shift= %d value = %02x \n",fshift,cb[fshift]);
+      for (uint32_t i=0;i<40;i++)
+	printf("%02x",cb[i]);
+      printf("\n");
       return fshift;
       //throw "Not a start of Frame";
     }
