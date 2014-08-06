@@ -69,7 +69,7 @@ CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN
 
 
 #LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
-LIBRARIES=['pthread',  'm', 'stdc++','boost_system-mt','boost_thread-mt','SDHCALcommon','SDHCALReadout','dim']
+LIBRARIES=['pthread',  'm', 'stdc++','boost_system-mt','boost_thread-mt','SDHCALcommon','SDHCALReadout','dim','netlink','cslm']
 
 
 
