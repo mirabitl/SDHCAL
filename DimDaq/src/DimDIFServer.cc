@@ -36,7 +36,10 @@ DimDIFServer::DimDIFServer()
   processStatus_=DimDIFServer::ALIVED;
   aliveService_->updateService();
   allocateCommands();
-  DimServer::start("TheServer"); 
+  s0.str(std::string());
+  gethostname(hname,80);
+  s0<<"DimDifServer-"<<hname;
+  DimServer::start(s0.str().c_str()); 
   memset(infoServicesMap_,0,255*sizeof(DimService*));
   memset(dataServicesMap_,0,255*sizeof(DimService*));
   memset(theDBDimInfo_,0,255*sizeof(DimInfo*));
