@@ -7,16 +7,21 @@ DimCCCServer::DimCCCServer()
   std::stringstream s0;
   char hname[80];
   gethostname(hname,80);
-  s0<<"/DCC/"<<hname<<"/STATUS";
+  s0<<"/DCS/"<<hname<<"/STATUS";
   aliveService_ = new DimService(s0.str().c_str(),processStatus_);
   s0.str(std::string());
-  s0<<"/DCC/"<<hname<<"/REGISTER";
+  s0<<"/DCS/"<<hname<<"/REGISTER";
   registerService_ = new DimService(s0.str().c_str(),register_);
   register_=0;
   processStatus_=DimCCCServer::ALIVED;
   aliveService_->updateService();
   allocateCommands();
-  DimServer::start("TheCCCServer"); 
+  s0.str(std::string());
+  gethostname(hname,80);
+  s0<<"DimCCCServer-"<<hname;
+  DimServer::start(s0.str().c_str()); 
+
+
 	
 
 }
@@ -25,34 +30,34 @@ void DimCCCServer::allocateCommands()
   std::stringstream s0;
   char hname[80];
   gethostname(hname,80);
-  s0<<"/DCC/"<<hname<<"/CONFIGURE";
+  s0<<"/DCS/"<<hname<<"/CONFIGURE";
   configureCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
-  s0<<"/DCC/"<<hname<<"/INITIALISE";
+  s0<<"/DCS/"<<hname<<"/INITIALISE";
   initialiseCommand_=new DimCommand(s0.str().c_str(),"C",this);
   s0.str(std::string());
-  s0<<"/DCC/"<<hname<<"/DIFRESET";
+  s0<<"/DCS/"<<hname<<"/DIFRESET";
   difresetCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
-  s0<<"/DCC/"<<hname<<"/CCCRESET";
+  s0<<"/DCS/"<<hname<<"/CCCRESET";
   cccresetCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
-  s0<<"/DCC/"<<hname<<"/START";
+  s0<<"/DCS/"<<hname<<"/START";
   startCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
-  s0<<"/DCC/"<<hname<<"/STOP";
+  s0<<"/DCS/"<<hname<<"/STOP";
   stopCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
-  s0<<"/DCC/"<<hname<<"/PAUSE";
+  s0<<"/DCS/"<<hname<<"/PAUSE";
   pauseCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
-  s0<<"/DCC/"<<hname<<"/RESUME";
+  s0<<"/DCS/"<<hname<<"/RESUME";
   resumeCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
-  s0<<"/DCC/"<<hname<<"/TESTREGISTERREAD";
+  s0<<"/DCS/"<<hname<<"/TESTREGISTERREAD";
   testregisterreadCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
-  s0<<"/DCC/"<<hname<<"/TESTREGISTERWRITE";
+  s0<<"/DCS/"<<hname<<"/TESTREGISTERWRITE";
   testregisterwriteCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
 
 }

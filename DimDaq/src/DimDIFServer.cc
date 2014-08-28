@@ -27,18 +27,18 @@ DimDIFServer::DimDIFServer()
    std::stringstream s0;
   char hname[80];
   gethostname(hname,80);
-  s0<<"/DSS/"<<hname<<"/STATUS";
+  s0<<"/DDS/"<<hname<<"/STATUS";
   aliveService_ = new DimService(s0.str().c_str(),processStatus_);
   s0.str(std::string());
   memset(devicesStatus_,0,255*sizeof(int32_t));
-  s0<<"/DSS/"<<hname<<"/DEVICES";
+  s0<<"/DDS/"<<hname<<"/DEVICES";
   devicesService_= new DimService(s0.str().c_str(),"I:255",devicesStatus_,255*sizeof(int32_t));
   processStatus_=DimDIFServer::ALIVED;
   aliveService_->updateService();
   allocateCommands();
   s0.str(std::string());
   gethostname(hname,80);
-  s0<<"DimDifServer-"<<hname;
+  s0<<"DimDIFServer-"<<hname;
   DimServer::start(s0.str().c_str()); 
   memset(infoServicesMap_,0,255*sizeof(DimService*));
   memset(dataServicesMap_,0,255*sizeof(DimService*));
@@ -50,29 +50,29 @@ void DimDIFServer::allocateCommands()
   std::stringstream s0;
   char hname[80];
   gethostname(hname,80);
-  s0<<"/DSS/"<<hname<<"/SCANDEVICES";
+  s0<<"/DDS/"<<hname<<"/SCANDEVICES";
   scanCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
-  s0<<"/DSS/"<<hname<<"/INITIALISE";
+  s0<<"/DDS/"<<hname<<"/INITIALISE";
   initialiseCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
-  s0<<"/DSS/"<<hname<<"/PRECONFIGURE";
+  s0<<"/DDS/"<<hname<<"/PRECONFIGURE";
   preconfigureCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
-  s0<<"/DSS/"<<hname<<"/REGISTERSTATE";
+  s0<<"/DDS/"<<hname<<"/REGISTERSTATE";
   registerstateCommand_=new DimCommand(s0.str().c_str(),"C",this);
   s0.str(std::string());
-  s0<<"/DSS/"<<hname<<"/CONFIGURECHIPS";
+  s0<<"/DDS/"<<hname<<"/CONFIGURECHIPS";
   configurechipsCommand_=new DimCommand(s0.str().c_str(),"I",this);
 
   s0.str(std::string());
-  s0<<"/DSS/"<<hname<<"/START";
+  s0<<"/DDS/"<<hname<<"/START";
   startCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
-  s0<<"/DSS/"<<hname<<"/STOP";
+  s0<<"/DDS/"<<hname<<"/STOP";
   stopCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
-  s0<<"/DSS/"<<hname<<"/DESTROY";
+  s0<<"/DDS/"<<hname<<"/DESTROY";
   destroyCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
 
 }
@@ -95,11 +95,11 @@ void DimDIFServer::allocateServices(int32_t dif)
   gethostname(hname,80);
 
   s0.str(std::string());
-  s0<<"/DSS/"<<hname<<"/DIF"<<dif<<"/INFO";
+  s0<<"/DDS/"<<hname<<"/DIF"<<dif<<"/INFO";
   // id,Status,GTC,BCID,Bytes
   infoServicesMap_[dif] = new DimService(s0.str().c_str(),"I:4,L:2",&difStatus_[dif],sizeof(DIFStatus));
   s0.str(std::string());
-  s0<<"/DSS/"<<hname<<"/DIF"<<dif<<"/DATA";
+  s0<<"/DDS/"<<hname<<"/DIF"<<dif<<"/DATA";
   // DIF buffer
   dataServicesMap_[dif] = new DimService(s0.str().c_str(),"I",&difData_[dif*32*1024],sizeof(uint32_t)*32*1024);
 

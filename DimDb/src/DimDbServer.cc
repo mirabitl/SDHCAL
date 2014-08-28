@@ -14,7 +14,10 @@ DimDbServer::DimDbServer()
   processStatus_=DimDbServer::ALIVED;
   aliveService_->updateService();
   allocateCommands();
-  DimServer::start("TheDBServer"); 
+  s0.str(std::string());
+  gethostname(hname,80);
+  s0<<"DimDbServer-"<<hname;
+  DimServer::start(s0.str().c_str()); 
   memset(difInfos_,0,255*sizeof(DIFDbInfo));
   memset(difServices_,0,255*sizeof(DimService*));
 	
