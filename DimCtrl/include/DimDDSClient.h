@@ -17,6 +17,7 @@ using namespace std;
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 
+#include <boost/interprocess/sync/interprocess_mutex.hpp>
 
 
 
@@ -32,7 +33,7 @@ public:
   void scanDevices();
 
   void initialise();
-  void setDBState(std::string state);
+  void setDBState(uint32_t ctrlreg,std::string state);
   void configure();
   void start();
   void stop();
@@ -45,7 +46,10 @@ private:
   DimInfo* theDDSDevices_;
   uint32_t theDevices_[255];
   std::map<uint32_t,DimDIFDataHandler*> theDDDHMap_;
-
+  uint32_t theCtrlReg_;
+  std::string theState_;
+  boost::interprocess::interprocess_mutex bsem_;
+  
 };
 #endif
 

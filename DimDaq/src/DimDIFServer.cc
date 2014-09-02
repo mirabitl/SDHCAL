@@ -459,6 +459,7 @@ void DimDIFServer::commandHandler()
 
       // First allocate services
       this->registerDBService(currCmd->getString());
+      aliveService_->updateService();
     }
   if (currCmd==preconfigureCommand_)
     {

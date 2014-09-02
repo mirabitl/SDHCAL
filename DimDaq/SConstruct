@@ -119,9 +119,9 @@ EXE_LIBPATH=LIBRARY_PATHS
 EXE_LIBPATH.append("#lib")
 EXE_LIBS=LIBRARIES
 EXE_LIBS.append("SDHCALDimDaq")
-dss=env.Program("bin/dss",source="src/dss.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
-dss=env.Program("bin/dcc",source="src/dcc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
-dzup=env.Program("bin/dzup",source="src/dzup.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+dds=env.Program("bin/dimdif",source="src/dss.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+dcs=env.Program("bin/dimccc",source="src/dcc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+dzups=env.Program("bin/dimzup",source="src/dzup.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
 #Python module
 _SDHCALDimDaq=env.PythonModule('_LSDHCALDimDaq', ['LSDHCALDimDaq.i'],LIBPATH="#lib",LIBS="SDHCALDimDaq")
@@ -131,10 +131,11 @@ for x in Glob("#include/*.h"):
   myinc.append("include/"+x.name)
 print myinc
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SDHCALDimDaq)
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[dds,dcs,dzups])
 ###env.Install("/opt/dhcal/lib",SDHCALDimDaq)
 ###env.Install("/opt/dhcal/include/readout",myinc)
 
-env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib"])
+env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib",DHCAL_ROOT+"/opt/dhcal/bin"])
 
 
 
