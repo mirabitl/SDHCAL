@@ -17,7 +17,7 @@
 
 
 
-DimDaqControl::DimDaqControl()  
+DimDaqControl::DimDaqControl(std::string dns) :theDns_(dns)  
 {
   
   running_=false;
@@ -32,10 +32,15 @@ DimDaqControl::DimDaqControl()
   processStatus_=DimDaqControl::ALIVED;
   aliveService_->updateService();
   allocateCommands();
-  DimServer::start("TheControlServer"); 
-  memset(theDataDimInfo_,0,255*sizeof(DimInfo*));
-}
+  s0.str(std::string());
+  s0<<"DimDaqControl-"<<hname;
+  DimServer::start(); 
 
+}
+ DimDaqControl::~DimDaqControl()
+ {
+   delete aliveService_;
+ }
 void DimDaqControl::allocateCommands()
 {
   std::stringstream s0;
@@ -51,7 +56,7 @@ void DimDaqControl::allocateCommands()
   configureCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
   s0<<"/DDC/"<<hname<<"/REGISTERSTATE";
-  registerstateCommand_=new DimCommand(s0.str().c_str(),"C",this);
+  registerstateCommand_=new DimCommand(s0.str().c_str(),"I:1,C",this);
   s0.str(std::string());
   s0<<"/DDC/"<<hname<<"/START";
   startCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
@@ -67,7 +72,56 @@ void DimDaqControl::allocateCommands()
 void DimDaqControl::scandns()
 {
   // Look for DB server
-  
+   DimBrowser dbr; 
+  char *service, *format; 
+  int type;
+  // Get DB service
+  dbr.getServices("/DB/*/DOWNLOAD" ); 
+  while(type = dbr.getNextService(service, format)) 
+    { 
+      cout << service << " -  " << format << endl; 
+      std::string ss;
+      ss.assign(service);
+      size_t n=ss.find("/DOWNLOAD");
+      cout<<ss.substr(0,n)<<endl;
+      theDBPrefix_=ss.substr(0,n);
+    } 
+  // Get the CCC prefix
+  dbr.getServices("/DCS/*/STATUS" ); 
+  while(type = dbr.getNextService(service, format)) 
+    { 
+      cout << service << " -  " << format << endl; 
+      std::string ss;
+      ss.assign(service);
+      size_t n=ss.find("/STATUS");
+      theCCCPrefix_=ss.substr(0,n);
+    } 
+
+  char *server,*node;
+  dbr.getServers( ); 
+  while(dbr.getNextServer(server, node)) 
+    { 
+      cout << server << " @ " << node << endl; 
+      
+
+
+      if (strncmp(server,"DimDIFServer",12)!=0) continue;
+      std::string ss;
+      ss.assign(node);
+      size_t n=ss.find(".");
+      std::string toto;
+      toto=ss.substr(0,n);
+
+      std::stringstream s0;
+      s0<<"/DDS/"<<toto;
+      DimDDSClient* d=new DimDDSClient(toto,s0.str());
+      std::pair<std::string,DimDDSClient*> p(toto,d);
+      theDDSCMap_.insert(p);
+      
+    }
+      
+
+
 }
 
 void DimDaqControl::commandHandler()
@@ -137,7 +191,7 @@ void DimDaqControl::commandHandler()
     {
     
       // First allocate services
-      this->registerDBService(currCmd->getString());
+      this->registerstate(theCtrlReg_,theState_);
     }
   if (currCmd==preconfigureCommand_)
     {

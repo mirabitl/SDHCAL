@@ -7,7 +7,7 @@
 #include<stdio.h>
 #include "dis.hxx"
 #include "dic.hxx"
-#include "DIFReadout.h"
+#include "DimDIFDataHandler.h"
 #include "DIFReadoutConstant.h"
 using namespace std;
 #include <sstream>
@@ -40,7 +40,7 @@ public:
   void destroy();
 private:
   std::string theName_;
-  std::string thePrefix_
+  std::string thePrefix_;
   DimInfo* theDDSStatus_;
   uint32_t theStatus_;
   DimInfo* theDDSDevices_;

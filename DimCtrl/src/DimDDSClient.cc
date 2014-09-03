@@ -1,22 +1,22 @@
 #include "DimDDSClient.h"
 #include "ShmProxy.h"
-DimDDSClient::DimDDSClient(uint32_t id,std::string prefix) : theName_(name),thePrefix_(prefix),theShmPrefix_("/dev/shm")
+DimDDSClient::DimDDSClient(std::string name,std::string prefix) : theName_(name),thePrefix_(prefix)
 {
   std::stringstream s0;
   s0.str(std::string());
   s0<<prefix<<"/STATUS";
-  theDDSStatus_ = new DimInfo(s.str().c_str(),&theStatus_,sizeof(uint32_t),this);
+  theDDSStatus_ = new DimInfo(s0.str().c_str(),&theStatus_,sizeof(uint32_t),this);
   s0.str(std::string());
   s0<<prefix<<"/DEVICES";
-  theDDSDevices_ = new DimInfo(s.str().c_str(),theDevices_,255*sizeof(uint32_t),this);
+  theDDSDevices_ = new DimInfo(s0.str().c_str(),theDevices_,255*sizeof(uint32_t),this);
   theDDDHMap_.clear();
   bsem_.lock();
 
 }     
-~DimDDSClient::DimDDSClient()
+DimDDSClient::~DimDDSClient()
 {
-  delete theDIFInfo_;
-  delete theDIFData_;
+  delete theDDSStatus_;
+  delete theDDSDevices_;
   for (std::map<uint32_t,DimDIFDataHandler*>::iterator it=theDDDHMap_.begin();it!=theDDDHMap_.end();it++)
     {
       delete it->second; 
@@ -30,7 +30,7 @@ void DimDDSClient::scanDevices()
   std::stringstream s0;
   s0.str(std::string());
   s0<<thePrefix_<<"/SCANDEVICES";
-  DimClient::sendCommand(s.0.str().c_str(), 1); 
+  DimClient::sendCommand(s0.str().c_str(), 1); 
   bsem_.lock();
 }
 
@@ -43,7 +43,7 @@ void DimDDSClient::initialise()
 	  std::stringstream s0;
 	  s0.str(std::string());
 	  s0<<thePrefix_<<"/INITIALISE";
-	  DimClient::sendCommand(s.0.str().c_str(), i); 
+	  DimClient::sendCommand(s0.str().c_str(),(int) i); 
 	  bsem_.lock();
 	  
 	  DimDIFDataHandler* d= new  DimDIFDataHandler(i,thePrefix_);
@@ -59,7 +59,7 @@ void DimDDSClient::setDBState(uint32_t ctrlreg,std::string state)
   std::stringstream s0;
   s0.str(std::string());
   s0<<thePrefix_<<"/REGISTERSTATE";
-  DimClient::sendCommand(s.0.str().c_str(), state.c_str()); 
+  DimClient::sendCommand(s0.str().c_str(), state.c_str()); 
   bsem_.lock();	
 }
 
@@ -69,7 +69,7 @@ void DimDDSClient::configure()
   std::stringstream s0;
   s0.str(std::string());
   s0<<thePrefix_<<"/PRECONFIGURE";
-  DimClient::sendCommand(s.0.str().c_str(), theCtrlreg); 
+  DimClient::sendCommand(s0.str().c_str(),(int) theCtrlReg_); 
   bsem_.lock();	
 }
 
@@ -78,7 +78,7 @@ void DimDDSClient::start()
   std::stringstream s0;
   s0.str(std::string());
   s0<<thePrefix_<<"/START";
-  DimClient::sendCommand(s.0.str().c_str(), 1); 
+  DimClient::sendCommand(s0.str().c_str(), 1); 
   bsem_.lock();
 }
 
@@ -87,7 +87,7 @@ void DimDDSClient::stop()
   std::stringstream s0;
   s0.str(std::string());
   s0<<thePrefix_<<"/STOP";
-  DimClient::sendCommand(s.0.str().c_str(), 1); 
+  DimClient::sendCommand(s0.str().c_str(), 1); 
   bsem_.lock();
 }
 void DimDDSClient::destroy()
@@ -95,7 +95,7 @@ void DimDDSClient::destroy()
   std::stringstream s0;
   s0.str(std::string());
   s0<<thePrefix_<<"/DESTROY";
-  DimClient::sendCommand(s.0.str().c_str(), 1); 
+  DimClient::sendCommand(s0.str().c_str(), 1); 
   bsem_.lock();
 }
 

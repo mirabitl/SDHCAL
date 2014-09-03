@@ -7,12 +7,11 @@
 #include<stdio.h>
 #include "dis.hxx"
 #include "dic.hxx"
-#include "DIFReadout.h"
 #include "DIFReadoutConstant.h"
 using namespace std;
 #include <sstream>
 #include <map>
-#include <vector>
+#include <string>
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
@@ -40,7 +39,7 @@ public:
 
 private:
   uint32_t theId_;
-  std::string thePrefix_
+  std::string thePrefix_;
   DimInfo* theDIFInfo_;
   DimInfo* theDIFData_;
   uint32_t difData_[32*1024];

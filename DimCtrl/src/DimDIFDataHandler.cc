@@ -5,13 +5,13 @@ DimDIFDataHandler::DimDIFDataHandler(uint32_t id,std::string prefix) : theId_(id
   std::stringstream s0;
   s0.str(std::string());
   s0<<prefix<<"DIF"<<id<<"/INFO";
-  theDIFInfo_ = new DimInfo(s.str().c_str(),&difStatus_,sizeof(DIFStatus),this);
+  theDIFInfo_ = new DimInfo(s0.str().c_str(),&difStatus_,sizeof(DIFStatus),this);
   s0.str(std::string());
   s0<<prefix<<"DIF"<<id<<"/DATA";
-  theDIFData_ = new DimInfo(s.str().c_str(),&difData_,32*1024*sizeof(uint32_t),this);
+  theDIFData_ = new DimInfo(s0.str().c_str(),&difData_,32*1024*sizeof(uint32_t),this);
 
 }     
-~DimDIFDataHandler::DimDIFDataHandler()
+DimDIFDataHandler::~DimDIFDataHandler()
 {
   delete theDIFInfo_;
   delete theDIFData_;
@@ -27,19 +27,20 @@ void DimDIFDataHandler::infoHandler()
      {
        memcpy(&difData_,curr->getData(),curr->getSize());
        // copy to Shm
-       ShmProxy::transferToFile(curr->getData(),
+       uint8_t* cdata=(uint8_t*)  curr->getData();
+       ShmProxy::transferToFile(cdata,
 				curr->getSize(),
-				ShmProxy::getBufferABCID(curr->getData()),
-				ShmProxy::getBufferDTC(curr->getData()),
-				ShmProxy::getBufferGTC(curr->getData()),
-				ShmProxy::getBufferDIF(curr->getData()));
+				ShmProxy::getBufferABCID(cdata),
+				ShmProxy::getBufferDTC(cdata),
+				ShmProxy::getBufferGTC(cdata),
+				ShmProxy::getBufferDIF(cdata));
 
-      if (ShmProxy::getBufferDTC(curr->getData())%10000 == 0)
+      if (ShmProxy::getBufferDTC(cdata)%10000 == 0)
 	printf("%s receieve %d  bytes, BCID %lld DTC %d GTC %d DIF %d \n",__PRETTY_FUNCTION__,
 	       curr->getSize(),
-	       ShmProxy::getBufferABCID(curr->getData()),
-	       ShmProxy::getBufferDTC(curr->getData()),
-	       ShmProxy::getBufferGTC(curr->getData()),
-	       ShmProxy::getBufferDIF(curr->getData()));
+	       ShmProxy::getBufferABCID(cdata),
+	       ShmProxy::getBufferDTC(cdata),
+	       ShmProxy::getBufferGTC(cdata),
+	       ShmProxy::getBufferDIF(cdata));
      }
 }
