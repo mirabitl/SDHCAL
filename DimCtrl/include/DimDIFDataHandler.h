@@ -17,17 +17,6 @@ using namespace std;
 #include <boost/bind.hpp>
 
 
-typedef struct
-{
-  uint32_t id;
-  uint32_t status;
-  uint32_t slc;
-  uint32_t gtc;
-  uint64_t bcid;
-  uint64_t bytes;
-} DIFStatus;
-
-
 
 class DimDIFDataHandler: public DimClient
 {

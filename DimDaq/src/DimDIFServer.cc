@@ -99,7 +99,7 @@ void DimDIFServer::allocateServices(int32_t dif)
   s0<<"/DDS/DIF"<<dif<<"/INFO";
   // id,Status,GTC,BCID,Bytes
   memcpy(difStatus_[dif].host,hname,80);
-  infoServicesMap_[dif] = new DimService(s0.str().c_str(),"I:4,L:2,C:80",&difStatus_[dif],sizeof(DIFStatus));
+  infoServicesMap_[dif] = new DimService(s0.str().c_str(),"I:4,L:2,C",&difStatus_[dif],sizeof(DIFStatus));
   s0.str(std::string());
   s0<<"/DDS/DIF"<<dif<<"/DATA";
   // DIF buffer
@@ -436,6 +436,7 @@ void DimDIFServer::commandHandler()
 	  difState_[difid]="INIT_FAILED";
 	}
       difStatus_[difid].status=DimDIFServer::INITIALISED;
+      cout <<" host of dif " <<difStatus_[difid].host<<endl;
       infoServicesMap_[difid]->updateService(&difStatus_[difid],sizeof(DIFStatus));
       stateServicesMap_[difid]->updateService((char*) difState_[difid].c_str());
       processStatus_=DimDIFServer::INITIALISED;

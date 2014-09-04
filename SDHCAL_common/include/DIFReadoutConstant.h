@@ -137,5 +137,19 @@ typedef struct {
 #define SHM_SLOT_DEBUG  (SHM_MAX_SLOT+1)
 #define SHM_DIF_SHIFT   (SHM_EVENT_SHIFT*(SHM_MAX_SLOT+SHM_EXTRA_SLOT))
 
+
+
+
+typedef struct
+{
+  uint32_t id;
+  uint32_t status;
+  uint32_t slc;
+  uint32_t gtc;
+  uint64_t bcid;
+  uint64_t bytes;
+  char host[80];
+} DIFStatus;
+
 #endif
 
