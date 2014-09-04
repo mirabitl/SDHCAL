@@ -99,7 +99,7 @@ void DimDIFServer::allocateServices(int32_t dif)
   s0<<"/DDS/DIF"<<dif<<"/INFO";
   // id,Status,GTC,BCID,Bytes
   memcpy(difStatus_[dif].host,hname,80);
-  infoServicesMap_[dif] = new DimService(s0.str().c_str(),"I:4,L:2:C:80",&difStatus_[dif],sizeof(DIFStatus));
+  infoServicesMap_[dif] = new DimService(s0.str().c_str(),"I:4,L:2,C:80",&difStatus_[dif],sizeof(DIFStatus));
   s0.str(std::string());
   s0<<"/DDS/DIF"<<dif<<"/DATA";
   // DIF buffer
