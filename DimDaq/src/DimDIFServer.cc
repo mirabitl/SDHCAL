@@ -83,6 +83,7 @@ void DimDIFServer::clearServices()
     {
       if (infoServicesMap_[i]!=NULL) {delete infoServicesMap_[i]; infoServicesMap_[i]=NULL;} 
       if (dataServicesMap_[i]!=NULL) {delete dataServicesMap_[i]; dataServicesMap_[i]=NULL;} 
+      if (stateServicesMap_[i]!=NULL) {delete stateServicesMap_[i]; stateServicesMap_[i]=NULL;} 
 
     }
   memset(difStatus_,0,255*sizeof(DIFStatus));
@@ -95,11 +96,12 @@ void DimDIFServer::allocateServices(int32_t dif)
   gethostname(hname,80);
 
   s0.str(std::string());
-  s0<<"/DDS/"<<hname<<"/DIF"<<dif<<"/INFO";
+  s0<<"/DDS/DIF"<<dif<<"/INFO";
   // id,Status,GTC,BCID,Bytes
-  infoServicesMap_[dif] = new DimService(s0.str().c_str(),"I:4,L:2",&difStatus_[dif],sizeof(DIFStatus));
+  memcpy(difStatus_[dif].host,hname,80);
+  infoServicesMap_[dif] = new DimService(s0.str().c_str(),"I:4,L:2:C:80",&difStatus_[dif],sizeof(DIFStatus));
   s0.str(std::string());
-  s0<<"/DDS/"<<hname<<"/DIF"<<dif<<"/DATA";
+  s0<<"/DDS/DIF"<<dif<<"/DATA";
   // DIF buffer
   dataServicesMap_[dif] = new DimService(s0.str().c_str(),"I",&difData_[dif*32*1024],sizeof(uint32_t)*32*1024);
 

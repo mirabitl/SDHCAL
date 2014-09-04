@@ -34,6 +34,7 @@ typedef struct
   uint32_t gtc;
   uint64_t bcid;
   uint64_t bytes;
+  char host[80];
 } DIFStatus;
 
 
