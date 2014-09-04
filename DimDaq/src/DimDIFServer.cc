@@ -436,7 +436,7 @@ void DimDIFServer::commandHandler()
 	  difState_[difid]="INIT_FAILED";
 	}
       difStatus_[difid].status=DimDIFServer::INITIALISED;
-      cout <<" host of dif " <<difStatus_[difid].host<<endl;
+      cout <<" host of dif " <<difStatus_[difid].host<<" "<<sizeof(DIFStatus)<<endl;
       infoServicesMap_[difid]->updateService(&difStatus_[difid],sizeof(DIFStatus));
       stateServicesMap_[difid]->updateService((char*) difState_[difid].c_str());
       processStatus_=DimDIFServer::INITIALISED;
