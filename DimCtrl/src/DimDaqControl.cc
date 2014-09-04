@@ -1,4 +1,5 @@
 
+#include "DimDaqControlServer.h"
 #include "DimDaqControl.h"
 #include <iostream>
 #include <sstream>
@@ -17,12 +18,12 @@
 
 
 
-DimDaqControl::DimDaqControl(std::string dns) :theDns_(dns)  
+DimDaqControl::DimDaqControl(std::string dns) :theDNS_(dns)  
 {
-  
-  running_=false;
-  readoutStarted_=false;
-  
+  //DimDaqControlServer* s= new DimDaqControlServer(this);
+  /*
+  DimClient::setDnsNode(theDNS_.c_str());
+  cout<<"Building DimDaqCtrl"<<endl;
   std::stringstream s0;
   char hname[80];
   gethostname(hname,80);
@@ -32,21 +33,41 @@ DimDaqControl::DimDaqControl(std::string dns) :theDns_(dns)
   processStatus_=DimDaqControl::ALIVED;
   aliveService_->updateService();
   allocateCommands();
+  scandns();
   s0.str(std::string());
   s0<<"DimDaqControl-"<<hname;
-  DimServer::start(); 
+  boost::thread wt(worker);
+  // DimServer::start(s0.str().c_str()); 
+  //  cout<<"Starting DimDaqCtrl"<<endl;
+  */
 
 }
- DimDaqControl::~DimDaqControl()
- {
-   delete aliveService_;
- }
+DimDaqControl::~DimDaqControl()
+{
+  /*
+  delete aliveService_;
+  delete browseCommand_;
+  delete scanCommand_;
+  delete initialiseCommand_;
+  delete registerstateCommand_;
+  delete configureCommand_;
+  delete startCommand_;
+  delete stopCommand_;
+  delete destroyCommand_;
+*/
+  for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)
+    delete it->second;
+}
+/*
 void DimDaqControl::allocateCommands()
 {
   std::stringstream s0;
   char hname[80];
   gethostname(hname,80);
-  s0<<"/DDC/"<<hname<<"/SCANDNS";
+  s0<<"/DDC/"<<hname<<"/BROWSEDNS";
+  browseCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
+  s0.str(std::string());
+  s0<<"/DDC/"<<hname<<"/SCANDEVICES";
   scanCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
   s0<<"/DDC/"<<hname<<"/INITIALISE";
@@ -68,16 +89,26 @@ void DimDaqControl::allocateCommands()
   destroyCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   
 }
-
+*/
 void DimDaqControl::scandns()
 {
   // Look for DB server
-   DimBrowser dbr; 
+  DimBrowser* dbr=new DimBrowser(); 
   char *service, *format; 
   int type;
   // Get DB service
-  dbr.getServices("/DB/*/DOWNLOAD" ); 
-  while(type = dbr.getNextService(service, format)) 
+  cout<<"On rentre dans scandns "<<endl;
+  cout<<"On sort \n";
+ char *server,*node;
+  dbr->getServers( ); 
+  while(dbr->getNextServer(server, node)) 
+    { 
+      cout << server << " @ " << node << endl; 
+    }
+  cout<<"0"<<endl;
+  dbr->getServices("/DB/*/DOWNLOAD" ); 
+  cout<<"1\n";
+  while(type = dbr->getNextService(service, format)) 
     { 
       cout << service << " -  " << format << endl; 
       std::string ss;
@@ -87,8 +118,9 @@ void DimDaqControl::scandns()
       theDBPrefix_=ss.substr(0,n);
     } 
   // Get the CCC prefix
-  dbr.getServices("/DCS/*/STATUS" ); 
-  while(type = dbr.getNextService(service, format)) 
+  cout<<"2\n";
+  dbr->getServices("/DCS/*/STATUS" ); 
+  while(type = dbr->getNextService(service, format)) 
     { 
       cout << service << " -  " << format << endl; 
       std::string ss;
@@ -97,9 +129,8 @@ void DimDaqControl::scandns()
       theCCCPrefix_=ss.substr(0,n);
     } 
 
-  char *server,*node;
-  dbr.getServers( ); 
-  while(dbr.getNextServer(server, node)) 
+  dbr->getServers( ); 
+  while(dbr->getNextServer(server, node)) 
     { 
       cout << server << " @ " << node << endl; 
       
@@ -123,272 +154,255 @@ void DimDaqControl::scandns()
 
 
 }
+void DimDaqControl::doScan(DimDDSClient* c)
+{
+  cout <<"Calling scan \n";
+  c->scanDevices();
+}
+void DimDaqControl::scan()
+{
+  boost::thread_group g;
 
+  for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)
+    {
+      g.create_thread(boost::bind(&DimDaqControl::doScan, this,it->second));
+    }
+  g.join_all();
+	
+}
+void DimDaqControl::doInitialise(DimDDSClient* c)
+{
+  c->initialise();
+}
+void DimDaqControl::initialise()
+{
+
+  std::stringstream s0;
+  s0.str(std::string());
+  s0<<theCCCPrefix_<<"/INITIALISE";
+  DimClient::sendCommand(s0.str().c_str(),"DCCCCC01"); 
+  //  bsem_.lock();
+  // theCCCClient_->doInitialise("DCCCCC01");
+  s0.str(std::string());
+  s0<<theCCCPrefix_<<"/CONFIGURE";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 
+  s0.str(std::string());
+  s0<<theCCCPrefix_<<"/STOP";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 
+  sleep((uint32_t) 1);
+  s0.str(std::string());
+  s0<<theCCCPrefix_<<"/CCCRESET";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 
+
+
+  sleep((uint32_t) 1);
+  s0.str(std::string());
+  s0<<theCCCPrefix_<<"/DIFRESET";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 
+
+
+
+  sleep((uint32_t) 1);
+  s0.str(std::string());
+  s0<<theCCCPrefix_<<"/CCCRESET";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 
+
+  boost::thread_group g;
+
+  for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)
+    {
+      g.create_thread(boost::bind(&DimDaqControl::doInitialise, this,it->second));
+    }
+  g.join_all();
+	
+}
+void DimDaqControl::doRegisterstate(DimDDSClient* c)
+{
+  c->setDBState(theCtrlReg_,theState_);
+}
+void DimDaqControl::registerstate(uint32_t ctr,std::string sta)
+{
+  theState_=sta;
+  theCtrlReg_=ctr;
+  boost::thread_group g;
+
+  for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)
+    {
+      g.create_thread(boost::bind(&DimDaqControl::doRegisterstate, this,it->second));
+    }
+  g.join_all();
+}
+
+void DimDaqControl::doConfigure(DimDDSClient* c)
+{
+  c->configure();
+}
+void DimDaqControl::configure()
+{
+  std::stringstream s0;
+
+  s0.str(std::string());
+  s0<<theCCCPrefix_<<"/CCCRESET";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 
+
+
+  sleep((uint32_t) 1);
+  s0.str(std::string());
+  s0<<theCCCPrefix_<<"/DIFRESET";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 
+
+
+
+  sleep((uint32_t) 1);
+  s0.str(std::string());
+  s0<<theCCCPrefix_<<"/CCCRESET";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 
+  boost::thread_group g;
+
+  for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)
+    {
+      g.create_thread(boost::bind(&DimDaqControl::doConfigure, this,it->second));
+    }
+  g.join_all();
+	
+}
+void DimDaqControl::doStart(DimDDSClient* c)
+{
+  c->start();
+}
+void DimDaqControl::start()
+{
+  boost::thread_group g;
+
+  for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)
+    {
+      g.create_thread(boost::bind(&DimDaqControl::doStart, this,it->second));
+    }
+  g.join_all();
+
+  std::stringstream s0;
+
+  s0.str(std::string());
+  s0<<theCCCPrefix_<<"/START";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 	
+}
+
+void DimDaqControl::doStop(DimDDSClient* c)
+{
+
+  c->stop();
+}
+void DimDaqControl::stop()
+{
+  std::stringstream s0;
+
+  s0.str(std::string());
+  s0<<theCCCPrefix_<<"/STOP";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 	
+
+  boost::thread_group g;
+
+  for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)
+    {
+      g.create_thread(boost::bind(&DimDaqControl::doStop, this,it->second));
+    }
+  g.join_all();
+	
+}
+void DimDaqControl::doDestroy(DimDDSClient* c)
+{
+  c->destroy();
+}
+void DimDaqControl::destroy()
+{
+  boost::thread_group g;
+
+  for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)
+    {
+      g.create_thread(boost::bind(&DimDaqControl::doDestroy, this,it->second));
+    }
+  g.join_all();
+	
+}
+
+/*
 void DimDaqControl::commandHandler()
 {
   DimCommand *currCmd = getCommand();
   printf(" J'ai recu %s COMMAND  \n",currCmd->getName());
+  if (currCmd==browseCommand_)
+    {
+      this->scandns();
+      processStatus_=DimDaqControl::BROWSED;
+      aliveService_->updateService();
+      return ;
+
+    }
+
   if (currCmd==scanCommand_)
     {
-      std::vector<uint32_t> v=scanDevices();
-      memset(devicesStatus_,0,255*sizeof(int32_t));
-      for (std::vector<uint32_t>::iterator i=v.begin();i!=v.end();i++)
-	{
-	  devicesStatus_[(*i)]=(*i);
-	}
-      devicesService_->updateService(devicesStatus_,255*sizeof(uint32_t));
+      this->scan();
       processStatus_=DimDaqControl::SCANNED;
       aliveService_->updateService();
-    
+      return ;
+
     }
   if (currCmd==initialiseCommand_)
     {
-      uint32_t difid=currCmd->getInt();
-      difStatus_[difid].id=difid;
-      this->allocateServices(difid);
-      int rc=1;
-      try 
-	{
-	  this->initialise(difid);
-	  rc=difid;
-	}
-      catch (LocalHardwareException e)
-	{
-	  std::cout<<e.what()<<std::endl;
-	  rc=-1;
-	  difStatus_[difid].status=DimDaqControl::FAILED;
-	}
-      difStatus_[difid].status=DimDaqControl::INITIALISED;
-      infoServicesMap_[difid]->updateService(&difStatus_[difid],sizeof(DIFStatus));
+      this->initialise();
       processStatus_=DimDaqControl::INITIALISED;
       aliveService_->updateService();
-    
+      return ;
+
     }
-  
-  /*	
-   *  if (m->getName().compare("SETDIFPARAM")==0)
-   *    {
-   *      uint32_t *ipay=(uint32_t*) m->getPayload();
-   *      //uint32_t difid=0,nbasic=0,asictype=0,ctrlreg=0;
-   *      //memcpy(&difid,(m->getPayload())[0],sizeof(uint32_t));
-   *      //memcpy(&nbasic,(m->getPayload())[4],sizeof(uint32_t));
-   *      //memcpy(&asictype,(m->getPayload())[8],sizeof(uint32_t));
-   *      //memcpy(&ctrlreg,(m->getPayload())[8],sizeof(uint32_t));
-   *      std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.find(ipay[0]);
-   *      if (itd!=theDIFMap_.end())
-   *	{
-   *	  itd->second->setNumberOfAsics(ipay[1]);
-   *	  itd->second->setAsicType(ipay[2]);
-   *	  itd->second->setControlRegister(ipay[3]);
-   }	
-   
-   NetMessage* mrep = new NetMessage("SETDIFPARAM",NetMessage::COMMAND_ACKNOWLEDGE,4);
-   std::cout << "Answer prepared"<<std::endl;
-   return mrep;
-   }
-  */
+
   if (currCmd==registerstateCommand_)
     {
-    
-      // First allocate services
-      this->registerstate(theCtrlReg_,theState_);
-    }
-  if (currCmd==preconfigureCommand_)
-    {
-    
-      // First allocate services
-    
-      uint32_t ctrlreg=currCmd->getInt();
-    
-      int rc=1;
-      for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
-	{
-	  try 
-	    {
-	      this->preConfigure(itd->first,ctrlreg);
-	    }
-	  catch (LocalHardwareException e)
-	    {
-	      rc=-1;
-	      std::cout<<itd->first<<" is not preconfigured "<<e.what()<<std::endl;
-	    }
-      
-      
-	  difStatus_[itd->first].slc=rc*DimDaqControl::PRECONFIGURED;
-	  infoServicesMap_[itd->first]->updateService(&difStatus_[itd->first],sizeof(DIFStatus));
-      
-	  uint32_t difid=itd->first;
-	  if (theDIFDbInfo_[difid].id==difid)
-	    {
-	      uint32_t slc=this->configureChips(difid,theDIFDbInfo_[difid].slow,theDIFDbInfo_[difid].nbasic);
-	      difStatus_[difid].slc=slc;
-	      infoServicesMap_[difid]->updateService(&difStatus_[difid],sizeof(DIFStatus));
-	    }
-	}
-    
-      processStatus_=DimDaqControl::PRECONFIGURED;
+      char* data= (char*) currCmd->getData();
+      memcpy(&theCtrlReg_,data,sizeof(uint32_t));
+      char* cdata= &data[4];
+      theState_.assign(cdata);
+      this->registerstate();
+      processStatus_=DimDaqControl::DBREGISTERED;
       aliveService_->updateService();
+      return ;
+
     }
-  
-  if (currCmd==destroyCommand_)
+  if (currCmd==configureCommand_)
     {
-      readoutStarted_=false;
-      g_d.join_all();
-      for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
-	{
-      
-      
-	  //m_Thread_d[itd->first].join();
-	  if (itd->second!=NULL)
-	    delete itd->second;
-	  std::stringstream s;
-	  s<<"DIF"<<itd->first;
-	  std::cout<<s.str()<<" beiing destroyed"<<std::endl;
-	  //this->destroyService(s.str());
-      
-	}
-      this->clearServices();
-      theDIFMap_.clear();
-      processStatus_=DimDaqControl::DESTROYED;
+      this->configure();
+      processStatus_=DimDaqControl::CONFIGURED;
       aliveService_->updateService();
+      return ;
+
     }
-  
   if (currCmd==startCommand_)
     {
-      running_=true;
-      this->startReadout();
-      for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
-	{
-	  try 
-	    {
-	      itd->second->start();
-	    }
-	  catch (LocalHardwareException e)
-	    {
-	      std::cout<<itd->first<<" is not started "<<e.what()<<std::endl;
-	    }
-	}
-    
-      processStatus_=DimDaqControl::RUNNING;
+      this->start();
+      processStatus_=DimDaqControl::STARTED;
       aliveService_->updateService();
+      return ;
+
     }
   if (currCmd==stopCommand_)
     {
-      running_=false;
-      for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
-	{
-	  try 
-	    {
-	      itd->second->stop();
-	    }
-	  catch (LocalHardwareException e)
-	    {
-	      std::cout<<itd->first<<" is not started "<<e.what()<<std::endl;
-	    }
-	}
-    
+      this->stop();
       processStatus_=DimDaqControl::STOPPED;
       aliveService_->updateService();
-    
+      return ;
+
     }
-  
-  if (currCmd==configurechipsCommand_)
+  if (currCmd==destroyCommand_)
     {
-      uint32_t difid;
-      memcpy(theSlowBuffer_,currCmd->getData(),currCmd->getSize());
-      memcpy(&difid,theSlowBuffer_,sizeof(uint32_t));
-      uint32_t nasic=(currCmd->getSize()-sizeof(uint32_t))/sizeof(SingleHardrocV2ConfigurationFrame);
-      printf("I found DIF %d asics %d \n",difid,nasic);
-      SingleHardrocV2ConfigurationFrame* slow =(SingleHardrocV2ConfigurationFrame*) &theSlowBuffer_[4];
-      uint32_t slc=this->configureChips(difid,slow,nasic);
-      difStatus_[difid].slc=slc;
-      infoServicesMap_[difid]->updateService(&difStatus_[difid],sizeof(DIFStatus));
+      this->destroy();
+      processStatus_=DimDaqControl::DESTROYED;
+      aliveService_->updateService();
+      return ;
+
     }
-  
+  cout<<"Unknown command \n";
+    
   return ;
 }
    
-void DimDaqControl::startReadout()
-{
-  if (readoutStarted_) return;
-  readoutStarted_=true;	
-     
-  for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
-    {
-      //m_Thread_d[itd->first]= boost::thread(&DimDaqControl::readout, this,itd->first); 
-      g_d.create_thread(boost::bind(&DimDaqControl::readout, this,itd->first));
-    }
-     
-}
-   
-void DimDaqControl::readout(uint32_t difid)
-{
-  std::cout<<"Thread of dif "<<difid<<" is started"<<std::endl;
-  std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.find(difid);
-  if (itd==theDIFMap_.end()) return;
-  unsigned char cbuf[MAX_EVENT_SIZE];
-     
-  while (readoutStarted_)
-    {
-      if (!running_) {usleep((uint32_t) 100000);continue;}
-      usleep((uint32_t) 100);
-       
-       
-      try 
-	{
-	 
-	  uint32_t nread=itd->second->DoHardrocV2ReadoutDigitalData(cbuf);
-	  //printf(" Je lis %d %d \n",difid,nread);
-	  if (nread==0) continue;
-#ifdef DEBUG_SHM	  
-	  ShmProxy::transferToFile(cbuf,
-				   nread,
-				   ShmProxy::getBufferABCID(cbuf),
-				   ShmProxy::getBufferDTC(cbuf),
-				   ShmProxy::getBufferGTC(cbuf),
-				   ShmProxy::getBufferDIF(cbuf));
-#endif
-	 
-	 
-	  memcpy(&difData_[itd->first*32*1024],cbuf,nread);
-	  dataServicesMap_[itd->first]->updateService(&difData_[itd->first*32*1024],nread);
-	  difStatus_[itd->first].gtc=ShmProxy::getBufferDTC(cbuf);
-	  difStatus_[itd->first].bcid=ShmProxy::getBufferABCID(cbuf);
-	  difStatus_[itd->first].bytes+=nread;
-	  infoServicesMap_[itd->first]->updateService(&difStatus_[itd->first],sizeof(DIFStatus));
-	 
-	}
-      catch (LocalHardwareException e)
-	{
-	  std::cout<<itd->first<<" is not started "<<e.what()<<std::endl;
-	}
-       
-    }
-  std::cout<<"Thread of dif "<<difid<<" is stopped"<<readoutStarted_<<std::endl;
-}
-   
-void DimDaqControl::registerDBService(const char* state)
-{
-  memset(theDIFDbInfo_,0,255*sizeof(DIFDbInfo));
-  for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
-    {
-      if (theDBDimInfo_[itd->first]!=NULL) delete theDBDimInfo_[itd->first];
-      std::stringstream s;
-      s<<"/DB/"<<state<<"/DIF"<<itd->first;
-      theDBDimInfo_[itd->first] = new DimInfo(s.str().c_str(),&theDIFDbInfo_[itd->first],sizeof(DIFDbInfo),this);
-    }
-}
-   
-void  DimDaqControl::infoHandler( ) 
-{
-     
-  DimInfo *curr = (DimInfo*) getInfo(); // get current DimStampedInfo address
-  std::cout<<curr->getName()<<std::endl;
-  for (int i=0;i<255;i++)
-    {
-      if (curr!=theDBDimInfo_[i]) continue;
-      memcpy(&theDIFDbInfo_[i],curr->getData(),sizeof(DIFDbInfo));
-      printf("Dim info read %d %d \n",theDIFDbInfo_[i].id,theDIFDbInfo_[i].nbasic);
-    }
-}
-   
+*/

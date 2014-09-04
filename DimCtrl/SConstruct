@@ -119,19 +119,19 @@ EXE_LIBPATH=LIBRARY_PATHS
 EXE_LIBPATH.append("#lib")
 EXE_LIBS=LIBRARIES
 EXE_LIBS.append("SDHCALDimCtrl")
-#dds=env.Program("bin/dimdif",source="src/dss.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+ddc=env.Program("bin/dimdaq",source="src/daq.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 #dcs=env.Program("bin/dimccc",source="src/dcc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 #dzups=env.Program("bin/dimzup",source="src/dzup.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
 #Python module
-#_SDHCALDimCtrl=env.PythonModule('_LSDHCALDimCtrl', ['LSDHCALDimCtrl.i'],LIBPATH="#lib",LIBS="SDHCALDimCtrl")
+_SDHCALDimCtrl=env.PythonModule('_LSDHCALDimCtrl', ['LSDHCALDimCtrl.i'],LIBPATH="#lib",LIBS="SDHCALDimCtrl")
 
 myinc=[]
 for x in Glob("#include/*.h"):
   myinc.append("include/"+x.name)
 print myinc
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SDHCALDimCtrl)
-#env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[dds,dcs,dzups])
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[ddc])
 ###env.Install("/opt/dhcal/lib",SDHCALDimCtrl)
 ###env.Install("/opt/dhcal/include/readout",myinc)
 

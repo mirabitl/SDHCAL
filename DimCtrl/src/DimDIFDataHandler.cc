@@ -4,12 +4,12 @@ DimDIFDataHandler::DimDIFDataHandler(uint32_t id,std::string prefix) : theId_(id
 {
   std::stringstream s0;
   s0.str(std::string());
-  s0<<prefix<<"DIF"<<id<<"/INFO";
+  s0<<prefix<<"/DIF"<<id<<"/INFO";
   theDIFInfo_ = new DimInfo(s0.str().c_str(),&difStatus_,sizeof(DIFStatus),this);
   s0.str(std::string());
-  s0<<prefix<<"DIF"<<id<<"/DATA";
+  s0<<prefix<<"/DIF"<<id<<"/DATA";
   theDIFData_ = new DimInfo(s0.str().c_str(),&difData_,32*1024*sizeof(uint32_t),this);
-
+  cout<<"Infos registerd\n";
 }     
 DimDIFDataHandler::~DimDIFDataHandler()
 {
@@ -20,10 +20,15 @@ DimDIFDataHandler::~DimDIFDataHandler()
 void DimDIFDataHandler::infoHandler()
 {
    DimInfo *curr = (DimInfo*) getInfo(); // get current DimStampedInfo address
-   std::cout<<curr->getName()<<std::endl;
-   if (curr=theDIFInfo_)
-     memcpy(&difStatus_,curr->getData(),sizeof(DIFStatus));
-   if (curr=theDIFData_)
+   std::cout<<curr->getName()<<" received "<< curr->getSize()<<std::endl;
+   if (curr==theDIFInfo_)
+     {
+       cout<<"copying to difStatus\n";
+       memcpy(&difStatus_,curr->getData(),sizeof(DIFStatus));
+       cout<<"copy done\n";
+       return;
+     }
+   if (curr==theDIFData_)
      {
        memcpy(&difData_,curr->getData(),curr->getSize());
        // copy to Shm

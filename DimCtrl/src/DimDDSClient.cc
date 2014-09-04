@@ -1,5 +1,6 @@
 #include "DimDDSClient.h"
 #include "ShmProxy.h"
+using namespace std;
 DimDDSClient::DimDDSClient(std::string name,std::string prefix) : theName_(name),thePrefix_(prefix)
 {
   std::stringstream s0;
@@ -30,7 +31,10 @@ void DimDDSClient::scanDevices()
   std::stringstream s0;
   s0.str(std::string());
   s0<<thePrefix_<<"/SCANDEVICES";
-  DimClient::sendCommand(s0.str().c_str(), 1); 
+  cout<<"Oops\n";
+  cout <<"Sending command "<<s0.str().c_str()<<" "<<DimClient::getDnsNode()<<endl;
+  DimClient::sendCommand(s0.str().c_str(), 1);
+  cout <<"Send done \n";
   bsem_.lock();
 }
 
@@ -43,6 +47,7 @@ void DimDDSClient::initialise()
 	  std::stringstream s0;
 	  s0.str(std::string());
 	  s0<<thePrefix_<<"/INITIALISE";
+	  cout <<"sending "<<s0.str().c_str()<<" "<<i<<endl;
 	  DimClient::sendCommand(s0.str().c_str(),(int) i); 
 	  bsem_.lock();
 	  
@@ -104,12 +109,13 @@ void DimDDSClient::infoHandler()
 {
   DimInfo *curr = (DimInfo*) getInfo(); // get current DimStampedInfo address
   std::cout<<curr->getName()<<std::endl;
-  if (curr=theDDSStatus_)
+  if (curr==theDDSStatus_)
     {
       theStatus_=curr->getInt();
+      cout<<"DimDDSClient status updated "<<theStatus_<<endl;
       bsem_.unlock();
     }
-  if (curr=theDDSDevices_)
+  if (curr==theDDSDevices_)
     {
       memcpy(&theDevices_,curr->getData(),curr->getSize());
       // copy to Shm
