@@ -103,6 +103,11 @@ void DimDIFServer::allocateServices(int32_t dif)
   // DIF buffer
   dataServicesMap_[dif] = new DimService(s0.str().c_str(),"I",&difData_[dif*32*1024],sizeof(uint32_t)*32*1024);
 
+  s0.str(std::string());
+  s0<<"/DDS/DIF"<<dif<<"/STATE";
+
+  stateServicesMap_[dif]= new DimService(s0.str().c_str(),(char*) difState_[dif].c_str());
+
 }
 
 
@@ -412,21 +417,25 @@ void DimDIFServer::commandHandler()
     {
       uint32_t difid=currCmd->getInt();
       difStatus_[difid].id=difid;
+      difState_[difid]="FOUND";
       this->allocateServices(difid);
       int rc=1;
       try 
 	{
 	  this->initialise(difid);
 	  rc=difid;
+	  difState_[difid]="INITIALISED";
 	}
       catch (LocalHardwareException e)
 	{
 	  std::cout<<e.what()<<std::endl;
 	  rc=-1;
 	  difStatus_[difid].status=DimDIFServer::FAILED;
+	  difState_[difid]="INIT_FAILED";
 	}
       difStatus_[difid].status=DimDIFServer::INITIALISED;
       infoServicesMap_[difid]->updateService(&difStatus_[difid],sizeof(DIFStatus));
+      stateServicesMap_[difid]->updateService((char*) difState_[difid].c_str());
       processStatus_=DimDIFServer::INITIALISED;
       aliveService_->updateService();
 
@@ -474,14 +483,17 @@ void DimDIFServer::commandHandler()
 	  try 
 	    {
 	      this->preConfigure(itd->first,ctrlreg);
+	      difState_[itd->first]="PRECONFIGURED";
+
 	    }
 	  catch (LocalHardwareException e)
 	    {
 	      rc=-1;
 	      std::cout<<itd->first<<" is not preconfigured "<<e.what()<<std::endl;
+	      difState_[itd->first]="PRECONFIGURE_FAILED";
 	    }
 
-
+	  stateServicesMap_[itd->first]->updateService((char*) difState_[itd->first].c_str());
 	  difStatus_[itd->first].slc=rc*DimDIFServer::PRECONFIGURED;
 	  infoServicesMap_[itd->first]->updateService(&difStatus_[itd->first],sizeof(DIFStatus));
 
@@ -489,6 +501,9 @@ void DimDIFServer::commandHandler()
 	  if (theDIFDbInfo_[difid].id==difid)
 	    {
 	      uint32_t slc=this->configureChips(difid,theDIFDbInfo_[difid].slow,theDIFDbInfo_[difid].nbasic);
+	      difState_[itd->first]="CONFIGURED";
+	      stateServicesMap_[itd->first]->updateService((char*) difState_[itd->first].c_str());
+
 	      difStatus_[difid].slc=slc;
 	      infoServicesMap_[difid]->updateService(&difStatus_[difid],sizeof(DIFStatus));
 	    }
@@ -513,6 +528,8 @@ void DimDIFServer::commandHandler()
 	  s<<"DIF"<<itd->first;
 	  std::cout<<s.str()<<" beiing destroyed"<<std::endl;
 	  //this->destroyService(s.str());
+	  difState_[itd->first]="DESTROYED";
+	  stateServicesMap_[itd->first]->updateService((char*) difState_[itd->first].c_str());
 			
 	}
       this->clearServices();
@@ -530,11 +547,14 @@ void DimDIFServer::commandHandler()
 	  try 
 	    {
 	      itd->second->start();
+	      difState_[itd->first]="STARTED";
 	    }
 	  catch (LocalHardwareException e)
 	    {
+	      difState_[itd->first]="START_FAILED";
 	      std::cout<<itd->first<<" is not started "<<e.what()<<std::endl;
 	    }
+	  stateServicesMap_[itd->first]->updateService((char*) difState_[itd->first].c_str());
 	}
 
       processStatus_=DimDIFServer::RUNNING;
@@ -548,11 +568,16 @@ void DimDIFServer::commandHandler()
 	  try 
 	    {
 	      itd->second->stop();
+	      difState_[itd->first]="STOPPED";
 	    }
 	  catch (LocalHardwareException e)
 	    {
+	      difState_[itd->first]="STOP_FAILED";
 	      std::cout<<itd->first<<" is not started "<<e.what()<<std::endl;
 	    }
+
+	  stateServicesMap_[itd->first]->updateService((char*) difState_[itd->first].c_str());
+
 	}
 
       processStatus_=DimDIFServer::STOPPED;

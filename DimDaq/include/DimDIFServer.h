@@ -77,12 +77,13 @@ private:
 	int32_t devicesStatus_[255];
   DIFStatus difStatus_[255];
   uint32_t difData_[255*32*1024];
-
+  std::string difState_[255];
   DimService* aliveService_; //State of the process 
   DimService* devicesService_; // List of FTDI devices
-
-	DimService* infoServicesMap_[255]; //FtdiDeviceInfo services map
-	DimService* dataServicesMap_[255]; // data services map
+  
+  DimService* infoServicesMap_[255]; //FtdiDeviceInfo services map
+  DimService* dataServicesMap_[255]; // data services map
+  DimService* stateServicesMap_[255]; // data services map
 
   DimCommand *scanCommand_;
   DimCommand *initialiseCommand_;
