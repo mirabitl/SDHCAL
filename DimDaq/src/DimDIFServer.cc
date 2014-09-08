@@ -99,7 +99,7 @@ void DimDIFServer::allocateServices(int32_t dif)
   s0<<"/DDS/DIF"<<dif<<"/INFO";
   // id,Status,GTC,BCID,Bytes
   memcpy(difStatus_[dif].host,hname,80);
-  infoServicesMap_[dif] = new DimService(s0.str().c_str(),"I:4,L:2,C",&difStatus_[dif],sizeof(DIFStatus));
+  infoServicesMap_[dif] = new DimService(s0.str().c_str(),"I:4;L:2;C:80",&difStatus_[dif],sizeof(DIFStatus));
   s0.str(std::string());
   s0<<"/DDS/DIF"<<dif<<"/DATA";
   // DIF buffer
@@ -409,6 +409,11 @@ void DimDIFServer::commandHandler()
       for (std::vector<uint32_t>::iterator i=v.begin();i!=v.end();i++)
 	{
 	  devicesStatus_[(*i)]=(*i);
+	  uint32_t difid=(*i);
+	  difStatus_[difid].id=difid;
+	  difState_[difid]="FOUND";
+	  this->allocateServices(difid);
+
 	}
       devicesService_->updateService(devicesStatus_,255*sizeof(uint32_t));
       processStatus_=DimDIFServer::SCANNED;
@@ -418,9 +423,6 @@ void DimDIFServer::commandHandler()
   if (currCmd==initialiseCommand_)
     {
       uint32_t difid=currCmd->getInt();
-      difStatus_[difid].id=difid;
-      difState_[difid]="FOUND";
-      this->allocateServices(difid);
       int rc=1;
       try 
 	{

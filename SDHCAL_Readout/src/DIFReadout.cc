@@ -8,7 +8,7 @@ DIFReadout::DIFReadout (std::string name,uint32_t productid) : FtdiDIFDriver ((c
 }
 DIFReadout::~DIFReadout()
 {
-printf("%s %n\n",__PRETTY_FUNCTION__,__LINE__);
+  printf("%s %d \n",__PRETTY_FUNCTION__,__LINE__);
 }
 void DIFReadout::setPowerManagment(uint32_t P2PAReg, uint32_t PA2PDReg,uint32_t PD2DAQReg, uint32_t DAQ2DReg,uint32_t D2AReg)
 {
