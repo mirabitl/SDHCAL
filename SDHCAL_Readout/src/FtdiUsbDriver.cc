@@ -411,7 +411,10 @@ throw (LocalHardwareException)
 	catch (LocalHardwareException& e)
 	{
 		(*tbyte)=0;
-		std::cout<<e.message()<<std::endl;throw (e);
+#ifdef DEBUG_READ
+		std::cout<<e.message()<<std::endl;
+#endif
+		throw (e);
 		
 	}
 	return 1;
