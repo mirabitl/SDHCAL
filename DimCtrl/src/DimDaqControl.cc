@@ -97,8 +97,8 @@ void DimDaqControl::scandns()
   char *service, *format; 
   int type;
   // Get DB service
-  cout<<"On rentre dans scandns "<<endl;
-  cout<<"On sort \n";
+  //cout<<"On rentre dans scandns "<<endl;
+  //cout<<"On sort \n";
  char *server,*node;
   dbr->getServers( ); 
   while(dbr->getNextServer(server, node)) 
@@ -156,7 +156,7 @@ void DimDaqControl::scandns()
 }
 void DimDaqControl::doScan(DimDDSClient* c)
 {
-  cout <<"Calling scan \n";
+  // cout <<"Calling scan \n";
   c->scanDevices();
 }
 void DimDaqControl::scan()
@@ -224,6 +224,7 @@ void DimDaqControl::registerstate(uint32_t ctr,std::string sta)
 {
   theState_=sta;
   theCtrlReg_=ctr;
+  //std::cout<<"SETTING DB "<<theState_<<" "<<theCtrlReg_<<std::endl;
   boost::thread_group g;
 
   for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)

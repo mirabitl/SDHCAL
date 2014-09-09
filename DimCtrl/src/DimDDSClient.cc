@@ -31,10 +31,10 @@ void DimDDSClient::scanDevices()
   std::stringstream s0;
   s0.str(std::string());
   s0<<thePrefix_<<"/SCANDEVICES";
-  cout<<"Oops\n";
-  cout <<"Sending command "<<s0.str().c_str()<<" "<<DimClient::getDnsNode()<<endl;
+  // cout<<"Oops\n";
+  // cout <<"Sending command "<<s0.str().c_str()<<" "<<DimClient::getDnsNode()<<endl;
   DimClient::sendCommand(s0.str().c_str(), 1);
-  cout <<"Send done \n";
+  // cout <<"Send done \n";
   bsem_.lock();
 }
 
@@ -47,13 +47,14 @@ void DimDDSClient::initialise()
 	  std::stringstream s0;
 	  s0.str(std::string());
 	  s0<<thePrefix_<<"/INITIALISE";
-	  cout <<"sending "<<s0.str().c_str()<<" "<<i<<endl;
+	  // cout <<"sending "<<s0.str().c_str()<<" "<<i<<endl;
 	  DimClient::sendCommand(s0.str().c_str(),(int) i); 
 	  bsem_.lock();
-	  
+#ifdef TESTWITHOUT	  
 	  DimDIFDataHandler* d= new  DimDIFDataHandler(i,thePrefix_);
 	  std::pair<uint32_t,DimDIFDataHandler*> p(i,d);
 	  theDDDHMap_.insert(p);
+#endif
 	}
     }
 }
@@ -108,11 +109,11 @@ void DimDDSClient::destroy()
 void DimDDSClient::infoHandler()
 {
   DimInfo *curr = (DimInfo*) getInfo(); // get current DimStampedInfo address
-  std::cout<<curr->getName()<<std::endl;
+  //std::cout<<"GOT info "<<curr->getName()<<std::endl;
   if (curr==theDDSStatus_)
     {
       theStatus_=curr->getInt();
-      cout<<"DimDDSClient status updated "<<theStatus_<<endl;
+      // cout<<"DimDDSClient status updated "<<theStatus_<<endl;
       bsem_.unlock();
     }
   if (curr==theDDSDevices_)

@@ -63,13 +63,20 @@ if (Use_Dim):
   INCLUDES.append(DIM_ROOT+"/dim")
 INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
 
+INCLUDES.append("/usr/include/jsoncpp")
+INCLUDES.append("/usr/include/libxml2")
+INCLUDES.append(DHCAL_ROOT+"/SDHCAL_Analysis/include")
+INCLUDES.append(os.path.join(os.getenv("LCIODIR"),"include"))
+INCLUDES.append(os.path.join(os.getenv("LCIODIR"),"include","IMPL"))
+
+
 CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2"]
 
 #Library ROOT + some of XDAQ + DB 
 
 
 #LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
-LIBRARIES=['pthread',  'm', 'stdc++','boost_system-mt','boost_thread-mt','SDHCALcommon','SDHCALReadout','dim','netlink','cslm']
+LIBRARIES=['pthread',  'm', 'stdc++','boost_system-mt','boost_thread-mt','SDHCALcommon','SDHCALReadout','SDHCALAnalysis','lcio','sio','dim','netlink','cslm']
 
 
 
@@ -79,7 +86,7 @@ if (Bit64):
 else:
   LIBRARY_PATHS=["/usr/lib","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib"]
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
-
+LIBRARY_PATHS.append(os.path.join(os.getenv("LCIODIR"),"lib"))
 if Use_Dim:
    CPPFLAGS.append("-DUSE_DIM")
 #   INCLUDES.append("/opt/xdaq/include/dim")
@@ -120,6 +127,7 @@ EXE_LIBPATH.append("#lib")
 EXE_LIBS=LIBRARIES
 EXE_LIBS.append("SDHCALDimCtrl")
 ddc=env.Program("bin/dimdaq",source="src/daq.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+dsp=env.Program("bin/dimwriter",source="src/dimwriter.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 #dcs=env.Program("bin/dimccc",source="src/dcc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 #dzups=env.Program("bin/dimzup",source="src/dzup.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
@@ -131,7 +139,7 @@ for x in Glob("#include/*.h"):
   myinc.append("include/"+x.name)
 print myinc
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SDHCALDimCtrl)
-env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[ddc])
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[ddc,dsp])
 ###env.Install("/opt/dhcal/lib",SDHCALDimCtrl)
 ###env.Install("/opt/dhcal/include/readout",myinc)
 
