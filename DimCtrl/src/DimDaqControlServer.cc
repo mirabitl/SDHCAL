@@ -69,7 +69,7 @@ void DimDaqControlServer::allocateCommands()
   configureCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
   s0<<"/DDC/"<<hname<<"/REGISTERSTATE";
-  registerstateCommand_=new DimCommand(s0.str().c_str(),"I:1,C",this);
+  registerstateCommand_=new DimCommand(s0.str().c_str(),"I:1;C",this);
   s0.str(std::string());
   s0<<"/DDC/"<<hname<<"/START";
   startCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
@@ -79,83 +79,158 @@ void DimDaqControlServer::allocateCommands()
   s0.str(std::string());
   s0<<"/DDC/"<<hname<<"/DESTROY";
   destroyCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
+
+  m_Thread_s = boost::thread(&DimDaqControlServer::services, this); 
   
 }
 
+void DimDaqControlServer::services()
+{
+  while (true)
+    {
+      usleep(10000);
 
+      while (!todo_.empty())
+	{
+	  std::string s = todo_.back();
+	  //std::cout<<" String to process "<<s<<std::endl;
+
+	  dim_wait();
+	  // std::cout<<" Dim Ok to process "<<s<<std::endl;
+	  
+	  if (s.compare("browse")==0)
+	    {
+	      //std::cout<<"On appelle BROWSE \n";
+	      theControl_->scandns();
+	      processStatus_=DimDaqControlServer::BROWSED;
+	      aliveService_->updateService();
+	      todo_.pop_back();continue; ;
+
+	    }
+
+	  if (s.compare("scan")==0)
+	    {
+	      //std::cout<<"On appelle SCAN \n";
+	      theControl_->scan();
+	      processStatus_=DimDaqControlServer::SCANNED;
+	      aliveService_->updateService();
+	      todo_.pop_back();continue; ;
+
+	    }
+	  if (s.compare("initialise")==0)
+	    {
+	      theControl_->initialise();
+	      processStatus_=DimDaqControlServer::INITIALISED;
+	      aliveService_->updateService();
+	      todo_.pop_back();continue; ;
+
+	    }
+
+	  if (s.compare("registerstate")==0)
+	    {
+	      
+	      theControl_->registerstate(ctrlreg_,state_);
+	      processStatus_=DimDaqControlServer::DBREGISTERED;
+	      aliveService_->updateService();
+	      todo_.pop_back();continue; ;
+	      
+	    }
+	  if (s.compare("configure")==0)
+	    {
+	      theControl_->configure();
+	      processStatus_=DimDaqControlServer::CONFIGURED;
+	      aliveService_->updateService();
+	      todo_.pop_back();continue; ;
+
+	    }
+	  if (s.compare("start")==0)
+	    {
+	      theControl_->start();
+	      processStatus_=DimDaqControlServer::STARTED;
+	      aliveService_->updateService();
+	      todo_.pop_back();continue; ;
+
+	    }
+	  if (s.compare("stop")==0)
+	    {
+	      theControl_->stop();
+	      processStatus_=DimDaqControlServer::STOPPED;
+	      aliveService_->updateService();
+	      todo_.pop_back();continue; ;
+
+	    }
+	  if (s.compare("destroy")==0)
+	    {
+	      theControl_->destroy();
+	      processStatus_=DimDaqControlServer::DESTROYED;
+	      aliveService_->updateService();
+	      todo_.pop_back();continue; ;
+	      
+	    }
+
+	  todo_.pop_back();
+	}
+
+      
+    }
+}
 void DimDaqControlServer::commandHandler()
 {
   DimCommand *currCmd = getCommand();
   printf(" J'ai recu %s COMMAND  \n",currCmd->getName());
   if (currCmd==browseCommand_)
     {
-      theControl_->scandns();
-      processStatus_=DimDaqControlServer::BROWSED;
-      aliveService_->updateService();
+      todo_.push_back("browse");
       return ;
 
     }
 
   if (currCmd==scanCommand_)
     {
-      theControl_->scan();
-      processStatus_=DimDaqControlServer::SCANNED;
-      aliveService_->updateService();
+      todo_.push_back("scan");
       return ;
 
     }
   if (currCmd==initialiseCommand_)
     {
-      theControl_->initialise();
-      processStatus_=DimDaqControlServer::INITIALISED;
-      aliveService_->updateService();
+      todo_.push_back("initialise");
       return ;
 
     }
 
   if (currCmd==registerstateCommand_)
     {
-      uint32_t ctr;
-      std::string sta;
       char* data= (char*) currCmd->getData();
-      memcpy(&ctr,data,sizeof(uint32_t));
+      memcpy(&ctrlreg_,data,sizeof(uint32_t));
       char* cdata= &data[4];
-      sta.assign(cdata);
-      theControl_->registerstate(ctr,sta);
-      processStatus_=DimDaqControlServer::DBREGISTERED;
-      aliveService_->updateService();
+      state_.assign(cdata);
+      //std::cout<<"SERVING SETTING DB "<<state_<<" "<<ctrlreg_<<std::endl;
+  
+      todo_.push_back("registerstate");
       return ;
 
     }
   if (currCmd==configureCommand_)
     {
-      theControl_->configure();
-      processStatus_=DimDaqControlServer::CONFIGURED;
-      aliveService_->updateService();
+      todo_.push_back("configure");
       return ;
 
     }
   if (currCmd==startCommand_)
     {
-      theControl_->start();
-      processStatus_=DimDaqControlServer::STARTED;
-      aliveService_->updateService();
+      todo_.push_back("start");
       return ;
 
     }
   if (currCmd==stopCommand_)
     {
-      theControl_->stop();
-      processStatus_=DimDaqControlServer::STOPPED;
-      aliveService_->updateService();
+      todo_.push_back("stop");
       return ;
 
     }
   if (currCmd==destroyCommand_)
     {
-      theControl_->destroy();
-      processStatus_=DimDaqControlServer::DESTROYED;
-      aliveService_->updateService();
+      todo_.push_back("destroy");
       return ;
 
     }

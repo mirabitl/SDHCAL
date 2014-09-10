@@ -1,6 +1,6 @@
-#ifndef _DimDaqControlServer_h
+#ifndef _DimShmProxy_h
 
-#define _DimDaqControlServer_h
+#define _DimShmProxy_h
 #include <iostream>
 
 #include <string.h>
@@ -8,6 +8,7 @@
 #include "dis.hxx"
 #include "dic.hxx"
 
+#include "ShmProxy.h"
 #include "DIFReadoutConstant.h"
 using namespace std;
 #include <sstream>
@@ -23,35 +24,33 @@ using namespace std;
 
 class DimDaqControl;
 
-class DimDaqControlServer: public DimServer
+class DimShmProxy: public DimServer,public DimClient
 {
 public:
-  DimDaqControlServer(DimDaqControl* c);
+  DimShmProxy();
 
-  ~DimDaqControlServer();
+  ~DimShmProxy();
   virtual void commandHandler();
+  virtual void infoHandler();
   void allocateCommands();
-  void services();
 
-  enum {ALIVED=1,BROWSED=2,SCANNED=3,INITIALISED=4,DBREGISTERED=5,CONFIGURED=6,STARTED=7,STOPPED=8,DESTROYED=9};
+  void registerDifs();
+  enum {ALIVED=1,INITIALISED=2,STARTED=3,STOPPED=4};
 private:
-  std::string theDNS_;
-  DimDaqControl* theControl_;
+  ShmProxy* theProxy_;
   DimService* aliveService_;
   int32_t processStatus_;
-  DimCommand* browseCommand_;
-  DimCommand* scanCommand_;
   DimCommand* initialiseCommand_;
-  DimCommand* registerstateCommand_;
-  DimCommand* configureCommand_;
   DimCommand* startCommand_;
   DimCommand* stopCommand_;
-  DimCommand* destroyCommand_;
-  boost::thread    m_Thread_s;
-  uint32_t ctrlreg_;
-  std::string state_;
-  std::vector<std::string> todo_;
+
+  char theState_[255];
+  DIFStatus theInfo_;
+  uint32_t theBuffer_[32*1024];
   
+  DimInfo* difInfo_[255];
+  DimInfo* difState_[255];
+  DimInfo* difData_[255];
 };
 #endif
 

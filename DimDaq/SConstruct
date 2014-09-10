@@ -51,7 +51,13 @@ Bit64=os.uname()[4]=='x86_64'
 NetLink=DHCAL_ROOT+"/netLink"
 if ( not os.path.exists(NetLink)):
   NetLink=os.getenv("HOME")+"/netLink"
+kl=os.uname()[2].split(".")
+platform="UBUNTU"
+if (kl[len(kl)-1][0:3] == 'el5'):
+    platform="SLC5"
 
+if (kl[len(kl)-2][0:3] == 'el6'):
+    platform="SLC6"
 
 Use_Dim=True
 #os.environ.has_key("DIM_DNS_NODE")
@@ -61,6 +67,8 @@ INCLUDES=['include',"/usr/include/boost141/",DHCAL_ROOT+"/SDHCAL_common/include"
 
 if (Use_Dim):
   INCLUDES.append(DIM_ROOT+"/dim")
+  if (platform=="SLC5"):
+    INCLUDES.append("/opt/xdaq/include/dim")
 INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
 
 CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2"]
@@ -82,9 +90,11 @@ LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig a
 
 if Use_Dim:
    CPPFLAGS.append("-DUSE_DIM")
+   if (platform=="SLC5"):
+     LIBRARY_PATHS.append("/opt/xdaq/lib")
 #   INCLUDES.append("/opt/xdaq/include/dim")
 #   LIBRARIES.append("dim")
-#   LIBRARY_PATHS.append("/opt/xdaq/lib")
+#   
 
 
 #link flags
