@@ -506,7 +506,25 @@ void DimDIFServer::commandHandler()
 	  if (theDIFDbInfo_[difid].id==difid)
 	    {
 	      uint32_t slc=this->configureChips(difid,theDIFDbInfo_[difid].slow,theDIFDbInfo_[difid].nbasic);
-	      difState_[itd->first]="CONFIGURED";
+
+	      std::stringstream s0;
+	      s0.str(std::string());
+	      s0<<"CONFIGURED => ";
+	      if ((slc&0x0003)==0x01) s0<<"SLC CRC OK       - ";
+	      else if ((slc&0x0003)==0x02) s0<<"SLC CRC Failed   - ";
+	      else s0<<"SLC CRC forb  - ";
+	      if ((slc&0x000C)==0x04) s0<<"All OK      - ";
+	      else if ((slc&0x000C)==0x08) s0<<"All Failed  - ";
+	      else  s0<<"All forb - ";
+	      if ((slc&0x0030)==0x10) s0<<"L1 OK     - ";
+	      else if ((slc&0x0030)==0x20) s0<<"L1 Failed - ";
+	      else s0<<"L1 forb   - ";
+
+
+
+
+
+	      difState_[itd->first]=s0.str();
 	      stateServicesMap_[itd->first]->updateService((char*) difState_[itd->first].c_str());
 
 	      difStatus_[difid].slc=slc;
