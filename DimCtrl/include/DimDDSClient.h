@@ -38,6 +38,8 @@ public:
   void start();
   void stop();
   void destroy();
+  void print();
+  std::map<uint32_t,DimDIFDataHandler*>& getDIFMap(){return theDDDHMap_;}
 private:
   std::string theName_;
   std::string thePrefix_;

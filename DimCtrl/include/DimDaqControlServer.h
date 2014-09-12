@@ -47,6 +47,7 @@ private:
   DimCommand* startCommand_;
   DimCommand* stopCommand_;
   DimCommand* destroyCommand_;
+  DimCommand* printCommand_;
   boost::thread    m_Thread_s;
   uint32_t ctrlreg_;
   std::string state_;

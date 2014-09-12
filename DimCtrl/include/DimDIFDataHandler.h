@@ -25,14 +25,17 @@ public:
 
   ~DimDIFDataHandler();
   void infoHandler();
-
+  DIFStatus& getStatus(){return difStatus_;}
+  char* getState(){return difState_;}
 private:
   uint32_t theId_;
   std::string thePrefix_;
   DimInfo* theDIFInfo_;
   DimInfo* theDIFData_;
+  DimInfo* theDIFState_;
   uint32_t difData_[32*1024];
   DIFStatus difStatus_;
+  char difState_[128];
   std::string theShmPrefix_;
 
 };

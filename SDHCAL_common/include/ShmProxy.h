@@ -16,6 +16,8 @@
 //using namespace __gnu_cxx;
 #include <map>
 #include <time.h>
+#include <stdio.h>
+
 #include "DIFWritterInterface.h"
 #ifdef USE_DIM
 #include "dis.hxx"
@@ -28,11 +30,12 @@ class ShmProxy
 {
  public:
   ShmProxy(uint32_t nbdif=1,bool save=false,DIFWritterInterface* w=NULL);
-
+  uint32_t getNumberOfDIF();
+  void setNumberOfDIF(int32_t t);
   void setDIFWritter(DIFWritterInterface* w){theWritter_=w;theSave_=true;}
   void Initialise(bool purge=true);
   void Configure();
-  void Start(uint32_t run=0,std::string dir="/tmp");
+  void Start(uint32_t run=0,std::string dir="/tmp",uint32_t nd=0);
   void Stop();
   void purgeShm();
   static void save2DevShm(unsigned char* cbuf,uint32_t size_buf,uint32_t dif_shift,std::string memory_dir);

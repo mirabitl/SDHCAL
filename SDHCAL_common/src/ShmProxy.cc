@@ -33,6 +33,13 @@ ShmProxy::ShmProxy(uint32_t nbdif,bool save,DIFWritterInterface* w) : theNumberO
   theSync_.unlock();
   theSave_=(theWritter_!=NULL);
 }
+
+uint32_t ShmProxy::getNumberOfDIF(){return theNumberOfDIF_;}
+void ShmProxy::setNumberOfDIF(int32_t t)
+{ theNumberOfDIF_=t;
+  printf("NNNNNNNNNNNNNNNNNNNNNNNNN   %d %x %x \n",theNumberOfDIF_,&theNumberOfDIF_,this);}
+  
+
 void ShmProxy::Initialise(bool purge)
 {
 
@@ -87,9 +94,10 @@ void ShmProxy::openFile(uint32_t run)
     }  
 }
 #endif
-void ShmProxy::Start(uint32_t run,std::string dir)
+void ShmProxy::Start(uint32_t run,std::string dir,uint32_t nd)
 {
-  printf("Starting run %d on directory %s \n",run,dir.c_str()); 
+  if (nd!=0) theNumberOfDIF_=nd;
+  printf("Starting run %d on directory %s for %d DIF %x %x\n",run,dir.c_str(),theNumberOfDIF_,&theNumberOfDIF_,this); 
   theBufferMap_.clear();
   printf("1 \n");
   theRunNumber_=run;
@@ -408,8 +416,8 @@ bool ShmProxy::performReadFiles()
 		}
 	    }
 	}
-      // if (it_gtc->second.size()==theNumberOfDIF_)
-      //   printf("GTC %d %d \n",it_gtc->first,it_gtc->second.size());
+       if (it_gtc->second.size()==theNumberOfDIF_)
+         printf("GTC %d %d  %\n",it_gtc->first,it_gtc->second.size(),theNumberOfDIF_);
 
     }
   theSync_.unlock();	

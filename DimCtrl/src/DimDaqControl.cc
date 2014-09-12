@@ -20,76 +20,15 @@
 
 DimDaqControl::DimDaqControl(std::string dns) :theDNS_(dns)  
 {
-  //DimDaqControlServer* s= new DimDaqControlServer(this);
-  /*
-  DimClient::setDnsNode(theDNS_.c_str());
-  cout<<"Building DimDaqCtrl"<<endl;
-  std::stringstream s0;
-  char hname[80];
-  gethostname(hname,80);
-  s0<<"/DDC/"<<hname<<"/STATUS";
-  aliveService_ = new DimService(s0.str().c_str(),processStatus_);
-  s0.str(std::string());
-  processStatus_=DimDaqControl::ALIVED;
-  aliveService_->updateService();
-  allocateCommands();
-  scandns();
-  s0.str(std::string());
-  s0<<"DimDaqControl-"<<hname;
-  boost::thread wt(worker);
-  // DimServer::start(s0.str().c_str()); 
-  //  cout<<"Starting DimDaqCtrl"<<endl;
-  */
-
+ 
 }
 DimDaqControl::~DimDaqControl()
 {
-  /*
-  delete aliveService_;
-  delete browseCommand_;
-  delete scanCommand_;
-  delete initialiseCommand_;
-  delete registerstateCommand_;
-  delete configureCommand_;
-  delete startCommand_;
-  delete stopCommand_;
-  delete destroyCommand_;
-*/
+ 
   for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)
     delete it->second;
 }
-/*
-void DimDaqControl::allocateCommands()
-{
-  std::stringstream s0;
-  char hname[80];
-  gethostname(hname,80);
-  s0<<"/DDC/"<<hname<<"/BROWSEDNS";
-  browseCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
-  s0.str(std::string());
-  s0<<"/DDC/"<<hname<<"/SCANDEVICES";
-  scanCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
-  s0.str(std::string());
-  s0<<"/DDC/"<<hname<<"/INITIALISE";
-  initialiseCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
-  s0.str(std::string());
-  s0<<"/DDC/"<<hname<<"/CONFIGURE";
-  configureCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
-  s0.str(std::string());
-  s0<<"/DDC/"<<hname<<"/REGISTERSTATE";
-  registerstateCommand_=new DimCommand(s0.str().c_str(),"I:1,C",this);
-  s0.str(std::string());
-  s0<<"/DDC/"<<hname<<"/START";
-  startCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
-  s0.str(std::string());
-  s0<<"/DDC/"<<hname<<"/STOP";
-  stopCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
-  s0.str(std::string());
-  s0<<"/DDC/"<<hname<<"/DESTROY";
-  destroyCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
-  
-}
-*/
+
 void DimDaqControl::scandns()
 {
   // Look for DB server
@@ -129,6 +68,24 @@ void DimDaqControl::scandns()
       theCCCPrefix_=ss.substr(0,n);
     } 
 
+  theWriterPrefix_="";
+  dbr->getServices("/DSP/*/STATUS" ); 
+  while(type = dbr->getNextService(service, format)) 
+    { 
+      cout << service << " -  " << format << endl; 
+      std::string ss;
+      ss.assign(service);
+      size_t n=ss.find("/STATUS");
+      theWriterPrefix_=ss.substr(0,n);
+
+      std::stringstream s0;
+
+      s0.str(std::string());
+      s0<<theWriterPrefix_<<"/INITIALISE";
+      DimClient::sendCommand(s0.str().c_str(),(int) 1); 
+
+    } 
+
   dbr->getServers( ); 
   while(dbr->getNextServer(server, node)) 
     { 
@@ -153,6 +110,14 @@ void DimDaqControl::scandns()
       
 
 
+}
+
+void DimDaqControl::print()
+{
+  for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)
+    {
+      it->second->print();
+    }
 }
 void DimDaqControl::doScan(DimDDSClient* c)
 {
@@ -273,19 +238,39 @@ void DimDaqControl::doStart(DimDDSClient* c)
 }
 void DimDaqControl::start()
 {
-  boost::thread_group g;
+  // Register a new run
+  DimClient::sendCommand("/DB/NEWRUN",(int) 1);
 
+
+  boost::thread_group g;
+  int32_t ndif=0;
   for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)
     {
+      std::map<uint32_t,DimDIFDataHandler*>& m=it->second->getDIFMap();
+      for (std::map<uint32_t,DimDIFDataHandler*>::iterator id=m.begin();id!=m.end();id++)
+	{
+	  ndif++;
+	}
+      cout<<"=====================================>"<<it->first<<" "<<ndif<<endl;
       g.create_thread(boost::bind(&DimDaqControl::doStart, this,it->second));
     }
   g.join_all();
 
+
+  // Start Writing operation
   std::stringstream s0;
 
   s0.str(std::string());
+  s0<<theWriterPrefix_<<"/START";
+  DimClient::sendCommand(s0.str().c_str(),ndif); 
+
+
+  // Start CCC
+  s0.str(std::string());
   s0<<theCCCPrefix_<<"/START";
   DimClient::sendCommand(s0.str().c_str(),(int) 1); 	
+
+
 }
 
 void DimDaqControl::doStop(DimDDSClient* c)
@@ -309,6 +294,15 @@ void DimDaqControl::stop()
     }
   g.join_all();
 	
+
+  // Stop Writing operation
+
+
+  s0.str(std::string());
+  s0<<theWriterPrefix_<<"/STOP";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 
+
+
 }
 void DimDaqControl::doDestroy(DimDDSClient* c)
 {

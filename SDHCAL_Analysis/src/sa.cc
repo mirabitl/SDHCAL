@@ -68,7 +68,8 @@ int main(int argc, char** argv ){
   
 
   DHCalEventReader  dher;
-  dher.setXdaqShift(2);
+  dher.setXdaqShift(24); //DimDaq etal 
+  //dher.setXdaqShift(94); //XDaq
   dher.setDropFirstRU(false);
   DCHistogramHandler rootHandler;
   //  LMBasicAnalyzer *a= new LMBasicAnalyzer( &dher,&rootHandler);

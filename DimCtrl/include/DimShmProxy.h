@@ -43,7 +43,7 @@ private:
   DimCommand* initialiseCommand_;
   DimCommand* startCommand_;
   DimCommand* stopCommand_;
-
+  int32_t theRun_;
   char theState_[255];
   DIFStatus theInfo_;
   uint32_t theBuffer_[32*1024];
@@ -51,6 +51,7 @@ private:
   DimInfo* difInfo_[255];
   DimInfo* difState_[255];
   DimInfo* difData_[255];
+  DimInfo* runInfo_;
 };
 #endif
 

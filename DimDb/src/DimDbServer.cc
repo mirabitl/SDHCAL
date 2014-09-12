@@ -13,6 +13,12 @@ DimDbServer::DimDbServer()
   s0.str(std::string());
   processStatus_=DimDbServer::ALIVED;
   aliveService_->updateService();
+  s0.str(std::string());
+  s0<<"/DB/RUNFROMDB";
+  runFromDb_=0;
+  runService_ = new DimService(s0.str().c_str(),runFromDb_);
+  runService_->updateService();
+
   allocateCommands();
   s0.str(std::string());
   gethostname(hname,80);
@@ -33,6 +39,9 @@ void DimDbServer::allocateCommands()
   s0.str(std::string());
   s0<<"/DB/"<<hname<<"/DELETE";
   deleteCommand_=new DimCommand(s0.str().c_str(),"C",this);
+  s0.str(std::string());
+  s0<<"/DB/NEWRUN";
+  runCommand_=new DimCommand(s0.str().c_str(),"C",this);
 
 }
 void DimDbServer::doDelete()
@@ -85,6 +94,51 @@ void DimDbServer::doDownload(std::string state)
       difServices_[id]->updateService();
     }
 }
+
+void DimDbServer::getRunFromDb()
+{
+
+  if (theRunInfo_==NULL)
+    {
+      try {
+
+
+	std::stringstream daqname("");    
+	char dateStr [64];
+            
+	time_t tm= time(NULL);
+	strftime(dateStr,50,"LaDaqAToto_%d%m%y_%H%M%S",localtime(&tm));
+	daqname<<dateStr;
+	Daq* me=new Daq(daqname.str());
+
+	printf("la daq est creee %s\n",daqname.str().c_str());
+	me->setStatus(0);
+	printf("la daq a change de statut\n");
+	me->setXML("/opt/dhcal/include/dummy.xml");
+	me->uploadToDatabase();
+	printf("Upload DOne");
+  
+	theRunInfo_=new RunInfo(0,"LaDaqAToto");
+	printf("le run est creee\n");
+	theRunInfo_->setStatus(1);
+	runFromDb_=theRunInfo_->getRunNumber();
+      } catch (ILCException::Exception e)
+	{
+	  theRunInfo_=NULL;
+	  std::cout<<e.getMessage()<<std::endl;
+	}
+    }
+  else
+    {
+      theRunInfo_->setStatus(4);
+      delete theRunInfo_;
+      theRunInfo_=new RunInfo(0,"LaDaqAToto");
+      theRunInfo_->setStatus(1);
+      runFromDb_=theRunInfo_->getRunNumber();
+      
+    }
+  runService_->updateService();
+}
 void DimDbServer::commandHandler()
 {
   DimCommand *currCmd = getCommand();
@@ -103,5 +157,10 @@ void DimDbServer::commandHandler()
       aliveService_->updateService();
 
     }
+  if (currCmd==runCommand_)
+    {
+      this->getRunFromDb();
+    }
+
   return;
 }

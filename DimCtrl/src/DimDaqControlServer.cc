@@ -80,6 +80,10 @@ void DimDaqControlServer::allocateCommands()
   s0<<"/DDC/"<<hname<<"/DESTROY";
   destroyCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
 
+
+  s0.str(std::string());
+  s0<<"/DDC/"<<hname<<"/PRINT";
+  printCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   m_Thread_s = boost::thread(&DimDaqControlServer::services, this); 
   
 }
@@ -167,6 +171,12 @@ void DimDaqControlServer::services()
 	      todo_.pop_back();continue; ;
 	      
 	    }
+	  if (s.compare("print")==0)
+	    {
+	      theControl_->print();
+	      todo_.pop_back();continue; ;
+	      
+	    }
 
 	  todo_.pop_back();
 	}
@@ -231,6 +241,12 @@ void DimDaqControlServer::commandHandler()
   if (currCmd==destroyCommand_)
     {
       todo_.push_back("destroy");
+      return ;
+
+    }
+  if (currCmd==printCommand_)
+    {
+      todo_.push_back("print");
       return ;
 
     }

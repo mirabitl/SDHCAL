@@ -24,6 +24,10 @@ while(true)
 uint32_t DIFUnpacker::getStartOfDIF(unsigned char* cbuf,uint32_t size_buf,uint32_t start)
 {
   uint32_t id0=0;
+
+  //for (int i=0;i<128;i++) {printf("%02x ",cbuf[i]); if ((i+1)%32==0) 	printf("\n");};	  printf("\n");
+  
+  
   for (uint32_t i=start;i<size_buf;i++)
     {
       if (cbuf[i]!=DU_START_OF_DIF && cbuf[i]!=DU_START_OF_DIF_TEMP) continue;
@@ -31,6 +35,7 @@ uint32_t DIFUnpacker::getStartOfDIF(unsigned char* cbuf,uint32_t size_buf,uint32
       //if (cbuf[id0+DU_ID_SHIFT]>0xFF) continue; 
       break;
     }
+  //printf("DIF %d Found at %d \n",cbuf[id0+1],id0);
   return id0;
 }
 

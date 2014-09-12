@@ -32,6 +32,7 @@ public:
   ~DimDaqControl();
   void scandns();
   void scan();
+  void print();
   void initialise();
   void registerstate(uint32_t ctr,std::string sta);
   void configure();
@@ -50,6 +51,8 @@ private:
   std::string theDNS_;
   std::string theDBPrefix_;
   std::string theCCCPrefix_;
+  std::string theWriterPrefix_;
+
   std::map<std::string,DimDDSClient*> theDDSCMap_;
   uint32_t theCtrlReg_;
   std::string theState_;

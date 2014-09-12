@@ -8,9 +8,16 @@ DimDIFDataHandler::DimDIFDataHandler(uint32_t id,std::string prefix) : theId_(id
   s0<<thePrefix_<<"/DIF"<<id<<"/INFO";
   theDIFInfo_ = new DimInfo(s0.str().c_str(),&difStatus_,sizeof(DIFStatus),this);
   s0.str(std::string());
+  s0<<thePrefix_<<"/DIF"<<id<<"/STATE";
+  theDIFState_ = new DimInfo(s0.str().c_str(),difState_,this);
+
+
+#ifdef DATA_HANDLER_ENABLE
+  s0.str(std::string());
   s0<<thePrefix_<<"/DIF"<<id<<"/DATA";
   theDIFData_ = new DimInfo(s0.str().c_str(),&difData_,32*1024*sizeof(uint32_t),this);
   cout<<" DIMDIF DATAHANDLER Infos registerd\n";
+#endif
 }     
 DimDIFDataHandler::~DimDIFDataHandler()
 {
@@ -29,6 +36,15 @@ void DimDIFDataHandler::infoHandler()
        // cout<<"copy done\n";
        return;
      }
+   if (curr==theDIFState_)
+     {
+       cout<<"copying to difState"<<curr->getString()<<endl;
+       memcpy(&difState_,curr->getString(),curr->getSize());
+       // cout<<"copy done\n";
+       return;
+     }
+#ifdef DATA_HANDLER_ENABLE
+
    if (curr==theDIFData_)
      {
        memcpy(&difData_,curr->getData(),curr->getSize());
@@ -49,4 +65,5 @@ void DimDIFDataHandler::infoHandler()
 	       ShmProxy::getBufferGTC(cdata),
 	       ShmProxy::getBufferDIF(cdata));
      }
+#endif
 }

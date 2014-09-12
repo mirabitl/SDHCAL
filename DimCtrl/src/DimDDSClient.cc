@@ -50,12 +50,23 @@ void DimDDSClient::initialise()
 	  // cout <<"sending "<<s0.str().c_str()<<" "<<i<<endl;
 	  DimClient::sendCommand(s0.str().c_str(),(int) i); 
 	  bsem_.lock();
-#ifdef TESTWITHOUT	  
 	  DimDIFDataHandler* d= new  DimDIFDataHandler(i,thePrefix_);
 	  std::pair<uint32_t,DimDIFDataHandler*> p(i,d);
 	  theDDDHMap_.insert(p);
-#endif
 	}
+    }
+ 
+}
+
+void DimDDSClient::print()
+{
+  printf("========================");
+  printf(" %s ======================== \n",thePrefix_.c_str());
+  for (std::map<uint32_t,DimDIFDataHandler*>::iterator it=theDDDHMap_.begin();it!=theDDDHMap_.end();it++)
+    {
+      //printf("\t DIF %d %s \n",it->first,it->second->getState());
+      DIFStatus& s=it->second->getStatus();
+      printf(" %d %d %x %d %lld %lld %s \n",s.id,s.status,s.slc,s.gtc,s.bcid,s.bytes,it->second->getState()); 
     }
 }
 void DimDDSClient::setDBState(uint32_t ctrlreg,std::string state)
@@ -67,6 +78,7 @@ void DimDDSClient::setDBState(uint32_t ctrlreg,std::string state)
   s0<<thePrefix_<<"/REGISTERSTATE";
   DimClient::sendCommand(s0.str().c_str(), state.c_str()); 
   bsem_.lock();	
+
 }
 
 void DimDDSClient::configure()
@@ -77,6 +89,7 @@ void DimDDSClient::configure()
   s0<<thePrefix_<<"/PRECONFIGURE";
   DimClient::sendCommand(s0.str().c_str(),(int) theCtrlReg_); 
   bsem_.lock();	
+
 }
 
 void DimDDSClient::start()

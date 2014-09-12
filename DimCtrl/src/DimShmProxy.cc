@@ -37,7 +37,7 @@ DimShmProxy::DimShmProxy() :theProxy_(NULL)
 
   DimServer::start(s0.str().c_str()); 
   //  cout<<"Starting DimDaqCtrl"<<endl;
-  
+  memset(difState_,0,255*sizeof(DimInfo*));
 
 }
 DimShmProxy::~DimShmProxy()
@@ -59,6 +59,13 @@ void  DimShmProxy::registerDifs()
 {
   for (int i=0;i<255;i++)
     {
+      if (difState_[i]!=NULL)			
+	{
+	  delete difState_[i];
+	  delete difInfo_[i];
+	  delete difData_[i];
+	}
+
       std::stringstream s0;
       s0.str(std::string());
       s0<<"/DDS/DIF"<<i<<"/STATE";
@@ -72,6 +79,8 @@ void  DimShmProxy::registerDifs()
       s0<<"/DDS/DIF"<<i<<"/DATA";
       memset(theBuffer_,0,32*1024*sizeof(uint32_t));
       difData_[i]=new DimInfo(s0.str().c_str(),theBuffer_,32*1024*sizeof(uint32_t),this);
+
+      runInfo_=new DimInfo("/DB/RUNFROMDB",theRun_,this);
     }
    
 }
@@ -79,6 +88,11 @@ void DimShmProxy::infoHandler()
 {
    DimInfo *curr = getInfo(); // get current DimInfo address 
    if (curr->getSize()==1) return;
+   if (curr==runInfo_)
+     {
+       theRun_=curr->getInt();
+       return;
+     }
    for (int i=0;i<255;i++)
       {
 
@@ -94,7 +108,7 @@ void DimShmProxy::infoHandler()
 				     ShmProxy::getBufferGTC(cdata),
 				     ShmProxy::getBufferDIF(cdata));
 
-	    if (ShmProxy::getBufferDTC(cdata)%10 == 0)
+	    if (ShmProxy::getBufferDTC(cdata)%1000 == 0 &&ShmProxy::getBufferDTC(cdata)!=0 )
 	      printf("%s receieve %d  bytes, BCID %lld DTC %d GTC %d DIF %d \n",__PRETTY_FUNCTION__,
 		     curr->getSize(),
 		     ShmProxy::getBufferABCID(cdata),
@@ -139,7 +153,7 @@ void DimShmProxy::commandHandler()
 	{
 	  int nd=currCmd->getInt();
 	  LCIOWritterInterface* lc= new LCIOWritterInterface();
-	  theProxy_=new ShmProxy(nd,true,lc);
+	  theProxy_=new ShmProxy(15,true,lc);
 	  theProxy_->Initialise();
 	  theProxy_->Configure();
 	  this->registerDifs();
@@ -154,12 +168,13 @@ void DimShmProxy::commandHandler()
   
   if (currCmd==startCommand_)
     {
-      int run=currCmd->getInt();
+      int nb=currCmd->getInt();
       if (theProxy_ != NULL)
 	{
-
-
-	  theProxy_->Start(run,"/tmp");
+	  cout<<" Number of DIF "<<nb<<endl;
+	  theProxy_->setNumberOfDIF(nb);
+	  cout<<" Number of DIF "<<theProxy_->getNumberOfDIF()<<endl;
+	  theProxy_->Start(theRun_,"/tmp");
 	  processStatus_=DimShmProxy::STARTED;
 	  aliveService_->updateService();
 
