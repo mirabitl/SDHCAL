@@ -37,6 +37,8 @@ public:
   void registerstate(uint32_t ctr,std::string sta);
   void configure();
   void start();
+  void on();
+  void off();
   void stop();
   void destroy();
   void doScan(DimDDSClient* c);
@@ -52,6 +54,7 @@ private:
   std::string theDBPrefix_;
   std::string theCCCPrefix_;
   std::string theWriterPrefix_;
+  std::string theZupPrefix_;
 
   std::map<std::string,DimDDSClient*> theDDSCMap_;
   uint32_t theCtrlReg_;

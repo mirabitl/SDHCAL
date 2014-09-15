@@ -86,6 +86,17 @@ void DimDaqControl::scandns()
 
     } 
 
+  theZupPrefix_="";
+  dbr->getServices("/DZUP/*/STATUS" ); 
+  while(type = dbr->getNextService(service, format)) 
+    { 
+      cout << service << " -  " << format << endl; 
+      std::string ss;
+      ss.assign(service);
+      size_t n=ss.find("/STATUS");
+      theZupPrefix_=ss.substr(0,n);
+    } 
+
   dbr->getServers( ); 
   while(dbr->getNextServer(server, node)) 
     { 
@@ -112,6 +123,24 @@ void DimDaqControl::scandns()
 
 }
 
+void DimDaqControl::on()
+{
+  std::stringstream s0;
+
+  s0.str(std::string());
+  s0<<theZupPrefix_<<"/ON";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 
+
+}
+void DimDaqControl::off()
+{
+  std::stringstream s0;
+
+  s0.str(std::string());
+  s0<<theZupPrefix_<<"/OFF";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 
+
+}
 void DimDaqControl::print()
 {
   for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)
@@ -241,7 +270,7 @@ void DimDaqControl::start()
   // Register a new run
   DimClient::sendCommand("/DB/NEWRUN",(int) 1);
 
-
+  sleep((unsigned int) 1);
   boost::thread_group g;
   int32_t ndif=0;
   for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)

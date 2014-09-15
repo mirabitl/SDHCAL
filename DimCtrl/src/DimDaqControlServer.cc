@@ -80,6 +80,13 @@ void DimDaqControlServer::allocateCommands()
   s0<<"/DDC/"<<hname<<"/DESTROY";
   destroyCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
 
+  s0.str(std::string());
+  s0<<"/DDC/"<<hname<<"/ON";
+  onCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
+  s0.str(std::string());
+  s0<<"/DDC/"<<hname<<"/OFF";
+  offCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
+
 
   s0.str(std::string());
   s0<<"/DDC/"<<hname<<"/PRINT";
@@ -177,6 +184,18 @@ void DimDaqControlServer::services()
 	      todo_.pop_back();continue; ;
 	      
 	    }
+	  if (s.compare("on")==0)
+	    {
+	      theControl_->on();
+	      todo_.pop_back();continue; ;
+	      
+	    }
+	  if (s.compare("off")==0)
+	    {
+	      theControl_->off();
+	      todo_.pop_back();continue; ;
+	      
+	    }
 
 	  todo_.pop_back();
 	}
@@ -247,6 +266,18 @@ void DimDaqControlServer::commandHandler()
   if (currCmd==printCommand_)
     {
       todo_.push_back("print");
+      return ;
+
+    }
+  if (currCmd==onCommand_)
+    {
+      todo_.push_back("on");
+      return ;
+
+    }
+  if (currCmd==offCommand_)
+    {
+      todo_.push_back("off");
       return ;
 
     }

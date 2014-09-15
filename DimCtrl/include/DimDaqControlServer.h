@@ -48,6 +48,8 @@ private:
   DimCommand* stopCommand_;
   DimCommand* destroyCommand_;
   DimCommand* printCommand_;
+  DimCommand* onCommand_;
+  DimCommand* offCommand_;
   boost::thread    m_Thread_s;
   uint32_t ctrlreg_;
   std::string state_;

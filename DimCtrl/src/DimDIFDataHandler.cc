@@ -38,7 +38,7 @@ void DimDIFDataHandler::infoHandler()
      }
    if (curr==theDIFState_)
      {
-       cout<<"copying to difState"<<curr->getString()<<endl;
+       //cout<<"copying to difState"<<curr->getString()<<endl;
        memcpy(&difState_,curr->getString(),curr->getSize());
        // cout<<"copy done\n";
        return;
