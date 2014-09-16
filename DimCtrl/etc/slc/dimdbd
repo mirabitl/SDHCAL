@@ -20,7 +20,7 @@
 
 . /etc/difdim.cfg
 PIDFILE="/var/run/dimdbd.pid"
-#DIFD_DIR="/opt/dhcal/bin/"
+DIFD_DIR="/opt/dhcal/bin/"
 
 start() {
         echo -n "Starting DIF Daemon: "
@@ -29,8 +29,8 @@ start() {
                 echo difd already running: $PID
                 exit 1;
         else
-                #cd $DIFD_DIR
-                dimdb  &> /var/log/dimdb.log &
+                cd $DIFD_DIR
+                ./dimdb  &> /var/log/dimdb.log &
                 RETVAL=$?
                 echo
                 [ $RETVAL -eq 0 ] && touch /var/lock/subsys/dimdbd
@@ -56,7 +56,7 @@ case "$1" in
         stop
         ;;
     status)
-        status dsv
+        status dimdb
         ;;
     restart)
         stop
