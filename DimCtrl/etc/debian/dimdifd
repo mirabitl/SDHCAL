@@ -2,7 +2,7 @@
 
 
 
-DAEMON="dimdif" #ligne de commande du programme
+DAEMON="/opt/dhcal/bin/dimdif" #ligne de commande du programme
 DEAMON_OPT=""  #argument à utiliser par le programme
 DAEMONUSER="root" #utilisateur du programme
 DEAMON_NAME="dimdif" #Nom du programme (doit être identique à l'exécutable)

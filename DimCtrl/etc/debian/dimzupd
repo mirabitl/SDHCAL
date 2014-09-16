@@ -2,7 +2,7 @@
 
 
 
-DAEMON="dimzup" #ligne de commande du programme
+DAEMON="/opt/dhcal/bin/dimzup" #ligne de commande du programme
 DEAMON_OPT=""  #argument à utiliser par le programme
 DAEMONUSER="root" #utilisateur du programme
 DEAMON_NAME="dimzup" #Nom du programme (doit être identique à l'exécutable)
