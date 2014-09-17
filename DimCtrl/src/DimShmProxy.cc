@@ -55,6 +55,19 @@ DimShmProxy::~DimShmProxy()
       }
 
 }
+void DimShmProxy::clearInfo()
+{
+   for (int i=0;i<255;i++)
+    {
+      if (difState_[i]!=NULL)			
+	{
+	  delete difState_[i];
+	  delete difInfo_[i];
+	  delete difData_[i];
+	}
+    }
+   delete runInfo_;
+}
 void  DimShmProxy::registerDifs()
 {
   for (int i=0;i<255;i++)
@@ -138,7 +151,9 @@ void DimShmProxy::allocateCommands()
   s0.str(std::string());
   s0<<"/DSP/"<<hname<<"/STOP";
   stopCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
- 
+  s0.str(std::string());
+  s0<<"/DSP/"<<hname<<"/DESTROY";
+  destroyCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
   
 }
 
@@ -165,7 +180,15 @@ void DimShmProxy::commandHandler()
 
     }
 
-  
+  if (currCmd==destroyCommand_)
+    {
+      if (theProxy_ != NULL)
+	{
+	  delete theProxy_;
+	  this->clearInfo();
+
+	}
+    }
   if (currCmd==startCommand_)
     {
       int nb=currCmd->getInt();
@@ -174,6 +197,7 @@ void DimShmProxy::commandHandler()
 	  cout<<" Number of DIF "<<nb<<endl;
 	  theProxy_->setNumberOfDIF(nb);
 	  cout<<" Number of DIF "<<theProxy_->getNumberOfDIF()<<endl;
+	  theProxy_->purgeShm(); // remove old data not written
 	  theProxy_->Start(theRun_,"/tmp");
 	  processStatus_=DimShmProxy::STARTED;
 	  aliveService_->updateService();

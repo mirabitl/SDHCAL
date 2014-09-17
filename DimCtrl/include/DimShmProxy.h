@@ -33,7 +33,7 @@ public:
   virtual void commandHandler();
   virtual void infoHandler();
   void allocateCommands();
-
+  void clearInfo();
   void registerDifs();
   enum {ALIVED=1,INITIALISED=2,STARTED=3,STOPPED=4};
 private:
@@ -43,6 +43,7 @@ private:
   DimCommand* initialiseCommand_;
   DimCommand* startCommand_;
   DimCommand* stopCommand_;
+  DimCommand* destroyCommand_;
   int32_t theRun_;
   char theState_[255];
   DIFStatus theInfo_;

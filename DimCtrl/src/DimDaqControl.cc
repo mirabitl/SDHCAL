@@ -123,6 +123,21 @@ void DimDaqControl::scandns()
 
 }
 
+
+void DimDaqControl::download(std::string state)
+{
+  std::stringstream s0;
+
+  s0.str(std::string());
+  s0<<theDBPrefix_<<"/DELETE";
+  DimClient::sendCommand(s0.str().c_str(),state.c_str());
+  sleep((unsigned int) 1);
+  s0.str(std::string());
+  s0<<theDBPrefix_<<"/DOWNLOAD";
+  DimClient::sendCommand(s0.str().c_str(),state.c_str());
+  sleep((unsigned int) 5);
+}
+
 void DimDaqControl::on()
 {
   std::stringstream s0;

@@ -40,6 +40,7 @@ public:
   void on();
   void off();
   void stop();
+  void download(std::string s);
   void destroy();
   void doScan(DimDDSClient* c);
   void doInitialise(DimDDSClient* c);
