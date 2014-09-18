@@ -33,13 +33,14 @@ void FilterAnalyzer::processEvent()
 
   try {
 
-    //    reader_->buildEvent(rebuild);
+    //reader_->buildEvent(rebuild);
     //LCTOOLS::dumpEvent( reader_->getEvent() ) ;
     //    getchar();
     // reader_->analyzeEvent();
       // getchar();
     std::cout<<"event "<<reader_->getEvent()->getEventNumber()<<std::endl;
     IMPL::LCCollectionVec* HitVec;
+    rebuild_=true;
     if (rebuild_)
       {
       reader_->parseRawEvent();
@@ -68,7 +69,7 @@ void FilterAnalyzer::processEvent()
        }
   //
   // getchar();
-     //printf("Calling CreaetRaw\n");
+     printf("Calling CreaetRaw %d\n",seed.size());
 
      HitVec=reader_->createRawCalorimeterHits(seed);
       
@@ -94,9 +95,8 @@ void FilterAnalyzer::processEvent()
       evtOutput_->setWeight(evt_->getWeight());
       evtOutput_->addCollection(HitVec,"DHCALRawHits");
       //LCTOOLS::printRawCalorimeterHits(HitVec);
-
       if (writing_)
-#undef NOSORT
+#define NOSORT
 #ifdef NOSORT
 	reader_->write(evtOutput_);
 #else

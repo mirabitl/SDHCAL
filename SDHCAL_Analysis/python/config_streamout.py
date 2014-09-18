@@ -1,0 +1,9 @@
+#marlin="./Slot1_39_MARLIN.xml"
+marlin="./tomuvol_agm14.xml"
+rebuild=True
+useSynch=True
+#
+minChambersInTime=3;
+filePath="/data/online/Results/DHCAL_%d_I%d_%d.slcio"
+fileOut="/tmp/DHCAL_%d_SO.slcio"
+nevent=0

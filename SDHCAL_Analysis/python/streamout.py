@@ -1,19 +1,29 @@
 #!/usr/bin/python
 import DHCalEventReader as dr
+import os,sys
+from ROOT import *
+import time
+#c=TCanvas("test1","test1",800,900)
+#c.Draw()
+#c.Update()
+
+if len(sys.argv) > 2:
+    run=int(sys.argv[1] )
+    mod_name=sys.argv[2]
+    fseq=int(sys.argv[3] )
+    lseq=int(sys.argv[4] )
+else:
+    print "Please give a run Number and config file"
 
 
 
-fileList=[
-"/data/NAS/Results/DHCAL_716308_I1_0.slcio"]
-#"/data/NAS/Results/DHCAL_716308_I0_0.slcio",
-#"/data/NAS/Results/DHCAL_716308_I1_0.slcio",
-#"/data/NAS/Results/DHCAL_716308_I2_0.slcio",
-#"/data/NAS/Results/DHCAL_716308_I4_0.slcio"]
-#fileList=["/data/online/Results/DHCAL_710456_I0_8.slcio"]
+try:
+    exec("import %s  as config" % mod_name)
+except ImportError:
+    raise Exception("cannot import")
 
 
 
-fileOut="/tmp/DHCAL_716308_I1_0.slcio"
 
 
 #fileOut="/tmp/t27ch.slcio"
@@ -26,19 +36,36 @@ rootHandler=dr.DCHistogramHandler()
 
 
 
-dher.ParseSteering("can37.xml")
-
+dher.ParseSteering(config.marlin)
+dher.setXdaqShift(24);
 a=dr.FilterAnalyzer( dher,rootHandler);
 
 
 
-a.setuseSynchronized(True);
-a.setminChambersInTime(7);
+a.setRebuild(config.rebuild)
+a.setuseSynchronized(config.useSynch);
+a.setminChambersInTime(config.minChambersInTime);
+
+fileOut=config.fileOut % run
 a.setWriting(True)
-dher.setDropFirstRU(True);
+dher.setDropFirstRU(False);
 dher.openOutput(fileOut)
 dher.registerAnalysis(a);
 #dher.setDropFirstRU(True);
+
+
+
+fileList=[]
+
+for iseq in range(fseq,lseq+1):
+    fileList.append(config.filePath % (run,0,iseq))
+
+
+print fileList
+
+#"/tmp/DHCAL_724648_I0_1.slcio"
+print fileOut
+time.sleep(3)
 for x in fileList:
     print "================================>",x
     dher.open(x)
