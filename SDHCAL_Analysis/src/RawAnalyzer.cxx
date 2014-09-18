@@ -154,7 +154,9 @@ void RawAnalyzer::processEvent()
     }
   hacqtime->Fill(theEventTotalTime_);
   theTotalTime_+=theEventTotalTime_;
-  printf("Processing %d - %d Total time %f Acquition time %f\n",evt_->getRunNumber(),evt_->getEventNumber(),(dbase->getAbsoluteBCID()-theStartBCID_)*2E-7,theTotalTime_);
+  printf("Processing %d - %d GTC %d Total time %f Acquition time %f\n",evt_->getRunNumber(),evt_->getEventNumber(),dbase->getGTC(),(dbase->getAbsoluteBCID()-theStartBCID_)*2E-7,theTotalTime_);
+  if (evt_->getEventNumber()%100 ==0)
+    rootHandler_->writeSQL();
 
   // Now loop on DIF
   for (uint32_t i=0;i<255;i++)
@@ -186,7 +188,6 @@ void RawAnalyzer::processEvent()
       
     }
   
-
   /*
   std::map<unsigned int,DifGeom>::iterator idg = reader_->getDifMap().find(d->getID());
   DifGeom& difgeom = idg->second;

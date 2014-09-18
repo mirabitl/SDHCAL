@@ -93,25 +93,27 @@ int main(int argc, char** argv ){
 
 
 
-  dher.ParseSteering("tomuvol_0714.xml");
+  dher.ParseSteering("m3_sep14.xml");
 
 #define USESTREAM
 #ifdef USESTREAM
   ShowerAnalyzer *a= new ShowerAnalyzer( &dher,&rootHandler);
+  a->setminChambersInTime(3);
   RawAnalyzer *ar= new RawAnalyzer();
   //StripAnalyzer *as= new StripAnalyzer();
-  a->setrebuild(rebuild);
+  //a->setrebuild(rebuild);
   dher.registerAnalysis(ar);
   dher.registerAnalysis(a);
+  
   dher.initJob();
-  if (writing) 
-    {std::string nameo(FILEO);
+  //if (writing) 
+   // {std::string nameo(FILEO);
 
-      dher.openOutput(FILEO);
-      a->setWriting(true);
-    }
-  else
-    a->setWriting(false);
+    //  dher.openOutput(FILEO);
+   //   a->setWriting(true);
+   // }
+  //else
+   a->setWriting(false);
   try {
     dher.readStream(0);
     }
@@ -234,7 +236,7 @@ int main(int argc, char** argv ){
     {
       int runnb=dher.getEvent()->getRunNumber();
       std::stringstream name("");
-      name<<"/scratch/LMNewAnalyzer_"<<runnb<<".root";
+      name<<"/tmp/LMNewAnalyzer_"<<runnb<<".root";
       rootHandler.writeHistograms(name.str());
     }
   std::cout<<"FINI ICI"<<std::endl;

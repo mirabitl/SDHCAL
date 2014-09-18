@@ -675,8 +675,9 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 	      found=true;}
       if (found) theNplans_++;
     }
-
+  //  printf("On a trouve                                    %d hits                    %d plans -> %d \n",theHitVector_.size(),theNplans_,minChambersInTime_);
   if (theNplans_<minChambersInTime_) return;  
+  //this->drawHits(theHitVector_);getchar();
   if ( currentTime_<0 || (theBCID_==6873405 && theHitVector_.size()>50 ))
    {
      printf("Number of Hits %d  %d %d\n",theHitVector_.size(),theNplans_,minChambersInTime_);
@@ -691,7 +692,7 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 #ifndef KEEPTRACK  
   if (true || sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1)
     {
-      //printf("On a trouve                                    %d hits                    %d plans -> %d \n",theHitVector_.size(),theNplans_,minChambersInTime_);
+      
       
       this->buildTracks(theHitVector_);
       if (theComputerTrack_->getCandidates().size()>0 &&false)
@@ -3006,13 +3007,13 @@ void ShowerAnalyzer::drawHits(std::vector<RecoHit*> vrh)
 	{
 	  //if (allpoints_[i].Charge()<7) continue;
 	  ChamberPos& cp=reader_->getPosition((*ih)->chamber());
-	  printf(" %d (%f,%f,%f) (%f,%f,%f) (%d,%d) \n",
+	  printf(" Chamber %d (%f,%f,%f) (%f,%f,%f) (%d,%d) \n",
 	  	 cp.getId(),cp.getX0(),cp.getY0(),cp.getZ0(),cp.getX1(),cp.getY1(),cp.getZ1(),cp.getXsize(),cp.getYsize());
 	  double x,y,z;
 	  cp.calculateGlobal((*ih)->X(),(*ih)->Y(),x,y,z);
 	  hcgposi->Fill(z,x,y);//(*ih)->Z(),(*ih)->X(),(*ih)->Y());
 
-	  printf("%d %d (%f,%f,%f) from (%f,%f) \n",(*ih)->dif(),(*ih)->getAsic(),z,x,y,(*ih)->X(),(*ih)->Y());
+	  printf("HIT %d %d  Global (%f,%f,%f) from Local (%f,%f) \n",(*ih)->dif(),(*ih)->getAsic(),z,x,y,(*ih)->X(),(*ih)->Y());
 	}
 
 
@@ -9153,7 +9154,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
       nstub++;
     }
   //  theComputerTrack_->associate(nstub,h_x,h_y,h_z,h_layer);
-  theComputerTrack_->telescope(nstub,h_x,h_y,h_z,h_layer,4);
+  theComputerTrack_->telescope(nstub,h_x,h_y,h_z,h_layer,8);
  
 
   if (theComputerTrack_->getCandidates().size()>0) theNbTracks_++;
@@ -9230,7 +9231,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	  hnp->Fill(tk.np_*1.);
 	  hax->Fill(tk.ax_);
 	  hay->Fill(tk.ay_);
-	  fch=0;lch=5;
+	  fch=0;lch=9;
 	  for (uint32_t ip=fch+1;ip<lch;ip++)
 	    {
 	      
