@@ -38,7 +38,9 @@
 #include "MarlinParameter.h"
 #include <map>
 #include <ext/hash_map>
+#ifdef USE_JSON
 #include "DHCalJsonParser.h"
+#endif
 
 using namespace std ;
 /** 
@@ -427,8 +429,10 @@ int readOneEvent(int run,int event);
   uint32_t getNumberOfEvents(){return lcReader_->getNumberOfEvents();}
   void openFiles(){this->open(filenames_);}
   void findEvent(int run,int event);
+#ifdef USE_JSON
   DHCalJsonParser* getDHCalJsonParser(){return &theJsonParser_;}
   void parseJsonConfig(std::string cfg){theJsonParser_.parse(cfg);}
+#endif
   std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> >& getPhysicsEventMap(){return thePhysicsEventMap_;}
   std::vector<uint32_t>& getTimeSeeds(){return theTimeSeeds_;}
   std::vector<DIFPtr*>& getDIFList(){return  theDIFPtrList_;}
@@ -442,7 +446,9 @@ int readOneEvent(int run,int event);
   IMPL::LCRunHeaderImpl* runh_; /// LCIO Run Heder ptr
  
 
+#ifdef USE_JSON
   DHCalJsonParser theJsonParser_;
+#endif
 
   std::vector<DCDIF*> vdif_; /// <i>Internal </i> to handle DIF
   std::vector<DCFrame*> vframe_; /// <i>Internal </i> to handle Frame

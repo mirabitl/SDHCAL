@@ -285,7 +285,7 @@ void DimDaqControl::start()
   // Register a new run
   DimClient::sendCommand("/DB/NEWRUN",(int) 1);
 
-  sleep((unsigned int) 1);
+  sleep((unsigned int) 5);
   boost::thread_group g;
   int32_t ndif=0;
   for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)

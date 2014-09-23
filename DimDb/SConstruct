@@ -63,7 +63,7 @@ Use_Dim=True
 #os.environ.has_key("DIM_DNS_NODE")
 
 # includes
-INCLUDES=['include',"/usr/include/ILCConfDB","/usr/include/boost141/",DHCAL_ROOT+"/SDHCAL_common/include",DHCAL_ROOT+"/SDHCAL_DB/include",DHCAL_ROOT+"/SDHCAL_Readout/include"]
+INCLUDES=['include',"/usr/include","/usr/include/ILCConfDB","/usr/include/boost141/",DHCAL_ROOT+"/SDHCAL_common/include",DHCAL_ROOT+"/SDHCAL_DB/include",DHCAL_ROOT+"/SDHCAL_Readout/include"]
 
 if (Use_Dim):
   INCLUDES.append(DIM_ROOT+"/dim")
@@ -85,7 +85,7 @@ LIBRARIES=[ 'dl','uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xer
 
 #Library path XDAQ,DHCAL and ROOT + Python
 if (Bit64):
-	LIBRARY_PATHS=["/usr/lib64","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib"]
+	LIBRARY_PATHS=["/opt/xdaq/lib","/usr/lib64","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib"]
 else:
   LIBRARY_PATHS=["/usr/lib","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib"]
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")

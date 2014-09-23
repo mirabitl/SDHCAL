@@ -84,7 +84,7 @@ LIBRARIES=['pthread', 'uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi'
 
 #Library path XDAQ,DHCAL and ROOT + Python
 if ( platform=="SLC5" and osv=="x86_64"):
-    LIBRARY_PATHS=["/usr/lib64/boost141","/usr/lib64","/usr/local/lib"]
+    LIBRARY_PATHS=["/opt/xdaq/lib","/usr/lib64/boost141","/usr/lib64","/usr/local/lib"]
 else:
     if ( platform=="SLC5"):
         LIBRARY_PATHS=["/usr/lib/boost141","/usr/lib","/usr/local/lib","/opt/xdaq/lib"]
@@ -124,7 +124,7 @@ for i in LIBRARY_SOURCES:
 SDHCALDB=env.SharedLibrary("#lib/SDHCALDB",source=LIBRARY_SOURCES)
 LIBRARIES.append("SDHCALDB")
 #Python module
-LSDHCALDB=env.PythonModule('_LSDHCALDB', ['LSDHCALDB.i'],LIBPATH=["#lib",DHCAL_ROOT+"/opt/dhcal/lib","/usr/lib","/opt/xdaq/lib"],LIBS=LIBRARIES)
+LSDHCALDB=env.PythonModule('_LSDHCALDB', ['LSDHCALDB.i'],LIBPATH=["#lib",DHCAL_ROOT+"/opt/dhcal/lib","/usr/lib"],LIBS=LIBRARIES)
 
 
 #Daemon 

@@ -45,7 +45,7 @@ FtdiDIFDriver::FtdiDIFDriver(char * deviceIdentifier,uint32_t productid )    thr
 int32_t FtdiDIFDriver :: NbAsicsWrite(uint32_t tnumber,uint32_t l1,uint32_t l2,uint32_t l3,uint32_t l4 )    throw (LocalHardwareException)
 {
 	uint32_t taddress=0x05;
-	//	printf ("nb of asics = %d\n",tnumber);
+	//printf ("nb of asics = %d\n",tnumber);
 	
 	tnumber += (l1<<8) + (l2<<14) + (l3<<20)+ (l4<<26);
 	//	printf ("tnumber = %d\n",tnumber);

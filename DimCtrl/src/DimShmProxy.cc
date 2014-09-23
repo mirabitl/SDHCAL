@@ -198,7 +198,7 @@ void DimShmProxy::commandHandler()
 	  theProxy_->setNumberOfDIF(nb);
 	  cout<<" Number of DIF "<<theProxy_->getNumberOfDIF()<<endl;
 	  theProxy_->purgeShm(); // remove old data not written
-	  theProxy_->Start(theRun_,"/tmp");
+	  theProxy_->Start(theRun_,"/data/online/Results");
 	  processStatus_=DimShmProxy::STARTED;
 	  aliveService_->updateService();
 

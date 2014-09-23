@@ -24,6 +24,8 @@ int CCCReadout::open() throw( LocalHardwareException )
         theDriver_=new USBDRIVER((char*) theName_.c_str());
 #else
         theDriver_=new USBDRIVER((char*) theName_.c_str());
+        theDriver_->checkReadWrite(0x1234,100);
+        theDriver_->checkReadWrite(0x1234,100);
 #endif
 
 
