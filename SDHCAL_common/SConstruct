@@ -65,9 +65,9 @@ LIBRARIES=['pthread',  'm', 'stdc++','boost_system-mt','boost_thread-mt']
 
 #Library path XDAQ,DHCAL and ROOT + Python
 if (Bit64):
-	LIBRARY_PATHS=["/usr/lib64","/usr/local/lib"]
+	LIBRARY_PATHS=["/usr/lib64","/usr/local/lib","/usr/lib64/boost141"]
 else:
-  LIBRARY_PATHS=["/usr/lib","/usr/local/lib"]
+  LIBRARY_PATHS=["/usr/lib","/usr/local/lib","/usr/lib/boost141"]
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
 
 
