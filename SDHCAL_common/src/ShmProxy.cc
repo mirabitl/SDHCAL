@@ -1,3 +1,4 @@
+
 #undef DEBUG
 #include "DIFReadoutConstant.h"
 #include "ShmProxy.h"
@@ -96,6 +97,11 @@ void ShmProxy::openFile(uint32_t run)
 #endif
 void ShmProxy::Start(uint32_t run,std::string dir,uint32_t nd)
 {
+  theBufferMap_.clear();
+  printf("avant purgeshm clear \n");
+  
+  this->purgeShm();
+
   if (nd!=0) theNumberOfDIF_=nd;
   printf("Starting run %d on directory %s for %d DIF %x %x\n",run,dir.c_str(),theNumberOfDIF_,&theNumberOfDIF_,this); 
   theBufferMap_.clear();
@@ -150,6 +156,15 @@ bool ShmProxy::performWrite()
 	{
 	  
 	  if (it->second.size()!=theNumberOfDIF_) continue;
+	  std::vector<unsigned char*>::iterator iv=it->second.begin();
+	  uint32_t* idata=(uint32_t*) (*iv);
+	  uint32_t gtc=idata[SHM_BX_NUMBER];
+	  /* if (theEventNumber_!=(gtc-1))
+	    {
+	      printf("Wrong event number %d GTC  %d \n",theEventNumber_,getBufferGTC(it->second[0]));
+	      continue;
+	    }
+	  */
 	  lastGTCWrite_=it->first;
 	  theWritter_->writeEvent(theEventNumber_,it->second);
 
