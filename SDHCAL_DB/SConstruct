@@ -87,7 +87,7 @@ if ( platform=="SLC5" and osv=="x86_64"):
     LIBRARY_PATHS=["/opt/xdaq/lib","/usr/lib64/boost141","/usr/lib64","/usr/local/lib"]
 else:
     if ( platform=="SLC5"):
-        LIBRARY_PATHS=["/usr/lib/boost141","/usr/lib","/usr/local/lib","/opt/xdaq/lib"]
+        LIBRARY_PATHS=["/opt/xdaq/lib","/usr/lib/boost141","/usr/lib","/usr/local/lib"]
     else:
         LIBRARY_PATHS=["/usr/lib","/usr/local/lib"]
 

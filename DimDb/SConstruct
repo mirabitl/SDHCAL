@@ -87,7 +87,7 @@ LIBRARIES=[ 'dl','uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xer
 if (Bit64):
 	LIBRARY_PATHS=["/opt/xdaq/lib","/usr/lib64","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib"]
 else:
-  LIBRARY_PATHS=["/usr/lib","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib"]
+  LIBRARY_PATHS=["/opt/xdaq/lib","/usr/lib","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib"]
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
 
 if Use_Dim:
