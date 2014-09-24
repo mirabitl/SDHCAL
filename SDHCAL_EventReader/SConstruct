@@ -92,7 +92,7 @@ CUDA_LIBPATH=[os.getenv("CULA_LIB_PATH_64"),"/usr/local/cula/lib"]
 
 # Summary
 
-LIBRARIES=ROOT_LIBS+MY_LIBS+['SDHCALcommon','pthread', 'lcio','xml2','sqlite3','X11','jsoncpp']
+LIBRARIES=ROOT_LIBS+MY_LIBS+['SDHCALcommon','pthread', 'lcio','xml2','sqlite3','X11']
 
 if (USE_CULA or USE_OPENCV):
 	LIBRARIES=LIBRARIES+CUDA_LIBS
