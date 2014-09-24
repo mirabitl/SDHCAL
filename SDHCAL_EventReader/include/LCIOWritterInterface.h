@@ -9,7 +9,7 @@ public:
   LCIOWritterInterface();
   std::string getOutputFileName(uint32_t run,uint32_t seq);
 
-  virtual void openFile(uint32_t run=0,std::string dir="/tmp");
+  virtual void openFile(uint32_t run=0,std::string dir="/tmp",std::string setup="default");
   virtual void writeEvent(uint32_t gtc,std::vector<unsigned char*> vbuf);
   virtual void closeFile();
  private:

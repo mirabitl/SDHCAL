@@ -31,6 +31,7 @@ private:
   DIFDbInfo difInfos_[255];
   DimService* aliveService_; //State of the process 
   DimService* runService_; //State of the process 
+  DimService* dbstateService_;
   DimService* difServices_[255]; //State of the last register read 
   DimCommand *downloadCommand_;
   DimCommand *deleteCommand_;

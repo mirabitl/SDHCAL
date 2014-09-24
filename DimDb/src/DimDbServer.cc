@@ -18,6 +18,10 @@ DimDbServer::DimDbServer()
   runFromDb_=0;
   runService_ = new DimService(s0.str().c_str(),runFromDb_);
   runService_->updateService();
+  
+  state_="NONE";
+  dbstateService_= new DimService("/DB/DBSTATE",(char*) state_.c_str());
+    
 
   allocateCommands();
   s0.str(std::string());
@@ -93,6 +97,7 @@ void DimDbServer::doDownload(std::string state)
       s0.str(std::string());
       difServices_[id]->updateService();
     }
+  dbstateService_->updateService((char*) state_.c_str());
 }
 
 void DimDbServer::getRunFromDb()

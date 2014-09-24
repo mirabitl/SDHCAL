@@ -34,7 +34,7 @@ std::string LCIOWritterInterface::getOutputFileName(uint32_t run,uint32_t seq)
 }
 
 
-void LCIOWritterInterface::openFile(uint32_t run,std::string dir)
+void LCIOWritterInterface::openFile(uint32_t run,std::string dir,std::string setup)
 {
   theDirectory_=dir;
   if (run!=theRunNumber_)
@@ -44,6 +44,7 @@ void LCIOWritterInterface::openFile(uint32_t run,std::string dir)
 
   theMonitor_->createEvent(run,"SD-HCAL");
   theMonitor_->createRunHeader(run,"SD-HCAL");
+  theMonitor_->getRunHeader()->parameters().setValue("Setup",setup);
   theMonitor_->writeRunHeader();
 
 

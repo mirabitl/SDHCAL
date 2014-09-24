@@ -41,6 +41,8 @@ private:
   DimService* aliveService_;
   int32_t processStatus_;
   DimCommand* initialiseCommand_;
+  DimCommand* setupCommand_;
+  DimCommand* directoryCommand_;
   DimCommand* startCommand_;
   DimCommand* stopCommand_;
   DimCommand* destroyCommand_;
@@ -53,6 +55,8 @@ private:
   DimInfo* difState_[255];
   DimInfo* difData_[255];
   DimInfo* runInfo_;
+  char  dbState_[255];
+  DimInfo* dbstateInfo_;
 };
 #endif
 

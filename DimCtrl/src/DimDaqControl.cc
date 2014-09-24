@@ -78,12 +78,7 @@ void DimDaqControl::scandns()
       size_t n=ss.find("/STATUS");
       theWriterPrefix_=ss.substr(0,n);
 
-      std::stringstream s0;
-
-      s0.str(std::string());
-      s0<<theWriterPrefix_<<"/INITIALISE";
-      DimClient::sendCommand(s0.str().c_str(),(int) 1); 
-
+ 
     } 
 
   theZupPrefix_="";
@@ -124,6 +119,24 @@ void DimDaqControl::scandns()
 }
 
 
+
+void DimDaqControl::initialiseWriter(std::string dir)
+{
+  std::stringstream s0;
+  
+  s0.str(std::string());
+  s0<<theWriterPrefix_<<"/DESTROY";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1);
+  sleep((unsigned int) 1);
+  s0.str(std::string());
+  s0<<theWriterPrefix_<<"/INITIALISE";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1);
+  sleep((unsigned int) 1);
+  s0.str(std::string());
+  s0<<theWriterPrefix_<<"/DIRECTORY";
+  DimClient::sendCommand(s0.str().c_str(),dir.c_str());
+
+}
 void DimDaqControl::download(std::string state)
 {
   std::stringstream s0;

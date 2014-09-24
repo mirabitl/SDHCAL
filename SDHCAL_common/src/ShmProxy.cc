@@ -28,7 +28,7 @@ int file_select_1(const struct direct *entry)
     return (TRUE);  
 }  
 
-ShmProxy::ShmProxy(uint32_t nbdif,bool save,DIFWritterInterface* w) : theNumberOfDIF_(nbdif),theSave_(save),theWritter_(w)
+ShmProxy::ShmProxy(uint32_t nbdif,bool save,DIFWritterInterface* w) : theNumberOfDIF_(nbdif),theSave_(save),theWritter_(w),theSetupName_("default"),theDirectoryName_("/tmp")
 {
   theBufferMap_.clear();
   theSync_.unlock();
@@ -103,7 +103,7 @@ void ShmProxy::Start(uint32_t run,std::string dir,uint32_t nd)
   this->purgeShm();
 
   if (nd!=0) theNumberOfDIF_=nd;
-  printf("Starting run %d on directory %s for %d DIF %x %x\n",run,dir.c_str(),theNumberOfDIF_,&theNumberOfDIF_,this); 
+  printf("Starting run %d on directory %s setup %s for %d DIF %x %x\n",run,theDirectoryName_.c_str(),theSetupName_.c_str(),theNumberOfDIF_,&theNumberOfDIF_,this); 
   theBufferMap_.clear();
   printf("1 \n");
   theRunNumber_=run;
@@ -111,7 +111,7 @@ void ShmProxy::Start(uint32_t run,std::string dir,uint32_t nd)
   theRunIsStopped_=false;
   printf("3 \n");
   lastGTCWrite_=0;
-  if (theSave_) theWritter_->openFile(run,dir);
+  if (theSave_) theWritter_->openFile(run,theDirectoryName_,theSetupName_);
   printf("4 \n");
   theEventNumber_=0;
 

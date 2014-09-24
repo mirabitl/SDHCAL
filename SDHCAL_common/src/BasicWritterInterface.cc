@@ -22,7 +22,7 @@ BasicWritterInterface::BasicWritterInterface() : theEventNumber_(0),theTotalSize
 {
 }
  
-void BasicWritterInterface::openFile(uint32_t run,std::string dir)
+void BasicWritterInterface::openFile(uint32_t run,std::string dir,std::string setup)
 {
   theDirectory_=dir;
  std::stringstream filename("");    
@@ -30,7 +30,7 @@ void BasicWritterInterface::openFile(uint32_t run,std::string dir)
             
   time_t tm= time(NULL);
   strftime(dateStr,20,"SMM_%d%m%y_%H%M%S",localtime(&tm));
-  filename<<theDirectory_<<"/"<<dateStr<<".dat";
+  filename<<theDirectory_<<"/"<<dateStr<<"_"<<setup<<".dat";
   fdOut_= ::open(filename.str().c_str(),O_CREAT| O_RDWR | O_NONBLOCK,S_IRWXU);
   if (fdOut_<0)
     {

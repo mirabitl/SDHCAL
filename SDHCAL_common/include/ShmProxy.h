@@ -58,8 +58,11 @@ class ShmProxy
   inline  std::map<uint64_t,std::vector<unsigned char*> >& getBufferMap(){return theBufferMap_;}
   inline uint32_t getRunNumber(){return theRunNumber_;}
   inline uint32_t getEventNumber(){return theEventNumber_;}
+  inline void setSetupName(std::string s){theSetupName_=s;}
+  inline void setDirectoryName(std::string s){theDirectoryName_=s;}
 private:
-  
+  std::string theSetupName_;
+  std::string theDirectoryName_;
 
     // work loops for transitional states
  

@@ -24,7 +24,7 @@ using namespace std;
 
 
 
-class DimDaqControl
+class DimDaqControl 
 {
 public:
   DimDaqControl(std::string dns);
@@ -33,7 +33,9 @@ public:
   void scandns();
   void scan();
   void print();
+  inline void dump(){this->print();}
   void initialise();
+  void initialiseWriter(std::string dir);
   void registerstate(uint32_t ctr,std::string sta);
   void configure();
   void start();
@@ -56,11 +58,13 @@ private:
   std::string theCCCPrefix_;
   std::string theWriterPrefix_;
   std::string theZupPrefix_;
-
+  
   std::map<std::string,DimDDSClient*> theDDSCMap_;
   uint32_t theCtrlReg_;
   std::string theState_;
   boost::interprocess::interprocess_mutex bsem_;
+
+
   
 };
 #endif
