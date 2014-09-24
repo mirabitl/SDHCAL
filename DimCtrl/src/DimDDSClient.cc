@@ -66,7 +66,7 @@ void DimDDSClient::print()
     {
       //printf("\t DIF %d %s \n",it->first,it->second->getState());
       DIFStatus& s=it->second->getStatus();
-      printf(" %d %d %x %d %lld %lld %s \n",s.id,s.status,s.slc,s.gtc,s.bcid,s.bytes,it->second->getState()); 
+      printf(" %d %d %x %d %ld %ld %s \n",s.id,s.status,s.slc,s.gtc,s.bcid,s.bytes,it->second->getState()); 
     }
 }
 void DimDDSClient::setDBState(uint32_t ctrlreg,std::string state)
