@@ -78,6 +78,8 @@ void RawAnalyzer::processEvent()
   
   if (reader_->getEvent()==0) return;
   evt_=reader_->getEvent();
+  std::cout<<reader_->getRunHeader()->getParameters().getStringVal("Setup")<<std::endl;
+  
   if (evt_->getEventNumber()<=theSkip_) return;
   TH1* hacqtime=rootHandler_->GetTH1("AcquisitionTime");
   TH2* hfr2=rootHandler_->GetTH2("HitFrequency");
