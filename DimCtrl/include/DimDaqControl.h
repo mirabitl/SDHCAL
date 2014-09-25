@@ -24,16 +24,18 @@ using namespace std;
 
 
 
-class DimDaqControl 
+class DimDaqControl : public DimClient
 {
 public:
   DimDaqControl(std::string dns);
 
   ~DimDaqControl();
+  virtual void infoHandler();
+  
   void scandns();
   void scan();
   void print();
-
+  
   void initialise();
   void initialiseWriter(std::string dir);
   void registerstate(uint32_t ctr,std::string sta);
@@ -44,6 +46,8 @@ public:
   void stop();
   void download(std::string s);
   void destroy();
+  int getCurrentRun();
+  char* getCurrentState();
   void doScan(DimDDSClient* c);
   void doInitialise(DimDDSClient* c);
   void doRegisterstate(DimDDSClient* c);
@@ -64,8 +68,10 @@ private:
   std::string theState_;
   boost::interprocess::interprocess_mutex bsem_;
 
-
-  
+  int theCurrentRun_;
+  char theCurrentState_[255];
+  DimInfo* runInfo_;
+  DimInfo* dbstateInfo_;
 };
 #endif
 

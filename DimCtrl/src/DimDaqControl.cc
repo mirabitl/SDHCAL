@@ -115,11 +115,34 @@ void DimDaqControl::scandns()
       
     }
       
+  runInfo_=new DimInfo("/DB/RUNFROMDB",theCurrentRun_,this);
+  dbstateInfo_=new DimInfo("/DB/DBSTATE",theCurrentState_,this);
 
 
 }
+int DimDaqControl::getCurrentRun()
+{ return theCurrentRun_;}
+char* DimDaqControl::getCurrentState()
+{return theCurrentState_;}
+void DimDaqControl::infoHandler()
+{
+   DimInfo *curr = getInfo(); // get current DimInfo address 
+   if (curr->getSize()==1) return;
+   if (curr==runInfo_)
+     {
+       theCurrentRun_=curr->getInt();
+       //std::cout<<"The current Run is "<<theCurrentRun_<<std::endl;
+       return;
+     }
+   if (curr==dbstateInfo_)
+     {
 
+       strcpy(theCurrentState_,curr->getString());
+       //std::cout<<"The current DbState is "<<theCurrentState_<<std::endl;
+       return;
+     }
 
+}
 
 void DimDaqControl::initialiseWriter(std::string dir)
 {
