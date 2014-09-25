@@ -77,10 +77,13 @@ void ComputerTrack::telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t
 		  if (used[j]) continue;
 		  if (layer[j]!=ip2) continue;
 		  TemplateTk<GeoPoint> t;
+		  t.planes_.reset();
 		  GeoPoint p0(layer[i],x[i],y[i],z[i]);
 		  GeoPoint p1(layer[j],x[j],y[j],z[j]);
 		  t.addPoint(p0);
 		  t.addPoint(p1);
+		  t.planes_[layer[i]]=1;
+		  t.planes_[layer[j]]=1;
 		  t.regression();
 		  //printf(" (%d,%f,%f,%f)  (%d,%f,%f,%f) ==> %f %f %f %f  \n",layer[i],x[i],y[i],z[i],layer[j],x[j],y[j],z[j],t.ax_,t.bx_,t.ay_,t.by_);
 		  for (uint32_t k=0;k<nstub;k++)
@@ -96,6 +99,7 @@ void ComputerTrack::telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t
 			  used[j]=true;
 			  used[k]=true;
 			  t.addPoint(p2);
+			  t.planes_[layer[k]]=1;
 			  t.regression();
 			}
 		    }
@@ -116,6 +120,7 @@ void ComputerTrack::telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t
 	//printf("small tk %ld \n",itk->getList().size());
 	continue;
       }
+      itk->regression();
       //printf("tracks %d %f %f \n",itk->getList().size(),itk->zmin_,itk->zmax_);
       float xmin=itk->getXext(itk->zmin_);
       float xmax=itk->getXext(itk->zmax_);
@@ -126,6 +131,7 @@ void ComputerTrack::telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t
       theLength_+=l;
       //itk->Print();
         RecoCandTk tk;
+	tk.planes_=itk->planes_;
 	tk.ax_=itk->ax_;
 	tk.bx_=itk->bx_;
 	tk.ay_=itk->ay_;

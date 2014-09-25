@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "RecoPoint.h"
-
+#include <bitset> 
 class RecoCandTk
 {
 public:
@@ -38,6 +38,7 @@ public:
 	inline bool isValid(){return valid_;}
 	inline void setValid(bool t){valid_=t;}
 	float zmin_,zmax_;
+	std::bitset<128> planes_;
 private:
 	bool valid_;
 	std::vector<RecoPoint*> list_;

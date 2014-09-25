@@ -26,7 +26,7 @@ public:
   ~DimDIFDataHandler();
   void infoHandler();
   DIFStatus& getStatus(){return difStatus_;}
-  char* getState(){return difState_;}
+  char* getState();
 private:
   uint32_t theId_;
   std::string thePrefix_;

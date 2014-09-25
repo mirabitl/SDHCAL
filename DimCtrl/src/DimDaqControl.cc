@@ -36,10 +36,11 @@ void DimDaqControl::scandns()
   char *service, *format; 
   int type;
   // Get DB service
-  //cout<<"On rentre dans scandns "<<endl;
-  //cout<<"On sort \n";
+  cout<<"On rentre dans scandns "<<endl;
+
  char *server,*node;
   dbr->getServers( ); 
+  cout<<"On sort \n";
   while(dbr->getNextServer(server, node)) 
     { 
       cout << server << " @ " << node << endl; 

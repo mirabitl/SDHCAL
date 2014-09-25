@@ -9162,6 +9162,15 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
    for (unsigned int i=0;i<theComputerTrack_->getCandidates().size();i++)
 	{
 	  RecoCandTk& tk = theComputerTrack_->getCandidates()[i];
+	  uint32_t nptot=0;
+	  for (uint32_t ipe=1;ipe<128;ipe++)
+	    {
+	      
+	      if (tk.planes_[ipe]) nptot++;
+	    }
+	  //std::cout<<tk.planes_<<std::endl;
+	  printf("Track cand tk: %f %f %f %f ZMIN %f ZMAX %f %d \n",tk.ax_,tk.bx_,tk.ay_,tk.by_,tk.zmin_,tk.zmax_,nptot);
+	  if (nptot<4) continue;
 #undef SCALEFACTOR
 #ifdef SCALEFACTOR
 	  tk.ax_/=1.04125;
@@ -9172,7 +9181,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	  uint32_t fch=int(ceil(tk.zmin_*10))/28+1;
 	  uint32_t lch=int(ceil(tk.zmax_*10))/28+1;
 
-	  printf("Track cand tk: %f %f %f %f ZMIN %f ZMAX %f \n",tk.ax_,tk.bx_,tk.ay_,tk.by_,tk.zmin_,tk.zmax_);
+
 	  //getchar();
 		 //int(ceil(tk.zmin_*10))/28+1,int(ceil(tk.zmax_*10))/28+1);
 // 	  for (std::vector<RecoHit*>::iterator ic=vrh.begin();ic!=vrh.end();ic++)
@@ -9232,9 +9241,20 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	  hax->Fill(tk.ax_);
 	  hay->Fill(tk.ay_);
 	  fch=0;lch=9;
+	  //	  std::cout<<tk.planes_<<std::endl;
+	  //getchar();
 	  for (uint32_t ip=fch+1;ip<lch;ip++)
 	    {
 	      
+	      uint32_t npext=0;
+	      for (uint32_t ipe=fch+1;ipe<lch;ipe++)
+		{
+		  if (ipe==ip) continue;
+		  if (tk.planes_[ipe]) npext++;
+		}
+	      //printf("Plan %d = Tk %d NPEXT %d \n",ip,tk.np_,npext);
+	      if (npext<4) continue; // Au moins 3 plans touches 
+
 	      std::stringstream s;
 	      s<<"/Plan"<<ip<<"/";
 	      

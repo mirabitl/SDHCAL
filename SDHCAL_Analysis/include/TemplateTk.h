@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <vector>
+#include <bitset> 
 
 //#include "RecoPoint.h"
 class A;
@@ -42,6 +43,7 @@ public:
   inline bool isValid(){return valid_;}
   inline void setValid(bool t){valid_=t;}
   float zmin_,zmax_;
+  std::bitset<128> planes_;
 private:
   bool valid_;
   std::vector<A*> list_;

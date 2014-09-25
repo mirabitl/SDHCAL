@@ -266,6 +266,7 @@ template <class A>
 void TemplateTk<A>::regression()
 {
 	unsigned int n = list_.size();
+
 	if (n<2) return;
 	double zbar=0;
 	double xbar=0;
@@ -291,6 +292,7 @@ void TemplateTk<A>::regression()
 	{
 		//      std::cout<<i<<"==>"<<list_[i]->X()<<" "<<list_[i]->Y()<<" "<<list_[i]->Z()<<std::endl;
 		uint32_t ch=list_[i]->getChamberId();
+
 		if (ch<firstChamber_) firstChamber_=ch;
 		if (ch>lastChamber_) lastChamber_=ch;
 #define Use_Error

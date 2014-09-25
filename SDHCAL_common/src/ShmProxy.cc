@@ -40,7 +40,8 @@ void ShmProxy::setNumberOfDIF(int32_t t)
 { theNumberOfDIF_=t;
   printf("NNNNNNNNNNNNNNNNNNNNNNNNN   %d %x %x \n",theNumberOfDIF_,&theNumberOfDIF_,this);}
   
-
+void ShmProxy::setDirectoryName(std::string s){theDirectoryName_=s;}
+void ShmProxy::setSetupName(std::string s){theSetupName_=s;}
 void ShmProxy::Initialise(bool purge)
 {
 

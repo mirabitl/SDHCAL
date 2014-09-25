@@ -96,10 +96,10 @@ void  DimShmProxy::registerDifs()
       memset(theBuffer_,0,32*1024*sizeof(uint32_t));
       difData_[i]=new DimInfo(s0.str().c_str(),theBuffer_,32*1024*sizeof(uint32_t),this);
 
-      runInfo_=new DimInfo("/DB/RUNFROMDB",theRun_,this);
-      dbstateInfo_=new DimInfo("/DB/DBSTATE",dbState_,this);
       
     }
+  runInfo_=new DimInfo("/DB/RUNFROMDB",theRun_,this);
+  dbstateInfo_=new DimInfo("/DB/DBSTATE",theState_,this);
    
 }
 void DimShmProxy::infoHandler()
@@ -109,11 +109,14 @@ void DimShmProxy::infoHandler()
    if (curr==runInfo_)
      {
        theRun_=curr->getInt();
+       std::cout<<"The current Run is "<<theRun_<<std::endl;
        return;
      }
    if (curr==dbstateInfo_)
      {
-       memcpy(dbState_,curr->getString(),curr->getSize());
+
+       dbState_.assign(curr->getString());
+       std::cout<<"The current DbState is "<<dbState_<<std::endl;
        return;
      }
    for (int i=0;i<255;i++)
@@ -221,9 +224,10 @@ void DimShmProxy::commandHandler()
     {
        if (theProxy_ != NULL)
 	{
-	  std::string s;
-	  s.assign(currCmd->getString());
-	  theProxy_->setDirectoryName(s);
+	  std::stringstream s;
+	  s<<currCmd->getString();
+	  std::cout<<" Directory is set to "<<currCmd->getString()<<std::endl;
+	  theProxy_->setDirectoryName(s.str());
 	}
        return;
     }
@@ -232,9 +236,8 @@ void DimShmProxy::commandHandler()
       int nb=currCmd->getInt();
       if (theProxy_ != NULL)
 	{
-	  std::string s;
-	  s.assign(dbState_);
-	  theProxy_->setSetupName(s);
+	  cout<<" Changing Proxy setup to  "<<dbState_<<endl;
+	  theProxy_->setSetupName(dbState_);
 	  cout<<" Number of DIF "<<nb<<endl;
 	  theProxy_->setNumberOfDIF(nb);
 	  cout<<" Number of DIF "<<theProxy_->getNumberOfDIF()<<endl;

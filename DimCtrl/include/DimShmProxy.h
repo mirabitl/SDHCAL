@@ -55,7 +55,7 @@ private:
   DimInfo* difState_[255];
   DimInfo* difData_[255];
   DimInfo* runInfo_;
-  char  dbState_[255];
+  std::string  dbState_;
   DimInfo* dbstateInfo_;
 };
 #endif

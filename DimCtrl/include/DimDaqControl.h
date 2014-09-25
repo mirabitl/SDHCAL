@@ -33,7 +33,7 @@ public:
   void scandns();
   void scan();
   void print();
-  inline void dump(){this->print();}
+
   void initialise();
   void initialiseWriter(std::string dir);
   void registerstate(uint32_t ctr,std::string sta);

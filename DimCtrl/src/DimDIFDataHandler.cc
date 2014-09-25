@@ -1,5 +1,7 @@
 #include "DimDIFDataHandler.h"
+#ifdef DATA_HANDLER_ENABLE
 #include "ShmProxy.h"
+#endif
 DimDIFDataHandler::DimDIFDataHandler(uint32_t id,std::string prefix) : theId_(id),theShmPrefix_("/dev/shm")
 {
   thePrefix_="/DDS";
@@ -24,7 +26,12 @@ DimDIFDataHandler::~DimDIFDataHandler()
   delete theDIFInfo_;
   delete theDIFData_;
 }
+char* DimDIFDataHandler::getState()
+{
 
+  //printf("State %s Address %x object %x \n",difState_,&difState_,this);
+  return difState_;
+}
 void DimDIFDataHandler::infoHandler()
 {
    DimInfo *curr = (DimInfo*) getInfo(); // get current DimStampedInfo address
@@ -38,9 +45,10 @@ void DimDIFDataHandler::infoHandler()
      }
    if (curr==theDIFState_)
      {
-       //cout<<"copying to difState"<<curr->getString()<<endl;
-       memcpy(&difState_,curr->getString(),curr->getSize());
-       // cout<<"copy done\n";
+       //cout<<"copying to difState"<<curr->getString()<<" size "<<curr->getSize()<<endl;
+       strcpy(difState_,curr->getString());
+       
+ 
        return;
      }
 #ifdef DATA_HANDLER_ENABLE

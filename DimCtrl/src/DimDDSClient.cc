@@ -32,7 +32,7 @@ void DimDDSClient::scanDevices()
   s0.str(std::string());
   s0<<thePrefix_<<"/SCANDEVICES";
   // cout<<"Oops\n";
-  // cout <<"Sending command "<<s0.str().c_str()<<" "<<DimClient::getDnsNode()<<endl;
+  cout <<"Sending command "<<s0.str().c_str()<<" "<<DimClient::getDnsNode()<<endl;
   DimClient::sendCommand(s0.str().c_str(), 1);
   // cout <<"Send done \n";
   bsem_.lock();
@@ -64,9 +64,9 @@ void DimDDSClient::print()
   printf(" %s ======================== \n",thePrefix_.c_str());
   for (std::map<uint32_t,DimDIFDataHandler*>::iterator it=theDDDHMap_.begin();it!=theDDDHMap_.end();it++)
     {
-      //printf("\t DIF %d %s \n",it->first,it->second->getState());
+      //printf("\t DIF %d %x %s \n",it->first,it->second,it->second->getState());
       DIFStatus& s=it->second->getStatus();
-      printf(" %d %d %x %d %ld %ld %s \n",s.id,s.status,s.slc,s.gtc,s.bcid,s.bytes,it->second->getState()); 
+      printf(" %d %d %x %d %lld %lld %s \n",s.id,s.status,s.slc,s.gtc,s.bcid,s.bytes,it->second->getState()); 
     }
 }
 void DimDDSClient::setDBState(uint32_t ctrlreg,std::string state)
@@ -131,7 +131,7 @@ void DimDDSClient::infoHandler()
     }
   if (curr==theDDSDevices_)
     {
-      memcpy(&theDevices_,curr->getData(),curr->getSize());
+      memcpy(&theDevices_[0],curr->getData(),curr->getSize());
       // copy to Shm
     }
      
