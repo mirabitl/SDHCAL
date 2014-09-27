@@ -147,14 +147,16 @@ def GetEff(plan):
   l.append(heff)
   heffsum=TH1F("Summary%d" % plan ,"Summary for plan %d " % plan,404,05.,101.)
   st = ''
+  ntk=0;
   for i in range(heff.GetXaxis().GetNbins()):
     for j in range(heff.GetYaxis().GetNbins()):
       st = st + '%f ' % heff.GetBinContent(i+1,j+1)
+      ntk=ntk+hext.GetBinContent(i+1,j+1)
       if (hext.GetBinContent(i+1,j+1)>10):
         heffsum.Fill(heff.GetBinContent(i+1,j+1))
   #print '%s' % st
   l.append(heffsum)
-  print plan,heffsum.GetMean()
+  print plan,heffsum.GetMean(),ntk
   return l
  
 
