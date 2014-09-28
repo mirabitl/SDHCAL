@@ -58,6 +58,14 @@ if (kl[len(kl)-1][0:3] == 'el5'):
 
 if (kl[len(kl)-2][0:3] == 'el6'):
     platform="SLC6"
+Arm=os.uname()[4]=='armv7l'
+
+if Arm:
+  boostsystem='boost_system'
+  boostthread='boost_thread'
+else:
+  boostsystem='boost_system-mt'
+  boostthread='boost_thread-mt'
 
 Use_Dim=True
 #os.environ.has_key("DIM_DNS_NODE")
@@ -79,7 +87,7 @@ CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN
 
 
 #LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
-LIBRARIES=[ 'dl','uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c',  'pthread', 'stdc++','boost_system-mt','boost_thread-mt','SDHCALcommon','SDHCALDB','dim','netlink','cslm']
+LIBRARIES=[ 'dl','uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c',  'pthread', 'stdc++',boostsystem,boostthread,'SDHCALcommon','SDHCALDB','dim','netlink','cslm']
 
 
 
@@ -100,8 +108,7 @@ if Use_Dim:
 
 
 #link flags
-LDFLAGS=[]
-LDFLAGS.append("-fPIC -dynamiclib ")
+LDFLAGS=["-fPIC","-dynamiclib"]
 
 # SWIG
 SWIGSF=["-c++","-classic"]

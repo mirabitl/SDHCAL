@@ -47,6 +47,16 @@ Use_Dim=False
 
 Bit64=False
 Bit64=os.uname()[4]=='x86_64'
+
+Arm=os.uname()[4]=='armv7l'
+
+if Arm:
+  boostsystem='boost_system'
+  boostthread='boost_thread'
+else:
+  boostsystem='boost_system-mt'
+  boostthread='boost_thread-mt'
+  
 # includes
 INCLUDES=['include',"/usr/include/boost141/"]
 
@@ -59,7 +69,7 @@ CPPFLAGS=["-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "
 
 
 
-LIBRARIES=['pthread',  'm', 'stdc++','boost_system-mt','boost_thread-mt']
+LIBRARIES=['pthread',  'm', 'stdc++',boostsystem,boostthread]
 
 
 
@@ -79,8 +89,8 @@ if Use_Dim:
 
 
 #link flags
-LDFLAGS=[]
-LDFLAGS.append("-fPIC -dynamiclib ")
+LDFLAGS=["-fPIC","-dynamiclib"]
+
 
 # SWIG
 SWIGSF=["-c++","-classic"]

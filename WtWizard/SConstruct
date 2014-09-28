@@ -51,6 +51,15 @@ NetLink=DHCAL_ROOT+"/netLink"
 if ( not os.path.exists(NetLink)):
   NetLink=os.getenv("HOME")+"/netLink"
 
+Arm=os.uname()[4]=='armv7l'
+
+if Arm:
+  boostsystem='boost_system'
+  boostthread='boost_thread'
+else:
+  boostsystem='boost_system-mt'
+  boostthread='boost_thread-mt'
+
 
 Use_Dim=False
 #os.environ.has_key("DIM_DNS_NODE")
@@ -71,7 +80,7 @@ ROOT_LIBS.append('XMLIO')
 ROOT_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getoutput("$ROOTSYS/bin/root-config --libs ").split(" "))]
 
 #LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
-LIBRARIES=ROOT_LIBS+['jsoncpp','pthread',  'm', 'stdc++','netlink','boost_system-mt','boost_thread-mt','cslm','SDHCALcommon','SDHCALDB','SDHCALClient','SDHCALAnalysis','wthttp','wt','boost_regex','boost_signals','boost_system','boost_thread','boost_filesystem','boost_date_time','wtdbo','wtdbosqlite3','xerces-c','lcio','ilcconfdb']
+LIBRARIES=ROOT_LIBS+['jsoncpp','pthread',  'm', 'stdc++','netlink',boostsystem,boostthread,'cslm','SDHCALcommon','SDHCALDB','SDHCALClient','SDHCALAnalysis','wthttp','wt','boost_regex','boost_signals','boost_system','boost_thread','boost_filesystem','boost_date_time','wtdbo','wtdbosqlite3','xerces-c','lcio','ilcconfdb']
 
 
 
@@ -90,8 +99,8 @@ if Use_Dim:
 
 
 #link flags
-LDFLAGS=[]
-LDFLAGS.append("-fPIC -dynamiclib -Wl,--no-as-needed  ")
+LDFLAGS=["-fPIC","-dynamiclib","-Wl","--no-as-needed"]
+
 
 # SWIG
 SWIGSF=["-c++","-classic"]

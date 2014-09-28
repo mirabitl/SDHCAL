@@ -20,6 +20,20 @@ osv=kp[0:len(kp)-1]
 
 print platform,osv
 
+Bit64=os.uname()[4]=='x86_64'
+
+Arm=os.uname()[4]=='armv7l'
+
+if Arm:
+  boostsystem='boost_system'
+  boostthread='boost_thread'
+else:
+  boostsystem='boost_system-mt'
+  boostthread='boost_thread-mt'
+
+
+
+
 LIBRARY_SOURCES=Glob("#src/*.cc")
 INCLUDES=['include']
 if (platform=="SLC5"):
@@ -43,9 +57,9 @@ else:
         LIBRARY_PATHS=["/usr/lib/boost141","/usr/lib","/usr/local/lib"]
     else:
         LIBRARY_PATHS=["/usr/lib","/usr/local/lib"]
-LDFLAGS=[]
-LDFLAGS.append("-fPIC -dynamiclib ")
 
+#link flags
+LDFLAGS=["-fPIC","-dynamiclib"]
 
 env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS)
 
@@ -54,10 +68,7 @@ netlink=env.SharedLibrary("#lib/netlink",source=LIBRARY_SOURCES)
 CSLM_SOURCES=Glob("#cslm/*.cc")
 
 LIBRARY_PATHS.append("./lib")
-if ( platform=="SLC5" or platform=="SLC6" ):
-    LIBRARIES=["pthread","netlink","boost_system-mt","boost_thread-mt"]
-else:
-    LIBRARIES=["pthread","netlink","boost_system","boost_thread"]
+LIBRARIES=["pthread","netlink",boostsystem,boostthread]
 env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS)
 cslm=env.SharedLibrary("#lib/cslm",source=CSLM_SOURCES)
 

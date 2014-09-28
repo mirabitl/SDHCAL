@@ -66,6 +66,15 @@ osv=kp[0:len(kp)-1]
 
 print platform,osv
 
+Arm=os.uname()[4]=='armv7l'
+
+if Arm:
+  boostsystem='boost_system'
+  boostthread='boost_thread'
+else:
+  boostsystem='boost_system-mt'
+  boostthread='boost_thread-mt'
+
 #includes
 INCLUDES=['include',"/usr/include/boost141/",DHCAL_ROOT+"/SDHCAL_common/include",NetLink+"/include",NetLink+"/cslm"]
 
@@ -81,7 +90,7 @@ CPPFLAGS=["-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "
 if (platform == "UBUNTU"):
   LIBRARIES=['pthread',  'm', 'stdc++','ftdi','ftdipp','netlink','boost_system','boost_thread','cslm']
 else:
-  LIBRARIES=['pthread',  'm', 'stdc++','ftdi','ftdipp','netlink','boost_system-mt','boost_thread-mt','cslm']
+  LIBRARIES=['pthread',  'm', 'stdc++','ftdi','ftdipp','netlink',boostsystem,boostthread,'cslm']
 
 
 #Library path XDAQ,DHCAL and ROOT + Python
@@ -92,8 +101,7 @@ else:
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
 
 #link flags
-LDFLAGS=[]
-LDFLAGS.append("-fPIC -dynamiclib ")
+LDFLAGS=["-fPIC","-dynamiclib"]
 
 # SWIG
 SWIGSF=["-c++","-classic"]

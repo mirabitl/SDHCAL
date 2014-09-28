@@ -56,6 +56,14 @@ kp=fres.readline()
 osv=kp[0:len(kp)-1]
 
 print platform,osv
+Arm=os.uname()[4]=='armv7l'
+
+if Arm:
+  boostsystem='boost_system'
+  boostthread='boost_thread'
+else:
+  boostsystem='boost_system-mt'
+  boostthread='boost_thread-mt'
 
 
 # includes
@@ -78,7 +86,7 @@ INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as con
 CPPFLAGS=commands.getoutput("$ROOTSYS/bin/root-config --cflags").split(" ") + ["-O4","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2"]
 
 #Library ROOT + some of XDAQ + DB 
-LIBRARIES=['pthread', 'uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c',  'stdc++','cslm','netlink','boost_system-mt','boost_thread-mt','dl']
+LIBRARIES=['pthread', 'uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c',  'stdc++','cslm','netlink',boostsystem,boostthread,'dl']
 
 
 
@@ -96,8 +104,10 @@ LIBRARY_PATHS.append([os.path.join(XDAQ_ROOT,"lib"),os.path.join(DHCAL_ROOT,"opt
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
 
 #link flags
+LDFLAGS=["-fPIC","-dynamiclib"]
+
 LDFLAGS=commands.getoutput("$ROOTSYS/bin/root-config --ldflags").split(" ")
-LDFLAGS.append("-fPIC -dynamiclib ")
+
 
 # SWIG
 SWIGSF=["-c++","-classic"]
