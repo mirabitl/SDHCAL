@@ -78,8 +78,7 @@ INCLUDES=['include',"/usr/include/boost141/",DHCAL_ROOT+"/SDHCAL_common/include"
 
 if (Use_Dim):
   INCLUDES.append(DIM_ROOT+"/dim")
-  if (platform=="SLC5"):
-    INCLUDES.append("/opt/xdaq/include/dim")
+ 
 INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
 
 INCLUDES.append("/usr/include/jsoncpp")
@@ -111,8 +110,7 @@ LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig a
 LIBRARY_PATHS.append(os.path.join(os.getenv("LCIODIR"),"lib"))
 if Use_Dim:
    CPPFLAGS.append("-DUSE_DIM")
-   if (platform=="SLC5"):
-     LIBRARY_PATHS.append("/opt/xdaq/lib")
+
 #   INCLUDES.append("/opt/xdaq/include/dim")
 #   LIBRARIES.append("dim")
 #   LIBRARY_PATHS.append("/opt/xdaq/lib")

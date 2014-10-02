@@ -75,10 +75,7 @@ INCLUDES=['include',"/usr/include","/usr/include/ILCConfDB","/usr/include/boost1
 
 if (Use_Dim):
   INCLUDES.append(DIM_ROOT+"/dim")
-  if (platform=="SLC5"):
-    INCLUDES.append("/opt/xdaq/include/")
-    INCLUDES.append("/opt/xdaq/include/dim")
-
+  INCLUDES.append("/opt/xdaq/include")
 INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
 
 CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2"]
@@ -93,17 +90,16 @@ LIBRARIES=[ 'dl','uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xer
 
 #Library path XDAQ,DHCAL and ROOT + Python
 if (Bit64):
-	LIBRARY_PATHS=["/opt/xdaq/lib","/usr/lib64","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib"]
+	LIBRARY_PATHS=[DIM_ROOT+"/linux","/opt/xdaq/lib","/usr/lib64","/usr/local/lib",DHCAL_ROOT+"/opt/dhcal/lib"]
 else:
-  LIBRARY_PATHS=["/opt/xdaq/lib","/usr/lib","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib"]
+  LIBRARY_PATHS=[DIM_ROOT+"/linux","/opt/xdaq/lib","/usr/lib","/usr/local/lib",DHCAL_ROOT+"/opt/dhcal/lib"]
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
 
 if Use_Dim:
    CPPFLAGS.append("-DUSE_DIM")
-   if (platform=="SLC5"):
-     LIBRARY_PATHS.append("/opt/xdaq/lib")
+   LIBRARIES.append("dim")
 #   INCLUDES.append("/opt/xdaq/include/dim")
-#   LIBRARIES.append("dim")
+
 #   LIBRARY_PATHS.append("/opt/xdaq/lib")
 
 
