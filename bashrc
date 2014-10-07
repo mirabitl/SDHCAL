@@ -14,8 +14,9 @@ export PYTHONPATH=${ROOTSYS}/lib:${PYTHONPATH}
 
 
 alias rundid='/usr/local/dim/WebDID/webDid &>/dev/null '
-alias dhcalinstall='sudo cp lib/*.so /opt/dhcal/lib/'
-alias dhnetinstall='cp lib/*.so /data/NAS/opt/dhcal/lib/'
+alias dhcalinstall='cp $SDHCALDIR/opt/dhcal/lib/*.so /opt/dhcal/lib/;cp $SDHCALDIR/opt/dhcal/bin/* /opt/dhcal/bin/'
+alias dhnetinstall='cp /opt/dhcal/lib/*.so /data/NAS/arm/opt/dhcal/lib/;cp /opt/dhcal/bin/* /data/NAS/arm/opt/dhcal/bin/'
+
 
 export CONFDB_DEV='ILC/b0T2FB3yxG@(DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST = ccdbora01.in2p3.fr)(PORT = 1521)) (CONNECT_DATA = (SERVER = DEDICATED) (SERVICE_NAME = ccdev11gtaf.in2p3.fr)))'
 export CONFDB_PROD='ILC/fFQeV52rQy@(DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST = ccdbora01.in2p3.fr)(PORT = 1521)) (CONNECT_DATA = (SERVER = DEDICATED) (SERVICE_NAME = calice.in2p3.fr)))'
