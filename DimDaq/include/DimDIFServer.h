@@ -52,6 +52,15 @@ public:
   void registerDBService(const char* state);
 
   void infoHandler();
+
+  void setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,unsigned char* ConfigHR2);
+  void setGain(uint32_t gain,unsigned char* ConfigHR2);
+  void setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,DIFDbInfo s);
+  void setGain(uint32_t gain,DIFDbInfo s);
+  void setThreshold(uint32_t B0,uint32_t B1,uint32_t B2);
+  void setGain(uint32_t gain);
+
+
   enum State {ALIVED=1,SCANNED=2,INITIALISED=3,PRECONFIGURED=4,CONFIGURED=5,RUNNING=6,STOPPED=7,DESTROYED=8,FAILED=99};
 private:
   bool running_,readoutStarted_;
@@ -82,10 +91,19 @@ private:
   DimCommand *registerstateCommand_;
   DimCommand *configurechipsCommand_;
   
-  
+   
   DimCommand *startCommand_;
   DimCommand *stopCommand_;
   DimCommand *destroyCommand_;
+
+
+  uint32_t theCalibrationGain_;
+  uint32_t theCalibrationThresholds_[3];
+  DimCommand *gainCommand_;
+  DimCommand *thresholdCommand_;
+
+
+
 
   DimInfo* theDBDimInfo_[255];
   DIFDbInfo theDIFDbInfo_[255];

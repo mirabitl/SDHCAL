@@ -707,3 +707,60 @@ void  DimDIFServer::infoHandler( )
 	printf("Dim info read %d %d \n",theDIFDbInfo_[i].id,theDIFDbInfo_[i].nbasic);
       }
 }
+void DimDIFServer::setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,unsigned char* ConfigHR2)
+{
+  ConfigHR2[3]= ((B2>>2)&0xFF);
+  ConfigHR2[4]= 0;
+  ConfigHR2[4]|=((B2&0x03)<<6);
+  ConfigHR2[4]|=((B1>>4)&0x3F);
+  ConfigHR2[5]= 0;
+  ConfigHR2[5]|=((B1&0x0F)<<4);
+  ConfigHR2[5]|=((B0>>6)&0x0F);
+  ConfigHR2[6]&=0x3;
+  ConfigHR2[6]|=((B0&0x3F)<<2);
+}
+void DimDIFServer::setGain(uint32_t gain,unsigned char* ConfigHR2)
+{
+ for (uint32_t ip=0;ip<64;ip++)
+    ConfigHR2[100-ip]|=(gain&0xFF);
+}
+
+void DimDIFServer::setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,DIFDbInfo s)
+{
+  for (int i=0;i<s.nbasic;i++)
+    setThreshold(B0,B1,B2,s.slow[i]);
+}
+void DimDIFServer::setGain(uint32_t gain,DIFDbInfo s)
+{
+  for (int i=0;i<s.nbasic;i++)
+    setGain(gain,s.slow[i]);
+}
+void DimDIFServer::setThreshold(uint32_t B0,uint32_t B1,uint32_t B2)
+{
+
+ for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
+   {
+     uint32_t difid=itd->first;
+     if (theDIFDbInfo_[difid].id==difid)
+       {
+	 setThreshold(B0,B1,B2,theDIFDbInfo_[difid]);
+       }
+   }
+
+
+
+}
+void DimDIFServer::setGain(uint32_t gain)
+{
+ for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
+   {
+     uint32_t difid=itd->first;
+     if (theDIFDbInfo_[difid].id==difid)
+       
+       {
+	 setGain(gain,theDIFDbInfo_[difid]);
+       }
+   }
+
+
+}
