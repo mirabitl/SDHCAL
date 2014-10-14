@@ -5,7 +5,7 @@ cd SDHCAL_Readout;scons -c;scons install -j 6;scons;cd -
 cd SDHCAL_Client;scons -c;scons install -j 6;scons;cd -
 cd SDHCAL_EventReader;scons -c;scons install -j 6;scons;cd -
 cd DimDaq
-cd /usr/local;sudo tar zxvf $HOME/SDHCAL/DimDaq/extras/dimrpi.tgz;cd -
+#cd /usr/local;sudo tar zxvf $HOME/SDHCAL/DimDaq/extras/dimrpi.tgz;cd -
 scons -c;scons install -j 6;scons;cd -
 #cd DimDb;scons -c;scons install -j 6;scons;cd -
 cd DimCtrl;scons -c;scons install -j 6;scons;cd -

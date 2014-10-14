@@ -24,7 +24,7 @@ Bit64=os.uname()[4]=='x86_64'
 
 Arm=os.uname()[4]=='armv7l'
 
-if Arm:
+if Arm or platform=="UBUNTU":
   boostsystem='boost_system'
   boostthread='boost_thread'
 else:
