@@ -1,10 +1,68 @@
 from ROOT import *
 import os
-import sqlite 
+import sqlite3 
 import time
+def sumamryBad():
+  f=open("summarybad.txt","w")
+  for i in range(1,255):
+    for j in range(1,49):
+      for k in range(1,65):
+        fn='DIF%d/Asic%d/channel%d' % (i,j,k)
+        if (os.path.exists(fn)):
+          fchan=open(fn)
+          f.write( "s.SetGain(%d,%d,%d,%d)\n" % (i,j,k,int(fchan.readline())))
+          fchan.close()
+  f.close() 
+
+def printBad(fn,gain):
+  f=TFile(fn)
+  vl=getmaindir()
+  for idif in range(1,255):
+    if ('DIF%d' % idif) in vl: 
+      for iasic in range(1,49):
+        hfreq=getth1('/DIF%d/Asic%d/Frequency' % (idif,iasic))
+        if (hfreq != None):
+          #print hfreq.GetName()
+          for ichan in range(1,65):
+            #print hfreq.GetBinContent(ichan)
+
+            if (hfreq.GetBinContent(ichan)>10):
+              gcut=gain
+              if  (hfreq.GetBinContent(ichan)>20):
+                gcut=gain/2
+              if  (hfreq.GetBinContent(ichan)>40):
+                gcut=gain/4
+
+              fdir="DIF%d/Asic%d" % (idif,iasic)
+              if (not os.path.exists(fdir)):
+                try:
+                  os.makedirs(fdir)
+                except:
+                  print ""
+              fnchan=fdir+"/channel%d" % ichan
+              
+              curgain=128
+              if os.path.exists(fnchan):
+                # read current gain store
+                fchan=open(fnchan,'r')
+                curgain=int(fchan.read())
+                fchan.close()
+              print idif,iasic,ichan,curgain,gcut,hfreq.GetBinContent(ichan)
+              if (gcut<curgain):
+                fchan=open(fnchan,'w')
+                fchan.write('%d\n' % gcut)
+                fchan.close()
+
+
+def getmaindir():
+  vdir=[]
+  for ik in range(gDirectory.GetListOfKeys().GetEntries()):
+    vdir.append(gDirectory.GetListOfKeys().At(ik).GetName())
+  return vdir
 def getth1(fullname):
   directory=os.path.dirname(fullname)
   name=os.path.basename(fullname)
+ 
   try:
     gDirectory.cd(directory)
   except:
@@ -21,6 +79,7 @@ def getth1(fullname):
 def getth2(fullname):
   directory=os.path.dirname(fullname)
   name=os.path.basename(fullname)
+ 
   gDirectory.cd(directory)
   for ik in range(gDirectory.GetListOfKeys().GetEntries()):
     obj=gDirectory.GetListOfKeys().At(ik).ReadObj()
@@ -137,6 +196,8 @@ def GetEff(plan):
   
   hnear.Draw("TEXT")
  
+  #hext.Rebin2D(2,2)
+  #hnear.Rebin2D(2,2)
   heff = hnear.Clone("heff")
   heff.SetDirectory(0)
   heff.Divide(hnear,hext,100.,1.)
@@ -148,8 +209,8 @@ def GetEff(plan):
   heffsum=TH1F("Summary%d" % plan ,"Summary for plan %d " % plan,404,05.,101.)
   st = ''
   ntk=0;
-  for i in range(heff.GetXaxis().GetNbins()):
-    for j in range(heff.GetYaxis().GetNbins()):
+  for i in range(2,heff.GetXaxis().GetNbins()-1):
+    for j in range(2,heff.GetYaxis().GetNbins()-1):
       st = st + '%f ' % heff.GetBinContent(i+1,j+1)
       ntk=ntk+hext.GetBinContent(i+1,j+1)
       if (hext.GetBinContent(i+1,j+1)>10):

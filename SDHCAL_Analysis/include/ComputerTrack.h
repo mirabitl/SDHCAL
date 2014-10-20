@@ -6,6 +6,7 @@
 
 #include "libhoughCPU.h"
 #include "RecoCandTk.h"
+#include "TrackInfo.h"
 
 typedef struct
 {
@@ -42,9 +43,11 @@ public:
   void telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t* layer,uint32_t nplans);
 
   std::vector<RecoCandTk> &getCandidates(){return theCandidateVector_;}
+  std::vector<TrackInfo> &getTracks(){return theTrackVector_;}
   float Length(){return theLength_;}
 protected:
   std::vector<RecoCandTk> theCandidateVector_;
+  std::vector<TrackInfo> theTrackVector_;
   HoughCut* theCuts_;
   uint32_t theNStub_;
   float* theX_;

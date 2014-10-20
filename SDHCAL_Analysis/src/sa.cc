@@ -74,7 +74,7 @@ int main(int argc, char** argv ){
   DCHistogramHandler rootHandler;
   //  LMBasicAnalyzer *a= new LMBasicAnalyzer( &dher,&rootHandler);
 
-  bool rebuild=true;
+  bool rebuild=false;
   // if (rebuild)
   //   a->setCollectionName("DHCALRawHitsNew");
   // a->registerDIF(23);
@@ -98,11 +98,11 @@ int main(int argc, char** argv ){
 #define USESTREAM
 #ifdef USESTREAM
   ShowerAnalyzer *a= new ShowerAnalyzer( &dher,&rootHandler);
-  a->setminChambersInTime(3);
-  RawAnalyzer *ar= new RawAnalyzer();
+  a->setminChambersInTime(4);
+  //RawAnalyzer *ar= new RawAnalyzer();
   //StripAnalyzer *as= new StripAnalyzer();
   //a->setrebuild(rebuild);
-  dher.registerAnalysis(ar);
+  //dher.registerAnalysis(ar);
   dher.registerAnalysis(a);
   
   dher.initJob();

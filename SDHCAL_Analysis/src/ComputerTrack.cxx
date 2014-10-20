@@ -60,6 +60,9 @@ void ComputerTrack::telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t
 	ich->second.push_back(p);
     }
   */
+  GeoPoint* gp[1024];
+  for (int i=0;i<nstub;i++)
+    gp[i]=new GeoPoint(layer[i],x[i],y[i],z[i]);
   bool used[1024];memset(used,0,1024*sizeof(bool));
   for (uint32_t ip1=1;ip1<=nplans/2;ip1++)
     {
@@ -78,10 +81,10 @@ void ComputerTrack::telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t
 		  if (layer[j]!=ip2) continue;
 		  TemplateTk<GeoPoint> t;
 		  t.planes_.reset();
-		  GeoPoint p0(layer[i],x[i],y[i],z[i]);
-		  GeoPoint p1(layer[j],x[j],y[j],z[j]);
-		  t.addPoint(p0);
-		  t.addPoint(p1);
+
+		  t.addPoint((*gp[i]));
+		  t.addPoint((*gp[j]));
+
 		  t.planes_[layer[i]]=1;
 		  t.planes_[layer[j]]=1;
 		  t.regression();
@@ -91,14 +94,15 @@ void ComputerTrack::telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t
 		      if (used[k]) continue;
 		      if (layer[k]==ip1) continue;
 		      if (layer[k]==ip2) continue;
-		      GeoPoint p2(layer[k],x[k],y[k],z[k]);
-		      if (t.calculateDistance(p2)<3.)
+		      
+		      if (t.calculateDistance((*gp[k]))<2.)
 			{
 			  // 3 hits on tag
 			  used[i]=true;
 			  used[j]=true;
 			  used[k]=true;
-			  t.addPoint(p2);
+			  t.addPoint((*gp[k]));
+
 			  t.planes_[layer[k]]=1;
 			  t.regression();
 			}
@@ -114,6 +118,7 @@ void ComputerTrack::telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t
 	}
     }
   theCandidateVector_.clear();
+  theTrackVector_.clear();
   for (std::vector<TemplateTk<GeoPoint> >::iterator itk=tracks.begin();itk!=tracks.end();itk++)
     {
       if (itk->getNumberOfHits()<3) {
@@ -141,7 +146,26 @@ void ComputerTrack::telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t
 	tk.zmax_=itk->zmax_;
 	tk.chi2_=itk->chi2_;
 	theCandidateVector_.push_back(tk);
+
+
+	TrackInfo t;
+	uint32_t np=0;
+	for (std::vector<GeoPoint*>::iterator ip=itk->getList().begin();ip!=itk->getList().end();ip++)
+	  {
+	    t.set_x(np,(*ip)->X());
+	    t.set_y(np,(*ip)->Y());
+	    t.set_z(np,(*ip)->Z());
+	    t.set_layer(np,(*ip)->chamber());
+	    //printf("%d %f %f %f \n",np,(*ip)->X(),(*ip)->Y(),(*ip)->Z());
+	    np++;
+	  }
+	t.set_size(np);
+	t.regression();
+	//printf(" l %f \n ",t.ax());
+	theTrackVector_.push_back(t);
     }
+  for (int i=0;i<nstub;i++)
+    delete gp[i];
 
 }
  
