@@ -80,6 +80,31 @@ void DimDDSClient::setDBState(uint32_t ctrlreg,std::string state)
   bsem_.lock();	
 
 }
+void DimDDSClient::setGain(uint32_t gain)
+{
+  theCalibrationGain_=gain;
+
+  std::stringstream s0;
+  s0.str(std::string());
+  s0<<thePrefix_<<"/SETGAIN";
+  DimClient::sendCommand(s0.str().c_str(),theCalibrationGain_); 
+  bsem_.lock();	
+
+}
+
+void DimDDSClient::setThresholds(uint32_t b0,uint32_t b1,uint32_t b2)
+{
+  theCalibrationThresholds_[0]=b0;
+  theCalibrationThresholds_[1]=b1;
+  theCalibrationThresholds_[2]=b2;
+
+  std::stringstream s0;
+  s0.str(std::string());
+  s0<<thePrefix_<<"/SETTHRESHOLD";
+  DimClient::sendCommand(s0.str().c_str(),theCalibrationThresholds_,3*sizeof(int32_t)); 
+  bsem_.lock();	
+
+}
 
 void DimDDSClient::configure()
 {
@@ -91,6 +116,7 @@ void DimDDSClient::configure()
   bsem_.lock();	
 
 }
+
 
 void DimDDSClient::start()
 {

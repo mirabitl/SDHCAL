@@ -58,7 +58,7 @@ osv=kp[0:len(kp)-1]
 print platform,osv
 Arm=os.uname()[4]=='armv7l'
 
-if Arm:
+if Arm or platform=="UBUNTU":
   boostsystem='boost_system'
   boostthread='boost_thread'
 else:

@@ -1,9 +1,9 @@
-export ROOTSYS=${HOME}/root
+export ROOTSYS=/opt/dhcal//root
 
-export LCIODIR=${HOME}/lcio/v02-00/
+export LCIODIR=/opt/dhcal/lcio/v02-00/
 export SDHCALDIR=${HOME}/SDHCAL
-export DIMDIR=/usr/local/dim
-export LD_LIBRARY_PATH=${SDHCALDIR}/opt/dhcal/lib:/opt/dhcal/lib:${LCIODIR}/lib:${ROOTSYS}/lib:$LD_LIBRARY_PATH
+export DIMDIR=//opt/dhcal/dim
+export LD_LIBRARY_PATH=/opt/dhcal/lib:${DIMDIR}/linux:${LCIODIR}/lib:${ROOTSYS}/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:${DIMDIR}/linux:$LD_LIBRARY_PATH
 
 export PATH=${HOME}/bin:${ROOTSYS}/bin:${DIMDIR}/linux:$PATH
@@ -13,7 +13,7 @@ export PYTHONPATH=${ROOTSYS}/lib:${PYTHONPATH}
 
 
 
-alias rundid='/usr/local/dim/WebDID/webDid &>/dev/null '
+alias rundid='${DIMDIR}/WebDID/webDid &>/dev/null '
 alias dhcalinstall='cp $SDHCALDIR/opt/dhcal/lib/*.so /opt/dhcal/lib/;cp $SDHCALDIR/opt/dhcal/bin/* /opt/dhcal/bin/'
 alias dhnetinstall='cp /opt/dhcal/lib/*.so /data/NAS/arm/opt/dhcal/lib/;cp /opt/dhcal/bin/* /data/NAS/arm/opt/dhcal/bin/'
 

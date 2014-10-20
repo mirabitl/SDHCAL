@@ -40,6 +40,9 @@ public:
   void destroy();
   void print();
   std::map<uint32_t,DimDIFDataHandler*>& getDIFMap(){return theDDDHMap_;}
+  void setGain(uint32_t g);
+  void setThresholds(uint32_t b0,uint32_t b1,uint32_t b2);
+
 private:
   std::string theName_;
   std::string thePrefix_;
@@ -51,7 +54,9 @@ private:
   uint32_t theCtrlReg_;
   std::string theState_;
   boost::interprocess::interprocess_mutex bsem_;
-  
+
+  int32_t theCalibrationGain_;
+  int32_t theCalibrationThresholds_[3];
 };
 #endif
 

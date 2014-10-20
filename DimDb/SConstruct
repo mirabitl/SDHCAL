@@ -60,7 +60,7 @@ if (kl[len(kl)-2][0:3] == 'el6'):
     platform="SLC6"
 Arm=os.uname()[4]=='armv7l'
 
-if Arm:
+if Arm or platform=="UBUNTU":
   boostsystem='boost_system'
   boostthread='boost_thread'
 else:

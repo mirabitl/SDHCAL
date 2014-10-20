@@ -75,6 +75,12 @@ void DimDIFServer::allocateCommands()
   s0<<"/DDS/"<<hname<<"/DESTROY";
   destroyCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
 
+  s0.str(std::string());
+  s0<<"/DDS/"<<hname<<"/SETGAIN";
+  gainCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
+  s0.str(std::string());
+  s0<<"/DDS/"<<hname<<"/SETTHRESHOLD";
+  thresholdCommand_=new DimCommand(s0.str().c_str(),"I:3",this);
 }
 
 void DimDIFServer::clearServices()
@@ -619,6 +625,19 @@ void DimDIFServer::commandHandler()
       uint32_t slc=this->configureChips(difid,slow,nasic);
       difStatus_[difid].slc=slc;
       infoServicesMap_[difid]->updateService(&difStatus_[difid],sizeof(DIFStatus));
+    }
+
+  if (currCmd==gainCommand_)
+    {
+      uint32_t gain=currCmd->getInt();
+      this->setGain(gain);
+       aliveService_->updateService();
+    }
+  if (currCmd==thresholdCommand_)
+    {
+      uint32_t* thr=(uint32_t*) currCmd->getData();
+      this->setThreshold(thr[0],thr[1],thr[2]);
+      aliveService_->updateService();
     }
  
   return ;

@@ -44,13 +44,28 @@ XDAQ_ROOT="/opt/xdaq"
 DHCAL_ROOT=os.path.abspath("..")
 Use_Dim=False
 #os.environ.has_key("DIM_DNS_NODE")
+fres=os.popen('uname -r')
+kl=fres.readline().split(".")
+
+platform="UBUNTU"
+if (kl[len(kl)-1][0:3] == 'el5'):
+    platform="SLC5"
+
+if (kl[len(kl)-2][0:3] == 'el6'):
+    platform="SLC6"
+print kl[len(kl)-2][0:3]
+fres=os.popen('uname -p')
+kp=fres.readline()
+osv=kp[0:len(kp)-1]
+
+print platform,osv
 
 Bit64=False
 Bit64=os.uname()[4]=='x86_64'
 
 Arm=os.uname()[4]=='armv7l'
 
-if Arm:
+if Arm or platform=="UBUNTU":
   boostsystem='boost_system'
   boostthread='boost_thread'
 else:
@@ -114,7 +129,7 @@ LIBRARY_SOURCES=Glob("#src/*.cc")
 SDHCALcommon=env.SharedLibrary("#lib/SDHCALcommon",LIBRARY_SOURCES)
 
 #Python module
-MYLIBS=["SDHCALcommon",'pthread',  'm', 'stdc++','boost_system-mt','boost_thread-mt']
+MYLIBS=["SDHCALcommon",'pthread',  'm', 'stdc++',boostsystem,boostthread]
 _SDHCALcommon=env.PythonModule('_LSDHCALcommon', ['LSDHCALcommon.i'],LIBPATH="#lib",LIBS=MYLIBS)
 
 myinc=[]

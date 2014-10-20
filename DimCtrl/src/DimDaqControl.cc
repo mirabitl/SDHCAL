@@ -279,6 +279,43 @@ void DimDaqControl::registerstate(uint32_t ctr,std::string sta)
     }
   g.join_all();
 }
+void DimDaqControl::doSetGain(DimDDSClient* c)
+{
+  c->setGain(theCalibrationGain_);
+}
+void DimDaqControl::setGain(uint32_t ga)
+{
+  theCalibrationGain_=ga;
+
+  //std::cout<<"SETTING DB "<<theState_<<" "<<theCtrlReg_<<std::endl;
+  boost::thread_group g;
+
+  for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)
+    {
+      g.create_thread(boost::bind(&DimDaqControl::doSetGain, this,it->second));
+    }
+  g.join_all();
+}
+
+void DimDaqControl::doSetThresholds(DimDDSClient* c)
+{
+  c->setThresholds(theCalibrationThresholds_[0],theCalibrationThresholds_[1],theCalibrationThresholds_[2]);
+}
+void DimDaqControl::setThresholds(uint32_t b0,uint32_t b1,uint32_t b2)
+{
+  theCalibrationThresholds_[0]=b0;
+  theCalibrationThresholds_[1]=b1;
+  theCalibrationThresholds_[2]=b2;
+
+  //std::cout<<"SETTING DB "<<theState_<<" "<<theCtrlReg_<<std::endl;
+  boost::thread_group g;
+
+  for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)
+    {
+      g.create_thread(boost::bind(&DimDaqControl::doSetThresholds, this,it->second));
+    }
+  g.join_all();
+}
 
 void DimDaqControl::doConfigure(DimDDSClient* c)
 {
