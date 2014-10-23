@@ -675,6 +675,7 @@ void DHCalEventReader::findTimeSeeds(int32_t nasic_min)
   //   std::cout<<" seed " <<(*is)<<" count "<<tcount[(*is)]<<std::endl      ;
   // Merge adjacent seeds
   theTimeSeeds_.clear();
+  
   for (uint32_t i=0;i<seed.size();)
     {
       if ((i+1)<=(seed.size()-1))
@@ -774,7 +775,7 @@ void DHCalEventReader::findTimeSeeds(int32_t nasic_min)
 	  else
 	    theTimeSeeds_.push_back(im->first);
 	}
-      //printf("%s EventMap size %d  \n",__PRETTY_FUNCTION__,thePhysicsEventMap_.size());
+      //printf("%s EventMap size %d seeds %d \n",__PRETTY_FUNCTION__,thePhysicsEventMap_.size(),theTimeSeeds_.size());
 
     }
   return ;

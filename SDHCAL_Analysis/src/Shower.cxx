@@ -6,6 +6,7 @@
 #include <Eigen/Dense>
 #include "TPolyLine3D.h"
 #include "TVirtualPad.h"
+#include "TPrincipal.h"
 using namespace Eigen;
 
 
@@ -505,7 +506,8 @@ void Shower::computePrincipalComponents(std::vector<RecoHit*> &v, double result[
 	double lx=-DBL_MAX;
 	double fy=DBL_MAX;
 	double ly=-DBL_MAX;
-
+	TPrincipal tp(3,"D");
+	double xp[3];
 	memset(result,0,21*sizeof(double));
 	//INFO_PRINT("%d vector size\n",v.size());
 	for (std::vector<RecoHit*>::iterator it=v.begin();it!=v.end();it++)
@@ -519,7 +521,7 @@ void Shower::computePrincipalComponents(std::vector<RecoHit*> &v, double result[
 		int ithr= iht->getAmplitude()&0x3;
 		if (ithr==2) w=1;
 		if (ithr==1) w=1;
-		if (ithr==3) w=2.;
+		if (ithr==3) w=1.; // WAS 2
 		xb+=iht->X()*w;
 		yb+=iht->Y()*w;
 		zb+=iht->Z()*w;
@@ -531,18 +533,24 @@ void Shower::computePrincipalComponents(std::vector<RecoHit*> &v, double result[
 		if (iht->J()<fy) fy=iht->J();
 		if (iht->J()>ly) ly=iht->J();
 		nh++;
+		xp[0]=iht->X();
+		xp[1]=iht->Y();
+		xp[2]=iht->Z();
+		//printf("XP  %f %f %f \n",xp[0],xp[1],xp[2]);
+		tp.AddRow(xp);
 	}
-	
+
 	if (nh<3) return;
+	tp.MakePrincipals();
 	//INFO_PRINT("%d hits\n",nh);
 	Matrix<double,Dynamic,3> m(nh,3);
-	//DEBUG_PRINT("2\n");
+	//INFO_PRINT("2\n");
 	Matrix<double,3,Dynamic> mt(3,nh);
 	Matrix<double,Dynamic,Dynamic> D(nh,nh);
 	for (int i=0;i<nh;i++)
 	for (int j=0;j<nh;j++)
 	D(i,j)=0.;
-	//DEBUG_PRINT("3 %d\n",nh);
+	//INFO_PRINT("3 %d\n",nh);
 	xb=xb/wt;
 	yb=yb/wt;
 	zb=zb/wt;
@@ -636,28 +644,27 @@ void Shower::computePrincipalComponents(std::vector<RecoHit*> &v, double result[
 	}
 #endif	
 	
-	//INFO_PRINT("%d %f\n",nh,wt);
+	//INFO_PRINT("on est la %d %f\n",nh,wt);
 	D *=1./wt;
 	//std::cout<<" Here it is "<<std::endl<<D<<std::endl;
 
 	Matrix<double,Dynamic,Dynamic> V(nh,nh);
 	// Matrix<double,Dynamic,Dynamic> V1(nh,3);
-	//DEBUG_PRINT("5\n");
+	//INFO_PRINT("5\n");
 	//V1= D*m;
 	//std::cout<<" Here it is "<<std::endl<<V1<<std::endl;
-	//DEBUG_PRINT("=6\n");
+	//INFO_PRINT("=6\n");
 	// TEST V=mt*D*m;
-	
 	V=mt*D*m;
 	//std::cout<<" Here it is "<<std::endl<<V<<std::endl;
 	// DEBUG_PRINT("7\n");
 	//V *=1./nh;
 	//std::cout<<" Here it is "<<std::endl<<V<<std::endl;
-
+	//INFO_PRINT("=7\n");
 
 	SelfAdjointEigenSolver< Matrix<double,Dynamic,Dynamic> > eigensolver(V);
 	if (eigensolver.info() != Success) abort();
-	
+	//INFO_PRINT("=8\n");
 	double tae=getHighResolutionTime();
 #ifdef CULA_PRINT
 
@@ -673,12 +680,24 @@ void Shower::computePrincipalComponents(std::vector<RecoHit*> &v, double result[
 		
 	}
 #endif
+	//	std::cout << "The eigenvalues of V are:\n" << eigensolver.eigenvalues() << std::endl;
+	//	std::cout << "Here's a matrix whose columns are eigenvectors of A \n"
+	//	  << "corresponding to these eigenvalues:\n"
+	//	  << eigensolver.eigenvectors() << std::endl;
+	//INFO_PRINT("=9\n");
 	//store eigen values
 	Matrix<double,3,1> va=eigensolver.eigenvalues();
 	result[3]=va(0);
 	result[4]=va(1);
 	result[5]=va(2);
+	double norm=sqrt(va(0)*va(0)+va(1)*va(1)+va(2)*va(2));
+	//INFO_PRINT("eigen results %f %f %f \n",va(0),va(1),va(2));
+	//INFO_PRINT("eigen results %g %g %g \n",va(0)/norm,va(1)/norm,va(2)/norm);
+	const TVectorD* fva=tp.GetEigenValues();
+	//fva->Print();
+	//INFO_PRINT("eigen results %g %g %g \n",(*fva)[0],(*fva)[1],(*fva)[2]);
 
+	//tp.Print("MSEV");
 	// store principal axis
 	Matrix<double,3,3> vv=eigensolver.eigenvectors();
 	result[6]=vv(0,0)*sqrt(result[3]);
@@ -698,6 +717,7 @@ void Shower::computePrincipalComponents(std::vector<RecoHit*> &v, double result[
 	result[18]=lx;
 	result[19]=fy;
 	result[20]=ly;
+	//INFO_PRINT("=11\n");
 #ifdef CULA_PRINT
 	if (nh>100)
 	{

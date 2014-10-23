@@ -45,5 +45,6 @@ private:
 	std::vector<double> dist_;
 	float dmin_[61];
 
+
 };
 #endif

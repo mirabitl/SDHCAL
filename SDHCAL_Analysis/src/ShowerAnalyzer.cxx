@@ -1,3 +1,4 @@
+#define NPLANS_USED 12
 #define NX 36
 #define NY 36
 
@@ -653,13 +654,15 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   tempim.clear();
   // DEBUG_PRINT("Building voulume for %d \n",seed);
   //uint32_t nhits=buildVolume(rhcol,seed);
-
+  //  printf("1");
   uint32_t nhits=buildVolume(seed);
+  if (nhits==0) return;
   //return;
   //DEBUG_PRINT("Edge detection for %d \n",seed);
   //  buildEdges();
   theNplans_=0;
   std::bitset<48> asics[255];
+  //printf("2");
   for (int ii=0;ii<255;ii++) asics[ii].reset();
   theHitVector_.clear();
   for (uint32_t k=0;k<60;k++)
@@ -676,6 +679,7 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
       if (found) theNplans_++;
     }
   //  printf("On a trouve                                    %d hits                    %d plans -> %d \n",theHitVector_.size(),theNplans_,minChambersInTime_);
+  //printf("3");
   if (theNplans_<minChambersInTime_) return;  
   //this->drawHits(theHitVector_);getchar();
   if ( currentTime_<0 || (theBCID_==6873405 && theHitVector_.size()>50 ))
@@ -683,19 +687,21 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
      printf("Number of Hits %d  %d %d\n",theHitVector_.size(),theNplans_,minChambersInTime_);
      this->drawHits(theHitVector_);getchar();
    }
+  if (theNplans_<5) return;  
+  //this->drawHits(theHitVector_);getchar();
 
-
-
-  
+  //printf("4");
   Shower::computePrincipalComponents(theHitVector_,(double*) &ish);
 #undef KEEPTRACK
-#ifndef KEEPTRACK  
+#ifndef KEEPTRACK 
+  //printf("5"); 
   if (true || sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1)
     {
       
       
       this->buildTracks(theHitVector_);
-      if (theComputerTrack_->getCandidates().size()>0 &&false)
+      //  printf("6\n");
+      if (theComputerTrack_->getTracks().size()>0 &&false)
 	{this->drawHits(theHitVector_);getchar();  }
       return;
     }
@@ -769,7 +775,8 @@ uint32_t ShowerAnalyzer::buildVolume(uint32_t seed)
   
 
   uint32_t ncount=0;
- 
+  
+  if (iseed->second.size()>4096) return 0;
   for (std::vector<IMPL::RawCalorimeterHitImpl*>::iterator ihit=iseed->second.begin();ihit!=iseed->second.end();ihit++)
     {
       IMPL::RawCalorimeterHitImpl* hit =(*ihit);
@@ -804,6 +811,8 @@ uint32_t ShowerAnalyzer::buildVolume(uint32_t seed)
       std::map<unsigned int,ChamberGeom>::iterator icg = reader_->getChamberMap().find( chid);
       ChamberGeom& chgeom = icg->second;
       //printf("Hit beeing filled %d %d %d\n",chid-1,I-1,J-1);
+      chgeom.setZ(reader_->getPosition(chid).getZ0());
+
       hitVolume_[chid-1][I-1][J-1].initialise(difgeom,chgeom,hit,hrtype);
 
       ncount++;
@@ -1463,8 +1472,9 @@ void ShowerAnalyzer::processEvent()
   //    rootHandler_->writeXML(theMonitoringPath_);
  
 
-  reader_->findTimeSeeds(3);
-  std::vector<uint32_t>& vseeds=reader_->getTimeSeeds();
+  reader_->findTimeSeeds(4);
+
+  std::vector<uint32_t> vseeds=reader_->getTimeSeeds();
 
   if ((evt_->getEventNumber()==65 || evt_->getEventNumber()==67 ||evt_->getEventNumber()==77 ) && false)
     {
@@ -1510,9 +1520,11 @@ void ShowerAnalyzer::processEvent()
  
   theNbShowers_=0;
   theNbTracks_=0;
-  for (std::vector<uint32_t>::iterator is=vseeds.begin();is!=vseeds.end();is++)
+  for (uint32_t is=0;is<vseeds.size();is++)
     {
-      this->processSeed(rhcol,(*is));
+
+      this->processSeed(rhcol,vseeds[is]);
+
     }
 
   //if (rhcoltransient) delete rhcol;return;  
@@ -1547,6 +1559,7 @@ void ShowerAnalyzer::processEvent()
   //etchar();
 
   if (rhcoltransient) delete rhcol;
+
   return;
   
   if (nAnalyzed_==0)
@@ -9065,7 +9078,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
   for (std::vector<RecoHit*>::iterator ih=vrh.begin();ih<vrh.end();ih++)
     {
       //printf("Hit plan = %d %d \n",(*ih)->chamber(),(*ih)->plan());
-      if ((*ih)->getFlag(RecoHit::CORE)==1) continue;
+      //      if ((*ih)->getFlag(RecoHit::CORE)==1) continue;
       bool merged=false;
       for (std::vector<RECOCluster*>::iterator ic=realc.begin();ic!=realc.end();ic++)
 	{
@@ -9078,6 +9091,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
       realc.push_back(c);
       clusters.push_back(c);
     }
+  /*
   uint32_t fpi=99,lpi=0;
   for (std::vector<RecoHit*>::iterator ih=vrh.begin();ih<vrh.end();ih++)
     {
@@ -9125,7 +9139,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	      if (fpi>ch) fpi=ch;
 	}
 
-
+  */
    
    
    // 2D draw of Hits and real clusters
@@ -9154,32 +9168,19 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
       nstub++;
     }
   //  theComputerTrack_->associate(nstub,h_x,h_y,h_z,h_layer);
-  theComputerTrack_->telescope(nstub,h_x,h_y,h_z,h_layer,8);
+  theComputerTrack_->telescope(nstub,h_x,h_y,h_z,h_layer,NPLANS_USED);
  
 
-  if (theComputerTrack_->getCandidates().size()>0) theNbTracks_++;
+  if (theComputerTrack_->getTracks().size()>0) theNbTracks_++;
   uint32_t nmip=0;
-   for (unsigned int i=0;i<theComputerTrack_->getCandidates().size();i++)
+   for (unsigned int i=0;i<theComputerTrack_->getTracks().size();i++)
 	{
-	  RecoCandTk& tk = theComputerTrack_->getCandidates()[i];
-	  uint32_t nptot=0;
-	  for (uint32_t ipe=1;ipe<128;ipe++)
-	    {
-	      
-	      if (tk.planes_[ipe]) nptot++;
-	    }
-	  //std::cout<<tk.planes_<<std::endl;
-	  printf("Track cand tk: %f %f %f %f ZMIN %f ZMAX %f %d \n",tk.ax_,tk.bx_,tk.ay_,tk.by_,tk.zmin_,tk.zmax_,nptot);
-	  if (nptot<4) continue;
-#undef SCALEFACTOR
-#ifdef SCALEFACTOR
-	  tk.ax_/=1.04125;
-	  tk.bx_/=1.04125;
-	  tk.ay_/=1.04125;
-	  tk.by_/=1.04125;
-#endif
-	  uint32_t fch=int(ceil(tk.zmin_*10))/28+1;
-	  uint32_t lch=int(ceil(tk.zmax_*10))/28+1;
+	  TrackInfo& tk = theComputerTrack_->getTracks()[i];
+	  if (tk.size()<5) continue;
+	  // this->draw(tk);
+	  //char c;c=getchar();putchar(c); if (c=='.') exit(0);
+	  uint32_t fch=int(ceil(tk.zmin()*10))/28+1;
+	  uint32_t lch=int(ceil(tk.zmax()*10))/28+1;
 
 
 	  //getchar();
@@ -9206,8 +9207,8 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	  //	 cp.getId(),cp.getX0(),cp.getY0(),cp.getZ0(),cp.getX1(),cp.getY1(),cp.getZ1(),cp.getXsize(),cp.getYsize());
 	      double x,y,z;
 	      cp.calculateGlobal((*ic)->X(),(*ic)->Y(),x,y,z);
-	      float dx=tk.getXext(z)-x;
-	      float dy=tk.getYext(z)-y;
+	      float dx=tk.xext(z)-x;
+	      float dy=tk.yext(z)-y;
 	      if (sqrt(dx*dx+dy*dy)<2.)
 		{
 		  //printf("Point (%f,%f,%f) dist %f %f -> %f  \n",(*ic)->X(),(*ic)->Y(),(*ic)->Z(),dx,dy,sqrt(dx*dx+dy*dy));
@@ -9237,23 +9238,19 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	       hay=  rootHandler_->BookTH1("/Track/ay",100,-2.,2.);
 
 	    }
-	  hnp->Fill(tk.np_*1.);
-	  hax->Fill(tk.ax_);
-	  hay->Fill(tk.ay_);
-	  fch=0;lch=9;
+	  hnp->Fill(tk.size()*1.);
+	  hax->Fill(tk.ax());
+	  hay->Fill(tk.ay());
+	  fch=0;lch=NPLANS_USED;
 	  //	  std::cout<<tk.planes_<<std::endl;
 	  //getchar();
 	  for (uint32_t ip=fch+1;ip<lch;ip++)
 	    {
 	      
-	      uint32_t npext=0;
-	      for (uint32_t ipe=fch+1;ipe<lch;ipe++)
-		{
-		  if (ipe==ip) continue;
-		  if (tk.planes_[ipe]) npext++;
-		}
-	      //printf("Plan %d = Tk %d NPEXT %d \n",ip,tk.np_,npext);
-	      if (npext<4) continue; // Au moins 3 plans touches 
+	      TrackInfo tex;
+	      tk.exclude_layer(ip,tex);
+	      uint32_t npext=tex.size();
+	      if (npext<5) continue; // Au moins 3 plans touches 
 
 	      std::stringstream s;
 	      s<<"/Plan"<<ip<<"/";
@@ -9266,14 +9263,14 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	      TH1* hdx= rootHandler_->GetTH1(s.str()+"dx");
 	      TH1* hdy= rootHandler_->GetTH1(s.str()+"dy");
 	      float dz0=0.,distz=60.; // 2.8
-	      float xext=tk.getXext(dz0+(ip-1)*distz);
-	      float yext =tk.getYext(dz0+(ip-1)*distz);
+	      float xext=tex.xext(dz0+(ip-1)*distz);
+	      float yext =tex.xext(dz0+(ip-1)*distz);
 	       std::map<uint32_t,ChamberPos>& pos= reader_->getPositionMap();
 	      for (std::map<uint32_t,ChamberPos>::iterator ich=pos.begin();ich!=pos.end();ich++)
 		{
 		  if ((*ich).second.getPlan()!=ip) continue;
-		   xext=tk.getXext((*ich).second.getZ0());
-		   yext =tk.getYext((*ich).second.getZ0());
+		   xext=tex.xext((*ich).second.getZ0());
+		   yext =tex.yext((*ich).second.getZ0());
 		   break;
 		}
 	      if (hext==NULL)
@@ -9294,13 +9291,13 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 		      
 		    }
 
-		  hext= rootHandler_->BookTH2(s.str()+"ext",17,xi,xa,17,yi,ya);
-		  hfound= rootHandler_->BookTH2(s.str()+"found",17,xi,xa,17,yi,ya);
+		  hext= rootHandler_->BookTH2(s.str()+"ext",33,xi,xa,33,yi,ya);
+		  hfound= rootHandler_->BookTH2(s.str()+"found",33,xi,xa,33,yi,ya);
 		  int nx=int(xa-xi)/4;
 		  int ny=int(ya-yi)/4;
 		  hnear= rootHandler_->BookTH2(s.str()+"near",nx,xi,xa,ny,yi,ya);
-		  hfound1= rootHandler_->BookTH2(s.str()+"found1",17,xi,xa,17,yi,ya);
-		  hfound2= rootHandler_->BookTH2(s.str()+"found2",17,xi,xa,17,yi,ya);
+		  hfound1= rootHandler_->BookTH2(s.str()+"found1",33,xi,xa,33,yi,ya);
+		  hfound2= rootHandler_->BookTH2(s.str()+"found2",33,xi,xa,33,yi,ya);
 		  hdx=  rootHandler_->BookTH1(s.str()+"dx",100,-8.,8.);
 		  hdy=  rootHandler_->BookTH1(s.str()+"dy",100,-8.,8.);
 		}
@@ -9318,10 +9315,10 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	  //	 cp.getId(),cp.getX0(),cp.getY0(),cp.getZ0(),cp.getX1(),cp.getY1(),cp.getZ1(),cp.getXsize(),cp.getYsize());
 		  double x,y,z;
 		  cp.calculateGlobal((*ic)->X(),(*ic)->Y(),x,y,z);
-		  xext=tk.getXext(z);
-		  yext=tk.getYext(z);
-		  float dx=tk.getXext(z)-x;
-		  float dy=tk.getYext(z)-y;
+		  xext=tex.xext(z);
+		  yext=tex.yext(z);
+		  float dx=xext-x;
+		  float dy=yext-y;
 		  //printf(" (%f,%f,%f) %f %f \n",x,y,z,tk.getXext(z),tk.getYext(z));
 		  //getchar();
 		  if (sqrt(dx*dx+dy*dy)<dist)
@@ -9342,7 +9339,8 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 		    }
 
 		}
-	      if (dist<6.)
+	      // Cut a 1.5 au lieu de 6
+	      if (dist<1.5)
 		{
 		  hdx->Fill(dxi);
 		  hdy->Fill(dyi);
@@ -9369,4 +9367,75 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
    free(h_z);
    free(h_layer);
    return nshower;
+}
+void ShowerAnalyzer::draw(TrackInfo& t)
+{
+
+
+  TH3* hcgposi = rootHandler_->GetTH3("InstantTkMap");
+  TH2* hasic2=rootHandler_->GetTH2("DIFAsicCount");
+  if (hcgposi==NULL)
+    {
+      hcgposi =rootHandler_->BookTH3("InstantTkMap",66,0.,100.,150,-50.,150.,200,-50.,150.);
+    }
+  else
+    {
+      hcgposi->Reset();
+    }
+
+  if (hcgposi!=0 )
+    {
+      hcgposi->Reset();
+      for (int ip=0;ip<t.size();ip++)
+	{
+	  //if (allpoints_[i].Charge()<7) continue;
+	  hcgposi->Fill(t.z(ip),t.x(ip),t.y(ip));//(*ih)->Z(),(*ih)->X(),(*ih)->Y());
+	  printf("%d %f %f %f \n",ip,t.z(ip),t.x(ip),t.y(ip));
+	}
+
+
+      if (TCHits==NULL)
+	{
+	  TCHits=new TCanvas("TCHits","test1",1300,600);
+	  TCHits->Modified();
+	  TCHits->Draw();
+	  TCHits->Divide(2,2);
+	}
+      TCHits->cd(1);
+      hcgposi->SetMarkerStyle(25);
+      hcgposi->SetMarkerColor(kRed);
+      hcgposi->Draw("P");
+
+      TCHits->cd(2);
+      TProfile2D* hpy1=hcgposi->Project3DProfile("zx");
+      hpy1->SetLineColor(kGreen);
+		
+
+      hpy1->Draw("BOX");
+
+      TLine* l = new TLine(-1.,t.yext(-1.),101.,t.yext(101));
+      l->SetLineColor(2);
+      l->Draw("SAME");
+
+
+
+      TCHits->cd(3);
+      TProfile2D* hpy2=hcgposi->Project3DProfile("yx");
+      hpy2->SetLineColor(kBlue);
+		
+
+      hpy2->Draw("BOX");
+
+      TLine* l1 = new TLine(-1.,t.xext(-1.),101.,t.xext(101));
+      l1->SetLineColor(2);
+      l1->Draw("SAME");
+
+
+      TCHits->Modified();
+      TCHits->Draw();
+      TCHits->Update();
+    }
+
+
+
 }

@@ -66,6 +66,7 @@ public:
 
 	bool decodeTrigger(LCCollection* rhcol, double tcut);
 	void drawHits(std::vector<RecoHit*> vrh);
+	void draw(TrackInfo& t);
   
 	void trackHistos();
 	void findTracks();
