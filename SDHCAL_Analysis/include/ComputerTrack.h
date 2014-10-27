@@ -41,6 +41,7 @@ public:
   void DefaultCuts();
   void associate(uint32_t nstub,float* x,float* y,float* z,uint32_t* layer);
   void telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t* layer,uint32_t nplans);
+  void muonFinder(uint32_t nstub,float* x,float* y,float* z,uint32_t* layer);
 
   std::vector<RecoCandTk> &getCandidates(){return theCandidateVector_;}
   std::vector<TrackInfo> &getTracks(){return theTrackVector_;}

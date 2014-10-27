@@ -687,7 +687,7 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
      printf("Number of Hits %d  %d %d\n",theHitVector_.size(),theNplans_,minChambersInTime_);
      this->drawHits(theHitVector_);getchar();
    }
-  if (theNplans_<5) return;  
+  //if (theNplans_<5) return;  
   //this->drawHits(theHitVector_);getchar();
 
   //printf("4");
@@ -9168,7 +9168,8 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
       nstub++;
     }
   //  theComputerTrack_->associate(nstub,h_x,h_y,h_z,h_layer);
-  theComputerTrack_->telescope(nstub,h_x,h_y,h_z,h_layer,NPLANS_USED);
+  //theComputerTrack_->telescope(nstub,h_x,h_y,h_z,h_layer,NPLANS_USED);
+  theComputerTrack_->muonFinder(nstub,h_x,h_y,h_z,h_layer);
  
 
   if (theComputerTrack_->getTracks().size()>0) theNbTracks_++;
@@ -9176,8 +9177,8 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
    for (unsigned int i=0;i<theComputerTrack_->getTracks().size();i++)
 	{
 	  TrackInfo& tk = theComputerTrack_->getTracks()[i];
-	  if (tk.size()<5) continue;
-	  // this->draw(tk);
+	  if (tk.size()<3) continue;
+	  //this->draw(tk);
 	  //char c;c=getchar();putchar(c); if (c=='.') exit(0);
 	  uint32_t fch=int(ceil(tk.zmin()*10))/28+1;
 	  uint32_t lch=int(ceil(tk.zmax()*10))/28+1;
@@ -9229,13 +9230,15 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 
 	  // Track info
 	  TH1* hnp= rootHandler_->GetTH1("/Track/Npoints");
+	  TH1* hnpl= rootHandler_->GetTH1("/Track/Nplanes");
 	  TH1* hax= rootHandler_->GetTH1("/Track/ax");
 	  TH1* hay= rootHandler_->GetTH1("/Track/ay");
 	  if (hnp==NULL)
 	    {
 	       hnp=  rootHandler_->BookTH1("/Track/Npoints",51,-0.1,50.9);
-	       hax=  rootHandler_->BookTH1("/Track/ax",100,-2.,2.);
-	       hay=  rootHandler_->BookTH1("/Track/ay",100,-2.,2.);
+	       hnpl=  rootHandler_->BookTH1("/Track/Nplanes",51,-0.1,50.9);
+	       hax=  rootHandler_->BookTH1("/Track/ax",200,-5.,5.);
+	       hay=  rootHandler_->BookTH1("/Track/ay",200,-5.,5.);
 
 	    }
 	  hnp->Fill(tk.size()*1.);
@@ -9250,7 +9253,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	      TrackInfo tex;
 	      tk.exclude_layer(ip,tex);
 	      uint32_t npext=tex.size();
-	      if (npext<5) continue; // Au moins 3 plans touches 
+	      if (npext<3) continue; // Au moins 4 plans dans l'estrapolation touches 
 
 	      std::stringstream s;
 	      s<<"/Plan"<<ip<<"/";
@@ -9290,16 +9293,16 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 		      if ((*ich).second.getY1()>ya) ya= (*ich).second.getY1();
 		      
 		    }
+		  int nx=int(xa-xi)+1;
+		  int ny=int(ya-yi)+1;
 
-		  hext= rootHandler_->BookTH2(s.str()+"ext",33,xi,xa,33,yi,ya);
-		  hfound= rootHandler_->BookTH2(s.str()+"found",33,xi,xa,33,yi,ya);
-		  int nx=int(xa-xi)/4;
-		  int ny=int(ya-yi)/4;
+		  hext= rootHandler_->BookTH2(s.str()+"ext",nx,xi,xa,ny,yi,ya);
+		  hfound= rootHandler_->BookTH2(s.str()+"found",nx,xi,xa,ny,yi,ya);
 		  hnear= rootHandler_->BookTH2(s.str()+"near",nx,xi,xa,ny,yi,ya);
-		  hfound1= rootHandler_->BookTH2(s.str()+"found1",33,xi,xa,33,yi,ya);
-		  hfound2= rootHandler_->BookTH2(s.str()+"found2",33,xi,xa,33,yi,ya);
-		  hdx=  rootHandler_->BookTH1(s.str()+"dx",100,-8.,8.);
-		  hdy=  rootHandler_->BookTH1(s.str()+"dy",100,-8.,8.);
+		  hfound1= rootHandler_->BookTH2(s.str()+"found1",nx,xi,xa,ny,yi,ya);
+		  hfound2= rootHandler_->BookTH2(s.str()+"found2",nx,xi,xa,ny,yi,ya);
+		  hdx=  rootHandler_->BookTH1(s.str()+"dx",400,-4.,4.);
+		  hdy=  rootHandler_->BookTH1(s.str()+"dy",400,-4.,4.);
 		}
 	   
 	      hext->Fill(xext,yext);
@@ -9319,12 +9322,14 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 		  yext=tex.yext(z);
 		  float dx=xext-x;
 		  float dy=yext-y;
-		  //printf(" (%f,%f,%f) %f %f \n",x,y,z,tk.getXext(z),tk.getYext(z));
+
+		  double dap=tex.closestApproach(x,y,z);
+		  // printf(" (%f,%f,%f) %f %f \n",x,y,z,dap,sqrt(dx*dx+dy*dy));
 		  //getchar();
-		  if (sqrt(dx*dx+dy*dy)<dist)
+		  if (dap<dist)
 		    {
 		      
-		      dist=sqrt(dx*dx+dy*dy);
+		      dist=dap;
 		      dxi=dx;
 		      dyi=dy;
 		      xn=x;
@@ -9372,11 +9377,12 @@ void ShowerAnalyzer::draw(TrackInfo& t)
 {
 
 
-  TH3* hcgposi = rootHandler_->GetTH3("InstantTkMap");
-  TH2* hasic2=rootHandler_->GetTH2("DIFAsicCount");
+  TH3* hcgposi = NULL;
+
   if (hcgposi==NULL)
     {
-      hcgposi =rootHandler_->BookTH3("InstantTkMap",66,0.,100.,150,-50.,150.,200,-50.,150.);
+      hcgposi =rootHandler_->BookTH3("InstantTkMap",66,t.zmin()-10.,t.zmax()+10,150,-50.,150.,200,-50.,150.);
+      printf("Booking %f %f \n",t.zmin()-10.,t.zmax()+10);
     }
   else
     {
@@ -9394,46 +9400,47 @@ void ShowerAnalyzer::draw(TrackInfo& t)
 	}
 
 
-      if (TCHits==NULL)
+      if (TCHT==NULL)
 	{
-	  TCHits=new TCanvas("TCHits","test1",1300,600);
-	  TCHits->Modified();
-	  TCHits->Draw();
-	  TCHits->Divide(2,2);
+	  TCHT=new TCanvas("TCHT","test1",1300,600);
+	  TCHT->Modified();
+	  TCHT->Draw();
+	  TCHT->Divide(2,2);
 	}
-      TCHits->cd(1);
+      TCHT->cd(1);
       hcgposi->SetMarkerStyle(25);
       hcgposi->SetMarkerColor(kRed);
       hcgposi->Draw("P");
 
-      TCHits->cd(2);
+      TCHT->cd(2);
       TProfile2D* hpy1=hcgposi->Project3DProfile("zx");
       hpy1->SetLineColor(kGreen);
 		
 
       hpy1->Draw("BOX");
 
-      TLine* l = new TLine(-1.,t.yext(-1.),101.,t.yext(101));
+      TLine* l = new TLine(t.zmin(),t.yext(t.zmin()),t.zmax(),t.yext(t.zmax()));
       l->SetLineColor(2);
       l->Draw("SAME");
 
 
 
-      TCHits->cd(3);
+      TCHT->cd(3);
       TProfile2D* hpy2=hcgposi->Project3DProfile("yx");
       hpy2->SetLineColor(kBlue);
 		
 
       hpy2->Draw("BOX");
 
-      TLine* l1 = new TLine(-1.,t.xext(-1.),101.,t.xext(101));
+
+      TLine* l1 = new TLine(t.zmin(),t.xext(t.zmin()),t.zmax(),t.xext(t.zmax()));
       l1->SetLineColor(2);
       l1->Draw("SAME");
 
 
-      TCHits->Modified();
-      TCHits->Draw();
-      TCHits->Update();
+      TCHT->Modified();
+      TCHT->Draw();
+      TCHT->Update();
     }
 
 

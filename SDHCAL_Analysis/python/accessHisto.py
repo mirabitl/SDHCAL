@@ -26,11 +26,11 @@ def printBad(fn,gain):
           for ichan in range(1,65):
             #print hfreq.GetBinContent(ichan)
 
-            if (hfreq.GetBinContent(ichan)>10):
+            if (hfreq.GetBinContent(ichan)>15):
               gcut=gain
-              if  (hfreq.GetBinContent(ichan)>20):
+              if  (hfreq.GetBinContent(ichan)>30):
                 gcut=gain/2
-              if  (hfreq.GetBinContent(ichan)>40):
+              if  (hfreq.GetBinContent(ichan)>60):
                 gcut=gain/4
 
               fdir="DIF%d/Asic%d" % (idif,iasic)
@@ -53,6 +53,19 @@ def printBad(fn,gain):
                 fchan.write('%d\n' % gcut)
                 fchan.close()
 
+def FeelBad():
+  hnoise=TH1F("noise","noise",10000,0.,100.)
+  vl=getmaindir()
+  for idif in range(1,255):
+    if ('DIF%d' % idif) in vl: 
+      for iasic in range(1,49):
+        hfreq=getth1('/DIF%d/Asic%d/Frequency' % (idif,iasic))
+        if (hfreq != None):
+          #print hfreq.GetName()
+          for ichan in range(1,65):
+            #print hfreq.GetBinContent(ichan)
+            hnoise.Fill(hfreq.GetBinContent(ichan))
+  return hnoise
 
 def getmaindir():
   vdir=[]
@@ -195,9 +208,9 @@ def GetEff(plan):
   hext.Draw("TEXT")
   
   hnear.Draw("TEXT")
- 
-  #hext.Rebin2D(2,2)
-  #hnear.Rebin2D(2,2)
+  if (hext.GetEntries()<1E6):
+    hext.Rebin2D(2,2)
+    hnear.Rebin2D(2,2)
   heff = hnear.Clone("heff")
   heff.SetDirectory(0)
   heff.Divide(hnear,hext,100.,1.)
@@ -213,7 +226,7 @@ def GetEff(plan):
     for j in range(2,heff.GetYaxis().GetNbins()-1):
       st = st + '%f ' % heff.GetBinContent(i+1,j+1)
       ntk=ntk+hext.GetBinContent(i+1,j+1)
-      if (hext.GetBinContent(i+1,j+1)>10):
+      if (hext.GetBinContent(i+1,j+1)>20):
         heffsum.Fill(heff.GetBinContent(i+1,j+1))
   #print '%s' % st
   l.append(heffsum)

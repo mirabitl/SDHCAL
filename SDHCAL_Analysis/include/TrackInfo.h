@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-class TrackInfo
+#include "Droite3D.h"
+class TrackInfo : public Droite3D
 {
  public:
   inline double ax(){return ax_;}
@@ -42,9 +43,20 @@ class TrackInfo
   inline void set_y(uint8_t i,double y){y_[i]=y;}
   inline void set_z(uint8_t i,double z){z_[i]=z;}
   inline void set_layer(uint8_t i,uint32_t l){layer_[i]=l;}
+  inline void clear(){np_=0;ax_=bx_=ay_=by_=chi2x_=chi2y_=zmin_=zmax_=0;
+    memset(layer_,0,TK_MAX_POINT*sizeof(uint32_t));
+    memset(x_,0,TK_MAX_POINT*sizeof(double));
+    memset(y_,0,TK_MAX_POINT*sizeof(double));
+    memset(z_,0,TK_MAX_POINT*sizeof(double));
+    
+  }
+  inline void add_point(double x,double y,double z,uint32_t l){x_[np_]=x;y_[np_]=y;z_[np_]=z;layer_[np_]=l;np_++;}
 
   void regression();
   void exclude_layer(uint32_t layer,TrackInfo& ti);
+  virtual double m(int i);
+  virtual double v(int i);
+  double closestApproach(double x,double y,double z);
  private:
   uint32_t np_;
   uint32_t layer_[TK_MAX_POINT];

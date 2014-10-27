@@ -1,8 +1,59 @@
 #include "TrackInfo.h"
+double TrackInfo::v(int i)
+{
+  switch (i)
+    {
+    case 0:
+      return ax_;
+    case 1:
+      return ay_;
+    case 2:
+      return 1;
+    default:
+      return 999999;
+    }
+}
+double TrackInfo::m(int i)
+{
+  switch (i)
+    {
+    case 0:
+      return bx_;
+    case 1:
+      return by_;
+    case 2:
+      return 0;
+    default:
+      return 999999;
+    }
+}
+double TrackInfo::closestApproach(double x,double y,double z)
+{
+  //
+  double m0m1[3];
+  // printf("1 %f %f %f \n",this->m(0),this->m(1),this->m(2));getchar();
+  //printf("1 %f %f %f \n",this->v(0),this->v(1),this->v(2));getchar();
+  m0m1[0]=this->m(0)-x;
+  m0m1[1]=this->m(1)-y;
+  m0m1[2]=this->m(2)-z;
+  //printf("2");
+  // produit direct
+  double v0v1[3];
+  v0v1[0]=m0m1[1]*this->v(2)-m0m1[2]*this->v(1);
+  v0v1[1]=m0m1[2]*this->v(0)-m0m1[0]*this->v(2);
+  v0v1[2]=m0m1[0]*this->v(1)-m0m1[1]*this->v(0);
+  // printf("3");
+  double norm_v0v1=sqrt(v0v1[0]*v0v1[0]+v0v1[1]*v0v1[1]+v0v1[2]*v0v1[2]);
+  double norm_v1=sqrt(this->v(0)*this->v(0)+this->v(1)*this->v(1)+this->v(2)*this->v(2));
+  // printf("4");
+  return norm_v0v1/norm_v1;
+  
+}
 void TrackInfo::regression()
 {
 
-  double z2=0,z=0,zy=0,y=0,zx=0,x=0,w=0,zmin_=0,zmax_=0;
+  double z2=0,z=0,zy=0,y=0,zx=0,x=0,w=0;
+  zmin_=9999.;zmax_=0;
   if (np_<2) return;
   for (uint32_t i=0;i<np_;i++)
     {
@@ -44,22 +95,11 @@ void TrackInfo::regression()
 }
 void TrackInfo::exclude_layer(uint32_t layer,TrackInfo& ti)
 {
-  memset(&ti,0,sizeof(TrackInfo));
-  uint32_t np=0;
-  double zmin=9999999.,zmax=-9999999;
+  ti.clear();
   for (uint32_t i=0;i<np_;i++)
     {
       if (layer_[i]==layer) continue;
-      ti.set_z(np,z_[i]);
-      ti.set_x(np,x_[i]);
-      ti.set_y(np,y_[i]);
-      ti.set_layer(np,layer_[i]);
-      if (z_[i]<zmin) zmin=z_[i];
-      if (z_[i]>zmax) zmax=z_[i];
-      np++;
+      ti.add_point(x_[i],y_[i],z_[i],layer_[i]);
     }
-  ti.set_size(np);
-  ti.set_zmin(zmin);
-  ti.set_zmax(zmax);
   ti.regression();
 }

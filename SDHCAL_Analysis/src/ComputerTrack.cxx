@@ -36,6 +36,117 @@ void ComputerTrack::DefaultCuts()
   theCuts_->NLayerHigh=5;
   theCuts_->NStubHighCandidate=5;
 }
+void ComputerTrack::muonFinder(uint32_t nstub,float* x,float* y,float* z,uint32_t* layer)
+{
+  theTrackVector_.clear();
+  // Look for first and last plane
+  int32_t fpl=9999,lpl=-1;
+  for (int i=0;i<nstub;i++)
+    {
+      if (layer[i]<fpl) fpl=layer[i];
+      if (layer[i]>fpl) lpl=layer[i];
+    }
+  int nplans=lpl-fpl+1;
+  if (nplans<3) return;
+
+
+  std::vector<TrackInfo> tracks;
+  /*
+  std::map<uint32_t,std::vector<GeoPoint> > chmap;
+  for (uint32_t i=0;i<nstub;i++)
+    {
+      if (layer[i]>nplans) continue;
+      GeoPoint p(layer[i],x[i],y[i],z[i]);
+      // printf("%d %d %f %f %f \n",i,layer[i],x[i],y[i],z[i]);
+      p.setUsed(false);
+      std::map<uint32_t,std::vector<GeoPoint> >::iterator ich=chmap.find(layer[i]);
+      if (ich==chmap.end())
+	{
+	  std::vector<GeoPoint> v;
+	  v.push_back(p);
+	  std::pair<uint32_t,std::vector<GeoPoint> > pm(layer[i],v);
+	  chmap.insert(pm);
+	}
+      else
+	ich->second.push_back(p);
+    }
+  */
+  bool used[1024];memset(used,0,1024*sizeof(bool));
+  for (uint32_t ip1=fpl;ip1<lpl;ip1++)
+    {
+      for (uint32_t ip2=ip1+1;ip2<lpl;ip2++)
+	{
+
+	  for (uint32_t i=0;i<nstub;i++)
+	    {
+	      if (used[i]) continue;
+	      if (layer[i]!=ip1) continue;
+
+	    
+	      for (uint32_t j=0;j<nstub;j++)
+		{
+		  if (used[j]) continue;
+		  if (layer[j]!=ip2) continue;
+		  TrackInfo t;
+		  t.clear();
+
+		  t.add_point(x[i],y[i],z[i],layer[i]);
+		  t.add_point(x[j],y[j],z[j],layer[j]);
+
+
+		  t.regression();
+		  //printf(" (%d,%f,%f,%f)  (%d,%f,%f,%f) ==> %f %f %f %f  \n",layer[i],x[i],y[i],z[i],layer[j],x[j],y[j],z[j],t.ax_,t.bx_,t.ay_,t.by_);
+		  for (uint32_t k=0;k<nstub;k++)
+		    {
+		      if (used[k]) continue;
+		      if (layer[k]==ip1) continue;
+		      if (layer[k]==ip2) continue;
+		      
+		      if (abs(t.closestApproach(x[k],y[k],z[k]))<2.)
+			{
+			  // 3 hits on tag
+			  used[i]=true;
+			  used[j]=true;
+			  used[k]=true;
+			  t.add_point(x[k],y[k],z[k],layer[k]);
+			  t.regression();
+			}
+		    }
+		  
+		  if (t.size()>=3)
+		    {
+		      //t.tagPoints();
+		      tracks.push_back(t);
+		    }
+		}
+	    }
+	}
+    }
+  theTrackVector_.clear();
+  for (std::vector<TrackInfo>::iterator itk=tracks.begin();itk!=tracks.end();itk++)
+    {
+      if (itk->size()<3) {
+	//printf("small tk %ld \n",itk->getList().size());
+	continue;
+      }
+      itk->regression();
+      //printf("tracks %d %f %f \n",itk->getList().size(),itk->zmin_,itk->zmax_);
+      float xmin=itk->xext(itk->zmin());
+      float xmax=itk->xext(itk->zmax());
+      float ymin=itk->yext(itk->zmin());
+      float ymax=itk->yext(itk->zmax());
+      float l=sqrt((xmax-xmin)*(xmax-xmin)+(ymax-ymin)*(ymax-ymin)+(itk->zmax()-itk->zmin())*(itk->zmax()-itk->zmin()));
+      //printf(" l %f \n ",l);
+      theLength_+=l;
+      //itk->Print();
+      theTrackVector_.push_back((*itk));
+    }
+
+}
+
+
+
+
 void ComputerTrack::telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t* layer,uint32_t nplans)
 {
 

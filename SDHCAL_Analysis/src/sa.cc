@@ -94,11 +94,12 @@ int main(int argc, char** argv ){
 
 
   dher.ParseSteering("m3_sep14.xml");
-
+  //dher.ParseSteering("tomuvol_agm14.xml");
+ 
 #define USESTREAM
 #ifdef USESTREAM
   ShowerAnalyzer *a= new ShowerAnalyzer( &dher,&rootHandler);
-  a->setminChambersInTime(4);
+  a->setminChambersInTime(3);
   //RawAnalyzer *ar= new RawAnalyzer();
   //StripAnalyzer *as= new StripAnalyzer();
   //a->setrebuild(rebuild);
