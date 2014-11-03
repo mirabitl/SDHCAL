@@ -53,10 +53,10 @@ public:
 
   void infoHandler();
 
-  void setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,unsigned char* ConfigHR2);
-  void setGain(uint32_t gain,unsigned char* ConfigHR2);
-  void setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,DIFDbInfo s);
-  void setGain(uint32_t gain,DIFDbInfo s);
+  void setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,SingleHardrocV2ConfigurationFrame& ConfigHR2);
+  void setGain(uint32_t gain,SingleHardrocV2ConfigurationFrame& ConfigHR2);
+  void setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,DIFDbInfo& s);
+  void setGain(uint32_t gain,DIFDbInfo& s);
   void setThreshold(uint32_t B0,uint32_t B1,uint32_t B2);
   void setGain(uint32_t gain);
 

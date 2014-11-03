@@ -631,7 +631,7 @@ void DimDIFServer::commandHandler()
     {
       uint32_t gain=currCmd->getInt();
       this->setGain(gain);
-       aliveService_->updateService();
+      aliveService_->updateService();
     }
   if (currCmd==thresholdCommand_)
     {
@@ -722,12 +722,13 @@ void  DimDIFServer::infoHandler( )
     for (int i=0;i<255;i++)
       {
 	if (curr!=theDBDimInfo_[i]) continue;
-	memcpy(&theDIFDbInfo_[i],curr->getData(),curr->getSize());
+	memcpy(&theDIFDbInfo_[i],curr->getData(),sizeof(DIFDbInfo));
 	printf("Dim info read %d %d \n",theDIFDbInfo_[i].id,theDIFDbInfo_[i].nbasic);
       }
 }
-void DimDIFServer::setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,unsigned char* ConfigHR2)
+void DimDIFServer::setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,SingleHardrocV2ConfigurationFrame& ConfigHR2)
 {
+  printf(" Seuil %d %d %d %x %x %x %x %x\n",B0,B1,B2,ConfigHR2[3],ConfigHR2[4],ConfigHR2[5],ConfigHR2[6],ConfigHR2[7]);
   ConfigHR2[3]= ((B2>>2)&0xFF);
   ConfigHR2[4]= 0;
   ConfigHR2[4]|=((B2&0x03)<<6);
@@ -737,19 +738,25 @@ void DimDIFServer::setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,unsigned cha
   ConfigHR2[5]|=((B0>>6)&0x0F);
   ConfigHR2[6]&=0x3;
   ConfigHR2[6]|=((B0&0x3F)<<2);
+  printf(" Apres %d %d %d %x %x %x %x %x \n",B0,B1,B2,ConfigHR2[3],ConfigHR2[4],ConfigHR2[5],ConfigHR2[6],ConfigHR2[7]);
 }
-void DimDIFServer::setGain(uint32_t gain,unsigned char* ConfigHR2)
+void DimDIFServer::setGain(uint32_t gain,SingleHardrocV2ConfigurationFrame& ConfigHR2)
 {
+ 
  for (uint32_t ip=0;ip<64;ip++)
-    ConfigHR2[100-ip]|=(gain&0xFF);
+   ConfigHR2[100-ip]=(gain&0xFF); // Pas |=
 }
 
-void DimDIFServer::setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,DIFDbInfo s)
+void DimDIFServer::setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,DIFDbInfo& s)
 {
+  printf(" DIF %d \n",s.id);
   for (int i=0;i<s.nbasic;i++)
-    setThreshold(B0,B1,B2,s.slow[i]);
+    {
+      printf("ASIC %d \n",i);
+      setThreshold(B0,B1,B2,s.slow[i]);
+    }
 }
-void DimDIFServer::setGain(uint32_t gain,DIFDbInfo s)
+void DimDIFServer::setGain(uint32_t gain,DIFDbInfo& s)
 {
   for (int i=0;i<s.nbasic;i++)
     setGain(gain,s.slow[i]);
