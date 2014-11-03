@@ -115,7 +115,7 @@ start:
 	//checkReadWrite(0x100,128);
 }
 
-void FtdiUsbDriver::checkReadWrite(uint32_t start,uint32_t count)
+void FtdiUsbDriver::checkReadWrite(uint32_t start,uint32_t count)   throw (LocalHardwareException)
 {
   int32_t reg=0x1024,ret=0;uint32_t regctrl=0;
   //     printf("single Writing %x ",reg);
@@ -132,17 +132,21 @@ void FtdiUsbDriver::checkReadWrite(uint32_t start,uint32_t count)
     {
       if (write)
 	{
-      printf("Writing %x ",ireg);
-      ret=UsbRegisterWrite2(2,ireg);
-      printf(" rc= %d ===>",ret);
+	  printf("Writing %x ",ireg);
+	  ret=UsbRegisterWrite2(2,ireg);
+	  printf(" rc= %d ===>",ret);
 	}
       if (ireg==start+count-1)
 	{
-      ret=UsbRegisterRead(2,&regctrl);
-      printf(" Reading %x rc= %d \n",regctrl,ret);
+	  ret=UsbRegisterRead(2,&regctrl);
+	  printf(" Reading %x %x rc= %d \n",regctrl,ireg,ret);
 
-      if (regctrl!=ireg)
-	printf(" Error Reading  \n");
+	  if (regctrl!=ireg)
+	    {
+	      printf(" Error Reading  \n");
+	      std::string errorMessage( "Cannot Read test register from FT245" );
+	      throw (LocalHardwareException( "FT245" ,errorMessage, __FILE__, __LINE__, __FUNCTION__ ) );   
+	    }
 	}
 	       //getchar();
     }

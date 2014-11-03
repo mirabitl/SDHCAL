@@ -306,10 +306,28 @@ void DimDIFServer::initialise(uint32_t difid) throw (LocalHardwareException)
 	  std::cout<<"cannot initialize "<<difid<<std::endl;
 				
 	}
-      
-      dif->checkReadWrite(0x1234,100);
-
-      dif->checkReadWrite(0x1234,100);
+      try
+	{
+	  dif->checkReadWrite(0x1234,100);
+	}
+      catch (LocalHardwareException& e)
+	{
+#ifdef DEBUG_READ
+		std::cout<<e.message()<<std::endl;
+#endif
+		throw (e);
+	}
+      try
+	{
+	  dif->checkReadWrite(0x1234,100);
+	}
+      catch (LocalHardwareException& e)
+	{
+#ifdef DEBUG_READ
+		std::cout<<e.message()<<std::endl;
+#endif
+		throw (e);
+	}
       /*
       if (dif!=NULL)
 	delete dif;
@@ -711,6 +729,10 @@ void DimDIFServer::registerDBService(const char* state)
       std::stringstream s;
       s<<"/DB/"<<state<<"/DIF"<<itd->first;
       theDBDimInfo_[itd->first] = new DimInfo(s.str().c_str(),&theDIFDbInfo_[itd->first],sizeof(DIFDbInfo),this);
+
+      difState_[itd->first]="DB_REGISTERED";
+      stateServicesMap_[itd->first]->updateService((char*) difState_[itd->first].c_str());
+
     }
 }
 

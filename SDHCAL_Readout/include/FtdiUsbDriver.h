@@ -22,7 +22,7 @@ class FtdiUsbDriver {
 public:
   FtdiUsbDriver(char * deviceIdentifier ,uint32_t productid=0x6001)     throw (LocalHardwareException);
 	~FtdiUsbDriver()     throw (LocalHardwareException);
-	void checkReadWrite(uint32_t start,uint32_t count);
+	void checkReadWrite(uint32_t start,uint32_t count) throw (LocalHardwareException);
 	void FT245Purge( void ) throw (LocalHardwareException);
 	int32_t read( unsigned char  *resultPtr ) throw (LocalHardwareException);
 	void readn( unsigned char  *resultPtr,int32_t nbbytes )throw (LocalHardwareException);
