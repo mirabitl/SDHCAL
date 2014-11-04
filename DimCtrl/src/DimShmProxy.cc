@@ -134,8 +134,8 @@ void DimShmProxy::infoHandler()
 				     ShmProxy::getBufferGTC(cdata),
 				     ShmProxy::getBufferDIF(cdata));
 
-	    if (ShmProxy::getBufferDTC(cdata)%1000 == 0 &&ShmProxy::getBufferDTC(cdata)!=0 )
-	      printf("%s receieve %d  bytes, BCID %lld DTC %d GTC %d DIF %d \n",__PRETTY_FUNCTION__,
+	    //if (ShmProxy::getBufferDTC(cdata)%1000 == 0 &&ShmProxy::getBufferDTC(cdata)!=0 )
+	      printf("%s DIF %d receieve %d  bytes, BCID %lld DTC %d GTC %d DIF %d \n",__PRETTY_FUNCTION__,i,
 		     curr->getSize(),
 		     ShmProxy::getBufferABCID(cdata),
 		     ShmProxy::getBufferDTC(cdata),
