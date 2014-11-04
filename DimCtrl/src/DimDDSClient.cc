@@ -38,6 +38,31 @@ void DimDDSClient::scanDevices()
   bsem_.lock();
 }
 
+bool DimDDSClient::checkState(std::string str)
+{
+  bool valid=true;
+  for (std::map<uint32_t,DimDIFDataHandler*>::iterator it=theDDDHMap_.begin();it!=theDDDHMap_.end();it++)
+    {
+      std::string state=it->second->getState();
+      // different member versions of find in the same order as above:
+      std::size_t found = state.find(str);
+      valid =valid && (found!=std::string::npos);
+    }
+  return valid;
+}
+
+void DimDDSClient::waitState(std::string str,uint32_t max_wait)
+{
+  uint32_t nw=0;
+  do
+    {
+      this->print();
+      sleep((unsigned int) 1);
+      nw++;
+    }
+  while (!checkState(str) && nw<max_wait);
+}
+
 void DimDDSClient::initialise()
 {
   for (uint32_t i=1;i<255;i++)
@@ -55,6 +80,8 @@ void DimDDSClient::initialise()
 	  theDDDHMap_.insert(p);
 	}
     }
+  
+  waitState("INIT",15);
  
 }
 
@@ -78,7 +105,9 @@ void DimDDSClient::setDBState(uint32_t ctrlreg,std::string state)
   s0<<thePrefix_<<"/REGISTERSTATE";
   DimClient::sendCommand(s0.str().c_str(), state.c_str()); 
   bsem_.lock();	
+  waitState("DB_REG",15);
 
+  
 }
 void DimDDSClient::setGain(uint32_t gain)
 {
@@ -115,6 +144,7 @@ void DimDDSClient::configure()
   DimClient::sendCommand(s0.str().c_str(),(int) theCtrlReg_); 
   bsem_.lock();	
 
+  waitState("CONFIG",15);
 }
 
 

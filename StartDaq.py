@@ -82,12 +82,12 @@ class StartDaq:
         self.daq_._print()
     def Initialise(self):
         self.daq_.scan()
-        print "SCAN completed"
+        print "USB SCAN completed will sleep 5 second"
         time.sleep(5)
         self.daq_.initialise()
     def Configure(self):
         self.daq_.registerstate(self.register_,self.state_)
-        time.sleep(2)
+        #time.sleep(2)
         self.daq_.configure()
     def Start(self):
         self.daq_.start()
@@ -98,6 +98,10 @@ class StartDaq:
     def LVOff(self):
         self.daq_.off()
     def LVOn(self):
+        self.daq_.on()
+    def zoff(self):
+        self.daq_.off()
+    def zon(self):
         self.daq_.on()
     def HVOff(self):
         HT.setGroupsSwitch(GROUPSSWITCH_ALL_OFF)

@@ -31,7 +31,8 @@ public:
   void infoHandler();
 
   void scanDevices();
-
+  bool checkState(std::string str);
+  void waitState(std::string str,uint32_t max_wait=5);
   void initialise();
   void setDBState(uint32_t ctrlreg,std::string state);
   void configure();
