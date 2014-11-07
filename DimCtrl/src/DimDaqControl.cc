@@ -200,6 +200,33 @@ void DimDaqControl::print()
       it->second->print();
     }
 }
+
+void DimDaqControl::getDifInfo()
+{
+  _nd_=0;
+  
+  for (std::map<std::string,DimDDSClient*>::iterator it=theDDSCMap_.begin();it!=theDDSCMap_.end();it++)
+    {
+      std::map<uint32_t,DimDIFDataHandler*> difmap=it->second->getDIFMap();
+      std::string pc=it->first;
+      for (std::map<uint32_t,DimDIFDataHandler*>::iterator id=difmap.begin();id!=difmap.end();id++)
+	{
+      //printf("\t DIF %d %x %s \n",it->first,it->second,it->second->getState());
+	  DIFStatus& s=id->second->getStatus();
+	  printf(" %d %d %x %d %lld %lld %s \n",s.id,s.status,s.slc,s.gtc,s.bcid,s.bytes,id->second->getState()); 
+	  _dif_[_nd_]=s.id;
+	  _slc_[_nd_]=s.slc;
+	  _state_[_nd_]=id->second->getState();
+	  _gtc_[_nd_]=s.gtc;
+	  _bcid_[_nd_]=s.bcid;
+	  _bytes_[_nd_]=s.bytes;
+	  _nd_++;
+	}
+    }
+}
+
+
+
 void DimDaqControl::doScan(DimDDSClient* c)
 {
   // cout <<"Calling scan \n";

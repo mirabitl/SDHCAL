@@ -62,7 +62,19 @@ public:
   void doSetGain(DimDDSClient* c);
   void doSetThresholds(DimDDSClient* c);
   enum {ALIVED=1,BROWSED=2,SCANNED=3,INITIALISED=4,DBREGISTERED=5,CONFIGURED=6,STARTED=7,STOPPED=8,DESTROYED=9};
+  void getDifInfo();
+  int32_t seenNumberOfDif(){return _nd_;}
+  int32_t seenId(uint32_t i){return _dif_[i];}
+  int32_t seenSlc(uint32_t i){return _slc_[i];}
+  int32_t seenGtc(uint32_t i){return _gtc_[i];}
+  int64_t seenBcid(uint32_t i){return _bcid_[i];}
+  int32_t seenBytes(uint32_t i){return _bytes_[i];}
+  const char* seenState(uint32_t i){return _state_[i].c_str();}
 private:
+  uint32_t _nd_,_dif_[255],_slc_[255],_gtc_[255],_bytes_[255];
+  uint64_t _bcid_[255];
+  std::string _state_[255];
+
   std::string theDNS_;
   std::string theDBPrefix_;
   std::string theCCCPrefix_;

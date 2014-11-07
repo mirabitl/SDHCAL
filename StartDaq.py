@@ -71,6 +71,13 @@ class StartDaq:
         self.daq_.scandns()
         self.daq_.download(self.state_)
         self.daq_.initialiseWriter(self.directory_)
+    def DiscoverDNS(self):
+        self.daq_.scandns()
+
+    def DownloadDB(self):
+        self.daq_.download(self.state_)
+    def InitialiseWriter(self):
+        self.daq_.initialiseWriter(self.directory_)
     def ChangeState(self,s):
         self.state_=s
         self.daq_.download(self.state_)

@@ -10,6 +10,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         super(ImageViewer, self).__init__(parent)
         self.setupUi(self)
         self.daq_=None
+        self.isLVOn_=False
         self.connectActions()
     def CreateDaq(self):
         print "On y est"
@@ -18,10 +19,22 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         self.daq_=StartDaq.StartDaq(name)
         self.PBCreateDaq.setEnabled(False)
         self.PBDiscover.setEnabled(True)
+        self.PBDiscoverDNS.setEnabled(True)
+        self.PBDownloadDB.setEnabled(True)
+        self.PBInitialiseWriter.setEnabled(True)
     def Discover(self):
         self.daq_.Discover()
         self.PBInitialise.setEnabled(True)
         self.PBDiscover.setEnabled(False)
+    def DiscoverDNS(self):
+        self.daq_.DiscoverDNS()
+        self.PBInitialise.setEnabled(True)
+    def DownloadDB(self):
+        self.daq_.DownloadDB()
+    def InitialiseWriter(self):
+        self.daq_.InitialiseWriter()
+
+
     def RestartHost(self):
         if self.daq_!=None:
             self.daq_.host_restart();
@@ -36,11 +49,13 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
             self.daq_.LVOn()
             self.PBLVOff.setEnabled(True)
             self.PBLVOn.setEnabled(False)
+            self.isLVOn_=True
     def LVOff(self):
         if self.daq_!=None:
             self.daq_.LVOff()
             self.PBLVOff.setEnabled(False)
             self.PBLVOn.setEnabled(True)
+            self.isLVOn_=False
     def SetVoltage(self):
         if self.daq_!=None:
             self.daq_.HVSetVoltage(self.SBVoltage.value(),self.SBFirstHvChannel.value(),self.SBLastHvChannel.value())
@@ -67,47 +82,69 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         self.LCDCurrent.display(self.im_[self.HSChannel.value()-self.HSChannel.minimum()])
     
     def Initialise(self):
-        if self.daq_!=None:
+        if self.daq_!=None and self.isLVOn_:
             self.daq_.Initialise()
-        self.PBInitialise.setEnabled(False)
-        self.PBConfigure.setEnabled(True)
-        self.PBDestroy.setEnabled(True)
-        self.PBUpdate.setEnabled(True)
+            self.PBInitialise.setEnabled(False)
+            self.PBConfigure.setEnabled(True)
+            self.PBDestroy.setEnabled(True)
+            self.PBUpdate.setEnabled(True)
+        elif not self.isLVOn_:
+            QtGui.QMessageBox.about(self,"LV is OFF","Please put LV On")
+            return
+        
     
     def Configure(self):
         if self.daq_!=None:
             self.daq_.Configure()
-        self.PBConfigure.setEnabled(True)
-        self.PBStart.setEnabled(True)
-        self.PBDestroy.setEnabled(True)
+            self.PBConfigure.setEnabled(True)
+            self.PBStart.setEnabled(True)
+            self.PBDestroy.setEnabled(True)
 
     def Start(self):
         if self.daq_!=None:
             self.daq_.Start()
-        self.PBConfigure.setEnabled(False)
-        self.PBStart.setEnabled(False)
-        self.PBStop.setEnabled(True)
-        self.PBDestroy.setEnabled(True)
+            self.PBConfigure.setEnabled(False)
+            self.PBStart.setEnabled(False)
+            self.PBStop.setEnabled(True)
+            self.PBDestroy.setEnabled(True)
 
     def Stop(self):
         if self.daq_!=None:
             self.daq_.Stop()
-        self.PBStop.setEnabled(False)
-        self.PBConfigure.setEnabled(True)
-        self.PBDestroy.setEnabled(True)
-
+            self.PBStop.setEnabled(False)
+            self.PBConfigure.setEnabled(True)
+            self.PBDestroy.setEnabled(True)
+            
     def Destroy(self):
         if self.daq_!=None:
             self.daq_.Destroy()
-        self.PBDestroy.setEnabled(False)
-        self.PBConfigure.setEnabled(False)
-        self.PBStart.setEnabled(False)
-        self.PBStop.setEnabled(False)
-        self.PBUpdate.setEnabled(False)
-        self.PBInitialise.setEnabled(True)
+            self.PBDestroy.setEnabled(False)
+            self.PBConfigure.setEnabled(False)
+            self.PBStart.setEnabled(False)
+            self.PBStop.setEnabled(False)
+            self.PBUpdate.setEnabled(False)
+            self.PBInitialise.setEnabled(True)
     def Update(self):
        if self.daq_!=None:
-            self.daq_.Print() 
+            self.daq_.Print()
+            self.daq_.daq_.getDifInfo()
+            for i in range(0,self.daq_.daq_.seenNumberOfDif()):
+                it_id = QtGui.QTableWidgetItem('%d' % self.daq_.daq_.seenId(i))
+                self.TWDIF.setItem(i+1, 0,it_id)
+                it_slc = QtGui.QTableWidgetItem('%x' % self.daq_.daq_.seenSlc(i))
+                self.TWDIF.setItem(i+1, 1,it_slc)
+                it_gtc = QtGui.QTableWidgetItem('%d' % self.daq_.daq_.seenGtc(i))
+                self.TWDIF.setItem(i+1, 2,it_gtc)
+                it_bcid = QtGui.QTableWidgetItem('%ld' % self.daq_.daq_.seenBcid(i))
+                self.TWDIF.setItem(i+1, 3,it_bcid)
+                it_bytes = QtGui.QTableWidgetItem('%ld' % self.daq_.daq_.seenBytes(i))
+                self.TWDIF.setItem(i+1, 4,it_bytes)
+                it_state = QtGui.QTableWidgetItem(self.daq_.daq_.seenState(i))
+                self.TWDIF.setItem(i+1, 5,it_state)
+                s=self.daq_.daq_.seenState(i)
+                if (s.upper().find('FAIL')>=0):
+                    QtGui.QMessageBox.about(self,"One DIF  failed" ,"Debug la %d Mon gros !" % self.daq_.daq_.seenId(i))
+            
     def accept(self):
         print "titi"
     def reject(self):
@@ -124,6 +161,9 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         self.PBStartHost.clicked.connect(self.StartHost)
         self.PBStopHost.clicked.connect(self.StopHost)
         self.PBDiscover.clicked.connect(self.Discover)
+        self.PBDiscoverDNS.clicked.connect(self.DiscoverDNS)
+        self.PBDownloadDB.clicked.connect(self.DownloadDB)
+        self.PBInitialiseWriter.clicked.connect(self.InitialiseWriter)
         self.PBLVOn.clicked.connect(self.LVOn)
         self.PBLVOff.clicked.connect(self.LVOff)
         self.PBHVOn.clicked.connect(self.SwitchHVOn)
