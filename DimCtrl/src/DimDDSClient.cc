@@ -54,13 +54,14 @@ bool DimDDSClient::checkState(std::string str)
 void DimDDSClient::waitState(std::string str,uint32_t max_wait)
 {
   uint32_t nw=0;
-  do
+  while (!checkState(str) && nw<max_wait);
     {
-      this->print();
+
+      printf("%s uncompleted waiting %d s \n",str.c_str(),nw);
       sleep((unsigned int) 1);
       nw++;
     }
-  while (!checkState(str) && nw<max_wait);
+    this->print();
 }
 
 void DimDDSClient::initialise()
@@ -164,6 +165,7 @@ void DimDDSClient::stop()
   s0<<thePrefix_<<"/STOP";
   DimClient::sendCommand(s0.str().c_str(), 1); 
   bsem_.lock();
+  waitState("STOP",15);
 }
 void DimDDSClient::destroy()
 {

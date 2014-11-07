@@ -4,7 +4,9 @@
 %include "std_map.i"
 %include "stdint.i"
 
+
  %{
+using std::string;
 #include "DimDaqControl.h"
  %}
 

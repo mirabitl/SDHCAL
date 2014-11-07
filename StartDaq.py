@@ -95,6 +95,9 @@ class StartDaq:
         self.daq_.stop()
     def Destroy(self):
         self.daq_.destroy()
+    def Halt(self):
+        self.daq_.stop()
+        self.daq_.destroy()
     def LVOff(self):
         self.daq_.off()
     def LVOn(self):
@@ -107,12 +110,13 @@ class StartDaq:
         HT.setGroupsSwitch(GROUPSSWITCH_ALL_OFF)
     def HVOn(self):
         HT.setGroupsSwitch(GROUPSSWITCH_ALL_ON)
-    def HVSetVoltage(self,v,ichan=-1):
-        if (ichan == -1):
+    def HVSetVoltage(self,v,ifirst=-1,ilast=-1):
+        if (ifirst == -1):
             for i in range(0,51):
                 HT.setOutputVoltage(i/8,i%8,v)
         else:
-            HT.setOutputVoltage(ichan/8,ichan%8,v)
+            for ichan in range(ifirst,ilast+1):
+                HT.setOutputVoltage(ichan/8,ichan%8,v)
     def HVSwitchOn(self,ichi,icha):
         for i in range(ichi,icha+1):
             HT.setOutputSwitch(i/8,i%8,1)
@@ -124,7 +128,16 @@ class StartDaq:
             vm=HT.getOutputMeasurementSenseVoltage(i/8,i%8)
             im=HT.getOutputMeasurementCurrent(i/8,i%8)
             print i,vm,im
-
+    def HVGet(self,ichi,icha):
+        ic=[]
+        vc=[]
+        for i in range(ichi,icha+1):
+            vm=int(HT.getOutputMeasurementSenseVoltage(i/8,i%8))
+            im=abs(int(HT.getOutputMeasurementCurrent(i/8,i%8)*1E6))
+            print i,vm,im
+            ic.append(im)
+            vc.append(vm)
+        return [vc,ic]
 
 
 
