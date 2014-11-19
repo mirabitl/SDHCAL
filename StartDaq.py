@@ -3,6 +3,34 @@ import time
 import LSDHCALDimCtrl
 import subprocess
 import biblioSNMP as HT
+
+
+from threading import Thread
+
+class threadedSendCommand(Thread):
+   """
+   Class to paralellize command configuration
+   """
+   def __init__ (self,command):
+      """
+      Thread inialisation
+      """
+      Thread.__init__(self)
+
+      self.status = -1
+      self.command=command
+   def run(self):
+      """
+      Thread running
+      """
+      os.system(self.command)
+      
+         
+
+
+
+
+
 class StartDaq:
     def __init__(self,mod_name):
         exec("import %s  as config" % mod_name)
@@ -34,7 +62,10 @@ class StartDaq:
     def host_status(self):
          for h in self.host_:
             cmd='ssh pi@'+h+' "sudo /etc/init.d/dimdifd status"'
-            print cmd;os.system(cmd)
+            tcm=threadedSendCommand(cmd)
+            tcm.start();
+            print cmd;
+            #os.system(cmd)
          cmd='ssh pi@'+self.ccc_+' "sudo /etc/init.d/dimcccd status"'
          print cmd;os.system(cmd)
          cmd='ssh acqilc@'+self.db_+' "sudo /etc/init.d/dimdbd status"'
@@ -45,7 +76,11 @@ class StartDaq:
     def host_stop(self):
          for h in self.host_:
             cmd='ssh pi@'+h+' "sudo /etc/init.d/dimdifd stop"'
-            print cmd;os.system(cmd)
+            tcm=threadedSendCommand(cmd)
+            tcm.start();
+            print cmd;
+
+            #print cmd;os.system(cmd)
          cmd='ssh pi@'+self.ccc_+' "sudo /etc/init.d/dimcccd stop"'
          print cmd;os.system(cmd)
          cmd='ssh acqilc@'+self.db_+' "sudo /etc/init.d/dimdbd stop"'
@@ -56,7 +91,11 @@ class StartDaq:
     def host_start(self):
          for h in self.host_:
             cmd='ssh pi@'+h+' "sudo /etc/init.d/dimdifd start"'
-            print cmd;os.system(cmd)
+            tcm=threadedSendCommand(cmd)
+            tcm.start();
+            print cmd;
+            
+            #print cmd;os.system(cmd)
          cmd='ssh pi@'+self.ccc_+' "sudo /etc/init.d/dimcccd start"'
          print cmd;os.system(cmd)
          cmd='ssh acqilc@'+self.db_+' "sudo /etc/init.d/dimdbd start"'
@@ -95,6 +134,7 @@ class StartDaq:
     def Configure(self):
         self.daq_.registerstate(self.register_,self.state_)
         #time.sleep(2)
+
         self.daq_.configure()
     def Start(self):
         self.daq_.start()

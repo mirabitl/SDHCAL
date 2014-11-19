@@ -140,10 +140,13 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
                 it_bytes = QtGui.QTableWidgetItem('%ld' % self.daq_.daq_.seenBytes(i))
                 self.TWDIF.setItem(i+1, 4,it_bytes)
                 it_state = QtGui.QTableWidgetItem(self.daq_.daq_.seenState(i))
-                self.TWDIF.setItem(i+1, 5,it_state)
+               
                 s=self.daq_.daq_.seenState(i)
                 if (s.upper().find('FAIL')>=0):
+                    it_state.setBackground(QtGui.QColor('red'))
                     QtGui.QMessageBox.about(self,"One DIF  failed" ,"Debug la %d Mon gros !" % self.daq_.daq_.seenId(i))
+
+                self.TWDIF.setItem(i+1, 5,it_state)
             
     def accept(self):
         print "titi"

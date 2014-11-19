@@ -24,7 +24,7 @@ DimDIFServer::DimDIFServer()
   running_=false;
   readoutStarted_=false;
 
-   std::stringstream s0;
+  std::stringstream s0;
   char hname[80];
   gethostname(hname,80);
   s0<<"/DDS/"<<hname<<"/STATUS";
@@ -81,6 +81,9 @@ void DimDIFServer::allocateCommands()
   s0.str(std::string());
   s0<<"/DDS/"<<hname<<"/SETTHRESHOLD";
   thresholdCommand_=new DimCommand(s0.str().c_str(),"I:3",this);
+  s0.str(std::string());
+  s0<<"/DDS/"<<hname<<"/LOOPCONFIGURE";
+  loopConfigureCommand_=new DimCommand(s0.str().c_str(),"I:2",this);
 }
 
 void DimDIFServer::clearServices()
@@ -313,9 +316,9 @@ void DimDIFServer::initialise(uint32_t difid) throw (LocalHardwareException)
       catch (LocalHardwareException& e)
 	{
 #ifdef DEBUG_READ
-		std::cout<<e.message()<<std::endl;
+	  std::cout<<e.message()<<std::endl;
 #endif
-		throw (e);
+	  throw (e);
 	}
       try
 	{
@@ -324,16 +327,16 @@ void DimDIFServer::initialise(uint32_t difid) throw (LocalHardwareException)
       catch (LocalHardwareException& e)
 	{
 #ifdef DEBUG_READ
-		std::cout<<e.message()<<std::endl;
+	  std::cout<<e.message()<<std::endl;
 #endif
-		throw (e);
+	  throw (e);
 	}
       /*
-      if (dif!=NULL)
+	if (dif!=NULL)
 	delete dif;
-      std::cout<<"On re essaie"<<std::endl;
+	std::cout<<"On re essaie"<<std::endl;
 
-      dif = new DIFReadout(cmd);
+	dif = new DIFReadout(cmd);
       */
       std::pair<uint32_t,DIFReadout*> p(difid,dif);
       theDIFMap_.insert(p);
@@ -471,34 +474,67 @@ void DimDIFServer::commandHandler()
     }
 
   /*	
-  if (m->getName().compare("SETDIFPARAM")==0)
-    {
-      uint32_t *ipay=(uint32_t*) m->getPayload();
-      //uint32_t difid=0,nbasic=0,asictype=0,ctrlreg=0;
-      //memcpy(&difid,(m->getPayload())[0],sizeof(uint32_t));
-      //memcpy(&nbasic,(m->getPayload())[4],sizeof(uint32_t));
-      //memcpy(&asictype,(m->getPayload())[8],sizeof(uint32_t));
-      //memcpy(&ctrlreg,(m->getPayload())[8],sizeof(uint32_t));
-      std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.find(ipay[0]);
-      if (itd!=theDIFMap_.end())
+	if (m->getName().compare("SETDIFPARAM")==0)
 	{
-	  itd->second->setNumberOfAsics(ipay[1]);
-	  itd->second->setAsicType(ipay[2]);
-	  itd->second->setControlRegister(ipay[3]);
+	uint32_t *ipay=(uint32_t*) m->getPayload();
+	//uint32_t difid=0,nbasic=0,asictype=0,ctrlreg=0;
+	//memcpy(&difid,(m->getPayload())[0],sizeof(uint32_t));
+	//memcpy(&nbasic,(m->getPayload())[4],sizeof(uint32_t));
+	//memcpy(&asictype,(m->getPayload())[8],sizeof(uint32_t));
+	//memcpy(&ctrlreg,(m->getPayload())[8],sizeof(uint32_t));
+	std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.find(ipay[0]);
+	if (itd!=theDIFMap_.end())
+	{
+	itd->second->setNumberOfAsics(ipay[1]);
+	itd->second->setAsicType(ipay[2]);
+	itd->second->setControlRegister(ipay[3]);
 	}	
 		
-      NetMessage* mrep = new NetMessage("SETDIFPARAM",NetMessage::COMMAND_ACKNOWLEDGE,4);
-      std::cout << "Answer prepared"<<std::endl;
-      return mrep;
-    }
-*/
-    if (currCmd==registerstateCommand_)
+	NetMessage* mrep = new NetMessage("SETDIFPARAM",NetMessage::COMMAND_ACKNOWLEDGE,4);
+	std::cout << "Answer prepared"<<std::endl;
+	return mrep;
+	}
+  */
+  if (currCmd==registerstateCommand_)
     {
 
       // First allocate services
       this->registerDBService(currCmd->getString());
       aliveService_->updateService();
     }
+  if (currCmd==loopConfigureCommand_)
+    {
+      uint32_t* difc=(uint32_t*) currCmd->getData();
+      uint32_t difid=difc[0];
+      uint32_t nloop=difc[1];
+	
+      if (theDIFDbInfo_[difid].id==difid)
+	{
+	  uint32_t slc=0;
+
+	  for (int il=0;il<nloop;il++)
+	    {
+	      slc=this->configureChips(difid,theDIFDbInfo_[difid].slow,theDIFDbInfo_[difid].nbasic);
+
+	      std::stringstream s0;
+	      s0.str(std::string());
+	      s0<<"CONFIGURED => ";
+	      if ((slc&0x0003)==0x01) s0<<"SLC CRC OK       - ";
+	      else if ((slc&0x0003)==0x02) s0<<"SLC CRC Failed   - ";
+	      else s0<<"SLC CRC forb  - ";
+	      if ((slc&0x000C)==0x04) s0<<"All OK      - ";
+	      else if ((slc&0x000C)==0x08) s0<<"All Failed  - ";
+	      else  s0<<"All forb - ";
+	      if ((slc&0x0030)==0x10) s0<<"L1 OK     - ";
+	      else if ((slc&0x0030)==0x20) s0<<"L1 Failed - ";
+	      else s0<<"L1 forb   - ";
+	      std::cout<<s0.str()<<std::endl;
+	    }
+	}
+	
+
+    }
+
   if (currCmd==preconfigureCommand_)
     {
 
@@ -507,6 +543,7 @@ void DimDIFServer::commandHandler()
       uint32_t ctrlreg=currCmd->getInt();
       
       int rc=1;
+
       for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
 	{
 	  try 
@@ -529,7 +566,9 @@ void DimDIFServer::commandHandler()
 	  uint32_t difid=itd->first;
 	  if (theDIFDbInfo_[difid].id==difid)
 	    {
-	      uint32_t slc=this->configureChips(difid,theDIFDbInfo_[difid].slow,theDIFDbInfo_[difid].nbasic);
+	      uint32_t slc=0;
+
+	      slc=this->configureChips(difid,theDIFDbInfo_[difid].slow,theDIFDbInfo_[difid].nbasic);
 
 	      std::stringstream s0;
 	      s0.str(std::string());
@@ -635,7 +674,7 @@ void DimDIFServer::commandHandler()
   if (currCmd==configurechipsCommand_)
     {
       uint32_t difid;
-			memcpy(theSlowBuffer_,currCmd->getData(),currCmd->getSize());
+      memcpy(theSlowBuffer_,currCmd->getData(),currCmd->getSize());
       memcpy(&difid,theSlowBuffer_,sizeof(uint32_t));
       uint32_t nasic=(currCmd->getSize()-sizeof(uint32_t))/sizeof(SingleHardrocV2ConfigurationFrame);
       printf("I found DIF %d asics %d \n",difid,nasic);
@@ -704,7 +743,7 @@ void DimDIFServer::readout(uint32_t difid)
 
 	 
 	  memcpy(&difData_[itd->first*32*1024],cbuf,nread);
-		dataServicesMap_[itd->first]->updateService(&difData_[itd->first*32*1024],nread);
+	  dataServicesMap_[itd->first]->updateService(&difData_[itd->first*32*1024],nread);
 	  difStatus_[itd->first].gtc=ShmProxy::getBufferDTC(cbuf);
 	  difStatus_[itd->first].bcid=ShmProxy::getBufferABCID(cbuf);
 	  difStatus_[itd->first].bytes+=nread;
@@ -739,14 +778,14 @@ void DimDIFServer::registerDBService(const char* state)
 void  DimDIFServer::infoHandler( ) 
 {
   
-    DimInfo *curr = (DimInfo*) getInfo(); // get current DimStampedInfo address
-    std::cout<<curr->getName()<<std::endl;
-    for (int i=0;i<255;i++)
-      {
-	if (curr!=theDBDimInfo_[i]) continue;
-	memcpy(&theDIFDbInfo_[i],curr->getData(),sizeof(DIFDbInfo));
-	printf("Dim info read %d %d \n",theDIFDbInfo_[i].id,theDIFDbInfo_[i].nbasic);
-      }
+  DimInfo *curr = (DimInfo*) getInfo(); // get current DimStampedInfo address
+  std::cout<<curr->getName()<<std::endl;
+  for (int i=0;i<255;i++)
+    {
+      if (curr!=theDBDimInfo_[i]) continue;
+      memcpy(&theDIFDbInfo_[i],curr->getData(),sizeof(DIFDbInfo));
+      printf("Dim info read %d %d \n",theDIFDbInfo_[i].id,theDIFDbInfo_[i].nbasic);
+    }
 }
 void DimDIFServer::setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,SingleHardrocV2ConfigurationFrame& ConfigHR2)
 {
@@ -765,8 +804,8 @@ void DimDIFServer::setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,SingleHardro
 void DimDIFServer::setGain(uint32_t gain,SingleHardrocV2ConfigurationFrame& ConfigHR2)
 {
  
- for (uint32_t ip=0;ip<64;ip++)
-   ConfigHR2[100-ip]=(gain&0xFF); // Pas |=
+  for (uint32_t ip=0;ip<64;ip++)
+    ConfigHR2[100-ip]=(gain&0xFF); // Pas |=
 }
 
 void DimDIFServer::setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,DIFDbInfo& s)
@@ -786,29 +825,29 @@ void DimDIFServer::setGain(uint32_t gain,DIFDbInfo& s)
 void DimDIFServer::setThreshold(uint32_t B0,uint32_t B1,uint32_t B2)
 {
 
- for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
-   {
-     uint32_t difid=itd->first;
-     if (theDIFDbInfo_[difid].id==difid)
-       {
-	 setThreshold(B0,B1,B2,theDIFDbInfo_[difid]);
-       }
-   }
+  for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
+    {
+      uint32_t difid=itd->first;
+      if (theDIFDbInfo_[difid].id==difid)
+	{
+	  setThreshold(B0,B1,B2,theDIFDbInfo_[difid]);
+	}
+    }
 
 
 
 }
 void DimDIFServer::setGain(uint32_t gain)
 {
- for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
-   {
-     uint32_t difid=itd->first;
-     if (theDIFDbInfo_[difid].id==difid)
+  for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
+    {
+      uint32_t difid=itd->first;
+      if (theDIFDbInfo_[difid].id==difid)
        
-       {
-	 setGain(gain,theDIFDbInfo_[difid]);
-       }
-   }
+	{
+	  setGain(gain,theDIFDbInfo_[difid]);
+	}
+    }
 
 
 }

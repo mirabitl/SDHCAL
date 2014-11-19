@@ -101,6 +101,7 @@ private:
   uint32_t theCalibrationThresholds_[3];
   DimCommand *gainCommand_;
   DimCommand *thresholdCommand_;
+  DimCommand *loopConfigureCommand_;
 
 
 
