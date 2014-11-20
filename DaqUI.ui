@@ -121,6 +121,27 @@
              </property>
             </widget>
            </item>
+           <item>
+            <widget class="QPushButton" name="PBStartRPI">
+             <property name="text">
+              <string>Start RPI</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="PBStopRPI">
+             <property name="text">
+              <string>Stop RPI</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="PBSynchronizeRPI">
+             <property name="text">
+              <string>Synchronize RPI</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>

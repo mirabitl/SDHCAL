@@ -699,23 +699,29 @@ void DimDIFServer::commandHandler()
  
   return ;
 }
+#define ONETHREAD
 
 void DimDIFServer::startReadout()
 {
   if (readoutStarted_) return;
   readoutStarted_=true;	
 
+#ifndef ONETHREAD
   for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
     {
       //m_Thread_d[itd->first]= boost::thread(&DimDIFServer::readout, this,itd->first); 
       g_d.create_thread(boost::bind(&DimDIFServer::readout, this,itd->first));
     }
   
+#else
+      g_d.create_thread(boost::bind(&DimDIFServer::readout, this,0));
+#endif
 }
-
 void DimDIFServer::readout(uint32_t difid)
 {
   std::cout<<"Thread of dif "<<difid<<" is started"<<std::endl;
+
+#ifndef ONETHREAD
   std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.find(difid);
   if (itd==theDIFMap_.end()) return;
   unsigned char cbuf[MAX_EVENT_SIZE];
@@ -756,6 +762,49 @@ void DimDIFServer::readout(uint32_t difid)
 	}
 		
     }
+#else
+ unsigned char cbuf[MAX_EVENT_SIZE];
+
+  while (readoutStarted_)
+    {
+      if (!running_) {usleep((uint32_t) 100000);continue;}
+      usleep((uint32_t) 100);
+		
+      for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
+	{
+		
+	  try 
+	    {
+	      
+	      uint32_t nread=itd->second->DoHardrocV2ReadoutDigitalData(cbuf);
+	      //printf(" Je lis %d %d \n",difid,nread);
+	      if (nread==0) continue;
+#ifdef DEBUG_SHM	  
+	      ShmProxy::transferToFile(cbuf,
+				       nread,
+				       ShmProxy::getBufferABCID(cbuf),
+				       ShmProxy::getBufferDTC(cbuf),
+				       ShmProxy::getBufferGTC(cbuf),
+				       ShmProxy::getBufferDIF(cbuf));
+#endif
+	      
+	      
+	      memcpy(&difData_[itd->first*32*1024],cbuf,nread);
+	      dataServicesMap_[itd->first]->updateService(&difData_[itd->first*32*1024],nread);
+	      difStatus_[itd->first].gtc=ShmProxy::getBufferDTC(cbuf);
+	      difStatus_[itd->first].bcid=ShmProxy::getBufferABCID(cbuf);
+	      difStatus_[itd->first].bytes+=nread;
+	      infoServicesMap_[itd->first]->updateService(&difStatus_[itd->first],sizeof(DIFStatus));
+
+	    }
+	  catch (LocalHardwareException e)
+	    {
+	      std::cout<<itd->first<<" is not started "<<e.what()<<std::endl;
+	    }
+	}	
+    }
+
+#endif
   std::cout<<"Thread of dif "<<difid<<" is stopped"<<readoutStarted_<<std::endl;
 }
 

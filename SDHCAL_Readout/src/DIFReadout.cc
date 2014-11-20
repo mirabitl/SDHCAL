@@ -481,7 +481,7 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
 
   if ((tdata != 0xB0) && (tdata != 0xBB))		// global header
     {	
-      std::cout<<theName_<<"==>"<<"DIF : Bad global header("<<std::hex<<tdata<<std::dec<<" instead of 0xb0 or 0xbb), exiting"<<std::endl;	
+      std::cout<<theName_<<"==>"<<"DIF : Bad global header("<<std::hex<< (int) tdata<<std::dec<<" instead of 0xb0 or 0xbb), exiting"<<std::endl;	
       HardrocFlushDigitalFIFO();
       return 0;
     }	
@@ -678,11 +678,15 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
 		    }	
 		  ComputedCRC=((ComputedCRC&0xFF)<<8) ^ ( FtdiUsbDriver::CrcTable[ ((ComputedCRC>>8)^(tdata&0xFF))&0xFF ] );		// frame trailer
 		  CurrentDIFDigitalData[tindex++]=tdata;
-		  tMemoryIndex=0;			// next hardroc, so mem index should be reseted
+		  tMemoryIndex=0;			// next hardroc, so mem index should be resetedSBad glo
 		  tHardrocIndex++;
 		  if( tHardrocIndex>MAX_NB_OF_ASICS) 
 		    {
-		      std::cout<< __FILE__<<" "<< __LINE__<<" "<< __FUNCTION__ <<" tHardrocIndex > MAX_NB_OF_ASICS"<<std::endl;
+		      std::cout<< __FILE__<<" "<< __LINE__<<" "<< __FUNCTION__ <<" tHardrocIndex= "<< tHardrocIndex<<" > MAX_NB_OF_ASICS"<<std::hex<<(int) tdata <<std::dec<<std::endl;
+
+		      for (int ic=0;ic<tHardrocIndex;ic++)
+			printf("%02x",CurrentDIFDigitalData[ic]);
+		      printf("\n");
 
 		      //std::cout<<theName_<<"==>"<<toolbox::toString("tHardrocIndex > MAX_NB_OF_ASICS")<<std::endl;	
 						

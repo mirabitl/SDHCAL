@@ -44,6 +44,15 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
     def StopHost(self):
         if self.daq_!=None:
             self.daq_.host_stop();
+    def StartRPI(self):
+        if self.daq_!=None:
+            self.daq_.rpi_start();
+    def StopRPI(self):
+        if self.daq_!=None:
+            self.daq_.rpi_stop();
+    def SynchronizeRPI(self):
+        if self.daq_!=None:
+            self.daq_.synchronizeRPI();
     def LVOn(self):
         if self.daq_!=None:
             self.daq_.LVOn()
@@ -162,7 +171,10 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         self.PBCreateDaq.clicked.connect(self.CreateDaq)
         self.PBRestartHost.clicked.connect(self.RestartHost)
         self.PBStartHost.clicked.connect(self.StartHost)
-        self.PBStopHost.clicked.connect(self.StopHost)
+        self.PBStopHost.clicked.connect(self.StopHost)  
+        self.PBStartRPI.clicked.connect(self.StartRPI)
+        self.PBStopRPI.clicked.connect(self.StopRPI)
+        self.PBSynchronizeRPI.clicked.connect(self.SynchronizeRPI)
         self.PBDiscover.clicked.connect(self.Discover)
         self.PBDiscoverDNS.clicked.connect(self.DiscoverDNS)
         self.PBDownloadDB.clicked.connect(self.DownloadDB)

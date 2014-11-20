@@ -102,6 +102,22 @@ class StartDaq:
          print cmd;os.system(cmd)
          cmd='ssh acqilc@'+self.writer_+' "sudo /etc/init.d/dimwriterd start"'
          print cmd;os.system(cmd)
+    def rpi_stop(self):
+         for h in self.host_:
+            cmd='ssh pi@'+h+' "sudo /etc/init.d/dimdifd stop"'
+            tcm=threadedSendCommand(cmd)
+            tcm.start();
+            print cmd;
+
+
+    def rpi_start(self):
+         for h in self.host_:
+            cmd='ssh pi@'+h+' "sudo /etc/init.d/dimdifd start"'
+            tcm=threadedSendCommand(cmd)
+            tcm.start();
+            print cmd;
+            
+
     def host_restart(self):
         self.host_stop()
         self.host_start()
