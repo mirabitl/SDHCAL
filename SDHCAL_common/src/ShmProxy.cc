@@ -34,7 +34,8 @@ ShmProxy::ShmProxy(uint32_t nbdif,bool save,DIFWritterInterface* w) : theNumberO
   theSync_.unlock();
   theSave_=(theWritter_!=NULL);
 }
-
+uint32_t ShmProxy::getRunNumber(){return theRunNumber_;}
+uint32_t ShmProxy::getEventNumber(){return theEventNumber_;}
 uint32_t ShmProxy::getNumberOfDIF(){return theNumberOfDIF_;}
 void ShmProxy::setNumberOfDIF(int32_t t)
 { theNumberOfDIF_=t;
@@ -167,6 +168,7 @@ bool ShmProxy::performWrite()
 	    }
 	  */
 	  lastGTCWrite_=it->first;
+	  printf("%x writing %d \n",this,theEventNumber_);
 	  theWritter_->writeEvent(theEventNumber_,it->second);
 
 	  if (theEventNumber_%100 == 0)

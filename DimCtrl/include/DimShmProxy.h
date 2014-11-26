@@ -35,11 +35,15 @@ public:
   void allocateCommands();
   void clearInfo();
   void registerDifs();
+  void svc();
   enum {ALIVED=1,INITIALISED=2,STARTED=3,STOPPED=4};
 private:
   ShmProxy* theProxy_;
+  boost::thread    theThread_;  
   DimService* aliveService_;
-  int32_t processStatus_;
+  DimService* runService_;
+  DimService* eventService_;
+  int32_t processStatus_,run_,event_;
   DimCommand* initialiseCommand_;
   DimCommand* setupCommand_;
   DimCommand* directoryCommand_;

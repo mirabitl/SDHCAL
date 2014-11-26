@@ -56,8 +56,9 @@ class ShmProxy
 #endif
   inline bool RunIsStopped(){return theRunIsStopped_;}
   inline  std::map<uint64_t,std::vector<unsigned char*> >& getBufferMap(){return theBufferMap_;}
-  inline uint32_t getRunNumber(){return theRunNumber_;}
-  inline uint32_t getEventNumber(){return theEventNumber_;}
+  
+  uint32_t getRunNumber();
+   uint32_t getEventNumber();
   void setSetupName(std::string s);
   void setDirectoryName(std::string s);
 private:

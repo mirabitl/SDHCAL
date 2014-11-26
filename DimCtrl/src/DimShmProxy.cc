@@ -31,6 +31,17 @@ DimShmProxy::DimShmProxy() :theProxy_(NULL)
   s0.str(std::string());
   processStatus_=DimShmProxy::ALIVED;
   aliveService_->updateService();
+  s0.str(std::string());
+  run_=0;
+  s0<<"/DSP/"<<hname<<"/RUN";
+  runService_ = new DimService(s0.str().c_str(),run_);
+  runService_->updateService();
+  event_=0;
+
+  s0.str(std::string());
+  s0<<"/DSP/"<<hname<<"/EVENT";
+  eventService_ = new DimService(s0.str().c_str(),event_);
+  eventService_->updateService();
   allocateCommands();
   s0.str(std::string());
   s0<<"DimShmProxy-"<<hname;
@@ -134,7 +145,7 @@ void DimShmProxy::infoHandler()
 				     ShmProxy::getBufferGTC(cdata),
 				     ShmProxy::getBufferDIF(cdata));
 
-	    //if (ShmProxy::getBufferDTC(cdata)%1000 == 0 &&ShmProxy::getBufferDTC(cdata)!=0 )
+	    if (ShmProxy::getBufferDTC(cdata)%1000 == 0 &&ShmProxy::getBufferDTC(cdata)!=0 )
 	      printf("%s DIF %d receieve %d  bytes, BCID %lld DTC %d GTC %d DIF %d \n",__PRETTY_FUNCTION__,i,
 		     curr->getSize(),
 		     ShmProxy::getBufferABCID(cdata),
@@ -203,8 +214,8 @@ void DimShmProxy::commandHandler()
     {
       if (theProxy_ != NULL)
 	{
-	  delete theProxy_;
-	  this->clearInfo();
+	  //delete theProxy_;
+	  //this->clearInfo();
 
 	}
     }
@@ -243,9 +254,12 @@ void DimShmProxy::commandHandler()
 	  cout<<" Number of DIF "<<theProxy_->getNumberOfDIF()<<endl;
 	  theProxy_->purgeShm(); // remove old data not written
 	  theProxy_->Start(theRun_,"/tmp");
+
 	  processStatus_=DimShmProxy::STARTED;
 	  aliveService_->updateService();
-
+	  run_=theRun_;
+	  runService_->updateService();
+	  theThread_ = boost::thread(&DimShmProxy::svc, this);
 	}
       return ;
 
@@ -258,7 +272,7 @@ void DimShmProxy::commandHandler()
 	  theProxy_->Stop();
 	  processStatus_=DimShmProxy::STOPPED;
 	  aliveService_->updateService();
-
+	  //theThread_.join();
 	}
       return ;
 
@@ -267,4 +281,16 @@ void DimShmProxy::commandHandler()
     
   return ;
 }
-   
+void DimShmProxy::svc()
+{
+  while (1)
+    {
+      sleep((unsigned int) 1);
+      if (theProxy_!=NULL)
+	{
+	  event_=theProxy_->getEventNumber();
+	  //printf("Event is %x %d \n",theProxy_,event_);
+	  eventService_->updateService();
+	}
+    }
+}   
