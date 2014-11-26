@@ -47,6 +47,7 @@ public:
   void download(std::string s);
   void destroy();
   int getCurrentRun();
+  int getCurrentEvent();
   char* getCurrentState();
 
   void setGain(uint32_t g);
@@ -70,10 +71,12 @@ public:
   int64_t seenBcid(uint32_t i){return _bcid_[i];}
   int32_t seenBytes(uint32_t i){return _bytes_[i];}
   const char* seenState(uint32_t i){return _state_[i].c_str();}
+  const char* seenHost(uint32_t i){return _host_[i].c_str();}
 private:
   uint32_t _nd_,_dif_[255],_slc_[255],_gtc_[255],_bytes_[255];
   uint64_t _bcid_[255];
   std::string _state_[255];
+  std::string _host_[255];
 
   std::string theDNS_;
   std::string theDBPrefix_;
@@ -86,9 +89,10 @@ private:
   std::string theState_;
   boost::interprocess::interprocess_mutex bsem_;
 
-  int theCurrentRun_;
+  int theCurrentRun_,theCurrentEvent_;
   char theCurrentState_[255];
   DimInfo* runInfo_;
+  DimInfo* eventInfo_;
   DimInfo* dbstateInfo_;
 
   int32_t theCalibrationGain_;

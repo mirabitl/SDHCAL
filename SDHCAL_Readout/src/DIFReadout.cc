@@ -680,11 +680,10 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
 		  CurrentDIFDigitalData[tindex++]=tdata;
 		  tMemoryIndex=0;			// next hardroc, so mem index should be resetedSBad glo
 		  tHardrocIndex++;
-		  if( tHardrocIndex>MAX_NB_OF_ASICS) 
-		    {
+		  if( tHardrocIndex>MAX_NB_OF_ASICS+1)		    {
 		      std::cout<< __FILE__<<" "<< __LINE__<<" "<< __FUNCTION__ <<" tHardrocIndex= "<< tHardrocIndex<<" > MAX_NB_OF_ASICS"<<std::hex<<(int) tdata <<std::dec<<std::endl;
 
-		      for (int ic=0;ic<tHardrocIndex;ic++)
+		      for (int ic=0;ic<tindex;ic++)
 			printf("%02x",CurrentDIFDigitalData[ic]);
 		      printf("\n");
 

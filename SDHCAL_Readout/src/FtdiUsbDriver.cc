@@ -159,10 +159,16 @@ FtdiUsbDriver::~FtdiUsbDriver()     throw (LocalHardwareException)
 	if ((ret = ftdi_usb_close(&theFtdi)) < 0)
 	{
 		fprintf(stderr, "unable to close ftdi device: %d (%s)\n", ret, ftdi_get_error_string(&theFtdi));
-		_exit(1);
+		
+		ftdi_deinit(&theFtdi);
+
+		std::stringstream errorMessage;
+		errorMessage <<  ftdi_get_error_string(&theFtdi)<< "unable to close ftdi device (ret: "<< ret << ")"<< std::ends;
+		throw (LocalHardwareException( "FT245" ,errorMessage.str(), __FILE__, __LINE__, __FUNCTION__ ) );
 	}
 
 	ftdi_deinit(&theFtdi);
+
 
 
 }	

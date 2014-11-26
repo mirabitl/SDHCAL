@@ -609,7 +609,19 @@ void DimDIFServer::commandHandler()
 
 	  //m_Thread_d[itd->first].join();
 	  if (itd->second!=NULL)
-	    delete itd->second;
+	    {
+	      try 
+		{
+		  delete itd->second;
+		}
+	      catch (LocalHardwareException& e)
+		{
+
+		  std::cout<<e.message()<<std::endl;
+
+
+		}
+	    }
 	  std::stringstream s;
 	  s<<"DIF"<<itd->first;
 	  std::cout<<s.str()<<" beiing destroyed"<<std::endl;
@@ -699,7 +711,7 @@ void DimDIFServer::commandHandler()
  
   return ;
 }
-#define ONETHREAD
+#undef ONETHREAD
 
 void DimDIFServer::startReadout()
 {

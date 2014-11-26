@@ -112,6 +112,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
     def Start(self):
         if self.daq_!=None:
             self.daq_.Start()
+            self.LCDRun.display(self.daq_.daq_.getCurrentRun())
             self.PBConfigure.setEnabled(False)
             self.PBStart.setEnabled(False)
             self.PBStop.setEnabled(True)
@@ -121,6 +122,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         if self.daq_!=None:
             self.daq_.Stop()
             self.PBStop.setEnabled(False)
+            self.PBStart.setEnabled(True)
             self.PBConfigure.setEnabled(True)
             self.PBDestroy.setEnabled(True)
             
@@ -135,6 +137,8 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
             self.PBInitialise.setEnabled(True)
     def Update(self):
        if self.daq_!=None:
+            self.LCDRun.display(self.daq_.daq_.getCurrentRun())
+            self.LCDEvent.display(self.daq_.daq_.getCurrentEvent())
             self.daq_.Print()
             self.daq_.daq_.getDifInfo()
             for i in range(0,self.daq_.daq_.seenNumberOfDif()):
@@ -148,6 +152,10 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
                 self.TWDIF.setItem(i+1, 3,it_bcid)
                 it_bytes = QtGui.QTableWidgetItem('%ld' % self.daq_.daq_.seenBytes(i))
                 self.TWDIF.setItem(i+1, 4,it_bytes)
+
+                it_host = QtGui.QTableWidgetItem(self.daq_.daq_.seenHost(i))
+                self.TWDIF.setItem(i+1, 5,it_host)
+
                 it_state = QtGui.QTableWidgetItem(self.daq_.daq_.seenState(i))
                
                 s=self.daq_.daq_.seenState(i)
@@ -155,7 +163,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
                     it_state.setBackground(QtGui.QColor('red'))
                     QtGui.QMessageBox.about(self,"One DIF  failed" ,"Debug la %d Mon gros !" % self.daq_.daq_.seenId(i))
 
-                self.TWDIF.setItem(i+1, 5,it_state)
+                self.TWDIF.setItem(i+1, 6,it_state)
             
     def accept(self):
         print "titi"

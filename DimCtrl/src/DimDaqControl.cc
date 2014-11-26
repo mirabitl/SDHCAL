@@ -92,6 +92,16 @@ void DimDaqControl::scandns()
       size_t n=ss.find("/STATUS");
       theZupPrefix_=ss.substr(0,n);
     } 
+  std::string theProxyPrefix_="";
+  dbr->getServices("/DSP/*/EVENT" ); 
+  while(type = dbr->getNextService(service, format)) 
+    { 
+      cout << service << " -  " << format << endl; 
+      std::string ss;
+      ss.assign(service);
+      size_t n=ss.find("/EVENT");
+      theProxyPrefix_=ss;
+    } 
 
   dbr->getServers( ); 
   while(dbr->getNextServer(server, node)) 
@@ -117,11 +127,13 @@ void DimDaqControl::scandns()
       
   runInfo_=new DimInfo("/DB/RUNFROMDB",theCurrentRun_,this);
   dbstateInfo_=new DimInfo("/DB/DBSTATE",theCurrentState_,this);
-
+  eventInfo_=new DimInfo(theProxyPrefix_.c_str(),theCurrentEvent_,this);
 
 }
 int DimDaqControl::getCurrentRun()
 { return theCurrentRun_;}
+int DimDaqControl::getCurrentEvent()
+{ return theCurrentEvent_;}
 char* DimDaqControl::getCurrentState()
 {return theCurrentState_;}
 void DimDaqControl::infoHandler()
@@ -131,6 +143,12 @@ void DimDaqControl::infoHandler()
    if (curr==runInfo_)
      {
        theCurrentRun_=curr->getInt();
+       //std::cout<<"The current Run is "<<theCurrentRun_<<std::endl;
+       return;
+     }
+   if (curr==eventInfo_)
+     {
+       theCurrentEvent_=curr->getInt();
        //std::cout<<"The current Run is "<<theCurrentRun_<<std::endl;
        return;
      }
@@ -217,6 +235,7 @@ void DimDaqControl::getDifInfo()
 	  _dif_[_nd_]=s.id;
 	  _slc_[_nd_]=s.slc;
 	  _state_[_nd_]=id->second->getState();
+	  _host_[_nd_]=it->first;
 	  _gtc_[_nd_]=s.gtc;
 	  _bcid_[_nd_]=s.bcid;
 	  _bytes_[_nd_]=s.bytes;
