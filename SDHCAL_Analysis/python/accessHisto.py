@@ -2,6 +2,7 @@ from ROOT import *
 import os
 import sqlite3 
 import time
+from ROOT import gStyle
 def sumamryBad():
   f=open("summarybad.txt","w")
   for i in range(1,255):
@@ -197,39 +198,75 @@ def DrawEff(plan):
   l.append(heffsum)
   print plan,heffsum.GetMean()
   return l
- 
+
+def DrawSummary(run,i):
+  c=TCanvas("Resume","resume",800,800)
+  c.Divide(2,2)
+  gStyle.SetOptFit(1)
+  gStyle.SetOptStat(0)
+  l=GetEff(i)
+  c.Clear()
+  c.Divide(2,2)
+  l[0].SetTitle("Found Position (%d,%d)" % (run,i) )
+  l[1].SetTitle("Extrapolated Position (%d,%d)" % (run,i) )
+  l[2].SetTitle("Local Efficiency (%d,%d)" % (run,i) )
+  l[3].SetTitle("Mean Efficiency (%d,%d)" % (run,i) )
+  l[4].SetTitle("Local Multiplicity (%d,%d)" % (run,i) )
+  l[5].SetTitle("Mean Multiplicity (%d,%d)" % (run,i) )
+  l[4].GetZaxis().SetRangeUser(0.5,4.)
+#    c.cd(1);l[0].SetStats(0);l[0].Draw("COLZ")
+#    c.cd(2);l[1].SetStats(0);l[1].Draw("COLZ")
+  c.cd(1);l[2].SetStats(0);l[2].Draw("COLZ")
+  c.cd(2);l[3].Fit("gaus","","",80.,100.)
+  c.cd(3);l[4].SetStats(0);l[4].Draw("COLZ")
+  c.cd(4);l[5].Fit("gaus","","",0.5,2.7)
+  c.Update()
+  c.Modified()
+  c.SaveAs("Summary_%d_Plan%d.bmp" % (run,i))
+  c.SaveAs("Summary_%d_Plan%d.pdf" % (run,i)) 
+  time.sleep(3)
 def GetEff(plan):
   l=[]
   dirname='/Plan%d' % plan
   extname= dirname+'/ext'
   nearname= dirname+'/found'
+  mulname= dirname+'/mul'
   hext = getth2(extname)
   hnear = getth2(nearname)
-  hext.Draw("TEXT")
+  hmul = getth2(mulname)
+  hext.Draw("COLZ")
   
-  hnear.Draw("TEXT")
+  hnear.Draw("COLZ")
   if (hext.GetEntries()<1E6):
-    hext.Rebin2D(2,2)
-    hnear.Rebin2D(2,2)
+    hext.Rebin2D(8,8)
+    hnear.Rebin2D(8,8)
+    hmul.Rebin2D(8,8)
   heff = hnear.Clone("heff")
   heff.SetDirectory(0)
   heff.Divide(hnear,hext,100.,1.)
-  heff.Draw("TEXT")
+  hmulc = hmul.Clone("hmulc")
+  hmulc.SetDirectory(0)
+  hmulc.Divide(hmul,hnear,1.,1.)
+  hmulc.Draw("COLZ")
  
   l.append(hnear)
   l.append(hext)
   l.append(heff)
-  heffsum=TH1F("Summary%d" % plan ,"Summary for plan %d " % plan,404,05.,101.)
+  heffsum=TH1F("Summary%d" % plan ,"Summary for plan %d " % plan,404,-0.5,100.5)
+  hmulsum=TH1F("Summul%d" % plan ,"Multiplicity for plan %d " % plan,200,-0.1,7.1)
   st = ''
   ntk=0;
   for i in range(2,heff.GetXaxis().GetNbins()-1):
     for j in range(2,heff.GetYaxis().GetNbins()-1):
       st = st + '%f ' % heff.GetBinContent(i+1,j+1)
       ntk=ntk+hext.GetBinContent(i+1,j+1)
-      if (hext.GetBinContent(i+1,j+1)>20):
+      if (hext.GetBinContent(i+1,j+1)>5):
         heffsum.Fill(heff.GetBinContent(i+1,j+1))
+      hmulsum.Fill(hmulc.GetBinContent(i+1,j+1))
   #print '%s' % st
   l.append(heffsum)
+  l.append(hmulc)
+  l.append(hmulsum)
   print plan,heffsum.GetMean(),ntk
   return l
  

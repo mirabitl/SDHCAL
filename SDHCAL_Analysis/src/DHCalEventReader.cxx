@@ -5,7 +5,7 @@ using namespace lcio ;
 #include <stdio.h>
 #include <stdint.h>
 #include <algorithm>
-
+#include <bitset>
 #include <string.h>
 #include <string>
 #include <iostream>
@@ -583,7 +583,52 @@ IMPL::LCCollectionVec* DHCalEventReader::createRawCalorimeterHits(bool useSynch)
     }
   return RawVec;
 }
+void DHCalEventReader::findDIFSeeds(int32_t dif_min)
+{
+  std::map<uint32_t,std::bitset<255> > difseeds;
+  difseeds.clear();
+  for (std::vector<DIFPtr*>::iterator it = theDIFPtrList_.begin();it!=theDIFPtrList_.end();it++)
+    {
+      DIFPtr* d = (*it);
+      // Loop on frames
+      for (uint32_t i=0;i<d->getNumberOfFrames();i++)
+	{
+	  uint32_t bc = d->getFrameTimeToTrigger(i);
+	  std::map<uint32_t,std::bitset<255> >::iterator it=difseeds.find(bc);
+	    if (it!=difseeds.end()) 
+	      it->second=it->second.set(d->getID());
+	    else
+	      {
+		std::bitset<255> bs;
+		bs.reset();
+		bs.set(d->getID());
+		std::pair<uint32_t,std::bitset<255> > p(bc,bs);
+		difseeds.insert(p);
+	      }
+	}
+    }
+   theDIFSeeds_.clear();
+   for (std::map<uint32_t,std::bitset<255> >::iterator it=difseeds.begin();it!=difseeds.end();it++)
+     {
+       uint32_t np=0,npp=0,nc=it->second.count();
+       bool ismax=true;
+       for (int i=-2;i<2;i++)
+	 {
+	   std::map< uint32_t, std::bitset<255> >::iterator itp=difseeds.find(it->first+i);
+	     if (itp==difseeds.end()) continue;
+	     if (itp->second.count()> nc) {ismax=false;break;}
+										    np+=itp->second.count();
+										    
+	 }
+   if (!ismax) continue;
+   if ((np+nc)<dif_min) continue;
+   theDIFSeeds_.push_back(it->first);
+									   
+										    
 
+     }
+
+}
 void DHCalEventReader::findTimeSeeds(int32_t nasic_min)
 {
   theTimeSeeds_.clear();

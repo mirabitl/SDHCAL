@@ -135,7 +135,7 @@ void RawAnalyzer::processEvent()
 	TH1* han20=rootHandler_->GetTH1(s.str()+"/Hits20");
 	TH1* hfr=rootHandler_->GetTH1(s.str()+"/Frequency");
 	TH1* hframetime=rootHandler_->GetTH1(s.str()+"/FrameTime");
-
+	TProfile* hmul=(TProfile*) rootHandler_->GetTH1(s.str()+"/Multiplicity");
 	if (han==NULL)
 	  {
 	    printf("booking %s \n",s.str().c_str());
@@ -143,13 +143,20 @@ void RawAnalyzer::processEvent()
 	    han20 =rootHandler_->BookTH1(s.str()+"/Hits20",64,0.1,64.1);
 	    hfr =rootHandler_->BookTH1(s.str()+"/Frequency",64,0.1,64.1);
 	    hframetime =rootHandler_->BookTH1(s.str()+"/FrameTime",2000,0.,2000.);
-      
+	    hmul =rootHandler_->BookProfile(s.str()+"/Multiplicity",64,0.1,64.1,0.5,5.);
 	  }
 	hframetime->Fill(d->getFrameTimeToTrigger(i)*1.);
+	uint32_t npad=0;
+	for (uint32_t j=0;j<64;j++)
+	   {
+	     if (!(d->getFrameLevel(i,j,0) || d->getFrameLevel(i,j,1))) continue;
+	     npad++;
+	   }
 	 for (uint32_t j=0;j<64;j++)
 	   {
 	     if (!(d->getFrameLevel(i,j,0) || d->getFrameLevel(i,j,1))) continue;
 	     han->Fill(j*1.);
+	     hmul->Fill(j*1.,npad*1.);
 	     if (d->getFrameTimeToTrigger(i)<20)
 	       han20->Fill(j*1.);
 	   }

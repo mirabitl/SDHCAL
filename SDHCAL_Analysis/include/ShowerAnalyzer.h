@@ -287,5 +287,6 @@ private:
 	ComputerTrack* theComputerTrack_;
 	unsigned long long theLastBCID_,theIdxSpill_;
 	float theTimeInSpill_[20],theCountSpill_[20],theLastRate_;
+	float coreRatio_;
 };
 #endif

@@ -1,4 +1,4 @@
-#define NPLANS_USED 12
+#define NPLANS_USED 50
 #define NX 36
 #define NY 36
 
@@ -659,12 +659,14 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   if (nhits==0) return;
   //return;
   //DEBUG_PRINT("Edge detection for %d \n",seed);
-  //  buildEdges();
+  buildEdges();
   theNplans_=0;
   std::bitset<48> asics[255];
   //printf("2");
   for (int ii=0;ii<255;ii++) asics[ii].reset();
   theHitVector_.clear();
+  std::vector<RecoHit*> tkhits;
+  tkhits.clear();
   for (uint32_t k=0;k<60;k++)
     { bool found=false;
       for (uint32_t i=0;i<96;i++)
@@ -673,6 +675,8 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 	    {tempim.setValue(k,i/3,j/3,1);
 	      //printf("%d%d %d %d \n",i,j,hitVolume_[k][i][j].getFlag(RecoHit::EDGE),hitVolume_[k][i][j].getFlag(RecoHit::ISOLATED));
 	      //if ((hitVolume_[k][i][j].getFlag(RecoHit::EDGE)==1||hitVolume_[k][i][j].getFlag(RecoHit::ISOLATED)==1) )
+	      if ((hitVolume_[k][i][j].getFlag(RecoHit::ISOLATED)!=1) )
+		tkhits.push_back(&hitVolume_[k][i][j]);
 	      theHitVector_.push_back(&hitVolume_[k][i][j]);
 	      asics[hitVolume_[k][i][j].dif()].set(hitVolume_[k][i][j].getAsic()-1);
 	      found=true;}
@@ -682,30 +686,33 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   //printf("3");
   if (theNplans_<minChambersInTime_) return;  
   //this->drawHits(theHitVector_);getchar();
-  if ( currentTime_<0 || (theBCID_==6873405 && theHitVector_.size()>50 ))
-   {
-     printf("Number of Hits %d  %d %d\n",theHitVector_.size(),theNplans_,minChambersInTime_);
-     this->drawHits(theHitVector_);getchar();
-   }
   //if (theNplans_<5) return;  
   //this->drawHits(theHitVector_);getchar();
 
   //printf("4");
-  Shower::computePrincipalComponents(theHitVector_,(double*) &ish);
+  Shower::computePrincipalComponents(tkhits,(double*) &ish);
 #undef KEEPTRACK
 #ifndef KEEPTRACK 
-  //printf("5"); 
-  if (true || sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1)
+  //printf(" Mean event parameter %f %f %f => %f \n",ish.lambda[0],ish.lambda[1],ish.lambda[2],sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])); 
+  //  getchar();
+  if (true && sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1)
     {
       
       
       this->buildTracks(theHitVector_);
       //  printf("6\n");
       if (theComputerTrack_->getTracks().size()>0 &&false)
-	{this->drawHits(theHitVector_);getchar();  }
+	{
+	  this->drawHits(theHitVector_);getchar();  }
       return;
     }
-  //return;
+  else
+    if (coreRatio_>1.2 && false)
+    {
+	  this->drawHits(theHitVector_);getchar();  
+	  //return;
+    }
+  return;
   if (sqrt((ish.lambda[0])/ish.lambda[2])<0.05) return;
   if (ish.xm[0]<5) return;
   
@@ -723,8 +730,8 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   if (!(abs(x[0]-55)<10&&abs(x[1]-49)<10)) return;
   std::cout<<t.bx_<<std::endl;
 #endif
-      DEBUG_PRINT("Edge detection for %d \n",seed);
-      buildEdges();
+  //  DEBUG_PRINT("Edge detection for %d \n",seed);
+  //  buildEdges();
 
   uint32_t nshower=buildClusters(theHitVector_);
 
@@ -1444,8 +1451,8 @@ void ShowerAnalyzer::processEvent()
       // getchar();
       seed.clear();
       DEBUG_PRINT("Calling CreaetRaw\n");
-
-      rhcol=reader_->createRawCalorimeterHits(seed);
+      reader_->findDIFSeeds(minChambersInTime_);
+      rhcol=reader_->createRawCalorimeterHits(reader_->getDIFSeeds());
       evt_->addCollection(rhcol,"DHCALRawHits");
       rhcoltransient=false; 
 
@@ -1472,7 +1479,7 @@ void ShowerAnalyzer::processEvent()
   //    rootHandler_->writeXML(theMonitoringPath_);
  
 
-  reader_->findTimeSeeds(4);
+  reader_->findTimeSeeds(minChambersInTime_);
 
   std::vector<uint32_t> vseeds=reader_->getTimeSeeds();
 
@@ -3004,6 +3011,7 @@ void ShowerAnalyzer::drawHits(std::vector<RecoHit*> vrh)
 
   TH3* hcgposi = rootHandler_->GetTH3("InstantHitMap");
   TH2* hasic2=rootHandler_->GetTH2("DIFAsicCount");
+  TH1* hweight=rootHandler_->GetTH1("showerweight2");
   if (hcgposi==NULL)
     {
       hcgposi =rootHandler_->BookTH3("InstantHitMap",66,0.,200.,200,-50.,150.,200,-50.,150.);
@@ -3020,13 +3028,13 @@ void ShowerAnalyzer::drawHits(std::vector<RecoHit*> vrh)
 	{
 	  //if (allpoints_[i].Charge()<7) continue;
 	  ChamberPos& cp=reader_->getPosition((*ih)->chamber());
-	  printf(" Chamber %d (%f,%f,%f) (%f,%f,%f) (%d,%d) \n",
-	  	 cp.getId(),cp.getX0(),cp.getY0(),cp.getZ0(),cp.getX1(),cp.getY1(),cp.getZ1(),cp.getXsize(),cp.getYsize());
+	  //	  printf(" Chamber %d (%f,%f,%f) (%f,%f,%f) (%d,%d) \n",
+	  //	 cp.getId(),cp.getX0(),cp.getY0(),cp.getZ0(),cp.getX1(),cp.getY1(),cp.getZ1(),cp.getXsize(),cp.getYsize());
 	  double x,y,z;
 	  cp.calculateGlobal((*ih)->X(),(*ih)->Y(),x,y,z);
 	  hcgposi->Fill(z,x,y);//(*ih)->Z(),(*ih)->X(),(*ih)->Y());
 
-	  printf("HIT %d %d  Global (%f,%f,%f) from Local (%f,%f) \n",(*ih)->dif(),(*ih)->getAsic(),z,x,y,(*ih)->X(),(*ih)->Y());
+	  //printf("HIT %d %d  Global (%f,%f,%f) from Local (%f,%f) \n",(*ih)->dif(),(*ih)->getAsic(),z,x,y,(*ih)->X(),(*ih)->Y());
 	}
 
 
@@ -3059,7 +3067,7 @@ void ShowerAnalyzer::drawHits(std::vector<RecoHit*> vrh)
       int ix,iy,iz;
       hasic2->GetMaximumBin(ix,iy,iz);
       printf("%d %d %d %f\n",ix,iy,iz,hasic2->GetMaximum());
-
+      hweight->Draw();
       TCHits->Modified();
       TCHits->Draw();
       TCHits->Update();
@@ -8544,6 +8552,7 @@ void ShowerAnalyzer::drawph(houghParam* p)
 }
 #define BINFACT 3
 #define BINEDGE 96/BINFACT
+#define DRAW_HISTOS
 void ShowerAnalyzer::buildEdges()
 {
 #ifdef DRAW_HISTOS  
@@ -8553,9 +8562,9 @@ void ShowerAnalyzer::buildEdges()
     {
       //hweight=(TH1F*) rootHandler_->BookTH1("showerweight",100,0.,2.);
       hweight= rootHandler_->BookTH1("showerweight",110,-0.1,0.99);
-      hweight2= rootHandler_->BookTH1("showerweight2",120,-0.1,1.1);
+      hweight2= rootHandler_->BookTH1("showerweight2",600,0.,30.);
     }
-  //hweight->Reset();
+  hweight->Reset();
 #endif
   uint32_t nmax=0;
   uint32_t nedge=0,ncore=0,niso=0;
@@ -8568,6 +8577,7 @@ void ShowerAnalyzer::buildEdges()
 	  //if (image2x[k][i]>=-1 ) continue;
 			
 	  for (uint32_t j=0;j<theImage_.getZSize();j++)
+
 	    {
 	      if (theImage_.getValue(k,i,j)>0)
 		{
@@ -8622,9 +8632,11 @@ void ShowerAnalyzer::buildEdges()
 	}
 	  
     }
+  coreRatio_=ncore*1./(nedge+niso);
 #ifdef DRAW_HISTOS
-  if (nedge+ncore!=0)
-    hweight2->Fill(nedge*1./(nedge+ncore));
+  //printf("Iso %d Edge %d Core %d Ratio %f \n",niso,nedge,ncore,ncore*1./(nedge+niso));
+  if ((nedge+ncore+niso)!=0)
+    hweight2->Fill(ncore*1./(nedge+niso));
 #endif
   
   //printf("Max neigh %d Hit summary Isolated %d Edge %d Core %d => %.2f\n",nmax,niso,nedge,ncore,(nedge*100./(nedge+ncore)));
@@ -9177,7 +9189,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
    for (unsigned int i=0;i<theComputerTrack_->getTracks().size();i++)
 	{
 	  TrackInfo& tk = theComputerTrack_->getTracks()[i];
-	  if (tk.size()<3) continue;
+	  if (tk.size()<minChambersInTime_) continue;
 	  //this->draw(tk);
 	  //char c;c=getchar();putchar(c); if (c=='.') exit(0);
 	  uint32_t fch=int(ceil(tk.zmin()*10))/28+1;
@@ -9253,7 +9265,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	      TrackInfo tex;
 	      tk.exclude_layer(ip,tex);
 	      uint32_t npext=tex.size();
-	      if (npext<3) continue; // Au moins 4 plans dans l'estrapolation touches 
+	      if (npext<minChambersInTime_) continue; // Au moins 4 plans dans l'estrapolation touches 
 
 	      std::stringstream s;
 	      s<<"/Plan"<<ip<<"/";
@@ -9263,6 +9275,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	      TH2* hnear= rootHandler_->GetTH2(s.str()+"near");
 	      TH2* hfound1= rootHandler_->GetTH2(s.str()+"found1");
 	      TH2* hfound2= rootHandler_->GetTH2(s.str()+"found2");
+	      TH2* hmul= rootHandler_->GetTH2(s.str()+"mul");
 	      TH1* hdx= rootHandler_->GetTH1(s.str()+"dx");
 	      TH1* hdy= rootHandler_->GetTH1(s.str()+"dy");
 	      float dz0=0.,distz=60.; // 2.8
@@ -9301,6 +9314,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 		  hnear= rootHandler_->BookTH2(s.str()+"near",nx,xi,xa,ny,yi,ya);
 		  hfound1= rootHandler_->BookTH2(s.str()+"found1",nx,xi,xa,ny,yi,ya);
 		  hfound2= rootHandler_->BookTH2(s.str()+"found2",nx,xi,xa,ny,yi,ya);
+		  hmul= rootHandler_->BookTH2(s.str()+"mul",nx,xi,xa,ny,yi,ya);
 		  hdx=  rootHandler_->BookTH1(s.str()+"dx",400,-4.,4.);
 		  hdy=  rootHandler_->BookTH1(s.str()+"dy",400,-4.,4.);
 		}
@@ -9309,7 +9323,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	      //bool 
 	      float dist=1E9;
 	      bool th1=false,th2=false;
-	      float dxi,dyi,xn,yn;
+	      float dxi,dyi,xn,yn,nhi;
 	      for (std::vector<RECOCluster*>::iterator ic=clusters.begin();ic!=clusters.end();ic++)
 		{
 		  if ((*ic)->plan()!=ip) continue;
@@ -9332,6 +9346,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 		      dist=dap;
 		      dxi=dx;
 		      dyi=dy;
+		      nhi=(*ic)->size();
 		      xn=x;
 		      yn=y;
 		      th1=false,th2=false;
@@ -9349,7 +9364,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 		{
 		  hdx->Fill(dxi);
 		  hdy->Fill(dyi);
-		  
+		  hmul->Fill(xext,yext,nhi*1.);
 		  hfound->Fill(xext,yext);
 		  hnear->Fill(xn,yn);
 		  if (th1)  hfound1->Fill(xext,yext);

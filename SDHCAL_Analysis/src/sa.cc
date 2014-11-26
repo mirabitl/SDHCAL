@@ -27,6 +27,7 @@
 #include "ShowerAnalyzer.h"
 #include "StripAnalyzer.h"
 #include "RawAnalyzer.h"
+#include "MulAnalyzer.h"
 #include "TApplication.h"
 #include "TCanvas.h"
 using namespace std ;
@@ -101,8 +102,9 @@ int main(int argc, char** argv ){
   ShowerAnalyzer *a= new ShowerAnalyzer( &dher,&rootHandler);
   a->setminChambersInTime(3);
   //RawAnalyzer *ar= new RawAnalyzer();
+  //MulAnalyzer *am= new MulAnalyzer();
   //StripAnalyzer *as= new StripAnalyzer();
-  //a->setrebuild(rebuild);
+  a->setrebuild(rebuild);
   //dher.registerAnalysis(ar);
   dher.registerAnalysis(a);
   
@@ -114,7 +116,7 @@ int main(int argc, char** argv ){
    //   a->setWriting(true);
    // }
   //else
-   a->setWriting(false);
+  //a->setWriting(false);
   try {
     dher.readStream(0);
     }

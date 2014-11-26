@@ -57,7 +57,7 @@
     <parameter name="SpillSize" value="20" /> 
     <parameter name="SpyPeriod" value="5" /> 
     <parameter name="OffTimePrescale" value="1" /> 
-    <parameter name="MinChambersInTime" value="3" /> 
+    <parameter name="MinChambersInTime" value="5" /> 
     <parameter name="UseTree" value="false" />
     <parameter name="UseSynchronised" value="false" />
 
@@ -216,7 +216,7 @@
       18,48,0.,64.000000,1.,1.
       105,49,0.,0.000000,1.,1. 
       182,49,0.,32.000000,1.,1. 
-      80,19,0.,64.000000,1.,1. 
+      80,49,0.,64.000000,1.,1. 
        243,50,0.,0.000000,1.,1. 
       242,50,0.,32.000000,1.,1. 
       241,50,0.,64.000000,1.,1. 

@@ -43,6 +43,88 @@ void RecoHit::clear()
   //  vnear_.clear();
   nnear_=0;
 }
+#define USE_PRINCIPAL
+#ifdef USE_PRINCIPAL
+#include <TPrincipal.h>
+void RecoHit::calculateComponents(std::vector<RecoHit*> vnear_)
+{
+  memset(components_,0,21*sizeof(double));
+  nnear_=vnear_.size();
+  if (nnear_<3) return;
+  TPrincipal tp(3,"");
+  double xp[3];
+  uint32_t nh=0;
+  double xb=0,yb=0,zb=0;
+  double wt=0.;
+  
+  double fp=DBL_MAX;
+  double lp=-DBL_MAX;
+  double fx=DBL_MAX;
+  double lx=-DBL_MAX;
+  double fy=DBL_MAX;
+  double ly=-DBL_MAX;
+
+  memset(components_,0,21*sizeof(double));
+  //INFO_PRINT("%d vector size\n",v.size());
+  for (std::vector<RecoHit*>::iterator it=vnear_.begin();it!=vnear_.end();it++)
+    {
+      RecoHit* iht=(*it);
+      if (iht==NULL) continue;
+      //INFO_PRINT("%x %d %d \n",iht,iht->I(),iht->J());
+      //INFO_PRINT("%f %f \n",iht->x(),iht->y());
+      //INFO_PRINT("%f %f \n",iht->X(),iht->Y());
+      double w=1.;
+      xb+=iht->X()*w;
+      yb+=iht->Y()*w;
+      zb+=iht->Z()*w;
+      wt+=w;
+      xp[0]=iht->X();
+      xp[1]=iht->Y();
+      xp[2]=iht->Z();
+      tp.AddRow(xp);
+      if (iht->Z()<fp) fp=iht->Z();
+      if (iht->Z()>lp) lp=iht->Z();
+      if (iht->X()<fx) fx=iht->X();
+      if (iht->X()>lx) lx=iht->X();
+      if (iht->Y()<fy) fy=iht->Y();
+      if (iht->Y()>ly) ly=iht->Y();
+      nh++;
+    }
+  
+  if (nh<3) return;
+  tp.MakePrincipals();
+  components_[0]=(*tp.GetMeanValues())[0];
+  components_[1]=(*tp.GetMeanValues())[1];
+  components_[2]=(*tp.GetMeanValues())[2];
+
+
+
+  components_[3]=(*tp.GetEigenValues())[2];
+  components_[4]=(*tp.GetEigenValues())[1];
+  components_[5]=(*tp.GetEigenValues())[0];
+
+
+  components_[6]=(*tp.GetEigenVectors())(0,0);
+  components_[7]=(*tp.GetEigenVectors())(1,0);
+  components_[8]=(*tp.GetEigenVectors())(2,0);	
+  components_[9]=(*tp.GetEigenVectors())(0,1);
+  components_[10]=(*tp.GetEigenVectors())(1,1);
+  components_[11]=(*tp.GetEigenVectors())(2,1);
+  components_[12]=(*tp.GetEigenVectors())(0,2);
+  components_[13]=(*tp.GetEigenVectors())(1,2);
+  components_[14]=(*tp.GetEigenVectors())(2,2);
+
+  // Store First and last Z
+  components_[15]=fp;
+  components_[16]=lp;
+  components_[17]=fx;
+  components_[18]=lx;
+  components_[19]=fy;
+  components_[20]=ly;
+  
+  //Shower::computePrincipalComponents(vnear_,components_);
+}
+#else
 void RecoHit::calculateComponents(std::vector<RecoHit*> vnear_)
 {
   memset(components_,0,21*sizeof(double));
@@ -162,6 +244,7 @@ void RecoHit::calculateComponents(std::vector<RecoHit*> vnear_)
 
   //Shower::computePrincipalComponents(vnear_,components_);
 }
+#endif
 void RecoHit::initialise(DifGeom& d, ChamberGeom& c,IMPL::RawCalorimeterHitImpl* h,uint32_t hrtype) 
 {
 

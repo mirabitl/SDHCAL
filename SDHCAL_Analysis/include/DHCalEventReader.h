@@ -406,6 +406,7 @@ int readOneEvent(int run,int event);
 
    void findTimeSeeds(  int32_t nhit_min,std::vector<uint32_t>& candidate);
   void findTimeSeeds(  int32_t nasic_min);
+  void findDIFSeeds(  int32_t nasic_min);
   //! <i>Internal</i> create the DHCALRawHits collection 
   IMPL::LCCollectionVec* createRawCalorimeterHits(bool usesynch=false);
   IMPL::LCCollectionVec* createRawCalorimeterHits(std::vector<uint32_t> seeds);
@@ -435,6 +436,7 @@ int readOneEvent(int run,int event);
 #endif
   std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> >& getPhysicsEventMap(){return thePhysicsEventMap_;}
   std::vector<uint32_t>& getTimeSeeds(){return theTimeSeeds_;}
+  std::vector<uint32_t>& getDIFSeeds(){return theDIFSeeds_;}
   std::vector<DIFPtr*>& getDIFList(){return  theDIFPtrList_;}
   void correctGeometry();
  private:
@@ -486,6 +488,7 @@ int readOneEvent(int run,int event);
   std::string currentFileName_;
   static DHCalEventReader* _me;
   std::vector<uint32_t> theTimeSeeds_;
+  std::vector<uint32_t> theDIFSeeds_;
   
   std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> > thePhysicsEventMap_;
 

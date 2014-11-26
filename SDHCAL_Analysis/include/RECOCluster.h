@@ -35,9 +35,11 @@ public:
 	void Print();
 	double X();
 	double Y();
+	
 	inline double Z(){return hits_[0].Z();}
 	inline uint32_t chamber(){return hits_[0].chamber();} 
 	inline uint32_t plan(){return hits_[0].plan();} 
+	inline uint32_t size(){return hits_.size();}
 	double dX();
 	double dY();
 private:
