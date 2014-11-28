@@ -41,6 +41,11 @@
 #ifdef USE_JSON
 #include "DHCalJsonParser.h"
 #endif
+#include <boost/function.hpp>
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
+
+#include <boost/interprocess/sync/interprocess_mutex.hpp>
 
 using namespace std ;
 /** 
@@ -439,6 +444,11 @@ int readOneEvent(int run,int event);
   std::vector<uint32_t>& getDIFSeeds(){return theDIFSeeds_;}
   std::vector<DIFPtr*>& getDIFList(){return  theDIFPtrList_;}
   void correctGeometry();
+  void stopReadMemory();
+  void startReadMemory(std::string directory,uint32_t nd,uint32_t run);
+  void startReadFile(std::string name);
+  void serviceReadMemory();
+  void serviceReadFile();
  private:
   LCReader* lcReader_; /// LCIO Reader
   //  LCSplitWriter* lcWriter_; /// LCIO Writer
@@ -492,6 +502,10 @@ int readOneEvent(int run,int event);
   
   std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> > thePhysicsEventMap_;
 
+  bool monitoringStart_;
+  std::string monitoringDirectory_;
+  uint32_t monitoringNDIF_,monitoringRun_;
+  boost::thread    monitoringThread_;
 };
 
 #endif

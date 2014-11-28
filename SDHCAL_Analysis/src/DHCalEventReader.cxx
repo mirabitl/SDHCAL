@@ -9,7 +9,14 @@ using namespace lcio ;
 #include <string.h>
 #include <string>
 #include <iostream>
-
+#include "ShmProxy.h"
+#include "DIFReadoutConstant.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/dir.h>  
+#include <sys/param.h>  
+#include <fcntl.h>
 #define CHECK_BIT(var,pos) ((var)& (1<<(pos)))
 DHCalEventReader* DHCalEventReader::_me = 0 ;
 
@@ -20,6 +27,13 @@ DHCalEventReader* DHCalEventReader::instance() {
     _me = new DHCalEventReader;
   
   return _me ;
+}  
+int file_select(const struct direct *entry) 
+{  
+  if ((strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0))  
+    return (0);  
+  else  
+    return (1);  
 }  
 
 //static DCFrame theFrameBuffer[256*48*128];
@@ -149,7 +163,156 @@ void DHCalEventReader::readRun()
   //         LCTOOLS::dumpRunHeader(runh_);
   // }
 }
+void DHCalEventReader::stopReadMemory()
+{
+  monitoringStart_=false;
+  monitoringThread_.join();
+}
+void DHCalEventReader::startReadMemory(std::string directory,uint32_t nd,uint32_t nr)
+{
+  monitoringDirectory_=directory;
+  monitoringNDIF_=nd;
 
+  monitoringStart_=true;
+  monitoringRun_=nr;
+  monitoringThread_=boost::thread(&DHCalEventReader::serviceReadMemory, this);
+}
+void DHCalEventReader::startReadFile(std::string directory)
+{
+  monitoringDirectory_=directory;
+  monitoringThread_=boost::thread(&DHCalEventReader::serviceReadFile, this);
+}
+void DHCalEventReader::serviceReadFile()
+{
+  this->open(monitoringDirectory_);
+  this->readStream(0);
+  this->close();
+}
+void DHCalEventReader::serviceReadMemory()
+{
+  std::map<uint64_t,std::vector<unsigned char*> > theBufferMap_;
+  theBufferMap_.clear();
+  while (monitoringStart_)
+    {
+        int count,i;  
+	struct direct **files;  
+	unsigned char cbuf[0x20000];
+	char fnamed[256];
+	    
+	sprintf(fnamed,"%s/closed",monitoringDirectory_.c_str());
+	    
+	count = scandir(fnamed, &files, file_select, alphasort);  
+      
+  /* If no files found, make a non-selectable menu item */  
+	if(count <= 0)  
+	  {::sleep(1); continue;}
+  
+  //printf("Number of files = %d\n",count);  
+	for (i=1; i<count+1; ++i)  
+	  {
+      //printf("%s  \n",files[i-1]->d_name);  
+	    uint32_t dif,dtc,gtc;
+	    uint64_t abcid;
+	    sscanf(files[i-1]->d_name,"%lld_%d_%d_%d",&abcid,&dtc,&gtc,&dif);
+      //printf("dif %d DTC %d GTC %d \n",dif,dtc,gtc);
+	    
+	    char fname[256];
+	    
+	    sprintf(fname,"%s/Event_%lld_%d_%d_%d",monitoringDirectory_.c_str(),abcid,dtc,gtc,dif);
+	    int fd=::open(fname,O_RDONLY);
+	    if (fd<0) 
+	      {
+		printf("%d rc\n",fd);
+		::sleep(1);goto wait_end;
+	      }
+	    int size_buf=::read(fd,cbuf,0x20000);
+	    //printf("%d bytes read %x %d \n",size_buf,cbuf[0],cbuf[1]);
+	    ::close(fd);
+	    ::unlink(fname);
+	    sprintf(fname,"%s/closed/%lld_%d_%d_%d",monitoringDirectory_.c_str(),abcid,dtc,gtc,dif);
+	    ::unlink(fname);
+	    
+	    
+	    uint32_t isizeb=size_buf/4+1;
+	    unsigned char* cdata = new unsigned char[isizeb*4];
+	    memcpy(cdata,cbuf,size_buf);
+	    uint32_t ib0=24;
+	    gtc=ShmProxy::getBufferGTC(cbuf,ib0);
+	    dtc=ShmProxy::getBufferDTC(cbuf,ib0);
+	    uint32_t difid=ShmProxy::getBufferDIF(cbuf,ib0);
+	    
+	    //      printf("FIFO read %d : %d %d \n",difid,dtc,gtc);
+	    
+	    std::map<uint64_t,std::vector<unsigned char*> >::iterator it_gtc=theBufferMap_.find(abcid);
+	    
+	    
+	    if (it_gtc!=theBufferMap_.end())
+	      it_gtc->second.push_back(cdata);
+	    else
+	      {
+		it_gtc=theBufferMap_.find(abcid-1);
+		if (it_gtc!=theBufferMap_.end())
+		  it_gtc->second.push_back(cdata);
+		else
+		  {
+		    it_gtc=theBufferMap_.find(abcid+1);
+		    if (it_gtc!=theBufferMap_.end())
+		      it_gtc->second.push_back(cdata);
+		    else
+		      {
+			std::vector<unsigned char*> v;
+			v.clear();
+			v.push_back(cdata);
+			
+			std::pair<uint64_t,std::vector<unsigned char*> > p(abcid,v);
+			theBufferMap_.insert(p);
+			it_gtc=theBufferMap_.find(gtc);
+		      }
+		  }
+	      }
+	    
+	    
+	  }
+	// Now loop on the Buffer Map and analyze completed events
+	for (std::map<uint64_t,std::vector<unsigned char*> >::iterator it=theBufferMap_.begin();it!=theBufferMap_.end();)
+	  {
+	    if (it->second.size()!=monitoringNDIF_) {it++;continue;}
+	    this->createEvent(monitoringRun_,"SD-HCAL");
+	    if (this->getRunHeader()==0)
+	      this->createRunHeader(monitoringRun_,"SD-HCAL");
+	    std::cout<<"event created"<<std::endl;
+	    
+	    
+	    for (std::vector<unsigned char*>::iterator iv =it->second.begin();iv!=it->second.end();iv++)
+	      {
+		int32_t* idata= (int32_t*) (*iv);
+		//for (int i=0;i<10;i++) printf("%d \n",idata[i]);
+		//uint32_t returned_buffer_size = idata[0]*sizeof(uint32_t);
+		uint32_t ib0=24;
+		unsigned char* cdif = (unsigned char*) idata;
+		uint32_t dif_id=ShmProxy::getBufferDIF(&cdif[ib0],0);
+		//printf("ADDDING %d with  %d bytes \n",dif_id,idata[SHM_BUFFER_SIZE]);
+		
+#ifdef USE_XDAQ_EVB
+		this->addRawOnlineRU(&idata[1],idata[0]);
+#else
+		
+		this->addRawOnlineRU(&idata[0],idata[SHM_BUFFER_SIZE]/sizeof(uint32_t)+1);
+#endif
+	      }
+
+	    
+	    this->buildEvent(true);
+	    this->analyzeEvent();
+	    //purge the map
+	    for (std::vector<unsigned char*>::iterator iv=it->second.begin();iv!=it->second.end();iv++) delete (*iv);
+	    it->second.clear();
+	    theBufferMap_.erase(it++);
+	  }
+	  wait_end:
+	usleep(100);
+	  }
+}
 int DHCalEventReader::readStream(int max_record)
 {
   try{
