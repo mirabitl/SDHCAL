@@ -3,6 +3,7 @@ import logging
 from spyne import Application, srpc, ServiceBase, Iterable, UnsignedInteger,String
 from spyne.protocol.json import JsonDocument
 from spyne.protocol.xml import XmlDocument
+from spyne.protocol.csv import Csv
 from spyne.protocol.http import HttpRpc
 from spyne.server.wsgi import WsgiApplication
 
@@ -129,7 +130,8 @@ if __name__=='__main__':
           # dict by skipping outer response structures that are redundant when
           # the client knows what object to expect.
           #out_protocol=XmlDocument()
-          out_protocol=JsonDocument(ignore_wrappers=True),
+          #out_protocol=YamlDocument(),
+          out_protocol=JsonDocument(ignore_wrappers=False),
       )
 
     # Now that we have our application, we must wrap it inside a transport.
