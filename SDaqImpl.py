@@ -3,7 +3,7 @@
 from PyQt4 import QtGui, QtCore
 import sys
 import StartDaq
-
+import postelog
 import DaqUI
 class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow): 
     def __init__(self, parent=None):
@@ -112,6 +112,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
     def Start(self):
         if self.daq_!=None:
             self.daq_.Start()
+            postelog.post(self.daq_.daq_.getCurrentRun(),self.daq_.daq_.getCurrentState())
             self.LCDRun.display(self.daq_.daq_.getCurrentRun())
             self.PBConfigure.setEnabled(False)
             self.PBStart.setEnabled(False)
