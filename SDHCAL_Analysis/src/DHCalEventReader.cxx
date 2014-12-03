@@ -194,6 +194,7 @@ void DHCalEventReader::serviceReadMemory()
   theBufferMap_.clear();
   while (monitoringStart_)
     {
+      printf("On liste \n");
         int count,i;  
 	struct direct **files;  
 	unsigned char cbuf[0x20000];

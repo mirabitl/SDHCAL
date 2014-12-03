@@ -94,13 +94,13 @@ int main(int argc, char** argv ){
 
 
 
-  dher.ParseSteering("m3_sep14.xml");
+  dher.ParseSteering("m3_bonneteau.xml");
   //dher.ParseSteering("tomuvol_agm14.xml");
  
 #define USESTREAM
 #ifdef USESTREAM
   ShowerAnalyzer *a= new ShowerAnalyzer( &dher,&rootHandler);
-  a->setminChambersInTime(3);
+  //a->setminChambersInTime(3);
   //RawAnalyzer *ar= new RawAnalyzer();
   //MulAnalyzer *am= new MulAnalyzer();
   //StripAnalyzer *as= new StripAnalyzer();
@@ -119,6 +119,7 @@ int main(int argc, char** argv ){
   //a->setWriting(false);
   try {
     dher.readStream(0);
+    //dher.startReadMemory("/dev/shm/monitor",155,10000);
     }
     catch(...)
       {

@@ -55,6 +55,7 @@ void TrackInfo::regression()
   double z2=0,z=0,zy=0,y=0,zx=0,x=0,w=0;
   zmin_=9999.;zmax_=0;
   if (np_<2) return;
+  planes_.reset();
   for (uint32_t i=0;i<np_;i++)
     {
 
@@ -66,6 +67,7 @@ void TrackInfo::regression()
       x+=x_[i];
       if (z_[i]<zmin_) zmin_=z_[i];
       if (z_[i]>zmax_) zmax_=z_[i];
+      planes_.set(layer_[i]);
       
     }
   

@@ -709,11 +709,12 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   else
     if (coreRatio_>1.2 && false)
     {
-	  this->drawHits(theHitVector_);getchar();  
+      //this->drawHits(theHitVector_);getchar();  
 	  //return;
     }
-  return;
-  if (sqrt((ish.lambda[0])/ish.lambda[2])<0.05) return;
+  // return;
+  //if (sqrt((ish.lambda[0])/ish.lambda[2])<0.05) return;
+  /*
   if (ish.xm[0]<5) return;
   
   double* v=ish.l2;
@@ -729,6 +730,7 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   if (t.by_<5 || t.by_>95) return;
   if (!(abs(x[0]-55)<10&&abs(x[1]-49)<10)) return;
   std::cout<<t.bx_<<std::endl;
+  */
 #endif
   //  DEBUG_PRINT("Edge detection for %d \n",seed);
   //  buildEdges();
@@ -1451,8 +1453,9 @@ void ShowerAnalyzer::processEvent()
       // getchar();
       seed.clear();
       DEBUG_PRINT("Calling CreaetRaw\n");
-      reader_->findDIFSeeds(minChambersInTime_);
-      rhcol=reader_->createRawCalorimeterHits(reader_->getDIFSeeds());
+      //reader_->findDIFSeeds(minChambersInTime_);
+      //rhcol=reader_->createRawCalorimeterHits(reader_->getDIFSeeds());
+      rhcol=reader_->createRawCalorimeterHits(seed);
       evt_->addCollection(rhcol,"DHCALRawHits");
       rhcoltransient=false; 
 
@@ -1546,21 +1549,22 @@ void ShowerAnalyzer::processEvent()
   else
     theIdxSpill_+=1;
 
-  theCountSpill_[theIdxSpill_%20] =  theNbShowers_+theNbTracks_;
-  theTimeInSpill_[theIdxSpill_%20] = theMonitoring_->getEventIntegratedTime()*2E-7;
+  //  theCountSpill_[theIdxSpill_%20] =  theNbShowers_+theNbTracks_;
+  theCountSpill_[theIdxSpill_%10] =  theNbShowers_;
+  theTimeInSpill_[theIdxSpill_%10] = theMonitoring_->getEventIntegratedTime()*2E-7;
 
   // Integrated 10 last
   float nc=0;
   float tc=0;
   DEBUG_PRINT("showers %uud %d %d ",theIdxSpill_,theNbShowers_,theNbTracks_);
-  for (int i=0;i<20;i++)
+  for (int i=0;i<10;i++)
     {
       nc+=theCountSpill_[i];
       tc+=theTimeInSpill_[i];
       //printf("%f ",theCountSpill_[i]);
     }
 
-  DEBUG_PRINT("\n %d Number of showers %d Event time %f -> Absolute bcid  %f-> Rate %f %f %f\n",evt_->getEventNumber(),theNbShowers_,theMonitoring_->getEventIntegratedTime()*2E-7,(theBCID_-theBCIDSpill_)*2E-7,nc,tc,nc/tc);
+  INFO_PRINT("\n %d Number of showers/tracks %d,%d Event time %f -> Absolute bcid  %f-> Rate %f %f %f\n",evt_->getEventNumber(),theNbShowers_,theNbTracks_,theMonitoring_->getEventIntegratedTime()*2E-7,(theBCID_-theBCIDSpill_)*2E-7,nc,tc,nc/tc);
   theLastRate_=nc/tc;
   theLastBCID_=theBCID_;
   //etchar();
@@ -8166,22 +8170,22 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
   TH2F* izx = (TH2F*) rootHandler_->GetTH2("/Clusters/IZX");
   TH2F* izy = (TH2F*) rootHandler_->GetTH2("/Clusters/IZY");
   
-  TH1* hest = rootHandler_->GetTH1("/Clusters/EST");
+  TH1* hest = rootHandler_->GetTH1("/Clusters/MipRatio");
   
-  TH1* hest1 = rootHandler_->GetTH1("/Clusters/EST1");
-  TH1* hest2 = rootHandler_->GetTH1("/Clusters/EST2");
-  TH1* hest3 = rootHandler_->GetTH1("/Clusters/EST3");
-  TH1* hlom = rootHandler_->GetTH1("/Clusters/LOM");
+  TH1* hest1 = rootHandler_->GetTH1("/Clusters/ShowerNumberOfHit");
+  TH1* hest2 = rootHandler_->GetTH1("/Clusters/LowRateNumberOfHit");
+  TH1* hest3 = rootHandler_->GetTH1("/Clusters/HighRateNumberOfHit");
+  TH1* hlom = rootHandler_->GetTH1("/Clusters/TrackLengthOverMip");
   TProfile* hrate=(TProfile*) rootHandler_->GetTH1("/Clusters/RATE");
-  TProfile* hspill=(TProfile*) rootHandler_->GetTH1("/Clusters/SPILL");
+  TProfile* hspill=(TProfile*) rootHandler_->GetTH1("/Clusters/MeanSpillRate");
   if (hest1==NULL)
     {
       printf("Booking\n");
-      hest1 =rootHandler_->BookTH1("/Clusters/EST1",1000,0.,3000.);
-      hest2 =rootHandler_->BookTH1("/Clusters/EST2",1000,0.,3000.);
-      hest3 =rootHandler_->BookTH1("/Clusters/EST3",1000,0.,3000.);
+      hest1 =rootHandler_->BookTH1("/Clusters/ShowerNumberOfHit",1000,0.,3000.);
+      hest2 =rootHandler_->BookTH1("/Clusters/LowRateNumberOfHit",1000,0.,3000.);
+      hest3 =rootHandler_->BookTH1("/Clusters/HighRateNumberOfHit",1000,0.,3000.);
       hrate =rootHandler_->BookProfile("/Clusters/RATE",200,0.,1000.,0.,2000.);
-      hspill =rootHandler_->BookProfile("/Clusters/SPILL",150,0.,20.,0.,2000.);
+      hspill =rootHandler_->BookProfile("/Clusters/MeanSpillRate",150,0.,20.,0.,2000.);
   
       hzx =(TH2F*)rootHandler_->BookTH2("/Clusters/HZXPOS",120,0.,170.,120,-10.,110.);
 
@@ -8194,8 +8198,8 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
       mzx =(TH2F*)rootHandler_->BookTH2("/Clusters/MZX",120,0.,170.,120,-10.,110.);
       izy =(TH2F*)rootHandler_->BookTH2("/Clusters/IZY",120,0.,170.,120,-10.,110.);
       izx =(TH2F*)rootHandler_->BookTH2("/Clusters/IZX",120,0.,170.,120,-10.,110.);
-      hest = rootHandler_->BookTH1("/Clusters/EST",120,-0.1,1.1);
-      hlom = rootHandler_->BookTH1("/Clusters/LOM",1100,-0.1,2.1);
+      hest = rootHandler_->BookTH1("/Clusters/MipRatio",120,-0.1,1.1);
+      hlom = rootHandler_->BookTH1("/Clusters/TrackLengthOverMip",1100,-0.1,2.1);
 
       
     }
@@ -8245,10 +8249,12 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
    for (unsigned int i=0;i<theComputerTrack_->getCandidates().size();i++)
 	{
 	  RecoCandTk& tk = theComputerTrack_->getCandidates()[i];
+#ifdef CORRECT_GEOM
 	  tk.ax_/=1.04125;
 	  tk.bx_/=1.04125;
 	  tk.ay_/=1.04125;
 	  tk.by_/=1.04125;
+#endif
 	  //printf("Track cand tk: %f %f %f %f \n",tk.ax_,tk.bx_,tk.ay_,tk.by_);
 // 	  for (std::vector<RecoHit*>::iterator ic=vrh.begin();ic!=vrh.end();ic++)
 // 	    {
@@ -8288,13 +8294,13 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
 		}
 	    }
 	}
-   printf("==> MIPS hit %d -> %.2f Length %f \n",nmip,nmip*100./vrh.size(),theComputerTrack_->Length()); 
+   DEBUG_PRINT("==> MIPS hit %d -> %.2f Length %f \n",nmip,nmip*100./vrh.size(),theComputerTrack_->Length()); 
    float lom=theComputerTrack_->Length()*1./vrh.size();
    hlom->Fill(lom);
    bool electron=(theComputerTrack_->Length()<5. || nmip*100./vrh.size()<1);
    bool muon=nmip*100./vrh.size()>60.;
    //if (false && (electron || muon) )
-   if (lom<1E-4 || lom>0.75)
+   if (false &&(lom<1E-4 || lom>0.75))
    //if (lom>1E-4) //select electrons
     {
        for (std::vector<RECOCluster*>::iterator ic=clusters.begin();ic!=clusters.end();ic++)
@@ -8341,7 +8347,7 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
 
 #ifdef DRAW_HISTOS
   bool doPlot=int(hest1->GetEntries())%30==40;
-  doPlot=true;
+  doPlot=false;
   if (doPlot)
     {
   if (TCCluster==NULL)
@@ -8393,7 +8399,7 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
       ia->compute();
       if (ia->getVolume()==0) continue;
       c=(Components*) ia->Components();
-      printf("%f %f %d %d \n",c->zmin,c->zmax,int(c->zmin/2.8),int(c->zmax/2.8));
+      //printf("%f %f %d %d \n",c->zmin,c->zmax,int(c->zmin/2.8),int(c->zmax/2.8));
       if (int(c->zmin/2.8)+1<ifi) ifi =int(c->zmin/2.8)+1;
       if (int(c->zmax/2.8)+1>ili) ili =int(c->zmax/2.8)+1;
 #ifdef DRAW_HISTOS
@@ -8428,6 +8434,18 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
       nag++;
 #endif
       // ia->Print();
+    }
+
+  printf("Amas %d MIP %d hits %d\n",nag,nmip,vrh.size());
+  if (nag==0 && theComputerTrack_->Length()==0) 
+    {
+      for (std::vector<RECOCluster*>::iterator ic=clusters.begin();ic!=clusters.end();ic++)
+	 delete (*ic);
+       free(h_x);
+       free(h_y);
+       free(h_z);
+       free(h_layer);
+       return nshower;
     }
 #ifdef DRAW_HISTOS
   TLine* l[100];
@@ -8471,9 +8489,9 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
 
     }
   if (hest!=NULL) hest->Fill(nmip*1./vrh.size());
-  hest1->Fill(1.*vrh.size());
-  hrate->Fill(theLastRate_,1.*vrh.size());
-  hspill->Fill((theBCID_-currentTime_-theBCIDSpill_)*2E-7,theLastRate_);
+  if (hest1!=NULL) hest1->Fill(1.*vrh.size());
+  if (hrate!=NULL) hrate->Fill(theLastRate_,1.*vrh.size());
+  if (hspill!=NULL) hspill->Fill((theBCID_-currentTime_-theBCIDSpill_)*2E-7,theLastRate_);
   if (theLastRate_<20.) 
     hest2->Fill(1.*vrh.size());
   else
@@ -8483,7 +8501,7 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
 #endif
 
   //  hest1->Draw();
-  INFO_PRINT("Hits %ld  Clusters (%ld,%.2f)  REAL (%ld,%.2f,%.2f) FP %d %d LP %d %d \n",vrh.size(),clusters.size(),clusters.size()*100./vrh.size(),realc.size(),realc.size()*170/vrh.size(),realc.size()*100./clusters.size(),fpi,ifi,lpi,ili);
+  DEBUG_PRINT("Hits %ld  Clusters (%ld,%.2f)  REAL (%d,%.2f,%.2f) FP %d %d LP %d %d \n",vrh.size(),clusters.size(),clusters.size()*100./vrh.size(),realc.size(),realc.size()*170/vrh.size(),realc.size()*100./clusters.size(),fpi,ifi,lpi,ili);
 #ifdef DRAW_HISTOS
   if (doPlot)
     {
@@ -8493,6 +8511,7 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
       char ci;ci=getchar();putchar(ci); if (ci=='.') exit(0);
     }
 #endif
+ end:
    for (std::vector<RECOCluster*>::iterator ic=clusters.begin();ic!=clusters.end();ic++)
      delete (*ic);
 #ifdef DRAW_HISTOS
@@ -9184,12 +9203,14 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
   theComputerTrack_->muonFinder(nstub,h_x,h_y,h_z,h_layer);
  
 
-  if (theComputerTrack_->getTracks().size()>0) theNbTracks_++;
+  //  if (theComputerTrack_->getTracks().size()>0) theNbTracks_++;
   uint32_t nmip=0;
    for (unsigned int i=0;i<theComputerTrack_->getTracks().size();i++)
 	{
 	  TrackInfo& tk = theComputerTrack_->getTracks()[i];
+
 	  if (tk.size()<minChambersInTime_) continue;
+	  if (fabs(tk.ax())<0.5 && fabs(tk.ax())<0.5) theNbTracks_++;
 	  //this->draw(tk);
 	  //char c;c=getchar();putchar(c); if (c=='.') exit(0);
 	  uint32_t fch=int(ceil(tk.zmin()*10))/28+1;
@@ -9256,16 +9277,26 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	  hnp->Fill(tk.size()*1.);
 	  hax->Fill(tk.ax());
 	  hay->Fill(tk.ay());
-	  fch=0;lch=NPLANS_USED;
+	  fch=1;lch=NPLANS_USED;
+	  for (int ip=fch;ip<=lch;ip++)
+	    if (tk.plane(ip)) hnpl->Fill(ip*1.);
 	  //	  std::cout<<tk.planes_<<std::endl;
 	  //getchar();
-	  for (uint32_t ip=fch+1;ip<lch;ip++)
+	  for (uint32_t ip=fch;ip<=lch;ip++)
 	    {
 	      
 	      TrackInfo tex;
+	      
 	      tk.exclude_layer(ip,tex);
 	      uint32_t npext=tex.size();
 	      if (npext<minChambersInTime_) continue; // Au moins 4 plans dans l'estrapolation touches 
+
+	      if (ip>1 && !tex.plane(ip-1)) 
+		if (ip>2 && !tex.plane(ip-2)) continue;
+
+	      if (ip<lch && !tex.plane(ip+1))
+		if (ip<(lch-1) && !tex.plane(ip+2)) continue;
+		
 
 	      std::stringstream s;
 	      s<<"/Plan"<<ip<<"/";

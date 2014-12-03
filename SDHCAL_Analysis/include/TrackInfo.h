@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <bitset>
 #include <math.h>
 #include "Droite3D.h"
 class TrackInfo : public Droite3D
@@ -21,7 +22,9 @@ class TrackInfo : public Droite3D
   inline double x(uint8_t i){return x_[i];}
   inline double y(uint8_t i){return y_[i];}
   inline double z(uint8_t i){return z_[i];}
+  
   inline uint32_t layer(uint8_t i){return layer_[i];}
+  inline bool plane(uint8_t i){return planes_[i];}
   inline double xext(double z){return ax_*z+bx_;}
   inline double yext(double z){return ay_*z+by_;}
   inline double dx(double x,double z) { return (ax_*z+bx_)-x;}
@@ -43,11 +46,13 @@ class TrackInfo : public Droite3D
   inline void set_y(uint8_t i,double y){y_[i]=y;}
   inline void set_z(uint8_t i,double z){z_[i]=z;}
   inline void set_layer(uint8_t i,uint32_t l){layer_[i]=l;}
+  inline void set_plane(uint8_t i){planes_.set(i);}
   inline void clear(){np_=0;ax_=bx_=ay_=by_=chi2x_=chi2y_=zmin_=zmax_=0;
     memset(layer_,0,TK_MAX_POINT*sizeof(uint32_t));
     memset(x_,0,TK_MAX_POINT*sizeof(double));
     memset(y_,0,TK_MAX_POINT*sizeof(double));
     memset(z_,0,TK_MAX_POINT*sizeof(double));
+    planes_.reset();
     
   }
   inline void add_point(double x,double y,double z,uint32_t l){x_[np_]=x;y_[np_]=y;z_[np_]=z;layer_[np_]=l;np_++;}
@@ -64,5 +69,6 @@ class TrackInfo : public Droite3D
   double x_[TK_MAX_POINT];
   double y_[TK_MAX_POINT];
   double z_[TK_MAX_POINT];
+  std::bitset<128> planes_;
 };
 #endif

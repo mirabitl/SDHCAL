@@ -48,7 +48,7 @@ void ComputerTrack::muonFinder(uint32_t nstub,float* x,float* y,float* z,uint32_
     }
   int nplans=lpl-fpl+1;
   if (nplans<3) return;
-
+  //std::cout<<"Seraching track from "<<fpl<<"to "<<lpl<<std::endl;
 
   std::vector<TrackInfo> tracks;
   /*
@@ -130,6 +130,13 @@ void ComputerTrack::muonFinder(uint32_t nstub,float* x,float* y,float* z,uint32_
 	continue;
       }
       itk->regression();
+     
+     //  for (int jp=0;jp<51;jp++)
+// 	if (itk->plane(jp))
+// 	  printf("%.1d",1);
+// 	else
+// 	  printf("%.1d",0);
+//       printf("\n");
       //printf("tracks %d %f %f \n",itk->getList().size(),itk->zmin_,itk->zmax_);
       float xmin=itk->xext(itk->zmin());
       float xmax=itk->xext(itk->zmax());
@@ -342,7 +349,7 @@ void ComputerTrack::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
 	  Components* c=(Components*) ip->Components();
 	  double w=0;
 	  if (c->l2!=0) w=sqrt((c->l1)/c->l2);
-	  printf("Voisins %ld l2=> %f %f %f  w=> %f\n",vnear_.size(),c->l0,c->l1,c->l2,w);
+	  //printf("Voisins %ld l2=> %f %f %f  w=> %f\n",vnear_.size(),c->l0,c->l1,c->l2,w);
 	  if (hweight!=NULL) hweight->Fill(w);
 	  if (w<0.3 && w!=0) 
 	    hxy->Fill(ip->Z(),ip->X());
