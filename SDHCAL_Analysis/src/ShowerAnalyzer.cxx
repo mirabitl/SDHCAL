@@ -8178,9 +8178,16 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
   TH1* hlom = rootHandler_->GetTH1("/Clusters/TrackLengthOverMip");
   TProfile* hrate=(TProfile*) rootHandler_->GetTH1("/Clusters/RATE");
   TProfile* hspill=(TProfile*) rootHandler_->GetTH1("/Clusters/MeanSpillRate");
+  TH1* hpion = rootHandler_->GetTH1("/Clusters/pions");
+  TH1* helectron = rootHandler_->GetTH1("/Clusters/electrons");
+  TH1* hmuon = rootHandler_->GetTH1("/Clusters/muons");
+
   if (hest1==NULL)
     {
       printf("Booking\n");
+      hpion =rootHandler_->BookTH1("/Clusters/pions",1000,0.,3000.);
+      helectron =rootHandler_->BookTH1("/Clusters/electrons",1000,0.,3000.);
+      hmuon =rootHandler_->BookTH1("/Clusters/muons",1000,0.,1000.);
       hest1 =rootHandler_->BookTH1("/Clusters/ShowerNumberOfHit",1000,0.,3000.);
       hest2 =rootHandler_->BookTH1("/Clusters/LowRateNumberOfHit",1000,0.,3000.);
       hest3 =rootHandler_->BookTH1("/Clusters/HighRateNumberOfHit",1000,0.,3000.);
@@ -8446,6 +8453,17 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
        free(h_z);
        free(h_layer);
        return nshower;
+    }
+#ifdef FILL_HISTOS
+  if ((lom>1E-4 && lom<0.75))
+    hpion->Fill(vrh.size());
+  if ((lom<1E-4))
+    helectron->Fill(vrh.size());
+  if ((lom>0.75))
+    hmuon->Fill(vrh.size());
+#endif
+   //if (lom>1E-4) //select electrons
+    {
     }
 #ifdef DRAW_HISTOS
   TLine* l[100];

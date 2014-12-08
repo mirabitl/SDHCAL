@@ -238,9 +238,9 @@ def GetEff(plan):
   
   hnear.Draw("COLZ")
   if (hext.GetEntries()<1E6):
-    hext.Rebin2D(8,8)
-    hnear.Rebin2D(8,8)
-    hmul.Rebin2D(8,8)
+    hext.Rebin2D(2,2)
+    hnear.Rebin2D(2,2)
+    hmul.Rebin2D(2,2)
   heff = hnear.Clone("heff")
   heff.SetDirectory(0)
   heff.Divide(hnear,hext,100.,1.)
