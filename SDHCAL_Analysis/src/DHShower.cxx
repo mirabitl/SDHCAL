@@ -623,7 +623,7 @@ void DHShower::summarizeNumberOfHits()
 	      if ((*ih)->getFlag(RecoHit::MIP)!=0)
 		{theHitNumber_[ipl->first*9+0]++;theHitNumber_[0]++;}
 	      else
-		if ((*ih)->getFlag(RecoHit::ISOLATED)!=0)
+		if ((*ih)->getFlag(RecoHit::CORE)!=0)
 		  {theHitNumber_[ipl->first*9+1]++;theHitNumber_[1]++;}
 		else
 		  {theHitNumber_[ipl->first*9+2]++;theHitNumber_[2]++;}
@@ -633,7 +633,7 @@ void DHShower::summarizeNumberOfHits()
 	      if ((*ih)->getFlag(RecoHit::MIP)!=0)
 		{theHitNumber_[ipl->first*9+3]++;theHitNumber_[3]++;}
 	      else
-		if ((*ih)->getFlag(RecoHit::ISOLATED)!=0)
+		if ((*ih)->getFlag(RecoHit::CORE)!=0)
 		  {theHitNumber_[ipl->first*9+4]++;theHitNumber_[4]++;}
 		else
 		  {theHitNumber_[ipl->first*9+5]++;theHitNumber_[5]++;}
@@ -643,7 +643,7 @@ void DHShower::summarizeNumberOfHits()
 	      if ((*ih)->getFlag(RecoHit::MIP)!=0)
 		{theHitNumber_[ipl->first*9+6]++;theHitNumber_[6]++;}
 	      else
-		if ((*ih)->getFlag(RecoHit::ISOLATED)!=0)
+		if ((*ih)->getFlag(RecoHit::CORE)!=0)
 		  {theHitNumber_[ipl->first*9+7]++;theHitNumber_[7]++;}
 		else
 		  {theHitNumber_[ipl->first*9+8]++;theHitNumber_[8]++;}
@@ -651,7 +651,7 @@ void DHShower::summarizeNumberOfHits()
 	}
    }
 
-
+ 
 
 
 }
@@ -685,10 +685,42 @@ double DHShower::getCorrectedNumberOfHits(uint32_t plan,uint32_t threshold,std::
     }
   return nh[threshold]; 
 }
-
+uint32_t DHShower::getMip(uint32_t threshold)
+{
+  uint32_t nh=0;
+  for (uint32_t ip=1;ip<=50;ip++)
+    {
+       uint32_t idx=ip*9+threshold*3;
+       nh+=theHitNumber_[idx];
+    }
+  
+  return nh;
+}
+uint32_t DHShower::getCore(uint32_t threshold)
+{
+  uint32_t nh=0;
+  for (uint32_t ip=1;ip<=50;ip++)
+    {
+       uint32_t idx=ip*9+threshold*3;
+       nh+=theHitNumber_[idx+1];
+    }
+  
+  return nh;
+}
+uint32_t DHShower::getEdge(uint32_t threshold)
+{
+  uint32_t nh=0;
+  for (uint32_t ip=1;ip<=50;ip++)
+    {
+       uint32_t idx=ip*9+threshold*3;
+       nh+=theHitNumber_[idx+2];
+    }
+  
+  return nh;
+}
 uint32_t DHShower::getNumberOfHits(uint32_t threshold)
 {
-  return this->getReduceNumberOfHits(threshold);
+  return this->getReduceNumberOfHits(threshold,1,50);
 }
 uint32_t DHShower::getReduceNumberOfHits(uint32_t threshold,uint32_t firstp,uint32_t lastp)
 {

@@ -499,7 +499,7 @@ void DCHistogramHandler::writeXML(std::string  path)
 	  xmlstr << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
 	  
 	  xmlstr<<TBufferXML::ConvertToXML(iter->second);
-	  ofstream myfile;
+	  std::ofstream myfile;
 		myfile.open (lastname.c_str());
 		myfile << xmlstr.str();
 		myfile.close();
@@ -543,7 +543,7 @@ void DCHistogramHandler::writeXML(std::string  path)
 	  xmlstr << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
 	  
 	  xmlstr<<TBufferXML::ConvertToXML(iter->second);
-	  ofstream myfile;
+	  std::ofstream myfile;
 		myfile.open (lastname.c_str());
 		myfile << xmlstr.str();
 		myfile.close();

@@ -53,7 +53,7 @@ public:
   //std::list<RecoHit*>& Voisins(){return vnear_;}
   //uint32_t getNumberOfVoisins(){return nnear_;}
   void clear();
-  static const double pad2cm=1.04125;
+  static double pad2cm(){return 1.04125;}
 
 private:
   DifGeom dg_;

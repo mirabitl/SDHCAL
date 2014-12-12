@@ -118,7 +118,7 @@ int main(int argc, char** argv ){
   //else
   //a->setWriting(false);
   try {
-    dher.readStream(0);
+    dher.readStream(5000);
     //dher.startReadMemory("/dev/shm/monitor",155,10000);
     }
     catch(...)
@@ -244,7 +244,7 @@ int main(int argc, char** argv ){
       rootHandler.writeHistograms(name.str());
     }
   std::cout<<"FINI ICI"<<std::endl;
-  //dher.endJob();
+  dher.endJob();
 
 
 

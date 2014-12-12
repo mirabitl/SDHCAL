@@ -19,11 +19,11 @@ RecoHit::RecoHit(DifGeom& d, ChamberGeom& c,IMPL::RawCalorimeterHitImpl* h,uint3
 	cg_.calculateGlobal(chamberLocalI_,chamberLocalJ_,0,x_,y_,zg);
 
 	/*
-	x_=RecoHit::pad2cm*difLocalI_*dg_.getPolarityX() +cg_.getX();
-	y_=RecoHit::pad2cm*difLocalJ_*dg_.getPolarityY()+cg_.getY();
+	x_=pad2cm()*difLocalI_*dg_.getPolarityX() +cg_.getX();
+	y_=pad2cm()*difLocalJ_*dg_.getPolarityY()+cg_.getY();
 	
-	x_/=RecoHit::pad2cm;
-	y_/=RecoHit::pad2cm;
+	x_/=pad2cm();
+	y_/=pad2cm();
 	*/
 
 
@@ -261,11 +261,11 @@ void RecoHit::initialise(DifGeom& d, ChamberGeom& c,IMPL::RawCalorimeterHitImpl*
 	double zg=0;
 	cg_.calculateGlobal(chamberLocalI_,chamberLocalJ_,0,x_,y_,zg);
 	/*	
-	x_=RecoHit::pad2cm*difLocalI_*dg_.getPolarityX() +cg_.getX();
-	y_=RecoHit::pad2cm*difLocalJ_*dg_.getPolarityY()+cg_.getY();
+	x_=pad2cm()*difLocalI_*dg_.getPolarityX() +cg_.getX();
+	y_=pad2cm()*difLocalJ_*dg_.getPolarityY()+cg_.getY();
 	
-	x_/=RecoHit::pad2cm;
-	y_/=RecoHit::pad2cm;
+	x_/=pad2cm();
+	y_/=pad2cm();
 	*/
 
 	int ithr= h->getAmplitude()&0x3;

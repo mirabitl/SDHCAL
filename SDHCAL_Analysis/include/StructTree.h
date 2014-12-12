@@ -101,6 +101,7 @@ typedef struct {
 
   uint32_t   nc[3];
   uint32_t   ne[3];
+  uint32_t   nm[3];
 
   uint32_t   namas,ngood,nhitafterlast;
   double     zfirst,zlast;

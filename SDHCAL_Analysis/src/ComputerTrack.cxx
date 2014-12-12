@@ -57,7 +57,7 @@ void ComputerTrack::muonFinder(uint32_t nstub,float* x,float* y,float* z,uint32_
     {
       if (layer[i]>nplans) continue;
       GeoPoint p(layer[i],x[i],y[i],z[i]);
-      // printf("%d %d %f %f %f \n",i,layer[i],x[i],y[i],z[i]);
+      //  DEBUG_PRINT("%d %d %f %f %f \n",i,layer[i],x[i],y[i],z[i]);
       p.setUsed(false);
       std::map<uint32_t,std::vector<GeoPoint> >::iterator ich=chmap.find(layer[i]);
       if (ich==chmap.end())
@@ -95,7 +95,7 @@ void ComputerTrack::muonFinder(uint32_t nstub,float* x,float* y,float* z,uint32_
 
 
 		  t.regression();
-		  //printf(" (%d,%f,%f,%f)  (%d,%f,%f,%f) ==> %f %f %f %f  \n",layer[i],x[i],y[i],z[i],layer[j],x[j],y[j],z[j],t.ax_,t.bx_,t.ay_,t.by_);
+		  // DEBUG_PRINT(" (%d,%f,%f,%f)  (%d,%f,%f,%f) ==> %f %f %f %f  \n",layer[i],x[i],y[i],z[i],layer[j],x[j],y[j],z[j],t.ax_,t.bx_,t.ay_,t.by_);
 		  for (uint32_t k=0;k<nstub;k++)
 		    {
 		      if (used[k]) continue;
@@ -126,24 +126,24 @@ void ComputerTrack::muonFinder(uint32_t nstub,float* x,float* y,float* z,uint32_
   for (std::vector<TrackInfo>::iterator itk=tracks.begin();itk!=tracks.end();itk++)
     {
       if (itk->size()<3) {
-	//printf("small tk %ld \n",itk->getList().size());
+	// DEBUG_PRINT("small tk %ld \n",itk->getList().size());
 	continue;
       }
       itk->regression();
      
      //  for (int jp=0;jp<51;jp++)
 // 	if (itk->plane(jp))
-// 	  printf("%.1d",1);
+// 	   DEBUG_PRINT("%.1d",1);
 // 	else
-// 	  printf("%.1d",0);
-//       printf("\n");
-      //printf("tracks %d %f %f \n",itk->getList().size(),itk->zmin_,itk->zmax_);
+// 	   DEBUG_PRINT("%.1d",0);
+//        DEBUG_PRINT("\n");
+      // DEBUG_PRINT("tracks %d %f %f \n",itk->getList().size(),itk->zmin_,itk->zmax_);
       float xmin=itk->xext(itk->zmin());
       float xmax=itk->xext(itk->zmax());
       float ymin=itk->yext(itk->zmin());
       float ymax=itk->yext(itk->zmax());
       float l=sqrt((xmax-xmin)*(xmax-xmin)+(ymax-ymin)*(ymax-ymin)+(itk->zmax()-itk->zmin())*(itk->zmax()-itk->zmin()));
-      //printf(" l %f \n ",l);
+      // DEBUG_PRINT(" l %f \n ",l);
       theLength_+=l;
       //itk->Print();
       theTrackVector_.push_back((*itk));
@@ -164,7 +164,7 @@ void ComputerTrack::telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t
     {
       if (layer[i]>nplans) continue;
       GeoPoint p(layer[i],x[i],y[i],z[i]);
-      // printf("%d %d %f %f %f \n",i,layer[i],x[i],y[i],z[i]);
+      //  DEBUG_PRINT("%d %d %f %f %f \n",i,layer[i],x[i],y[i],z[i]);
       p.setUsed(false);
       std::map<uint32_t,std::vector<GeoPoint> >::iterator ich=chmap.find(layer[i]);
       if (ich==chmap.end())
@@ -206,7 +206,7 @@ void ComputerTrack::telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t
 		  t.planes_[layer[i]]=1;
 		  t.planes_[layer[j]]=1;
 		  t.regression();
-		  //printf(" (%d,%f,%f,%f)  (%d,%f,%f,%f) ==> %f %f %f %f  \n",layer[i],x[i],y[i],z[i],layer[j],x[j],y[j],z[j],t.ax_,t.bx_,t.ay_,t.by_);
+		  // DEBUG_PRINT(" (%d,%f,%f,%f)  (%d,%f,%f,%f) ==> %f %f %f %f  \n",layer[i],x[i],y[i],z[i],layer[j],x[j],y[j],z[j],t.ax_,t.bx_,t.ay_,t.by_);
 		  for (uint32_t k=0;k<nstub;k++)
 		    {
 		      if (used[k]) continue;
@@ -240,17 +240,17 @@ void ComputerTrack::telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t
   for (std::vector<TemplateTk<GeoPoint> >::iterator itk=tracks.begin();itk!=tracks.end();itk++)
     {
       if (itk->getNumberOfHits()<3) {
-	//printf("small tk %ld \n",itk->getList().size());
+	// DEBUG_PRINT("small tk %ld \n",itk->getList().size());
 	continue;
       }
       itk->regression();
-      //printf("tracks %d %f %f \n",itk->getList().size(),itk->zmin_,itk->zmax_);
+      // DEBUG_PRINT("tracks %d %f %f \n",itk->getList().size(),itk->zmin_,itk->zmax_);
       float xmin=itk->getXext(itk->zmin_);
       float xmax=itk->getXext(itk->zmax_);
       float ymin=itk->getYext(itk->zmin_);
       float ymax=itk->getYext(itk->zmax_);
       float l=sqrt((xmax-xmin)*(xmax-xmin)+(ymax-ymin)*(ymax-ymin)+(itk->zmax_-itk->zmin_)*(itk->zmax_-itk->zmin_));
-      //printf(" l %f \n ",l);
+      // DEBUG_PRINT(" l %f \n ",l);
       theLength_+=l;
       //itk->Print();
         RecoCandTk tk;
@@ -274,12 +274,12 @@ void ComputerTrack::telescope(uint32_t nstub,float* x,float* y,float* z,uint32_t
 	    t.set_y(np,(*ip)->Y());
 	    t.set_z(np,(*ip)->Z());
 	    t.set_layer(np,(*ip)->chamber());
-	    //printf("%d %f %f %f \n",np,(*ip)->X(),(*ip)->Y(),(*ip)->Z());
+	    // DEBUG_PRINT("%d %f %f %f \n",np,(*ip)->X(),(*ip)->Y(),(*ip)->Z());
 	    np++;
 	  }
 	t.set_size(np);
 	t.regression();
-	//printf(" l %f \n ",t.ax());
+	// DEBUG_PRINT(" l %f \n ",t.ax());
 	theTrackVector_.push_back(t);
     }
   for (int i=0;i<nstub;i++)
@@ -295,7 +295,7 @@ void ComputerTrack::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
     {
       if (layer[i]>50) continue;
       GeoPoint p(layer[i],x[i],y[i],z[i]);
-      // printf("%d %d %f %f %f \n",i,layer[i],x[i],y[i],z[i]);
+      //  DEBUG_PRINT("%d %d %f %f %f \n",i,layer[i],x[i],y[i],z[i]);
       p.setUsed(false);
       std::map<uint32_t,std::vector<GeoPoint> >::iterator ich=chmap.find(layer[i]);
       if (ich==chmap.end())
@@ -349,7 +349,7 @@ void ComputerTrack::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
 	  Components* c=(Components*) ip->Components();
 	  double w=0;
 	  if (c->l2!=0) w=sqrt((c->l1)/c->l2);
-	  //printf("Voisins %ld l2=> %f %f %f  w=> %f\n",vnear_.size(),c->l0,c->l1,c->l2,w);
+	  // DEBUG_PRINT("Voisins %ld l2=> %f %f %f  w=> %f\n",vnear_.size(),c->l0,c->l1,c->l2,w);
 	  if (hweight!=NULL) hweight->Fill(w);
 	  if (w<0.3 && w!=0) 
 	    hxy->Fill(ip->Z(),ip->X());
@@ -410,7 +410,7 @@ void ComputerTrack::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
 		    	t.by_=c->yb-t.ay_*c->zb;
 		    	float dx=(t.getXext(ip->Z())-ip->X()),dy=(t.getYext(ip->Z())-ip->Y());
 		    	float dist=sqrt(dx*dx+dy*dy);
-			//printf("%f (%f,%f,%f) \n",c->l2,c->v2x,c->v2y,c->v2z);
+			// DEBUG_PRINT("%f (%f,%f,%f) \n",c->l2,c->v2x,c->v2y,c->v2z);
 		    	if (dist<distmax && dist<6) //4 before
 		    	  {
 		    	    distmax=dist;itk_assoc=itk;
@@ -562,7 +562,7 @@ void ComputerTrack::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
 	}
     }
 
-    //    printf("All %d  unassociated cluster %d %d\n",nstub,nuna,nass);
+    //     DEBUG_PRINT("All %d  unassociated cluster %d %d\n",nstub,nuna,nass);
   TH2F* g_houghxz[100];
   TH2F* g_houghyz[100];
   uint32_t nh=0;
@@ -582,7 +582,7 @@ void ComputerTrack::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
   for (std::vector<TemplateTk<GeoPoint> >::iterator itk=tracks.begin();itk!=tracks.end();itk++)
     {
       if (itk->getNumberOfHits()<3) {
-	printf("small tk %ld \n",itk->getList().size());
+	 DEBUG_PRINT("small tk %ld \n",itk->getList().size());
 	continue;
       }
       float xmin=itk->getXext(itk->zmin_);
@@ -590,7 +590,7 @@ void ComputerTrack::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
       float ymin=itk->getYext(itk->zmin_);
       float ymax=itk->getYext(itk->zmax_);
       float l=sqrt((xmax-xmin)*(xmax-xmin)+(ymax-ymin)*(ymax-ymin)+(itk->zmax_-itk->zmin_)*(itk->zmax_-itk->zmin_));
-      printf(" l %f \n ",l);
+       DEBUG_PRINT(" l %f \n ",l);
       theLength_+=l;
       //itk->Print();
         RecoCandTk tk;
@@ -603,19 +603,19 @@ void ComputerTrack::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
 	tk.chi2_=itk->chi2_;
 	theCandidateVector_.push_back(tk);
 	float chi2=0,ndf=0;
-	//printf("Track tk: %f %f %f %f \n",itk->ax_,itk->bx_,itk->ay_,itk->by_);
+	// DEBUG_PRINT("Track tk: %f %f %f %f \n",itk->ax_,itk->bx_,itk->ay_,itk->by_);
 	for (std::vector<GeoPoint*>::iterator ip=itk->getList().begin(); ip!=itk->getList().end();ip++)
 	  {
 	    if ((*ip)->isUsed())
 	      {
 		float dx=itk->getXext((*ip)->Z())-(*ip)->X();
 		float dy=itk->getYext((*ip)->Z())-(*ip)->Y();
-		//	printf ("\t Point (%f,%f,%f) %f %f \n",(*ip)->X(),(*ip)->Y(),(*ip)->Z(),dx,dy);
+		//	 DEBUG_PRINT ("\t Point (%f,%f,%f) %f %f \n",(*ip)->X(),(*ip)->Y(),(*ip)->Z(),dx,dy);
 		chi2+= (dx*dx+dy*dy);ndf+=2.;
 	    }
 	    
 	}
-	printf("%f %f DIST %f\n",chi2,ndf,chi2/(ndf-4));
+	 DEBUG_PRINT("%f %f DIST %f\n",chi2,ndf,chi2/(ndf-4));
 #ifdef DRAW_IT
       std::stringstream s;
       s<<"GPUHough1X"<<nh;
@@ -666,7 +666,7 @@ void ComputerTrack::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
   CanvasGPU1->Modified();
   CanvasGPU1->Draw();
 #endif
-  printf("All %d   unassociated cluster %d %d intk %d\n",nstub,nuna,nass,nin);
+   DEBUG_PRINT("All %d   unassociated cluster %d %d intk %d\n",nstub,nuna,nass,nin);
 
   //CanvasGPU1->WaitPrimitive();
 #ifdef DRAW_IT
@@ -685,6 +685,6 @@ void ComputerTrack::associate(uint32_t nstub,float* x,float* y,float* z,uint32_t
   delete hweight;
   delete hxy;
   delete hxyb;
-  printf("Total lengh %f\n",theLength_);
+   DEBUG_PRINT("Total lengh %f\n",theLength_);
 
 }

@@ -24,7 +24,10 @@ public:
   uint32_t getNumberOfHits(uint32_t plan,uint32_t threshold);
   double getCorrectedNumberOfHits(uint32_t plan,uint32_t threshold,std::map<uint32_t,double*> &corr);   
   uint32_t getReduceNumberOfHits(uint32_t threshold,uint32_t fp=0,uint32_t lp=100);
-  uint32_t getNumberOfHits(uint32_t threshold);
+  uint32_t getNumberOfHits(uint32_t threshold);  
+  uint32_t getEdge(uint32_t threshold);
+  uint32_t getCore(uint32_t threshold);
+  uint32_t getMip(uint32_t threshold);
   uint32_t getNumberOfMips(uint32_t plan);
   uint32_t getFDHits(uint32_t* v,uint32_t thr);
   uint32_t getFDHitsN(uint32_t* v,uint32_t thr);
