@@ -41,7 +41,7 @@ def SWIGSharedLibrary(env, library, sources, **args):
 #print "----------------------------------------------"
 Decider('MD5-timestamp')
 XDAQ_ROOT="/opt/xdaq"
-DHCAL_ROOT=os.path.abspath("./SDHCAL/")
+DHCAL_ROOT=os.path.abspath("../")
 
 
 Bit64=False
