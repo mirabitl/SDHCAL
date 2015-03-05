@@ -36,7 +36,7 @@
     <parameter name="MaxHitCount" value="900000" />  
     <parameter name="DoTimeHistos" value="true" /> 
     <parameter name="DropFirstSpillEvent" value="false" /> 
-    <parameter name="Interactif" value="true" /> 
+    <parameter name="Interactif" value="false" /> 
     <parameter name="Alignement" value="false" /> 
     <parameter name="NbAlignement" value="0" />
     <parameter name="TkFirstChamber" value="1" />  
@@ -57,7 +57,7 @@
     <parameter name="SpillSize" value="20" /> 
     <parameter name="SpyPeriod" value="5" /> 
     <parameter name="OffTimePrescale" value="1" /> 
-    <parameter name="MinChambersInTime" value="8" /> 
+    <parameter name="MinChambersInTime" value="6" /> 
     <parameter name="UseTree" value="false" />
     <parameter name="UseSynchronised" value="false" />
 

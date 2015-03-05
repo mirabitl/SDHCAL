@@ -118,7 +118,7 @@ int main(int argc, char** argv ){
   //else
   //a->setWriting(false);
   try {
-    dher.readStream(5000);
+    dher.readStream(500000);
     //dher.startReadMemory("/dev/shm/monitor",155,10000);
     }
     catch(...)

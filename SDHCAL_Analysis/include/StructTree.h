@@ -61,6 +61,7 @@ typedef struct {
   uint64_t    ib1;
   uint32_t    time;
   uint32_t    eventid;
+  uint32_t    showers;
   uint32_t    gtc;
   double     xm[3];
   double     lambda[3];
@@ -104,9 +105,11 @@ typedef struct {
   uint32_t   nm[3];
 
   uint32_t   namas,ngood,nhitafterlast;
-  double     zfirst,zlast;
+  double     zfirst,zlast,tklen;
   
-
+  uint16_t m0,e0,c0,i0;
+  uint16_t m1,e1,c1,i1;
+  uint16_t m2,e2,c2,i2;
 } shower_t;
 
  
@@ -126,6 +129,10 @@ typedef struct {
   uint16_t    allshowers;
   uint16_t    showers;
   uint8_t    type;
+  uint16_t m0,e0,c0,i0;
+  uint16_t m1,e1,c1,i1;
+  uint16_t m2,e2,c2,i2;
+  double tracklength;
 } event_t;
 
 #endif

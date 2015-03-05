@@ -117,6 +117,7 @@ void DHShower::PlayMatrix(uint32_t fp,uint32_t lp)
   uint32_t nh=0;
   double xb=0,yb=0,zb=0;
   double wt=0.;
+  theAmas_.clear();
 
   for (std::map<uint32_t,std::vector<RecoHit*> >::iterator ipl=thePlans_.begin();ipl!=thePlans_.end();ipl++)
     {
@@ -133,6 +134,21 @@ void DHShower::PlayMatrix(uint32_t fp,uint32_t lp)
 	  zb+=(*iht)->Z()*w;
 	  wt+=w;
 	  nh++;
+
+	  if ((*iht)->getFlag(RecoHit::CORE))
+	    {
+	      bool appended=false;
+	      for (std::vector<Amas>::iterator ia=theAmas_.begin();ia!=theAmas_.end();ia++)
+		  {
+		    appended=(ia->append((*iht),2));
+		    if (appended) break;
+		  }
+		if (!appended)
+		  {
+		    Amas a((*iht));
+		    theAmas_.push_back(a);
+		  }
+	    }
 	}
     }
   if (nh<5) return;
@@ -227,6 +243,20 @@ void DHShower::PlayMatrix(uint32_t fp,uint32_t lp)
     {
       if (ipl->second.size()>1 && ipl->first<firstPlan_) firstPlan_=ipl->first;
       lastPlan_=ipl->first;
+    }
+
+
+  // now compute First and Last good amas
+  zfirst_=999999.;
+  zlast_=-9999999.;
+  ng_=0;
+  for (std::vector<Amas>::iterator ia=theAmas_.begin();ia!=theAmas_.end();ia++)
+    {
+      if (ia->size()<4) continue;
+      ia->compute();
+      ng_++;
+      if (ia->getComponents(2)<zfirst_) zfirst_=ia->getComponents(2);
+      if (ia->getComponents(2)>zlast_) zlast_=ia->getComponents(2);
     }
 
 }
