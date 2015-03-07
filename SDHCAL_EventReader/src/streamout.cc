@@ -21,17 +21,17 @@
 #include "UTIL/CellIDDecoder.h"
 
 #include <cstdlib>
-#include "DCBufferReader.h"
+//#include "DCBufferReader.h"
 #include "DIFSlowControl.h"
 #include "DCType.h"
-#include "LMBasicAnalyzer.h"
-#include "LMNewAnalyzer.h"
+//#include "LMBasicAnalyzer.h"
+//#include "LMNewAnalyzer.h"
 #include "FilterAnalyzer.h"
 using namespace std ;
 using namespace lcio ;
 /** dump the given event to screen
  */
-#include "GenericOnlineReader.h"
+//#include "GenericOnlineReader.h"
 
 int main(int argc, char** argv ){
 

@@ -303,7 +303,7 @@ int DHCalEventReader::parseRawEvent(int rushift)
 	  uint32_t idstart=DIFUnpacker::getStartOfDIF(tcbuf,rusize,theXdaqShift_);
 	  //bool slowcontrol; uint32_t version,hrtype,id0,iddif;
 	  //DCBufferReader::checkType(tcbuf,rusize/4,slowcontrol,version,hrtype,id0,iddif,theXdaqShift_);
-	  //printf(" Found start of Buffer at %d %d contains %x and %d bytes \n",idstart,id0,tcbuf[idstart],rusize-idstart+1);
+	  //printf(" Found start of Buffer at %d contains %x and %d bytes \n",idstart,tcbuf[idstart],rusize-idstart+1);
 
 	  
 	  

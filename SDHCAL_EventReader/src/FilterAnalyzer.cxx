@@ -96,7 +96,7 @@ void FilterAnalyzer::processEvent()
       evtOutput_->addCollection(HitVec,"DHCALRawHits");
       //LCTOOLS::printRawCalorimeterHits(HitVec);
       if (writing_)
-#define NOSORT
+#undef NOSORT
 #ifdef NOSORT
 	reader_->write(evtOutput_);
 #else

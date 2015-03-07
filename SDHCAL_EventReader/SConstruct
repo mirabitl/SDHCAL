@@ -154,8 +154,9 @@ EXE_LIBS.append("SDHCALEventReader")
 EXE_LIBS.append("lcio")
 EXE_LIBS.append("sio")
 sa=env.Program("bin/sa",source="src/sa.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+so=env.Program("bin/so",source="src/streamout.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
-Default([SDHCALEventReader,LSDHCALEventReader,sa])
+Default([SDHCALEventReader,LSDHCALEventReader,sa,so])
 env.Install("../opt/dhcal/lib",SDHCALEventReader)
 #env.Install("/opt/dhcal/lib",DIF)
 

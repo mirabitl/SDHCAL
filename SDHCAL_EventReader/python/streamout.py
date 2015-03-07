@@ -37,7 +37,7 @@ rootHandler=dr.DCHistogramHandler()
 
 
 dher.ParseSteering(config.marlin)
-dher.setXdaqShift(24);
+dher.setXdaqShift(92);
 a=dr.FilterAnalyzer( dher,rootHandler);
 
 
@@ -48,7 +48,7 @@ a.setminChambersInTime(config.minChambersInTime);
 
 fileOut=config.fileOut % run
 a.setWriting(True)
-dher.setDropFirstRU(False);
+dher.setDropFirstRU(True);
 dher.openOutput(fileOut)
 dher.registerAnalysis(a);
 #dher.setDropFirstRU(True);
@@ -58,7 +58,7 @@ dher.registerAnalysis(a);
 fileList=[]
 
 for iseq in range(fseq,lseq+1):
-    fileList.append(config.filePath % (run,0,iseq))
+    fileList.append(config.filePath % (run,iseq,0))
 
 
 print fileList

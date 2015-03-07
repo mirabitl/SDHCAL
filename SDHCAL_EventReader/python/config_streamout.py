@@ -1,9 +1,9 @@
 #marlin="./Slot1_39_MARLIN.xml"
-marlin="xml/m3_sep14.xml"
+marlin="xml/can38.xml"
 rebuild=True
 useSynch=True
 #
 minChambersInTime=5;
-filePath="/data/NAS/Test2014/DHCAL_%d_I%d_%d.slcio"
-fileOut="/home/mirabito/DHCAL_%d_SO.slcio"
+filePath="/data/NAS/Results/DHCAL_%d_I%d_%d.slcio"
+fileOut="/home/mirabito/DHCAL_%d_SO_O.slcio"
 nevent=0
