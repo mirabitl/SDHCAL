@@ -19,6 +19,7 @@
    mkdir -p /opt/dhcal/etc
    mkdir -p /opt/dhcal/bin
    mkdir -p /opt/dhcal/lib
+   cd
    cp SDHCAL/bashrc /opt/dhcal/etc/
    echo "source /opt/dhcal/etc/bashrc" >> .bashrc
    cat .bashrc
