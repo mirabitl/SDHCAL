@@ -56,7 +56,7 @@
    sudo cp lib64/libclntsh.so.11.1 /usr/lib/libclntsh.so
    sudo cp lib64/libnnz11.so /usr/lib/libnnz11.so
    sudo cp lib64/libocci.so.11.1 /usr/lib/libocci.so
-   sudo cp lib64/libocciei.so /usr/lib/libocciei.so
+   sudo cp lib64/libociei.so /usr/lib/libocciei.so
    sudo cp lib64/libociicus.so /usr/lib/libociicus.so
    sudo cp lib64/libocijdbc11.so /usr/lib/libocijdbc11.so
    sudo cp lib64/libclntsh.so.11.1 /usr/lib/libclntsh.so
