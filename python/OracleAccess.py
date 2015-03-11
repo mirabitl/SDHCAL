@@ -3,7 +3,7 @@
 from ilcconfdb import *
 import RocDescription as rd
 import os
-import sqlite
+import sqlite3 as sqlite
 class OracleAccess:
     """
     Modify or/and create an Oracle DB state
