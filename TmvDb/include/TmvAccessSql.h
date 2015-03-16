@@ -6,6 +6,7 @@
 #include <mysql/mysql.h>
 #include <string>
 #include <sstream>
+#include <stdint.h>
 class TmvAccessSql
 {
 public:
