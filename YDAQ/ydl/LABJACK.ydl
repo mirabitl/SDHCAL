@@ -1,0 +1,30 @@
+package LABJACK is
+
+   type Config is
+      ShmPath : String;
+      NumberOfFragment : Integer;
+      MonitoringPath : String;
+      MonitoringSize : Integer;
+      OutputMode : String;
+      OutputPath : String;
+      PublishPeriod : Integer;
+   end Config;
+
+   
+   type Status is
+     evbStatus: String;
+     run :  optional Integer;
+     StartTime : optional String; 
+     completed : optional Integer;
+     event : optional Integer;
+    end Status;
+
+
+   interface StateMachine is
+      message Initialise(Conf : in Config; Res : out Status);
+      message Start (Res : out Status);
+      message Stop (Res : out Status);
+   end StateMachine;
+
+end LABJACK;
+

@@ -1,0 +1,23 @@
+package ODB is
+
+   type Config is
+      DBState : String;
+   end Config;
+
+   type DBBuffer is
+      DIFID : Integer_Array;
+      PayLoad : Binary_Array;
+    end DBBuffer;
+   
+   type Status is
+     oracleStatus: Integer;
+    end Status;
+
+
+   interface StateMachine is
+      message Initialise(Res : out Status);
+      message Download (Conf : in Config);
+   end StateMachine;
+
+end ODB;
+

@@ -1,0 +1,23 @@
+package ZUP is
+
+   type Config is
+      Serial : String;
+   end Config;
+
+   
+   type Status is
+     ZupStatus: String;
+     Voltage: Float;
+     Current: Float;
+    end Status;
+
+
+   interface StateMachine is
+      message Check(Res : out Status);
+      message On(Res : out Status);
+      message Off(Res : out Status);
+      message Open(Conf : in Config);
+   end StateMachine;
+
+end ZUP;
+

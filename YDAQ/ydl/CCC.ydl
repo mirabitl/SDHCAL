@@ -1,0 +1,44 @@
+package CCC is
+
+   type Config is
+      Serial : String;
+   end Config;
+
+   type RegisterAccess is
+     Address: Integer;
+     CCCRegister: Integer;
+    end RegisterAccess;
+   
+   
+   type Status is
+     CCCStatus: Integer;
+     CCCRegister: optional Integer;
+    end Status;
+
+
+   interface StateMachine is
+      message Initialise(Res : out Status);
+      message Configure(Res : out Status);
+      message DIFReset(Res : out Status);
+      message BCIDReset(Res : out Status);
+      message StartAcquisitionAuto(Res : out Status);
+      message RamFullExt(Res : out Status);
+      message TrigExt(Res : out Status);
+      message StopAcquisition(Res : out Status);
+      message StartSingleAcquisition(Res : out Status);
+      message PulseLemo(Res : out Status);
+      message Trigger(Res : out Status);
+      message CCCReset(Res : out Status);
+      message SpillOn(Res : out Status);
+      message SpillOff(Res : out Status);
+      message PauseTrigger(Res : out Status);
+      message ResumeTrigger(Res : out Status);
+
+
+      message WriteRegister(Ra : in RegisterAccess;Res : out Status);
+      message ReadRegister(Ra : in RegisterAccess;Res : out Status);
+      message Open(Conf : in Config);
+   end StateMachine;
+
+end CCC;
+

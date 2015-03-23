@@ -1,0 +1,38 @@
+package DIF is
+
+   type Config is
+      Trigger : Integer;
+      DBState : String;
+   end Config;
+
+   type DIFStatus is
+      Status : Integer_Array;
+      Debug : String_Array;
+      GTC : optional Integer_Array;
+      BCID: optional Integer_Array;
+    end DIFStatus;
+   
+   type ScanStatus is
+     DIFList: Integer_Array;
+    end ScanStatus;
+
+
+    type Data is
+      DIFID : Integer;
+      GTC : Integer;
+      BCID : Integer;
+      PayLoad : Binary;
+    end Data;
+
+
+   interface StateMachine is
+      message Scan(Res : out ScanStatus);
+      message Configure (Conf : in Config; Res : out DIFStatus);
+      message Initialise (conf : in ScanStatus;Res : out DIFStatus);
+      message Start (Res : out DIFStatus);
+      message Stop  (Res : out DIFStatus);
+      message Destroy(Res: out DIFStatus);
+   end StateMachine;
+
+end DIF;
+
