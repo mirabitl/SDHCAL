@@ -2,7 +2,9 @@
 #include <mysql/mysql.h>
 #include <string>
 #include <sstream>
-
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #ifdef MAINP
 int main()
 {
