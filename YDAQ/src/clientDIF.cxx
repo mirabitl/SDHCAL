@@ -43,17 +43,46 @@ int main(int argc, char * argv[])
         return EXIT_FAILURE;
     }
 
-    const std::string server_address = argv[1];
-
     try
     {
         yami::agent client_agent;
+
+#ifdef NONAMESRV
+    const std::string server_address = argv[1];
+#else
+    const std::string name_server_address = argv[1];
+    yami::parameters resolve_params;
+
+    resolve_params.set_string("object", "#DIF#lyopc252");
+
+    std::auto_ptr<yami::outgoing_message> ns_query(
+						   client_agent.send(name_server_address,
+								     "names", "resolve", resolve_params));
+        
+        ns_query->wait_for_completion();
+        if (ns_query->get_state() != yami::replied)
+        {
+            std::cout << "error: "
+                << ns_query->get_exception_msg() << std::endl;
+
+            return EXIT_FAILURE;
+        }
+
+        const yami::parameters & resolve_reply =
+	  ns_query->get_reply();
+        const std::string & server_address =
+            resolve_reply.get_string("location");
+
+#endif
+
+
+
 	yami::parameters params;
 	const std::string update_object_name =
             "update_handler";
         params.set_string("destination_object", update_object_name);
 	client_agent.register_object(update_object_name, update);
-	Dif::Statemachine s(client_agent,server_address,"DIF");
+	Dif::Statemachine s(client_agent,server_address,"#DIF#lyopc252");
 	Dif::Scanstatus Res;
 	Dif::Config cf;
 	Dif::Difstatus dst;
@@ -97,13 +126,18 @@ int main(int argc, char * argv[])
 
 // subscribe to the producer
 
-     
+	/*
 	for (std::vector<int>::iterator it=Res.Diflist.begin();it!=Res.Diflist.end();it++)
 	  {
 	    std::cout<<"Subscirbing " <<(*it)<<std::endl;
 	    std::stringstream ss;
 	    ss<<"/DIFSERVER/DIF"<<(*it)<<"/DATA";
-
+	*/
+	for (int i=1;i<255;i++)
+	  {
+	     std::cout<<"Subscirbing " <<i<<std::endl;
+	    std::stringstream ss;
+	    ss<<"/DIFSERVER/DIF"<<i<<"/DATA";
 	    client_agent.send_one_way(server_address,
 				      ss.str(), "subscribe", params);
 	  }

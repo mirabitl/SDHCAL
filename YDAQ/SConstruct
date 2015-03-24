@@ -73,6 +73,8 @@ env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIB
 serverPP=env.Program("serverPP",source=Glob("src/serverPP.cxx"))
 serverDIF=env.Program("serverDIF",source=Glob("src/serverDIF.cxx"))
 clientDIF=env.Program("clientDIF",source=Glob("src/clientDIF.cxx"))
+server_ns=env.Program("server_ns",source=Glob("src/server_ns.cxx"))
+client_ns=env.Program("client_ns",source=Glob("src/client_ns.cxx"))
 
 
 
