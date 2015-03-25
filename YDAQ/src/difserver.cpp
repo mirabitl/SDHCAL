@@ -75,7 +75,7 @@ void StatemachineServerImpl::Open(std::string theAddress)
 void StatemachineServerImpl:: Scan(Scanstatus & Res)
 {
   Res.Diflist.clear();
-  for (int i=1;i<=53;i++)
+  for (int i=100;i<=153;i++)
     Res.Diflist.push_back(i);
   
 }
