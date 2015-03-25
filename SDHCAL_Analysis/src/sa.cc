@@ -101,12 +101,12 @@ int main(int argc, char** argv ){
 #ifdef USESTREAM
   ShowerAnalyzer *a= new ShowerAnalyzer( &dher,&rootHandler);
   //a->setminChambersInTime(3);
-  //RawAnalyzer *ar= new RawAnalyzer();
+  RawAnalyzer *ar= new RawAnalyzer();
   //MulAnalyzer *am= new MulAnalyzer();
   //StripAnalyzer *as= new StripAnalyzer();
   a->setrebuild(rebuild);
-  //dher.registerAnalysis(ar);
-  dher.registerAnalysis(a);
+  dher.registerAnalysis(ar);
+  //dher.registerAnalysis(a);
   
   dher.initJob();
   //if (writing) 

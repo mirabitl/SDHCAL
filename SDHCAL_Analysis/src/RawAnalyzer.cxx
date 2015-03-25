@@ -19,7 +19,8 @@
 #include <math.h>
 //#include <lapacke.h>
 #include "DifGeom.h"
-
+#include "DIFSnapShot.h"
+#include <time.h>
 
 
 
@@ -72,7 +73,8 @@ void RawAnalyzer::presetParameters()
 	
 }
 
-
+static int nst=0;
+static float allt=0.;
 void RawAnalyzer::processEvent()
 {
   
@@ -102,7 +104,109 @@ void RawAnalyzer::processEvent()
  
   std::cout<<"Event  "<<dbase->getAbsoluteBCID()<<std::endl;
   
+  
   memset(theCount_,0,255*49*sizeof(uint32_t));
+  struct timespec tp0,tp1;
+  clock_gettime(CLOCK_REALTIME,&tp0);
+  int64_t tlast=0;
+  
+  // reader_->findTimeSeeds(5);
+#define MAPSEARCH
+  std::vector<uint32_t> seeds=reader_->getTimeSeeds();
+#ifdef MAPSEARCH
+
+  std::map<uint32_t,std::bitset<64> > chti;
+  chti.clear();
+  for (std::vector<DIFPtr*>::iterator it = reader_->getDIFList().begin();it!=reader_->getDIFList().end();it++)
+    {
+      DIFPtr* d = (*it);
+      if (d->getID()>255) continue;
+     // Loop on frames
+      std::map<unsigned int,DifGeom>::iterator idg = reader_->getDifMap().find(d->getID());
+      uint32_t chid = idg->second.getChamberId();
+      
+      for (uint32_t i=0;i<d->getNumberOfFrames();i++)
+      {
+	double t=d->getFrameTimeToTrigger(i)*2E-7;
+
+	if (t>3.8) {
+	  printf("Wrong Time %f %x \n",t,d->getFrameTimeToTrigger(i));
+	  continue;
+	}
+	std::map<uint32_t,std::bitset<64> >::iterator ich=chti.find(d->getFrameTimeToTrigger(i));
+	if (ich==chti.end())
+	  {
+	    std::bitset<64> k;k.set(chid);
+	    std::pair<uint32_t,std::bitset<64> > p(d->getFrameTimeToTrigger(i),k);
+	    chti.insert(p);
+	  }
+	else
+	  {
+	    ich->second.set(chid);
+	  }
+      }
+    }
+  uint32_t nseeds=0;
+  std::vector<uint32_t> seedm;
+  seedm.clear();
+  for (std::map<uint32_t,std::bitset<64> >::iterator ich=chti.begin();ich!=chti.end();)
+    {
+      
+      if (ich->second.count()>=5) {
+	//std::cout<<  "     seed " <<ich->first<<" "<<std::setw(5)<<ich->second.count()<<" "<<ich->second<<std::endl;
+	std::map<uint32_t,std::bitset<64> >::iterator ichn=chti.find(ich->first+1);
+      if (ichn==chti.end())
+	{
+	  nseeds++;
+	  //std::cout<<"Good seed " <<ich->first<<" "<<std::setw(5)<<ich->second.count()<<" "<<ich->second<<std::endl;
+	  if (ich->first>tlast) tlast=ich->first;
+	  seedm.push_back(ich->first);
+	  ich++;
+	}
+      else
+	{
+	  if (ichn->second.count()>=3)
+	    {
+	      //std::cout<<"Mer0 seed " <<ich->first<<" "<<std::setw(5)<<ich->second.count()<<" "<<ich->second<<std::endl;
+	      //std::cout<<"Mer1 seed " <<ichn->first<<" "<<std::setw(5)<<ichn->second.count()<<" "<<ichn->second<<std::endl;
+	      ichn->second|=ich->second;
+	      chti.erase(ich++);
+	    }
+	  else
+	    {
+	      nseeds++;
+	      // std::cout<<"Good seed " <<ich->first<<" "<<std::setw(5)<<ich->second.count()<<" "<<ich->second<<std::endl;
+	      if (ich->first>tlast) tlast=ich->first;
+	      seedm.push_back(ich->first);
+	      ich++;
+	    }
+	}
+      }
+     else
+       ich++;
+  
+    }
+//for (std::vector<uint32_t>::iterator is=seeds.begin();is!=seeds.end();is++)
+// {
+//   std::map<uint32_t,std::bitset<64> >::iterator ichn=chti.find((*is));
+//   if (ichn!=chti.end())
+//     std::cout<<"find seed " <<ichn->first<<" "<<std::setw(5)<<ichn->second.count()<<" "<<ichn->second<<std::endl;
+	
+// }
+//getchar();
+  #endif
+  
+//std::vector<uint32_t> seeds=reader_->getTimeSeeds();
+DIFSnapShot ds;
+for (std::vector<uint32_t>::iterator is=seedm.begin();is!=seedm.end();is++)
+  ds.fill(reader_->getDIFList(),(*is));
+  clock_gettime(CLOCK_REALTIME,&tp1);
+  nst+=seedm.size();
+  allt+=(tp1.tv_sec+1E-9*tp1.tv_nsec-tp0.tv_sec+1E-9*tp0.tv_nsec);
+printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %f T tot %f N Evt %d\n",seedm.size(),seedm.size(),(tp1.tv_sec+1E-9*tp1.tv_nsec-tp0.tv_sec+1E-9*tp0.tv_nsec),
+       seedm.size()/(tp1.tv_sec+1E-9*tp1.tv_nsec-tp0.tv_sec+1E-9*tp0.tv_nsec),nst,nst/allt,allt,evt_->getEventNumber()); 
+return;
+//getchar();
   for (std::vector<DIFPtr*>::iterator it = reader_->getDIFList().begin();it!=reader_->getDIFList().end();it++)
     {
       DIFPtr* d = (*it);
@@ -119,7 +223,7 @@ void RawAnalyzer::processEvent()
 	if (dbase->getDTC()==17 && d->getFrameTimeToTrigger(i)>80385 && d->getFrameTimeToTrigger(i)<80395 )
 	  {
 	    std::cout<<d->getID()<<" "<<d->getAbsoluteBCID()<<" "<<d->getFrameTimeToTrigger(i);
-	    getchar();
+	    //getchar();
 	  }
 	//printf("%d %d \n",d->getID(),d->getFrameAsicHeader(i));
 	if (d->getFrameAsicHeader(i)>48) continue;

@@ -51,9 +51,56 @@ int main(int argc, char * argv[])
     const std::string server_address = argv[1];
 #else
     const std::string name_server_address = argv[1];
+
+    yami::parameters list_params;
+
+    list_params.set_string("object", "unessai");
+    
+
+    std::auto_ptr<yami::outgoing_message> ns_query1(
+						   client_agent.send(name_server_address,
+								     "names", "list", list_params));
+
+    ns_query1->wait_for_completion();
+
+        if (ns_query1->get_state() != yami::replied)
+        {
+            std::cout << "error: "
+                << ns_query1->get_exception_msg() << std::endl;
+
+            return EXIT_FAILURE;
+        }
+
+        const yami::parameters & list_reply =
+	  ns_query1->get_reply();
+
+
+    
+
+      std::vector<std::string> vnames;
+      std::vector<std::string> vlocs;
+      
+        std::size_t size_ = list_reply.get_string_array_length("location");
+        vnames.resize(size_);
+        vlocs.resize(size_);
+        for (std::size_t i_ = 0; i_ != size_; ++i_)
+        {
+            vnames[i_] = list_reply.get_string_in_array("object", i_);
+            vlocs[i_] = list_reply.get_string_in_array("location", i_);
+	    std::cout<<vnames[i_]<<"@"<<vlocs[i_]<<std::endl;
+        }
+
+
+
+    std::string dummyl;
+    std::cin >> dummyl;
+
+
+
+    // Un seul
     yami::parameters resolve_params;
 
-    resolve_params.set_string("object", "#DIF#lyopc252");
+    resolve_params.set_string("object", "#lyopc252#DIF");
 
     std::auto_ptr<yami::outgoing_message> ns_query(
 						   client_agent.send(name_server_address,
@@ -82,7 +129,7 @@ int main(int argc, char * argv[])
             "update_handler";
         params.set_string("destination_object", update_object_name);
 	client_agent.register_object(update_object_name, update);
-	Dif::Statemachine s(client_agent,server_address,"#DIF#lyopc252");
+	Dif::Statemachine s(client_agent,server_address,"#lyopc252#DIF");
 	Dif::Scanstatus Res;
 	Dif::Config cf;
 	Dif::Difstatus dst;

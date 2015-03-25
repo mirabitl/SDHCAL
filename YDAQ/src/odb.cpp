@@ -10,78 +10,78 @@
 #include <yami4-cpp/incoming_message.h>
 #include <yami4-cpp/outgoing_message.h>
 
-using namespace odb;
+using namespace Odb;
 
-config::config()
+Config::Config()
 {
 }
 
-void config::write(yami::parameters & params) const
+void Config::write(yami::parameters & params) const
 {
     params.set_string_shallow("dbstate",
-        dbstate.c_str(), dbstate.size());
+        Dbstate.c_str(), Dbstate.size());
 }
 
-void config::read(const yami::parameters & params)
+void Config::read(const yami::parameters & params)
 {
-    dbstate = params.get_string("dbstate");
+    Dbstate = params.get_string("dbstate");
 }
 
-dbbuffer::dbbuffer()
+Dbbuffer::Dbbuffer()
 {
 }
 
-void dbbuffer::write(yami::parameters & params) const
+void Dbbuffer::write(yami::parameters & params) const
 {
     params.set_integer_array_shallow("difid",
-        &difid[0], difid.size());
+        &Difid[0], Difid.size());
     {
-        std::size_t size_ = payload.size();
+        std::size_t size_ = Payload.size();
         params.create_binary_array("payload", size_);
         for (std::size_t i_ = 0; i_ != size_; ++i_)
         {
             params.set_binary_in_array(
-                "payload", i_, &payload[i_][0], payload[i_].size());
+                "payload", i_, &Payload[i_][0], Payload[i_].size());
         }
     }
 }
 
-void dbbuffer::read(const yami::parameters & params)
+void Dbbuffer::read(const yami::parameters & params)
 {
     {
         std::size_t size_;
         const int * buf_ = params.get_integer_array(
             "difid", size_);
-        difid.assign(buf_, buf_ + size_);
+        Difid.assign(buf_, buf_ + size_);
     }
     {
         std::size_t size_ = params.get_binary_array_length("payload");
-        payload.resize(size_);
+        Payload.resize(size_);
         for (std::size_t i_ = 0; i_ != size_; ++i_)
         {
             std::size_t bufSize_;
             const char * buf_ = reinterpret_cast<const char *>(
                 params.get_binary_in_array("payload", i_, bufSize_));
-            payload[i_].assign(buf_, buf_ + bufSize_);
+            Payload[i_].assign(buf_, buf_ + bufSize_);
         }
     }
 }
 
-status::status()
+Status::Status()
 {
 }
 
-void status::write(yami::parameters & params) const
+void Status::write(yami::parameters & params) const
 {
-    params.set_integer("oraclestatus", oraclestatus);
+    params.set_integer("oraclestatus", Oraclestatus);
 }
 
-void status::read(const yami::parameters & params)
+void Status::read(const yami::parameters & params)
 {
-    oraclestatus = params.get_integer("oraclestatus");
+    Oraclestatus = params.get_integer("oraclestatus");
 }
 
-statemachine::statemachine(yami::agent & client_agent,
+Statemachine::Statemachine(yami::agent & client_agent,
     const std::string & server_location, const std::string & object_name,
     int timeout)
     : agent_(client_agent),
@@ -91,7 +91,7 @@ statemachine::statemachine(yami::agent & client_agent,
 {
 }
 
-void statemachine::initialise(status & res)
+void Statemachine::Initialise(Status & Res)
 {
     std::auto_ptr<yami::outgoing_message> om_(
         agent_.send(server_location_, object_name_, "initialise"));
@@ -113,7 +113,7 @@ void statemachine::initialise(status & res)
     switch (state_)
     {
     case yami::replied:
-        res.read(om_->get_reply());
+        Res.read(om_->get_reply());
         break;
     case yami::abandoned:
         throw yami::yami_runtime_error(
@@ -129,12 +129,12 @@ void statemachine::initialise(status & res)
     }
 }
 
-void statemachine::download(const config & conf)
+void Statemachine::Download(const Config & Conf)
 {
-    yami::parameters conf_;
-    conf.write(conf_);
+    yami::parameters Conf_;
+    Conf.write(Conf_);
     std::auto_ptr<yami::outgoing_message> om_(
-        agent_.send(server_location_, object_name_, "download", conf_));
+        agent_.send(server_location_, object_name_, "download", Conf_));
 
     if (timeout_ != 0)
     {
@@ -168,27 +168,27 @@ void statemachine::download(const config & conf)
     }
 }
 
-void statemachine_server::operator()(yami::incoming_message & im_)
+void StatemachineServer::operator()(yami::incoming_message & im_)
 {
     const std::string & msg_name_ = im_.get_message_name();
 
     if (msg_name_ == "initialise")
     {
-        status res;
+        Status Res;
 
-        initialise(res);
+        Initialise(Res);
 
-        yami::parameters res_;
-        res.write(res_);
-        im_.reply(res_);
+        yami::parameters Res_;
+        Res.write(Res_);
+        im_.reply(Res_);
     }
     else
     if (msg_name_ == "download")
     {
-        config conf;
-        conf.read(im_.get_parameters());
+        Config Conf;
+        Conf.read(im_.get_parameters());
 
-        download(conf);
+        Download(Conf);
 
         im_.reply();
     }

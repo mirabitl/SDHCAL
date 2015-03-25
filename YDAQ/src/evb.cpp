@@ -9,97 +9,97 @@
 #include <yami4-cpp/errors.h>
 #include <yami4-cpp/incoming_message.h>
 #include <yami4-cpp/outgoing_message.h>
+#include<iostream>
+using namespace Evb;
 
-using namespace evb;
-
-config::config()
+Config::Config()
 {
 }
 
-void config::write(yami::parameters & params) const
+void Config::write(yami::parameters & params) const
 {
     params.set_string_shallow("shmpath",
-        shmpath.c_str(), shmpath.size());
-    params.set_integer("numberoffragment", numberoffragment);
+        Shmpath.c_str(), Shmpath.size());
+    params.set_integer("numberoffragment", Numberoffragment);
     params.set_string_shallow("monitoringpath",
-        monitoringpath.c_str(), monitoringpath.size());
-    params.set_integer("monitoringsize", monitoringsize);
+        Monitoringpath.c_str(), Monitoringpath.size());
+    params.set_integer("monitoringsize", Monitoringsize);
     params.set_string_shallow("outputmode",
-        outputmode.c_str(), outputmode.size());
+        Outputmode.c_str(), Outputmode.size());
     params.set_string_shallow("outputpath",
-        outputpath.c_str(), outputpath.size());
-    params.set_integer("publishperiod", publishperiod);
+        Outputpath.c_str(), Outputpath.size());
+    params.set_integer("publishperiod", Publishperiod);
 }
 
-void config::read(const yami::parameters & params)
+void Config::read(const yami::parameters & params)
 {
-    shmpath = params.get_string("shmpath");
-    numberoffragment = params.get_integer("numberoffragment");
-    monitoringpath = params.get_string("monitoringpath");
-    monitoringsize = params.get_integer("monitoringsize");
-    outputmode = params.get_string("outputmode");
-    outputpath = params.get_string("outputpath");
-    publishperiod = params.get_integer("publishperiod");
+    Shmpath = params.get_string("shmpath");
+    Numberoffragment = params.get_integer("numberoffragment");
+    Monitoringpath = params.get_string("monitoringpath");
+    Monitoringsize = params.get_integer("monitoringsize");
+    Outputmode = params.get_string("outputmode");
+    Outputpath = params.get_string("outputpath");
+    Publishperiod = params.get_integer("publishperiod");
 }
 
-status::status()
+Status::Status()
 {
-    run_valid = false;
-    starttime_valid = false;
-    completed_valid = false;
-    event_valid = false;
+    RunValid = false;
+    StarttimeValid = false;
+    CompletedValid = false;
+    EventValid = false;
 }
 
-void status::write(yami::parameters & params) const
+void Status::write(yami::parameters & params) const
 {
     params.set_string_shallow("evbstatus",
-        evbstatus.c_str(), evbstatus.size());
-    if (run_valid)
+        Evbstatus.c_str(), Evbstatus.size());
+    if (RunValid)
     {
-    params.set_integer("run", run);
+    params.set_integer("run", Run);
     }
-    if (starttime_valid)
+    if (StarttimeValid)
     {
     params.set_string_shallow("starttime",
-        starttime.c_str(), starttime.size());
+        Starttime.c_str(), Starttime.size());
     }
-    if (completed_valid)
+    if (CompletedValid)
     {
-    params.set_integer("completed", completed);
+    params.set_integer("completed", Completed);
     }
-    if (event_valid)
+    if (EventValid)
     {
-    params.set_integer("event", event);
+    params.set_integer("event", Event);
     }
 }
 
-void status::read(const yami::parameters & params)
+void Status::read(const yami::parameters & params)
 {
-    evbstatus = params.get_string("evbstatus");
+    Evbstatus = params.get_string("evbstatus");
     yami::parameter_entry e_;
-    run_valid = params.find("run", e_);
-    if (run_valid)
+    RunValid = params.find("run", e_);
+    if (RunValid)
     {
-    run = params.get_integer("run");
+    Run = params.get_integer("run");
     }
-    starttime_valid = params.find("starttime", e_);
-    if (starttime_valid)
+    StarttimeValid = params.find("starttime", e_);
+    if (StarttimeValid)
     {
-    starttime = params.get_string("starttime");
+    Starttime = params.get_string("starttime");
     }
-    completed_valid = params.find("completed", e_);
-    if (completed_valid)
+    CompletedValid = params.find("completed", e_);
+    if (CompletedValid)
     {
-    completed = params.get_integer("completed");
+    Completed = params.get_integer("completed");
     }
-    event_valid = params.find("event", e_);
-    if (event_valid)
+    EventValid = params.find("event", e_);
+    if (EventValid)
     {
-    event = params.get_integer("event");
+    Event = params.get_integer("event");
     }
 }
 
-statemachine::statemachine(yami::agent & client_agent,
+Statemachine::Statemachine(yami::agent & client_agent,
     const std::string & server_location, const std::string & object_name,
     int timeout)
     : agent_(client_agent),
@@ -109,12 +109,12 @@ statemachine::statemachine(yami::agent & client_agent,
 {
 }
 
-void statemachine::initialise(const config & conf, status & res)
+void Statemachine::Initialise(const Config & Conf, Status & Res)
 {
-    yami::parameters conf_;
-    conf.write(conf_);
+    yami::parameters Conf_;
+    Conf.write(Conf_);
     std::auto_ptr<yami::outgoing_message> om_(
-        agent_.send(server_location_, object_name_, "initialise", conf_));
+        agent_.send(server_location_, object_name_, "initialise", Conf_));
 
     if (timeout_ != 0)
     {
@@ -133,7 +133,7 @@ void statemachine::initialise(const config & conf, status & res)
     switch (state_)
     {
     case yami::replied:
-        res.read(om_->get_reply());
+        Res.read(om_->get_reply());
         break;
     case yami::abandoned:
         throw yami::yami_runtime_error(
@@ -149,7 +149,7 @@ void statemachine::initialise(const config & conf, status & res)
     }
 }
 
-void statemachine::start(status & res)
+void Statemachine::Start(Status & Res)
 {
     std::auto_ptr<yami::outgoing_message> om_(
         agent_.send(server_location_, object_name_, "start"));
@@ -171,7 +171,7 @@ void statemachine::start(status & res)
     switch (state_)
     {
     case yami::replied:
-        res.read(om_->get_reply());
+        Res.read(om_->get_reply());
         break;
     case yami::abandoned:
         throw yami::yami_runtime_error(
@@ -187,7 +187,7 @@ void statemachine::start(status & res)
     }
 }
 
-void statemachine::stop(status & res)
+void Statemachine::Stop(Status & Res)
 {
     std::auto_ptr<yami::outgoing_message> om_(
         agent_.send(server_location_, object_name_, "stop"));
@@ -209,7 +209,7 @@ void statemachine::stop(status & res)
     switch (state_)
     {
     case yami::replied:
-        res.read(om_->get_reply());
+        Res.read(om_->get_reply());
         break;
     case yami::abandoned:
         throw yami::yami_runtime_error(
@@ -225,43 +225,58 @@ void statemachine::stop(status & res)
     }
 }
 
-void statemachine_server::operator()(yami::incoming_message & im_)
+void Statemachine::Processdif(const Dif::Data & Buf)
+{
+    yami::parameters Buf_;
+    Buf.write(Buf_);
+    agent_.send_one_way(server_location_, object_name_, "processdif", Buf_);
+}
+
+void StatemachineServer::operator()(yami::incoming_message & im_)
 {
     const std::string & msg_name_ = im_.get_message_name();
-
+    //std::cout<<msg_name_ <<std::endl;
     if (msg_name_ == "initialise")
     {
-        config conf;
-        conf.read(im_.get_parameters());
-        status res;
+        Config Conf;
+        Conf.read(im_.get_parameters());
+        Status Res;
 
-        initialise(conf, res);
+        Initialise(Conf, Res);
 
-        yami::parameters res_;
-        res.write(res_);
-        im_.reply(res_);
+        yami::parameters Res_;
+        Res.write(Res_);
+        im_.reply(Res_);
     }
     else
     if (msg_name_ == "start")
     {
-        status res;
+        Status Res;
 
-        start(res);
+        Start(Res);
 
-        yami::parameters res_;
-        res.write(res_);
-        im_.reply(res_);
+        yami::parameters Res_;
+        Res.write(Res_);
+        im_.reply(Res_);
     }
     else
     if (msg_name_ == "stop")
     {
-        status res;
+        Status Res;
 
-        stop(res);
+        Stop(Res);
 
-        yami::parameters res_;
-        res.write(res_);
-        im_.reply(res_);
+        yami::parameters Res_;
+        Res.write(Res_);
+        im_.reply(Res_);
+    }
+    else
+    if (msg_name_ == "processdif" || msg_name_=="subscription_update")
+    {
+        Dif::Data Buf;
+        Buf.read(im_.get_parameters());
+
+        Processdif(Buf);
     }
     else
     {

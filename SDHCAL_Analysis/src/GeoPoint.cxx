@@ -23,6 +23,21 @@ GeoPoint::GeoPoint(unsigned int ch,double x,double y,double z,double dx,double d
 	//	vnear_.clear();
 }
 
+void GeoPoint::setPosition(unsigned int ch,double x,double y,double z,double dx,double dy) 
+{
+  inTrack_=false;
+  
+  x_=x*pad2cm;
+  y_=y*pad2cm;
+  dx_=dx*pad2cm;
+  dy_=dy*pad2cm;
+  
+  z_=z;
+  chId_=ch;
+	//	vnear_.reserve(100);
+	//	vnear_.clear();
+}
+
 void GeoPoint::Print()
 {
 	printf("%d %f %f %f \n",chId_,x_,y_,z_);

@@ -16,54 +16,57 @@ namespace yami
     class incoming_message;
 }
 
-namespace evb
+#include "dif.h"
+
+namespace Evb
 {
 
-struct config
+struct Config
 {
-    config();
+    Config();
 
     void write(yami::parameters & params) const;
     void read(const yami::parameters & params);
 
-    std::string shmpath;
-    int numberoffragment;
-    std::string monitoringpath;
-    int monitoringsize;
-    std::string outputmode;
-    std::string outputpath;
-    int publishperiod;
+    std::string Shmpath;
+    int Numberoffragment;
+    std::string Monitoringpath;
+    int Monitoringsize;
+    std::string Outputmode;
+    std::string Outputpath;
+    int Publishperiod;
 };
 
-struct status
+struct Status
 {
-    status();
+    Status();
 
     void write(yami::parameters & params) const;
     void read(const yami::parameters & params);
 
-    std::string evbstatus;
-    bool run_valid;
-    int run;
-    bool starttime_valid;
-    std::string starttime;
-    bool completed_valid;
-    int completed;
-    bool event_valid;
-    int event;
+    std::string Evbstatus;
+    bool RunValid;
+    int Run;
+    bool StarttimeValid;
+    std::string Starttime;
+    bool CompletedValid;
+    int Completed;
+    bool EventValid;
+    int Event;
 };
 
-class statemachine
+class Statemachine
 {
 public:
 
-    statemachine(yami::agent & client_agent,
+    Statemachine(yami::agent & client_agent,
         const std::string & server_location, const std::string & object_name,
         int timeout = 0);
 
-    void initialise(const config & conf, status & res);
-    void start(status & res);
-    void stop(status & res);
+    void Initialise(const Config & Conf, Status & Res);
+    void Start(Status & Res);
+    void Stop(Status & Res);
+    void Processdif(const Dif::Data & Buf);
 
 private:
 
@@ -73,19 +76,20 @@ private:
     const std::size_t timeout_;
 };
 
-class statemachine_server
+class StatemachineServer
 {
 public:
 
-    virtual ~statemachine_server() {}
+    virtual ~StatemachineServer() {}
 
-    virtual void initialise(const config & conf, status & res) = 0;
-    virtual void start(status & res) = 0;
-    virtual void stop(status & res) = 0;
+    virtual void Initialise(const Config & Conf, Status & Res) = 0;
+    virtual void Start(Status & Res) = 0;
+    virtual void Stop(Status & Res) = 0;
+    virtual void Processdif(const Dif::Data & Buf) = 0;
 
     void operator()(yami::incoming_message & im_);
 };
 
-} // namespace evb
+} // namespace Evb
 
 #endif // YAMI4_IDL_EVB_H_INCLUDED

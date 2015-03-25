@@ -21,7 +21,9 @@
 class GeoPoint 
 {
 public:
-	GeoPoint(unsigned int ch,double x , double y, double z,double dx=0.5,double dy=0.5);
+  
+	GeoPoint(unsigned int ch=0,double x=0 , double y=0, double z=0,double dx=0.5,double dy=0.5);
+	void setPosition(unsigned int ch,double x , double y, double z,double dx=0.5,double dy=0.5);
 	void Print();
 	 double X(){ return x_;}
 	 double Y(){return y_;}
