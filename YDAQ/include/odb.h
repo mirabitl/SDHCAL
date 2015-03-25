@@ -16,50 +16,50 @@ namespace yami
     class incoming_message;
 }
 
-namespace odb
+namespace Odb
 {
 
-struct config
+struct Config
 {
-    config();
+    Config();
 
     void write(yami::parameters & params) const;
     void read(const yami::parameters & params);
 
-    std::string dbstate;
+    std::string Dbstate;
 };
 
-struct dbbuffer
+struct Dbbuffer
 {
-    dbbuffer();
+    Dbbuffer();
 
     void write(yami::parameters & params) const;
     void read(const yami::parameters & params);
 
-    std::vector<int> difid;
-    std::vector<std::vector<char> > payload;
+    std::vector<int> Difid;
+    std::vector<std::vector<char> > Payload;
 };
 
-struct status
+struct Status
 {
-    status();
+    Status();
 
     void write(yami::parameters & params) const;
     void read(const yami::parameters & params);
 
-    int oraclestatus;
+    int Oraclestatus;
 };
 
-class statemachine
+class Statemachine
 {
 public:
 
-    statemachine(yami::agent & client_agent,
+    Statemachine(yami::agent & client_agent,
         const std::string & server_location, const std::string & object_name,
         int timeout = 0);
 
-    void initialise(status & res);
-    void download(const config & conf);
+    void Initialise(Status & Res);
+    void Download(const Config & Conf);
 
 private:
 
@@ -69,18 +69,18 @@ private:
     const std::size_t timeout_;
 };
 
-class statemachine_server
+class StatemachineServer
 {
 public:
 
-    virtual ~statemachine_server() {}
+    virtual ~StatemachineServer() {}
 
-    virtual void initialise(status & res) = 0;
-    virtual void download(const config & conf) = 0;
+    virtual void Initialise(Status & Res) = 0;
+    virtual void Download(const Config & Conf) = 0;
 
     void operator()(yami::incoming_message & im_);
 };
 
-} // namespace odb
+} // namespace Odb
 
 #endif // YAMI4_IDL_ODB_H_INCLUDED

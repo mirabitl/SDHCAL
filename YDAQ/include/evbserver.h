@@ -1,6 +1,6 @@
 #ifndef YAMI_EVBSERVER_INCLUDE
 #define YAMI_EVBSERVER_INCLUDE
-#include "dif.h"
+#include "evb.h"
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
@@ -16,13 +16,13 @@ namespace Evb {
     virtual void Initialise(const Config & Conf, Status & Res);
     virtual void Start(Status & Res);
     virtual void Stop(Status & Res);
-    
-    
+    void Subscribe();
+    virtual void Processdif(const Dif::Data & Buf);
+
   private:
-    void Loop();
+    bool running_;
+    std::string name_server_address;
     yami::agent server_agent;
-    std::map<uint32_t,Dif::Data*> databuf;
-    std::map<uint32_t,yami::value_publisher*> datapublisher;
   };
 }
 #endif

@@ -16,6 +16,8 @@ namespace yami
     class incoming_message;
 }
 
+#include "dif.h"
+
 namespace Evb
 {
 
@@ -64,6 +66,7 @@ public:
     void Initialise(const Config & Conf, Status & Res);
     void Start(Status & Res);
     void Stop(Status & Res);
+    void Processdif(const Dif::Data & Buf);
 
 private:
 
@@ -82,6 +85,7 @@ public:
     virtual void Initialise(const Config & Conf, Status & Res) = 0;
     virtual void Start(Status & Res) = 0;
     virtual void Stop(Status & Res) = 0;
+    virtual void Processdif(const Dif::Data & Buf) = 0;
 
     void operator()(yami::incoming_message & im_);
 };

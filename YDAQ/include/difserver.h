@@ -20,7 +20,9 @@ namespace Dif {
     virtual void Start(Difstatus & Res);
     virtual void Stop(Difstatus & Res);
     virtual void Destroy(Difstatus & Res);
-    
+    virtual void Processsc(const Odb::Dbbuffer & Buf)
+    {std::cout<<"not yet done "<<std::endl;}
+
   private:
     void Loop();
     yami::agent server_agent;

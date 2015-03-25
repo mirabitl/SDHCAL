@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include "dif.h"
 #include "onedifhandler.h"
+#include "evb.h"
 #include "browser.h"
 
 int main(int argc, char * argv[])
@@ -33,11 +34,22 @@ int main(int argc, char * argv[])
       std::size_t size_ = vnames.size();
       vnames.resize(size_);
       vlocs.resize(size_);
+      std::string evbname;
+      std::string evbloc;
+      Evb::Statemachine *evbs=NULL;
       for (std::size_t i_ = 0; i_ != size_; ++i_)
         {
 	  std::cout<<vnames[i_].substr(0,5)<<"@"<<vlocs[i_]<<std::endl;
-	  Dif::onedifhandler odh(vnames[i_],vlocs[i_],&client_agent);
-	  vds.push_back(odh);
+	  if (vnames[i_].substr(0,5).compare("#DIF#")==0)
+	    {
+	      Dif::onedifhandler odh(vnames[i_],vlocs[i_],&client_agent);
+	      vds.push_back(odh);
+	    }
+	  if (vnames[i_].substr(0,5).compare("#EVB#")==0)
+	    {
+	      evbs= new Evb::Statemachine(client_agent,vlocs[i_],vnames[i_]);
+
+	    }
         }
 
 
@@ -51,10 +63,14 @@ int main(int argc, char * argv[])
 	  itv->Initialise();
 	  itv->Print();
 	  itv->Configure(0xb000,"UNETATGERE");
-	  itv->Subscribe();
+	  //itv->Subscribe();
 	  itv->Print();
 	}
-    
+      if (evbs!=NULL)
+	{
+	  Evb::Status evbstat;
+	  evbs->Start(evbstat);
+	}
       std::cin >> dummyl;
       for ( std::vector<Dif::onedifhandler>::iterator itv=vds.begin();itv!=vds.end();itv++)
 	{
