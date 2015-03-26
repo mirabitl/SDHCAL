@@ -11,9 +11,11 @@
 #include <sstream>
 #include <sys/utsname.h>
 #include "difserver.h"
+#include "browser.h"
 using namespace Dif;
 void StatemachineServerImpl::Open(std::string theAddress)
 {
+  name_server_address=theAddress;
 
   try
     {
@@ -75,7 +77,8 @@ void StatemachineServerImpl::Open(std::string theAddress)
 void StatemachineServerImpl:: Scan(Scanstatus & Res)
 {
   Res.Diflist.clear();
-  for (int i=100;i<=153;i++)
+
+  for (int i=1;i<=53;i++)
     Res.Diflist.push_back(i);
   
 }
@@ -110,6 +113,8 @@ void StatemachineServerImpl::Initialise(const Scanstatus & Conf,Difstatus & Res)
 }
 void StatemachineServerImpl::Configure(const Config & Conf,Difstatus & Res)
 {
+  theConf_=Conf;
+  this->Subscribe();
   for (std::map<uint32_t,Dif::Data*>::iterator itd=databuf.begin();itd!=databuf.end();itd++)
     {
       std::stringstream s("");
@@ -161,7 +166,7 @@ void StatemachineServerImpl::readout(uint32_t difid)
   while (readoutStarted_)
     {
       if (!running_) {usleep((uint32_t) 100000);continue;}
-      usleep((uint32_t) 100);
+      usleep((uint32_t) 100000);
       // Modify itd
       itd->second->Difid=difid;
       itd->second->Gtc++;
@@ -188,3 +193,46 @@ void StatemachineServerImpl::Stop(Difstatus & Res)
 }
 void StatemachineServerImpl::Destroy(Difstatus & Res)
 {}
+void Dif::StatemachineServerImpl::Subscribe()
+{
+  Dif::browser b(name_server_address,&server_agent);
+  b.QueryList();
+  std::vector<std::string>& vnames= b.getNames();
+  std::vector<std::string>& vlocs=b.getLocation();
+  std::size_t size_ = vnames.size();
+  theDBMsgHandler = boost::bind(&Dif::StatemachineServerImpl::Processslowcontrolmsg, this, _1);   
+  for (std::size_t i_ = 0; i_ != size_; ++i_)
+    {
+      if(vnames[i_].substr(0,5).compare("#DB#")!=0) continue;
+      
+      yami::parameters params;
+      const std::string update_object_name =
+	"update_handler";
+      params.set_string("destination_object", update_object_name);
+
+      server_agent.register_object(update_object_name,(theDBMsgHandler));
+     
+      for (std::map<uint32_t,Dif::Data*>::iterator itd=databuf.begin();itd!=databuf.end();itd++)
+	{
+	  std::cout<<"Subscribing Slow control info of " <<itd->first<<std::endl;
+	  std::stringstream ss;
+	  ss<<"/DBSERVER/"<<theConf_.Dbstate<<"/DIF"<<itd->first;
+	  server_agent.send_one_way(vlocs[i_],
+				    ss.str(), "subscribe", params);
+	}
+    }
+
+
+  
+}
+
+void Dif::StatemachineServerImpl::Processslowcontrolmsg(yami::incoming_message & im)
+{
+
+  //std::cout<<im.get_object_name()<<std::endl;
+  Odb::Dbbuffer Buf;
+  Buf.read(im.get_parameters());
+  
+  Processslowcontrol(Buf);
+
+}

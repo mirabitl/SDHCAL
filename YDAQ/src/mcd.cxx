@@ -49,6 +49,14 @@ int main(int argc, char * argv[])
 	    {
 	      evbs= new Evb::Statemachine(client_agent,vlocs[i_],vnames[i_]);
 
+	      Evb::Config cf;
+	      Evb::Status st;
+	      cf.Shmpath="/dev/Share";
+
+	      evbs->Initialise(cf,st);
+	      
+	      std::cout<<st.Evbstatus<<std::endl;
+	      getchar();
 	    }
         }
 

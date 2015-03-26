@@ -84,7 +84,7 @@ public:
     void Start(Difstatus & Res);
     void Stop(Difstatus & Res);
     void Destroy(Difstatus & Res);
-    void Processsc(const Odb::Dbbuffer & Buf);
+    void Processslowcontrol(const Odb::Dbbuffer & Buf);
 
 private:
 
@@ -106,7 +106,7 @@ public:
     virtual void Start(Difstatus & Res) = 0;
     virtual void Stop(Difstatus & Res) = 0;
     virtual void Destroy(Difstatus & Res) = 0;
-    virtual void Processsc(const Odb::Dbbuffer & Buf) = 0;
+    virtual void Processslowcontrol(const Odb::Dbbuffer & Buf) = 0;
 
     void operator()(yami::incoming_message & im_);
 };

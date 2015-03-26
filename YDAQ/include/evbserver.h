@@ -18,11 +18,13 @@ namespace Evb {
     virtual void Stop(Status & Res);
     void Subscribe();
     virtual void Processdif(const Dif::Data & Buf);
-
+    void Processdifmsg(yami::incoming_message & im);
   private:
     bool running_;
+    Config theConf_;
     std::string name_server_address;
     yami::agent server_agent;
+    boost::function<void(yami::incoming_message &)> theDifMsgHandler;
   };
 }
 #endif

@@ -5,8 +5,8 @@ package ODB is
    end Config;
 
    type DBBuffer is
-      DIFID : Integer_Array;
-      PayLoad : Binary_Array;
+      DIFID : Integer;
+      PayLoad : Binary;
     end DBBuffer;
    
    type Status is
@@ -17,6 +17,7 @@ package ODB is
    interface StateMachine is
       message Initialise(Res : out Status);
       message Download (Conf : in Config);
+      message Dispatch(Res : out Status);
    end StateMachine;
 
 end ODB;

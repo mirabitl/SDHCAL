@@ -33,37 +33,19 @@ Dbbuffer::Dbbuffer()
 
 void Dbbuffer::write(yami::parameters & params) const
 {
-    params.set_integer_array_shallow("difid",
-        &Difid[0], Difid.size());
-    {
-        std::size_t size_ = Payload.size();
-        params.create_binary_array("payload", size_);
-        for (std::size_t i_ = 0; i_ != size_; ++i_)
-        {
-            params.set_binary_in_array(
-                "payload", i_, &Payload[i_][0], Payload[i_].size());
-        }
-    }
+    params.set_integer("difid", Difid);
+    params.set_binary_shallow("payload",
+        &Payload[0], Payload.size());
 }
 
 void Dbbuffer::read(const yami::parameters & params)
 {
+    Difid = params.get_integer("difid");
     {
         std::size_t size_;
-        const int * buf_ = params.get_integer_array(
-            "difid", size_);
-        Difid.assign(buf_, buf_ + size_);
-    }
-    {
-        std::size_t size_ = params.get_binary_array_length("payload");
-        Payload.resize(size_);
-        for (std::size_t i_ = 0; i_ != size_; ++i_)
-        {
-            std::size_t bufSize_;
-            const char * buf_ = reinterpret_cast<const char *>(
-                params.get_binary_in_array("payload", i_, bufSize_));
-            Payload[i_].assign(buf_, buf_ + bufSize_);
-        }
+        const char * buf_ = reinterpret_cast<const char *>(
+            params.get_binary("payload", size_));
+        Payload.assign(buf_, buf_ + size_);
     }
 }
 
@@ -168,6 +150,44 @@ void Statemachine::Download(const Config & Conf)
     }
 }
 
+void Statemachine::Dispatch(Status & Res)
+{
+    std::auto_ptr<yami::outgoing_message> om_(
+        agent_.send(server_location_, object_name_, "dispatch"));
+
+    if (timeout_ != 0)
+    {
+        bool on_time_ = om_->wait_for_completion(timeout_);
+        if (on_time_ == false)
+        {
+            throw yami::yami_runtime_error("Operation timed out.");
+        }
+    }
+    else
+    {
+        om_->wait_for_completion();
+    }
+
+    const yami::message_state state_ = om_->get_state();
+    switch (state_)
+    {
+    case yami::replied:
+        Res.read(om_->get_reply());
+        break;
+    case yami::abandoned:
+        throw yami::yami_runtime_error(
+            "Operation was abandoned due to communication errors.");
+    case yami::rejected:
+        throw yami::yami_runtime_error(
+            "Operation was rejected: " + om_->get_exception_msg());
+
+    // these are for completeness:
+    case yami::posted:
+    case yami::transmitted:
+        break;
+    }
+}
+
 void StatemachineServer::operator()(yami::incoming_message & im_)
 {
     const std::string & msg_name_ = im_.get_message_name();
@@ -191,6 +211,17 @@ void StatemachineServer::operator()(yami::incoming_message & im_)
         Download(Conf);
 
         im_.reply();
+    }
+    else
+    if (msg_name_ == "dispatch")
+    {
+        Status Res;
+
+        Dispatch(Res);
+
+        yami::parameters Res_;
+        Res.write(Res_);
+        im_.reply(Res_);
     }
     else
     {

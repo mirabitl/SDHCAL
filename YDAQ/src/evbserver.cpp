@@ -72,9 +72,10 @@ void Evb::StatemachineServerImpl::Open(std::string theAddress)
 
 void Evb::StatemachineServerImpl::Initialise(const Evb::Config & Conf,Evb::Status & Res)
 {
-
-  std::cout<<"On ecrirai dans "<<Conf.Shmpath<<std::endl;
+  theConf_=Conf;
+  std::cout<<"On ecrirai dans "<<theConf_.Shmpath<<std::endl;
   Res.Evbstatus="INITIALISED";
+
 }
 void Evb::StatemachineServerImpl::Subscribe()
 {
@@ -83,7 +84,7 @@ void Evb::StatemachineServerImpl::Subscribe()
   std::vector<std::string>& vnames= b.getNames();
   std::vector<std::string>& vlocs=b.getLocation();
   std::size_t size_ = vnames.size();
-  
+  theDifMsgHandler = boost::bind(&Evb::StatemachineServerImpl::Processdifmsg, this, _1);   
   for (std::size_t i_ = 0; i_ != size_; ++i_)
     {
       if(vnames[i_].substr(0,5).compare("#DIF#")!=0) continue;
@@ -92,7 +93,8 @@ void Evb::StatemachineServerImpl::Subscribe()
       const std::string update_object_name =
 	"update_handler";
       params.set_string("destination_object", update_object_name);
-      server_agent.register_object(update_object_name, *this);
+
+      server_agent.register_object(update_object_name,(theDifMsgHandler));
       for (int i=0;i<255;i++)
 	{
 	  std::cout<<"Subscirbing " <<i<<std::endl;
@@ -112,9 +114,20 @@ void Evb::StatemachineServerImpl:: Start(Evb::Status & Res)
   Res.Evbstatus="STARTED";
   running_=true;
 }
-void Evb::StatemachineServerImpl::Processdif(const Dif::Data & Buf)
+void Evb::StatemachineServerImpl::Processdifmsg(yami::incoming_message & im)
 {
   if (!running_) return; 
+  //std::cout<<im.get_object_name()<<std::endl;
+  Dif::Data Buf;
+  Buf.read(im.get_parameters());
+  
+  Processdif(Buf);
+
+}
+
+void Evb::StatemachineServerImpl::Processdif(const Dif::Data & Buf)
+{
+
  const char* buf=Buf.Payload.data();int* ibuf=(int*) buf;
  std::cout << "received update: " << Buf.Difid<<" "<<Buf.Gtc <<" "<<Buf.Payload.size()<<"->"<<ibuf[0]<<" "<<ibuf[1]<<" "<<ibuf[2]<< std::endl;
 }

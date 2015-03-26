@@ -9,7 +9,7 @@
 #include <yami4-cpp/errors.h>
 #include <yami4-cpp/incoming_message.h>
 #include <yami4-cpp/outgoing_message.h>
-#include<iostream>
+
 using namespace Evb;
 
 Config::Config()
@@ -235,7 +235,7 @@ void Statemachine::Processdif(const Dif::Data & Buf)
 void StatemachineServer::operator()(yami::incoming_message & im_)
 {
     const std::string & msg_name_ = im_.get_message_name();
-    //std::cout<<msg_name_ <<std::endl;
+
     if (msg_name_ == "initialise")
     {
         Config Conf;
@@ -271,7 +271,7 @@ void StatemachineServer::operator()(yami::incoming_message & im_)
         im_.reply(Res_);
     }
     else
-    if (msg_name_ == "processdif" || msg_name_=="subscription_update")
+    if (msg_name_ == "processdif")
     {
         Dif::Data Buf;
         Buf.read(im_.get_parameters());

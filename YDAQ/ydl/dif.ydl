@@ -33,7 +33,7 @@ package DIF is
       message Start (Res : out DIFStatus);
       message Stop  (Res : out DIFStatus);
       message Destroy(Res: out DIFStatus);
-      oneway message ProcessSC (buf : in ODB.DBBuffer);
+      oneway message ProcessSlowControl(buf : in ODB.DBBuffer);
    end StateMachine;
 
 end DIF;

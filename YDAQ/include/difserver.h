@@ -20,11 +20,13 @@ namespace Dif {
     virtual void Start(Difstatus & Res);
     virtual void Stop(Difstatus & Res);
     virtual void Destroy(Difstatus & Res);
-    virtual void Processsc(const Odb::Dbbuffer & Buf)
+    virtual void Processslowcontrol(const Odb::Dbbuffer & Buf)
     {std::cout<<"not yet done "<<std::endl;}
-
   private:
     void Loop();
+    void Subscribe();
+    void Processslowcontrolmsg(yami::incoming_message & im);
+    std::string name_server_address;
     yami::agent server_agent;
     std::map<uint32_t,Dif::Data*> databuf;
     std::map<uint32_t,yami::value_publisher*> datapublisher;
@@ -32,6 +34,8 @@ namespace Dif {
     boost::thread    m_Thread_s;
     boost::thread  m_Thread_d[255];
     boost::thread_group g_d;
+    boost::function<void(yami::incoming_message &)> theDBMsgHandler;
+    Config theConf_;
   };
 }
 #endif

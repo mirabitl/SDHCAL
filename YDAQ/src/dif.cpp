@@ -386,11 +386,11 @@ void Statemachine::Destroy(Difstatus & Res)
     }
 }
 
-void Statemachine::Processsc(const Odb::Dbbuffer & Buf)
+void Statemachine::Processslowcontrol(const Odb::Dbbuffer & Buf)
 {
     yami::parameters Buf_;
     Buf.write(Buf_);
-    agent_.send_one_way(server_location_, object_name_, "processsc", Buf_);
+    agent_.send_one_way(server_location_, object_name_, "processslowcontrol", Buf_);
 }
 
 void StatemachineServer::operator()(yami::incoming_message & im_)
@@ -467,12 +467,12 @@ void StatemachineServer::operator()(yami::incoming_message & im_)
         im_.reply(Res_);
     }
     else
-    if (msg_name_ == "processsc" || msg_name_=="subscription_update" )
+    if (msg_name_ == "processslowcontrol")
     {
         Odb::Dbbuffer Buf;
         Buf.read(im_.get_parameters());
 
-        Processsc(Buf);
+        Processslowcontrol(Buf);
     }
     else
     {
