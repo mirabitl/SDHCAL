@@ -47,7 +47,7 @@ struct Status
     void write(yami::parameters & params) const;
     void read(const yami::parameters & params);
 
-    int Oraclestatus;
+    std::string Oraclestatus;
 };
 
 class Statemachine
@@ -59,7 +59,7 @@ public:
         int timeout = 0);
 
     void Initialise(Status & Res);
-    void Download(const Config & Conf);
+    void Download(const Config & Conf, Status & Res);
     void Dispatch(Status & Res);
 
 private:
@@ -77,7 +77,7 @@ public:
     virtual ~StatemachineServer() {}
 
     virtual void Initialise(Status & Res) = 0;
-    virtual void Download(const Config & Conf) = 0;
+    virtual void Download(const Config & Conf, Status & Res) = 0;
     virtual void Dispatch(Status & Res) = 0;
 
     void operator()(yami::incoming_message & im_);

@@ -10,13 +10,13 @@ package ODB is
     end DBBuffer;
    
    type Status is
-     oracleStatus: Integer;
+     oracleStatus: String;
     end Status;
 
 
    interface StateMachine is
       message Initialise(Res : out Status);
-      message Download (Conf : in Config);
+      message Download (Conf : in Config; Res : out Status);
       message Dispatch(Res : out Status);
    end StateMachine;
 

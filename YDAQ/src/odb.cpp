@@ -55,12 +55,13 @@ Status::Status()
 
 void Status::write(yami::parameters & params) const
 {
-    params.set_integer("oraclestatus", Oraclestatus);
+    params.set_string_shallow("oraclestatus",
+        Oraclestatus.c_str(), Oraclestatus.size());
 }
 
 void Status::read(const yami::parameters & params)
 {
-    Oraclestatus = params.get_integer("oraclestatus");
+    Oraclestatus = params.get_string("oraclestatus");
 }
 
 Statemachine::Statemachine(yami::agent & client_agent,
@@ -111,7 +112,7 @@ void Statemachine::Initialise(Status & Res)
     }
 }
 
-void Statemachine::Download(const Config & Conf)
+void Statemachine::Download(const Config & Conf, Status & Res)
 {
     yami::parameters Conf_;
     Conf.write(Conf_);
@@ -135,6 +136,7 @@ void Statemachine::Download(const Config & Conf)
     switch (state_)
     {
     case yami::replied:
+        Res.read(om_->get_reply());
         break;
     case yami::abandoned:
         throw yami::yami_runtime_error(
@@ -207,10 +209,13 @@ void StatemachineServer::operator()(yami::incoming_message & im_)
     {
         Config Conf;
         Conf.read(im_.get_parameters());
+        Status Res;
 
-        Download(Conf);
+        Download(Conf, Res);
 
-        im_.reply();
+        yami::parameters Res_;
+        Res.write(Res_);
+        im_.reply(Res_);
     }
     else
     if (msg_name_ == "dispatch")

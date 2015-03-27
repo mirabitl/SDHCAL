@@ -76,6 +76,7 @@ clientDIF=env.Program("clientDIF",source=Glob("src/clientDIF.cxx"))
 server_ns=env.Program("server_ns",source=Glob("src/server_ns.cxx"))
 mcd=env.Program("mcd",source=Glob("src/mcd.cxx"))
 serverEVB=env.Program("serverEVB",source=Glob("src/serverEVB.cxx"))
+serverODB=env.Program("serverODB",source=Glob("src/serverODB.cxx"))
 
 
 
