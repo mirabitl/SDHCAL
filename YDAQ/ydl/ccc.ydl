@@ -11,13 +11,13 @@ package CCC is
    
    
    type Status is
-     CCCStatus: Integer;
+     CCCStatus: String;
      CCCRegister: optional Integer;
     end Status;
 
 
    interface StateMachine is
-      message Initialise(Res : out Status);
+      message Initialise(Conf : in Config;Res : out Status);
       message Configure(Res : out Status);
       message DIFReset(Res : out Status);
       message BCIDReset(Res : out Status);
@@ -37,7 +37,7 @@ package CCC is
 
       message WriteRegister(Ra : in RegisterAccess;Res : out Status);
       message ReadRegister(Ra : in RegisterAccess;Res : out Status);
-      message Open(Conf : in Config);
+
    end StateMachine;
 
 end CCC;

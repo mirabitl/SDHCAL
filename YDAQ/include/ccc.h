@@ -47,7 +47,7 @@ struct Status
     void write(yami::parameters & params) const;
     void read(const yami::parameters & params);
 
-    int Cccstatus;
+    std::string Cccstatus;
     bool CccregisterValid;
     int Cccregister;
 };
@@ -60,7 +60,7 @@ public:
         const std::string & server_location, const std::string & object_name,
         int timeout = 0);
 
-    void Initialise(Status & Res);
+    void Initialise(const Config & Conf, Status & Res);
     void Configure(Status & Res);
     void Difreset(Status & Res);
     void Bcidreset(Status & Res);
@@ -78,7 +78,6 @@ public:
     void Resumetrigger(Status & Res);
     void Writeregister(const Registeraccess & Ra, Status & Res);
     void Readregister(const Registeraccess & Ra, Status & Res);
-    void Open(const Config & Conf);
 
 private:
 
@@ -94,7 +93,7 @@ public:
 
     virtual ~StatemachineServer() {}
 
-    virtual void Initialise(Status & Res) = 0;
+    virtual void Initialise(const Config & Conf, Status & Res) = 0;
     virtual void Configure(Status & Res) = 0;
     virtual void Difreset(Status & Res) = 0;
     virtual void Bcidreset(Status & Res) = 0;
@@ -112,7 +111,6 @@ public:
     virtual void Resumetrigger(Status & Res) = 0;
     virtual void Writeregister(const Registeraccess & Ra, Status & Res) = 0;
     virtual void Readregister(const Registeraccess & Ra, Status & Res) = 0;
-    virtual void Open(const Config & Conf) = 0;
 
     void operator()(yami::incoming_message & im_);
 };

@@ -16,7 +16,7 @@ package ZUP is
       message Check(Res : out Status);
       message On(Res : out Status);
       message Off(Res : out Status);
-      message Open(Conf : in Config);
+      message Initialise(Conf : in Config);
    end StateMachine;
 
 end ZUP;

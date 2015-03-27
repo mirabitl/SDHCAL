@@ -170,12 +170,12 @@ void Statemachine::Off(Status & Res)
     }
 }
 
-void Statemachine::Open(const Config & Conf)
+void Statemachine::Initialise(const Config & Conf)
 {
     yami::parameters Conf_;
     Conf.write(Conf_);
     std::auto_ptr<yami::outgoing_message> om_(
-        agent_.send(server_location_, object_name_, "open", Conf_));
+        agent_.send(server_location_, object_name_, "initialise", Conf_));
 
     if (timeout_ != 0)
     {
@@ -246,12 +246,12 @@ void StatemachineServer::operator()(yami::incoming_message & im_)
         im_.reply(Res_);
     }
     else
-    if (msg_name_ == "open")
+    if (msg_name_ == "initialise")
     {
         Config Conf;
         Conf.read(im_.get_parameters());
 
-        Open(Conf);
+        Initialise(Conf);
 
         im_.reply();
     }

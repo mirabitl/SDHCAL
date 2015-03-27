@@ -52,7 +52,7 @@ public:
     void Check(Status & Res);
     void On(Status & Res);
     void Off(Status & Res);
-    void Open(const Config & Conf);
+    void Initialise(const Config & Conf);
 
 private:
 
@@ -71,7 +71,7 @@ public:
     virtual void Check(Status & Res) = 0;
     virtual void On(Status & Res) = 0;
     virtual void Off(Status & Res) = 0;
-    virtual void Open(const Config & Conf) = 0;
+    virtual void Initialise(const Config & Conf) = 0;
 
     void operator()(yami::incoming_message & im_);
 };

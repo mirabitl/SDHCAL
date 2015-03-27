@@ -50,7 +50,8 @@ Status::Status()
 
 void Status::write(yami::parameters & params) const
 {
-    params.set_integer("cccstatus", Cccstatus);
+    params.set_string_shallow("cccstatus",
+        Cccstatus.c_str(), Cccstatus.size());
     if (CccregisterValid)
     {
     params.set_integer("cccregister", Cccregister);
@@ -59,7 +60,7 @@ void Status::write(yami::parameters & params) const
 
 void Status::read(const yami::parameters & params)
 {
-    Cccstatus = params.get_integer("cccstatus");
+    Cccstatus = params.get_string("cccstatus");
     yami::parameter_entry e_;
     CccregisterValid = params.find("cccregister", e_);
     if (CccregisterValid)
@@ -78,10 +79,12 @@ Statemachine::Statemachine(yami::agent & client_agent,
 {
 }
 
-void Statemachine::Initialise(Status & Res)
+void Statemachine::Initialise(const Config & Conf, Status & Res)
 {
+    yami::parameters Conf_;
+    Conf.write(Conf_);
     std::auto_ptr<yami::outgoing_message> om_(
-        agent_.send(server_location_, object_name_, "initialise"));
+        agent_.send(server_location_, object_name_, "initialise", Conf_));
 
     if (timeout_ != 0)
     {
@@ -766,54 +769,17 @@ void Statemachine::Readregister(const Registeraccess & Ra, Status & Res)
     }
 }
 
-void Statemachine::Open(const Config & Conf)
-{
-    yami::parameters Conf_;
-    Conf.write(Conf_);
-    std::auto_ptr<yami::outgoing_message> om_(
-        agent_.send(server_location_, object_name_, "open", Conf_));
-
-    if (timeout_ != 0)
-    {
-        bool on_time_ = om_->wait_for_completion(timeout_);
-        if (on_time_ == false)
-        {
-            throw yami::yami_runtime_error("Operation timed out.");
-        }
-    }
-    else
-    {
-        om_->wait_for_completion();
-    }
-
-    const yami::message_state state_ = om_->get_state();
-    switch (state_)
-    {
-    case yami::replied:
-        break;
-    case yami::abandoned:
-        throw yami::yami_runtime_error(
-            "Operation was abandoned due to communication errors.");
-    case yami::rejected:
-        throw yami::yami_runtime_error(
-            "Operation was rejected: " + om_->get_exception_msg());
-
-    // these are for completeness:
-    case yami::posted:
-    case yami::transmitted:
-        break;
-    }
-}
-
 void StatemachineServer::operator()(yami::incoming_message & im_)
 {
     const std::string & msg_name_ = im_.get_message_name();
 
     if (msg_name_ == "initialise")
     {
+        Config Conf;
+        Conf.read(im_.get_parameters());
         Status Res;
 
-        Initialise(Res);
+        Initialise(Conf, Res);
 
         yami::parameters Res_;
         Res.write(Res_);
@@ -1009,16 +975,6 @@ void StatemachineServer::operator()(yami::incoming_message & im_)
         yami::parameters Res_;
         Res.write(Res_);
         im_.reply(Res_);
-    }
-    else
-    if (msg_name_ == "open")
-    {
-        Config Conf;
-        Conf.read(im_.get_parameters());
-
-        Open(Conf);
-
-        im_.reply();
     }
     else
     {
