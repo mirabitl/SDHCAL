@@ -37,6 +37,7 @@ struct Dbbuffer
     void read(const yami::parameters & params);
 
     int Difid;
+    int Nasic;
     std::vector<char> Payload;
 };
 

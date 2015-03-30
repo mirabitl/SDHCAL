@@ -71,96 +71,139 @@ void StatemachineServerImpl::Open(std::string theAddress)
 
 void  StatemachineServerImpl::Configure(Status & Res)
 {
-  Res.Cccstatus="CONFIGURED";
+  if (theManager_!=NULL)
+    {
+      theManager_->configure();
+      Res.Cccstatus="CONFIGURED";
+    }
+  else
+    Res.Cccstatus="NOCCCFOUND";
+
   Res.CccregisterValid=false;
 }
 
 void StatemachineServerImpl::Difreset(Status & Res)
 {
+  if (theManager_!=NULL)
+    theManager_->getCCCReadout()->DoSendDIFReset();
   Res.Cccstatus="Difreset";
   Res.CccregisterValid=false;
 }
 void StatemachineServerImpl::Bcidreset(Status & Res)
 {
+  if (theManager_!=NULL)
+    theManager_->getCCCReadout()->DoSendBCIDReset();
   Res.Cccstatus="Bcidreset";
   Res.CccregisterValid=false;
 }
 void StatemachineServerImpl::Startacquisitionauto(Status & Res)
 {
+  if (theManager_!=NULL)
+    theManager_->getCCCReadout()->DoSendStartAcquisitionAuto();
   Res.Cccstatus="Startacquisitionauto";
   Res.CccregisterValid=false;
 }
 void StatemachineServerImpl::Ramfullext(Status & Res)
 {
+  if (theManager_!=NULL)
+    theManager_->getCCCReadout()->DoSendRamfullExt();
   Res.Cccstatus="Ramfullext";
   Res.CccregisterValid=false;
 }
 void StatemachineServerImpl::Trigext(Status & Res)
 {
+  if (theManager_!=NULL)
+    theManager_->getCCCReadout()->DoSendTrigExt();
   Res.Cccstatus="Trigext";
   Res.CccregisterValid=false;
 }
 void StatemachineServerImpl::Stopacquisition(Status & Res)
 {
+  if (theManager_!=NULL)
+    theManager_->getCCCReadout()->DoSendStopAcquisition();
   Res.Cccstatus="Stopacquisition";
   Res.CccregisterValid=false;
 }
 void StatemachineServerImpl::Startsingleacquisition(Status & Res)
 {
+  if (theManager_!=NULL)
+    theManager_->getCCCReadout()->DoSendStartSingleAcquisition();
   Res.Cccstatus="Startsingleacquisition";
   Res.CccregisterValid=false;
 }
 void StatemachineServerImpl::Pulselemo(Status & Res)
 {
+  if (theManager_!=NULL)
+    theManager_->getCCCReadout()->DoSendPulseLemo();
   Res.Cccstatus="Pulselemo";
   Res.CccregisterValid=false;
 }
 void StatemachineServerImpl::Trigger(Status & Res)
 {
+  if (theManager_!=NULL)
+    theManager_->getCCCReadout()->DoSendTrigger();
   Res.Cccstatus="Trigger";
   Res.CccregisterValid=false;
 }
 void StatemachineServerImpl::Cccreset(Status & Res)
 {
+  if (theManager_!=NULL)
+    theManager_->getCCCReadout()->DoSendCCCReset();
   Res.Cccstatus="Cccreset";
   Res.CccregisterValid=false;
 }
 void StatemachineServerImpl::Spillon(Status & Res)
 {
+  if (theManager_!=NULL)
+    theManager_->getCCCReadout()->DoSendSpillOn();
   Res.Cccstatus="Spillon";
   Res.CccregisterValid=false;
 }
 void StatemachineServerImpl::Spilloff(Status & Res)
 {
+  if (theManager_!=NULL)
+    theManager_->getCCCReadout()->DoSendSpillOff();
   Res.Cccstatus="Spilloff";
   Res.CccregisterValid=false;
 }
 void StatemachineServerImpl::Pausetrigger(Status & Res)
 {
+  if (theManager_!=NULL)
+    theManager_->getCCCReadout()->DoSendPauseTrigger();
   Res.Cccstatus="Pausetrigger";
   Res.CccregisterValid=false;
 }
 void StatemachineServerImpl::Resumetrigger(Status & Res)
 {
+  if (theManager_!=NULL)
+    theManager_->getCCCReadout()->DoSendResumeTrigger();
   Res.Cccstatus="Resumetrigger";
   Res.CccregisterValid=false;
 }
 void StatemachineServerImpl::Initialise(const Config & Conf, Status & Res)
 {
   theConf_=Conf;
+  theManager_= new CCCManager(Conf.Serial);
+  theManager_->initialise();
+  
   Res.Cccstatus="INITIALISED";
   Res.CccregisterValid=false;
 }
   void StatemachineServerImpl::Writeregister(const Registeraccess & Ra, Status & Res)
 {
+  if (theManager_!=NULL)
+    theManager_->getCCCReadout()->DoWriteRegister(Ra.Address,Ra.Cccregister);
 
   Res.Cccstatus="Writeregister";
   Res.CccregisterValid=false;
 }
      void StatemachineServerImpl::Readregister(const Registeraccess & Ra, Status & Res)
 {
+  Res.Cccregister=0;
+  if (theManager_!=NULL)
+    Res.Cccregister=theManager_->getCCCReadout()->DoReadRegister(Ra.Address);
 
   Res.Cccstatus="Readregister";
   Res.CccregisterValid=true;
-  Res.Cccregister=0;
+
 }

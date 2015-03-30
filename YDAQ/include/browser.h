@@ -10,7 +10,7 @@
 #include <stdint.h>
 
 
-namespace Dif {
+namespace Difhw {
   class browser
   {
   public:

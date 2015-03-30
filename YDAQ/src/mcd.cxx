@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-#include "dif.h"
+#include "difhw.h"
 #include "onedifhandler.h"
 #include "evb.h"
 #include "browser.h"
@@ -26,23 +26,24 @@ int main(int argc, char * argv[])
       yami::agent client_agent;
 
       const std::string name_server_address = argv[1];
-      Dif::browser b(name_server_address,&client_agent);
+      Difhw::browser b(name_server_address,&client_agent);
       b.QueryList();
       std::vector<std::string> &vnames=b.getNames();
       std::vector<std::string> &vlocs=b.getLocation();
-      std::vector<Dif::onedifhandler> vds;
+      std::vector<Difhw::onedifhandler> vds;
       std::size_t size_ = vnames.size();
       vnames.resize(size_);
       vlocs.resize(size_);
       std::string evbname;
       std::string evbloc;
       Evb::Statemachine *evbs=NULL;
+      Odb::Statemachine *odbs=NULL;
       for (std::size_t i_ = 0; i_ != size_; ++i_)
         {
 	  std::cout<<vnames[i_].substr(0,5)<<"@"<<vlocs[i_]<<std::endl;
 	  if (vnames[i_].substr(0,5).compare("#DIF#")==0)
 	    {
-	      Dif::onedifhandler odh(vnames[i_],vlocs[i_],&client_agent);
+	      Difhw::onedifhandler odh(vnames[i_],vlocs[i_],&client_agent);
 	      vds.push_back(odh);
 	    }
 	  if (vnames[i_].substr(0,5).compare("#EVB#")==0)
@@ -58,6 +59,20 @@ int main(int argc, char * argv[])
 	      std::cout<<st.Evbstatus<<std::endl;
 	      getchar();
 	    }
+	  if (vnames[i_].substr(0,5).compare("#ODB#")==0)
+	    {
+	      odbs= new Odb::Statemachine(client_agent,vlocs[i_],vnames[i_]);
+
+	      Odb::Config cdb;
+	      Odb::Status st;
+
+
+	      odbs->Initialise(st);
+	      cdb.Dbstate="LPCC_230";
+	      odbs->Download(cdb,st);
+	      std::cout<<st.Oraclestatus<<std::endl;
+	      getchar();
+	    }
         }
 
 
@@ -65,7 +80,7 @@ int main(int argc, char * argv[])
       std::string dummyl;
       std::cin >> dummyl;
 
-      for ( std::vector<Dif::onedifhandler>::iterator itv=vds.begin();itv!=vds.end();itv++)
+      for ( std::vector<Difhw::onedifhandler>::iterator itv=vds.begin();itv!=vds.end();itv++)
 	{
 	  itv->Scan();
 	  itv->Initialise();
@@ -74,19 +89,31 @@ int main(int argc, char * argv[])
 	  //itv->Subscribe();
 	  itv->Print();
 	}
+      if (odbs!=NULL)
+	{
+	  Odb::Status odbstat;
+	  odbs->Dispatch(odbstat);
+	}
+      for ( std::vector<Difhw::onedifhandler>::iterator itv=vds.begin();itv!=vds.end();itv++)
+	{
+	  itv->LoadSlowControl();
+	  //itv->Subscribe();
+	  itv->Print();
+	}
+
       if (evbs!=NULL)
 	{
 	  Evb::Status evbstat;
 	  evbs->Start(evbstat);
 	}
       std::cin >> dummyl;
-      for ( std::vector<Dif::onedifhandler>::iterator itv=vds.begin();itv!=vds.end();itv++)
+      for ( std::vector<Difhw::onedifhandler>::iterator itv=vds.begin();itv!=vds.end();itv++)
 	{
 	  itv->Start();
 	  itv->Print();
 	}
       std::cin >> dummyl;
-      for ( std::vector<Dif::onedifhandler>::iterator itv=vds.begin();itv!=vds.end();itv++)
+      for ( std::vector<Difhw::onedifhandler>::iterator itv=vds.begin();itv!=vds.end();itv++)
 	{
 	  itv->Stop();
 	  itv->Print();

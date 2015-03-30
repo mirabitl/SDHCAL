@@ -79,7 +79,7 @@ void Evb::StatemachineServerImpl::Initialise(const Evb::Config & Conf,Evb::Statu
 }
 void Evb::StatemachineServerImpl::Subscribe()
 {
-  Dif::browser b(name_server_address,&server_agent);
+  Difhw::browser b(name_server_address,&server_agent);
   b.QueryList();
   std::vector<std::string>& vnames= b.getNames();
   std::vector<std::string>& vlocs=b.getLocation();
@@ -118,14 +118,14 @@ void Evb::StatemachineServerImpl::Processdifmsg(yami::incoming_message & im)
 {
   if (!running_) return; 
   //std::cout<<im.get_object_name()<<std::endl;
-  Dif::Data Buf;
+  Difhw::Data Buf;
   Buf.read(im.get_parameters());
   
   Processdif(Buf);
 
 }
 
-void Evb::StatemachineServerImpl::Processdif(const Dif::Data & Buf)
+void Evb::StatemachineServerImpl::Processdif(const Difhw::Data & Buf)
 {
 
  const char* buf=Buf.Payload.data();int* ibuf=(int*) buf;

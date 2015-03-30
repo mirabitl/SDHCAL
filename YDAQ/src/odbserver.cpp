@@ -76,10 +76,12 @@ void StatemachineServerImpl::Open(std::string theAddress)
 void StatemachineServerImpl:: Initialise(Odb::Status & Res)
 {
   Res.Oraclestatus="INITIALISED";
+
 }
 void StatemachineServerImpl::Download(const Config & Conf,Odb::Status & Res)
 {
   theConf_=Conf;
+
   for (std::map<uint32_t,Odb::Dbbuffer*>::iterator itd=databuf.begin();itd!=databuf.end();itd++)
     delete itd->second;
   databuf.clear();
@@ -87,25 +89,55 @@ void StatemachineServerImpl::Download(const Config & Conf,Odb::Status & Res)
     delete itd->second;
 
   datapublisher.clear();
-
-  for( int itd=0;itd<255;itd++)
+  if (theDBManager_!=NULL)
     {
-      std::map<uint32_t,Odb::Dbbuffer*>::iterator itdf=databuf.find((itd));
+      delete theDBManager_;
+      
+    }
+  
+  theDBManager_= new OracleDIFDBManager("74",Conf.Dbstate);
+  theDBManager_->initialize();
+  theDBManager_->download();
+  std::map<uint32_t,unsigned char*> dbm=theDBManager_->getAsicKeyMap();
+  for (std::map<uint32_t,unsigned char*>::iterator idb=dbm.begin();idb!=dbm.end();idb++)
+    {
+      uint32_t id = (idb->first>>8)&0xFF;
+      std::map<uint32_t,Odb::Dbbuffer*>::iterator itdf=databuf.find(id);
       if (itdf==databuf.end())
 	{
 	  Odb::Dbbuffer* d=new Odb::Dbbuffer;
-	  d->Difid=itd;
-	  std::pair<uint32_t,Odb::Dbbuffer*> p((itd),d);
+	  d->Difid=id;
+	  std::pair<uint32_t,Odb::Dbbuffer*> p(id,d);
 	  databuf.insert(p);
 	  yami::value_publisher* vp=new yami::value_publisher;
 	  std::stringstream s("");
-	  s<<"/DBSERVER/"<<theConf_.Dbstate<<"/DIF"<<(itd);
+	  s<<"/DBSERVER/"<<theConf_.Dbstate<<"/DIF"<<(id);
 	  server_agent.register_value_publisher(s.str(),*vp);
-	  std::pair<uint32_t,yami::value_publisher*> pp((itd),vp);
+	  std::pair<uint32_t,yami::value_publisher*> pp((id),vp);
 	  datapublisher.insert(pp);
 	
 	}
-      
+    }
+  
+  
+
+  for( uint32_t id=1;id<256;id++)
+    {
+      std::map<uint32_t,Odb::Dbbuffer*>::iterator itdf=databuf.find(id);
+
+      if (itdf==databuf.end()) continue;
+      itdf->second->Nasic=0;
+      for (uint32_t iasic=1;iasic<=48;iasic++)
+	{
+	  uint32_t key=(id<<8)|iasic;
+	  std::map<uint32_t,unsigned char*>::iterator it=dbm.find(key);
+	  if (it==dbm.end()) continue;
+	  unsigned char* bframe=it->second;
+	  uint32_t       framesize=bframe[0];
+	  itdf->second->Payload.assign(&bframe[1],&bframe[1]+framesize);
+	  itdf->second->Nasic++;
+
+	}
     }
 }
 void StatemachineServerImpl::Dispatch(Odb::Status & Res)

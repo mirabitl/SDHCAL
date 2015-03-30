@@ -34,6 +34,7 @@ Dbbuffer::Dbbuffer()
 void Dbbuffer::write(yami::parameters & params) const
 {
     params.set_integer("difid", Difid);
+    params.set_integer("nasic", Nasic);
     params.set_binary_shallow("payload",
         &Payload[0], Payload.size());
 }
@@ -41,6 +42,7 @@ void Dbbuffer::write(yami::parameters & params) const
 void Dbbuffer::read(const yami::parameters & params)
 {
     Difid = params.get_integer("difid");
+    Nasic = params.get_integer("nasic");
     {
         std::size_t size_;
         const char * buf_ = reinterpret_cast<const char *>(

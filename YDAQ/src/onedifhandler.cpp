@@ -1,7 +1,7 @@
 #include "onedifhandler.h"
 
 
-using namespace Dif;
+using namespace Difhw;
 onedifhandler::onedifhandler( std::string objectname,
 			      std::string serveraddress,
 			      yami::agent* clientagent) : object_name(objectname),server_address(serveraddress),client_agent(clientagent)
@@ -11,7 +11,7 @@ onedifhandler::onedifhandler( std::string objectname,
     "update_handler";
   params.set_string("destination_object", update_object_name);
     
-  s =new Dif::Statemachine((*client_agent),server_address,object_name);
+  s =new Difhw::Statemachine((*client_agent),server_address,object_name);
 }
 
   
@@ -31,7 +31,11 @@ void onedifhandler::Configure(int32_t reg,std::string dbs)
 {
   cf.Trigger=reg;
   cf.Dbstate=dbs;
-  s->Configure(cf,dst);
+  s->Registerdb(cf,dst);
+}
+void onedifhandler::LoadSlowControl()
+{
+  s->Loadslowcontrol(dst);
 }
 void onedifhandler::Print()
 {

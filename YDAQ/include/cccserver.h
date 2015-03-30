@@ -5,7 +5,7 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <stdint.h>
-
+#include "CCCManager.h"
 namespace Ccc {
 
   class StatemachineServerImpl : public StatemachineServer
@@ -37,7 +37,8 @@ namespace Ccc {
     Config theConf_;
     std::string name_server_address;
     yami::agent server_agent;
-    
+    CCCManager* theManager_;
+
   };
 }
 #endif

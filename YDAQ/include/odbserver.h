@@ -5,7 +5,10 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <stdint.h>
+#include "OracleDIFDBManager.h"
+#include "DIFReadoutConstant.h"
 
+using namespace std;
 namespace Odb {
 
   class StatemachineServerImpl : public StatemachineServer
@@ -22,6 +25,9 @@ namespace Odb {
     yami::agent server_agent;
     std::map<uint32_t,Odb::Dbbuffer*> databuf;
     std::map<uint32_t,yami::value_publisher*> datapublisher;
+
+    RunInfo* theRunInfo_;
+    OracleDIFDBManager* theDBManager_;
   };
 }
 #endif

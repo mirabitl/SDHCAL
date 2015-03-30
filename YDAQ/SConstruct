@@ -31,7 +31,7 @@ else:
   boostsystem='boost_system-mt'
   boostthread='boost_thread-mt'
 
-
+USEDB=os.path.isdir("/usr/include/ILCConfDB")
 
 
 LIBRARY_SOURCES=Glob("#src/*.cpp")
@@ -40,6 +40,13 @@ if (platform=="SLC5"):
     INCLUDES.append('/usr/include/boost141')
 CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux"]
 
+# Daq includes
+INCLUDES.append(DHCAL_ROOT+"/SDHCAL_Readout/include")
+INCLUDES.append(DHCAL_ROOT+"/SDHCAL_common/include")
+INCLUDES.append(DHCAL_ROOT+"/SDHCAL_EventReader/include")
+if USEDB:
+    INCLUDES.append(DHCAL_ROOT+"/SDHCAL_DB/include")
+    INCLUDES.append("/usr/include/ILCConfDB")
 #SDHCAL_RPI=os.getenv("SDHCAL_RPI")
 #if (SDHCAL_RPI==None):
 #	print "please specify SDHCAL_RPI"
@@ -60,13 +67,29 @@ else:
 
 #link flags
 LIBRARY_PATHS.append("/opt/dhcal/yami/lib")
+
+#Daq lib path
+LIBRARY_PATHS.append(DHCAL_ROOT+"/opt/dhcal/lib")
+
 LDFLAGS=["-fPIC","-dynamiclib"]
+
+#DAQ libraries
+LIBRARIES.append(["netlink","cslm","SDHCALcommon","SDHCALReadout","SDHCALEventReader"])
+if (USEDB):
+    LIBRARIES.append(['dl','uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c','SDHCALDB'])
+
+
+
 
 env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS)
 
 ydaq=env.SharedLibrary("#lib/ydaq",source=LIBRARY_SOURCES)
 
-LIBRARIES=["ydaq","yamicore","yamicpp","yamicore","yamicpp","pthread",boostsystem,boostthread]
+LIBRARIES.append(["yamicore","yamicpp","yamicore","yamicpp","pthread",boostsystem,boostthread])
+
+
+# Severs
+LIBRARIES.append("ydaq")
 LIBRARY_PATHS.append("./lib")
 env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS)
 

@@ -1,6 +1,6 @@
 #include "browser.h"
 
-using namespace Dif;
+using namespace Difhw;
 browser::browser(std::string nameserver_address, yami::agent* clientagent) :name_server_address(nameserver_address),client_agent(clientagent)
 {
 }

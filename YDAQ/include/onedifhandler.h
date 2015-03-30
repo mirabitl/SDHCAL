@@ -8,9 +8,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-#include "dif.h"
+#include "difhw.h"
 
-namespace Dif {
+namespace Difhw {
   class onedifhandler
   {
   public:
@@ -26,14 +26,15 @@ namespace Dif {
     void Scan();
     void Initialise();
     void Configure(int32_t reg,std::string dbs);
+    void LoadSlowControl();
     void Print();
     void Subscribe();
   private:
-    Dif::Statemachine *s;
-    Dif::Scanstatus Res;
-    Dif::Config cf;
-    Dif::Difstatus dst;
-    Dif::Data d;
+    Difhw::Statemachine *s;
+    Difhw::Scanstatus Res;
+    Difhw::Config cf;
+    Difhw::Difstatus dst;
+    Difhw::Data d;
 
     std::string object_name;
     std::string server_address;

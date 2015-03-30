@@ -1,10 +1,10 @@
 //
-// C++ type definitions for package DIF.
+// C++ type definitions for package DIFHW.
 // This file was generated automatically by yami4idl.
 //
 
-#ifndef YAMI4_IDL_DIF_H_INCLUDED
-#define YAMI4_IDL_DIF_H_INCLUDED
+#ifndef YAMI4_IDL_DIFHW_H_INCLUDED
+#define YAMI4_IDL_DIFHW_H_INCLUDED
 
 #include <yami4-cpp/parameters.h>
 #include <string>
@@ -18,7 +18,7 @@ namespace yami
 
 #include "odb.h"
 
-namespace Dif
+namespace Difhw
 {
 
 struct Config
@@ -79,7 +79,8 @@ public:
         int timeout = 0);
 
     void Scan(Scanstatus & Res);
-    void Configure(const Config & Conf, Difstatus & Res);
+    void Registerdb(const Config & Conf, Difstatus & Res);
+    void Loadslowcontrol(Difstatus & Res);
     void Initialise(const Scanstatus & Conf, Difstatus & Res);
     void Start(Difstatus & Res);
     void Stop(Difstatus & Res);
@@ -101,7 +102,8 @@ public:
     virtual ~StatemachineServer() {}
 
     virtual void Scan(Scanstatus & Res) = 0;
-    virtual void Configure(const Config & Conf, Difstatus & Res) = 0;
+    virtual void Registerdb(const Config & Conf, Difstatus & Res) = 0;
+    virtual void Loadslowcontrol(Difstatus & Res) = 0;
     virtual void Initialise(const Scanstatus & Conf, Difstatus & Res) = 0;
     virtual void Start(Difstatus & Res) = 0;
     virtual void Stop(Difstatus & Res) = 0;
@@ -111,6 +113,6 @@ public:
     void operator()(yami::incoming_message & im_);
 };
 
-} // namespace Dif
+} // namespace Difhw
 
-#endif // YAMI4_IDL_DIF_H_INCLUDED
+#endif // YAMI4_IDL_DIFHW_H_INCLUDED

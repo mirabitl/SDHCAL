@@ -6,6 +6,7 @@ package ODB is
 
    type DBBuffer is
       DIFID : Integer;
+      Nasic :Integer;
       PayLoad : Binary;
     end DBBuffer;
    

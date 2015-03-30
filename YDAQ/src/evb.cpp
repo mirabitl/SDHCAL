@@ -225,7 +225,7 @@ void Statemachine::Stop(Status & Res)
     }
 }
 
-void Statemachine::Processdif(const Dif::Data & Buf)
+void Statemachine::Processdif(const Difhw::Data & Buf)
 {
     yami::parameters Buf_;
     Buf.write(Buf_);
@@ -273,7 +273,7 @@ void StatemachineServer::operator()(yami::incoming_message & im_)
     else
     if (msg_name_ == "processdif")
     {
-        Dif::Data Buf;
+        Difhw::Data Buf;
         Buf.read(im_.get_parameters());
 
         Processdif(Buf);

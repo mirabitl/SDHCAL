@@ -1,4 +1,4 @@
-import DIF;
+import DIFHW;
 package EVB is
 
    type Config is
@@ -25,7 +25,7 @@ package EVB is
       message Initialise(Conf : in Config; Res : out Status);
       message Start (Res : out Status);
       message Stop (Res : out Status);
-      oneway message ProcessDif (buf : in DIF.Data);
+      oneway message ProcessDif (buf : in DIFHW.Data);
    end StateMachine;
 
 end EVB;

@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-#include "dif.h"
+#include "difhw.h"
 uint32_t gtc[255];
 static uint32_t br=0;
 void update(yami::incoming_message & message)
@@ -15,7 +15,7 @@ void update(yami::incoming_message & message)
     const yami::parameters & content =
         message.get_parameters();
 
-    Dif::Data d;
+    Difhw::Data d;
     d.read(content);
 
 
@@ -129,10 +129,10 @@ int main(int argc, char * argv[])
             "update_handler";
         params.set_string("destination_object", update_object_name);
 	client_agent.register_object(update_object_name, update);
-	Dif::Statemachine s(client_agent,server_address,"#lyopc252#DIF");
-	Dif::Scanstatus Res;
-	Dif::Config cf;
-	Dif::Difstatus dst;
+	Difhw::Statemachine s(client_agent,server_address,"#lyopc252#DIF");
+	Difhw::Scanstatus Res;
+	Difhw::Config cf;
+	Difhw::Difstatus dst;
 
 	
 	s.Stop(dst);
@@ -156,7 +156,7 @@ int main(int argc, char * argv[])
 
 	cf.Trigger=0xb00;
 	cf.Dbstate="Mon_EtaT_amoi";
-	s.Configure(cf,dst);
+	s.Registerdb(cf,dst);
 	for (int i=0;i<dst.Status.size();i++)
 	    std::cout<<std::hex<<dst.Status[i]<<std::dec<<" "<<dst.Debug[i]<<std::endl;
        

@@ -17,7 +17,7 @@ namespace Evb {
     virtual void Start(Status & Res);
     virtual void Stop(Status & Res);
     void Subscribe();
-    virtual void Processdif(const Dif::Data & Buf);
+    virtual void Processdif(const Difhw::Data & Buf);
     void Processdifmsg(yami::incoming_message & im);
   private:
     bool running_;
