@@ -53,17 +53,28 @@ void Dbbuffer::read(const yami::parameters & params)
 
 Status::Status()
 {
+    RunValid = false;
 }
 
 void Status::write(yami::parameters & params) const
 {
     params.set_string_shallow("oraclestatus",
         Oraclestatus.c_str(), Oraclestatus.size());
+    if (RunValid)
+    {
+    params.set_integer("run", Run);
+    }
 }
 
 void Status::read(const yami::parameters & params)
 {
     Oraclestatus = params.get_string("oraclestatus");
+    yami::parameter_entry e_;
+    RunValid = params.find("run", e_);
+    if (RunValid)
+    {
+    Run = params.get_integer("run");
+    }
 }
 
 Statemachine::Statemachine(yami::agent & client_agent,
@@ -192,6 +203,82 @@ void Statemachine::Dispatch(Status & Res)
     }
 }
 
+void Statemachine::Newrun(Status & Res)
+{
+    std::auto_ptr<yami::outgoing_message> om_(
+        agent_.send(server_location_, object_name_, "newrun"));
+
+    if (timeout_ != 0)
+    {
+        bool on_time_ = om_->wait_for_completion(timeout_);
+        if (on_time_ == false)
+        {
+            throw yami::yami_runtime_error("Operation timed out.");
+        }
+    }
+    else
+    {
+        om_->wait_for_completion();
+    }
+
+    const yami::message_state state_ = om_->get_state();
+    switch (state_)
+    {
+    case yami::replied:
+        Res.read(om_->get_reply());
+        break;
+    case yami::abandoned:
+        throw yami::yami_runtime_error(
+            "Operation was abandoned due to communication errors.");
+    case yami::rejected:
+        throw yami::yami_runtime_error(
+            "Operation was rejected: " + om_->get_exception_msg());
+
+    // these are for completeness:
+    case yami::posted:
+    case yami::transmitted:
+        break;
+    }
+}
+
+void Statemachine::Currentrun(Status & Res)
+{
+    std::auto_ptr<yami::outgoing_message> om_(
+        agent_.send(server_location_, object_name_, "currentrun"));
+
+    if (timeout_ != 0)
+    {
+        bool on_time_ = om_->wait_for_completion(timeout_);
+        if (on_time_ == false)
+        {
+            throw yami::yami_runtime_error("Operation timed out.");
+        }
+    }
+    else
+    {
+        om_->wait_for_completion();
+    }
+
+    const yami::message_state state_ = om_->get_state();
+    switch (state_)
+    {
+    case yami::replied:
+        Res.read(om_->get_reply());
+        break;
+    case yami::abandoned:
+        throw yami::yami_runtime_error(
+            "Operation was abandoned due to communication errors.");
+    case yami::rejected:
+        throw yami::yami_runtime_error(
+            "Operation was rejected: " + om_->get_exception_msg());
+
+    // these are for completeness:
+    case yami::posted:
+    case yami::transmitted:
+        break;
+    }
+}
+
 void StatemachineServer::operator()(yami::incoming_message & im_)
 {
     const std::string & msg_name_ = im_.get_message_name();
@@ -225,6 +312,28 @@ void StatemachineServer::operator()(yami::incoming_message & im_)
         Status Res;
 
         Dispatch(Res);
+
+        yami::parameters Res_;
+        Res.write(Res_);
+        im_.reply(Res_);
+    }
+    else
+    if (msg_name_ == "newrun")
+    {
+        Status Res;
+
+        Newrun(Res);
+
+        yami::parameters Res_;
+        Res.write(Res_);
+        im_.reply(Res_);
+    }
+    else
+    if (msg_name_ == "currentrun")
+    {
+        Status Res;
+
+        Currentrun(Res);
 
         yami::parameters Res_;
         Res.write(Res_);

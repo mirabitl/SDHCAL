@@ -1,7 +1,7 @@
 package ODB is
 
    type Config is
-      DBState : String;
+     DBState : String;
    end Config;
 
    type DBBuffer is
@@ -12,6 +12,7 @@ package ODB is
    
    type Status is
      oracleStatus: String;
+     run: optional Integer;
     end Status;
 
 
@@ -19,6 +20,8 @@ package ODB is
       message Initialise(Res : out Status);
       message Download (Conf : in Config; Res : out Status);
       message Dispatch(Res : out Status);
+      message NewRun(Res : out Status);
+      message CurrentRun(Res : out Status);
    end StateMachine;
 
 end ODB;

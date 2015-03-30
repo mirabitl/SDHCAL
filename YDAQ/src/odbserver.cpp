@@ -76,7 +76,7 @@ void StatemachineServerImpl::Open(std::string theAddress)
 void StatemachineServerImpl:: Initialise(Odb::Status & Res)
 {
   Res.Oraclestatus="INITIALISED";
-
+  Res.RunValid=false;
 }
 void StatemachineServerImpl::Download(const Config & Conf,Odb::Status & Res)
 {
@@ -139,6 +139,9 @@ void StatemachineServerImpl::Download(const Config & Conf,Odb::Status & Res)
 
 	}
     }
+    Res.Oraclestatus="DOWNLOAD";
+    Res.RunValid=false;
+
 }
 void StatemachineServerImpl::Dispatch(Odb::Status & Res)
 {
@@ -150,5 +153,68 @@ void StatemachineServerImpl::Dispatch(Odb::Status & Res)
       itvp->second->publish(Conf_);
 
     }
-}
 
+    Res.Oraclestatus="DISPATCH";
+    Res.RunValid=false;
+
+}
+void StatemachineServerImpl::Newrun(Odb::Status & Res)
+{
+   if (theRunInfo_==NULL)
+    {
+      try {
+
+
+	std::stringstream daqname("");    
+	char dateStr [64];
+            
+	time_t tm= time(NULL);
+	strftime(dateStr,50,"LaDaqAToto_%d%m%y_%H%M%S",localtime(&tm));
+	daqname<<dateStr;
+	Daq* me=new Daq(daqname.str());
+
+	printf("la daq est creee %s\n",daqname.str().c_str());
+	me->setStatus(0);
+	printf("la daq a change de statut\n");
+	me->setXML("/opt/dhcal/include/dummy.xml");
+	me->uploadToDatabase();
+	printf("Upload DOne");
+  
+	theRunInfo_=new RunInfo(0,"LaDaqAToto");
+	printf("le run est creee\n");
+	theRunInfo_->setStatus(1);
+	Res.Run=theRunInfo_->getRunNumber();
+      } catch (ILCException::Exception e)
+	{
+	  theRunInfo_=NULL;
+	  std::cout<<e.getMessage()<<std::endl;
+	}
+    }
+  else
+    {
+      theRunInfo_->setStatus(4);
+      delete theRunInfo_;
+      theRunInfo_=new RunInfo(0,"LaDaqAToto");
+      theRunInfo_->setStatus(1);
+     Res.Run=theRunInfo_->getRunNumber();
+      
+    }
+    Res.Oraclestatus="NEWRUN";
+    Res.RunValid=true;
+
+}
+void StatemachineServerImpl::Currentrun(Odb::Status & Res)
+{
+   if (theRunInfo_==NULL)
+    {
+      this->Newrun(Res);
+    }
+  else
+    {
+      Res.Run=theRunInfo_->getRunNumber();
+      
+    }
+    Res.Oraclestatus="CURRENTRUN";
+    Res.RunValid=true;
+
+}

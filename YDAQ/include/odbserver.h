@@ -19,6 +19,8 @@ namespace Odb {
     virtual void Initialise(Status & Res);
     virtual void Download(const Config & Conf, Status & Res);
     virtual void Dispatch(Status & Res);
+    virtual void Newrun(Status & Res);
+    virtual void Currentrun(Status & Res);
   private:
     Config theConf_;
     std::string name_server_address;
