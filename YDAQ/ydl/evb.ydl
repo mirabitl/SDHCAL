@@ -11,20 +11,33 @@ package EVB is
       PublishPeriod : Integer;
    end Config;
 
+   type RunConfig is
+     run : Integer;
+     NumberOfFragment: Integer;
+     dbstate: String;
+   end RunConfig;  
    
+
+
    type Status is
      evbStatus: String;
      run :  optional Integer;
      StartTime : optional String; 
      completed : optional Integer;
      event : optional Integer;
+     difid: optional Integer_Array;
+     gtc: optional Integer_Array;
+     dtc: optional Integer_Array;
+     bcid: optional Integer_Array;
+
     end Status;
 
 
    interface StateMachine is
       message Initialise(Conf : in Config; Res : out Status);
-      message Start (Res : out Status);
+      message Start (RunConf: in RunConfig;Res : out Status);
       message Stop (Res : out Status);
+      message CurrentStatus( Res: out Status);
       oneway message ProcessDif (buf : in DIFHW.Data);
    end StateMachine;
 

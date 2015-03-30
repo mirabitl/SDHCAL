@@ -74,6 +74,16 @@ void Evb::StatemachineServerImpl::Initialise(const Evb::Config & Conf,Evb::Statu
 {
   theConf_=Conf;
   std::cout<<"On ecrirai dans "<<theConf_.Shmpath<<std::endl;
+  DIFWritterInterface* lc= NULL;
+  bool ondisk=(theConf_.Outputmode.compare("LCIO")==0)||(theConf_.Outputmode.compare("BINARY")==0);
+  if (theConf_.Outputmode.compare("LCIO")==0)
+    lc= new LCIOWritterInterface();
+  if (theConf_.Outputmode.compare("BINARY")==0)
+     lc= new BasicWritterInterface();
+  theProxy_=new ShmProxy(theConf_.Numberoffragment,ondisk,lc);
+  theProxy_->setDirectoryName(theConf_.Outputpath);
+  theProxy_->Initialise();
+  theProxy_->Configure();
   Res.Evbstatus="INITIALISED";
 
 }
@@ -130,10 +140,16 @@ void Evb::StatemachineServerImpl::Processdif(const Difhw::Data & Buf)
 
  const char* buf=Buf.Payload.data();int* ibuf=(int*) buf;
  std::cout << "received update: " << Buf.Difid<<" "<<Buf.Gtc <<" "<<Buf.Payload.size()<<"->"<<ibuf[0]<<" "<<ibuf[1]<<" "<<ibuf[2]<< std::endl;
+ ShmProxy::transferToFile(buf,
+			  Buf.Payload.size(),
+			  ShmProxy::getBufferABCID(buf),
+			  ShmProxy::getBufferDTC(buf),
+			  ShmProxy::getBufferGTC(buf),
+			  ShmProxy::getBufferDIF(buf));
+
 }
 void Evb::StatemachineServerImpl:: Stop(Evb::Status & Res)
 {
-  this->Subscribe();
   Res.Evbstatus="STOPPED";
   running_=false;
 }
