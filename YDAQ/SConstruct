@@ -35,6 +35,10 @@ USEDB=os.path.isdir("/usr/include/ILCConfDB")
 
 
 LIBRARY_SOURCES=Glob("#src/*.cpp")
+if USEDB:
+    LIBRARY_SOURCES=Glob("#src/*.cpp")
+else:
+    LIBRARY_SOURCES=commands.getoutput('ls src/*.cpp  | grep -v odbserver').split("\n")
 INCLUDES=['include','/opt/dhcal/yami/include','/opt/dhcal/yami/src/cpp/examples/common_util']
 if (platform=="SLC5"):
     INCLUDES.append('/usr/include/boost141')
@@ -62,6 +66,13 @@ ROOT_LIBS=[lib[2:] for lib in filter(lambda x: (x[:2]=="-l"), commands.getoutput
 ]
 ROOT_LIBS.append('XMLIO')
 ROOT_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getoutput("$ROOTSYS/bin/root-config --libs ").split(" "))]
+
+
+
+
+
+
+
 
 LIBRARIES=ROOT_LIBS+["pthread",boostsystem,boostthread]
 LIBRARY_PATHS=ROOT_LIBPATH
@@ -108,7 +119,8 @@ server_ns=env.Program("server_ns",source=Glob("src/server_ns.cxx"))
 mcd=env.Program("mcd",source=Glob("src/mcd.cxx"))
 serverDIF=env.Program("serverDIF",source=Glob("src/serverDIF.cxx"))
 serverEVB=env.Program("serverEVB",source=Glob("src/serverEVB.cxx"))
-serverODB=env.Program("serverODB",source=Glob("src/serverODB.cxx"))
+if (USEDB):
+  serverODB=env.Program("serverODB",source=Glob("src/serverODB.cxx"))
 serverZUP=env.Program("serverZUP",source=Glob("src/serverZUP.cxx"))
 serverCCC=env.Program("serverCCC",source=Glob("src/serverCCC.cxx"))
 
