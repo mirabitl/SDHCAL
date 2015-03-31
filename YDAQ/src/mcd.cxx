@@ -104,7 +104,11 @@ int main(int argc, char * argv[])
       if (evbs!=NULL)
 	{
 	  Evb::Status evbstat;
-	  evbs->Start(evbstat);
+	  Evb::Runconfig run;
+	  run.Run=10000;
+	  run.Numberoffragment=150;
+	  run.Dbstate="UNESSAI";
+	  evbs->Start(run,evbstat);
 	}
       std::cin >> dummyl;
       for ( std::vector<Difhw::onedifhandler>::iterator itv=vds.begin();itv!=vds.end();itv++)

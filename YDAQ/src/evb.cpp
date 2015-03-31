@@ -42,12 +42,35 @@ void Config::read(const yami::parameters & params)
     Publishperiod = params.get_integer("publishperiod");
 }
 
+Runconfig::Runconfig()
+{
+}
+
+void Runconfig::write(yami::parameters & params) const
+{
+    params.set_integer("run", Run);
+    params.set_integer("numberoffragment", Numberoffragment);
+    params.set_string_shallow("dbstate",
+        Dbstate.c_str(), Dbstate.size());
+}
+
+void Runconfig::read(const yami::parameters & params)
+{
+    Run = params.get_integer("run");
+    Numberoffragment = params.get_integer("numberoffragment");
+    Dbstate = params.get_string("dbstate");
+}
+
 Status::Status()
 {
     RunValid = false;
     StarttimeValid = false;
     CompletedValid = false;
     EventValid = false;
+    DifidValid = false;
+    GtcValid = false;
+    DtcValid = false;
+    BcidValid = false;
 }
 
 void Status::write(yami::parameters & params) const
@@ -70,6 +93,26 @@ void Status::write(yami::parameters & params) const
     if (EventValid)
     {
     params.set_integer("event", Event);
+    }
+    if (DifidValid)
+    {
+    params.set_integer_array_shallow("difid",
+        &Difid[0], Difid.size());
+    }
+    if (GtcValid)
+    {
+    params.set_integer_array_shallow("gtc",
+        &Gtc[0], Gtc.size());
+    }
+    if (DtcValid)
+    {
+    params.set_integer_array_shallow("dtc",
+        &Dtc[0], Dtc.size());
+    }
+    if (BcidValid)
+    {
+    params.set_integer_array_shallow("bcid",
+        &Bcid[0], Bcid.size());
     }
 }
 
@@ -96,6 +139,46 @@ void Status::read(const yami::parameters & params)
     if (EventValid)
     {
     Event = params.get_integer("event");
+    }
+    DifidValid = params.find("difid", e_);
+    if (DifidValid)
+    {
+    {
+        std::size_t size_;
+        const int * buf_ = params.get_integer_array(
+            "difid", size_);
+        Difid.assign(buf_, buf_ + size_);
+    }
+    }
+    GtcValid = params.find("gtc", e_);
+    if (GtcValid)
+    {
+    {
+        std::size_t size_;
+        const int * buf_ = params.get_integer_array(
+            "gtc", size_);
+        Gtc.assign(buf_, buf_ + size_);
+    }
+    }
+    DtcValid = params.find("dtc", e_);
+    if (DtcValid)
+    {
+    {
+        std::size_t size_;
+        const int * buf_ = params.get_integer_array(
+            "dtc", size_);
+        Dtc.assign(buf_, buf_ + size_);
+    }
+    }
+    BcidValid = params.find("bcid", e_);
+    if (BcidValid)
+    {
+    {
+        std::size_t size_;
+        const int * buf_ = params.get_integer_array(
+            "bcid", size_);
+        Bcid.assign(buf_, buf_ + size_);
+    }
     }
 }
 
@@ -149,10 +232,12 @@ void Statemachine::Initialise(const Config & Conf, Status & Res)
     }
 }
 
-void Statemachine::Start(Status & Res)
+void Statemachine::Start(const Runconfig & Runconf, Status & Res)
 {
+    yami::parameters Runconf_;
+    Runconf.write(Runconf_);
     std::auto_ptr<yami::outgoing_message> om_(
-        agent_.send(server_location_, object_name_, "start"));
+        agent_.send(server_location_, object_name_, "start", Runconf_));
 
     if (timeout_ != 0)
     {
@@ -225,6 +310,44 @@ void Statemachine::Stop(Status & Res)
     }
 }
 
+void Statemachine::Currentstatus(Status & Res)
+{
+    std::auto_ptr<yami::outgoing_message> om_(
+        agent_.send(server_location_, object_name_, "currentstatus"));
+
+    if (timeout_ != 0)
+    {
+        bool on_time_ = om_->wait_for_completion(timeout_);
+        if (on_time_ == false)
+        {
+            throw yami::yami_runtime_error("Operation timed out.");
+        }
+    }
+    else
+    {
+        om_->wait_for_completion();
+    }
+
+    const yami::message_state state_ = om_->get_state();
+    switch (state_)
+    {
+    case yami::replied:
+        Res.read(om_->get_reply());
+        break;
+    case yami::abandoned:
+        throw yami::yami_runtime_error(
+            "Operation was abandoned due to communication errors.");
+    case yami::rejected:
+        throw yami::yami_runtime_error(
+            "Operation was rejected: " + om_->get_exception_msg());
+
+    // these are for completeness:
+    case yami::posted:
+    case yami::transmitted:
+        break;
+    }
+}
+
 void Statemachine::Processdif(const Difhw::Data & Buf)
 {
     yami::parameters Buf_;
@@ -251,9 +374,11 @@ void StatemachineServer::operator()(yami::incoming_message & im_)
     else
     if (msg_name_ == "start")
     {
+        Runconfig Runconf;
+        Runconf.read(im_.get_parameters());
         Status Res;
 
-        Start(Res);
+        Start(Runconf, Res);
 
         yami::parameters Res_;
         Res.write(Res_);
@@ -265,6 +390,17 @@ void StatemachineServer::operator()(yami::incoming_message & im_)
         Status Res;
 
         Stop(Res);
+
+        yami::parameters Res_;
+        Res.write(Res_);
+        im_.reply(Res_);
+    }
+    else
+    if (msg_name_ == "currentstatus")
+    {
+        Status Res;
+
+        Currentstatus(Res);
 
         yami::parameters Res_;
         Res.write(Res_);

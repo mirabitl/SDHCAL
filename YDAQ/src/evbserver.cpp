@@ -12,6 +12,8 @@
 #include <sys/utsname.h>
 #include "evbserver.h"
 #include "browser.h"
+#include "LCIOWritterInterface.h"
+#include "BasicWritterInterface.h"
 
 void Evb::StatemachineServerImpl::Open(std::string theAddress)
 {
@@ -118,11 +120,74 @@ void Evb::StatemachineServerImpl::Subscribe()
 
   
 }
-void Evb::StatemachineServerImpl:: Start(Evb::Status & Res)
+
+void Evb::StatemachineServerImpl::updateStatus(int run,int event,int difid,int gtc,int dtc,int bcid)
 {
+  theCurrentStatus_.RunValid=(run!=0);
+  if (run!=0)
+    theCurrentStatus_.Run=run;
+  theCurrentStatus_.StarttimeValid=(run!=0) && event==0;
+
+  if (run!=0 && event==0)
+    {
+      time_t rawtime;
+      struct tm * timeinfo;
+      char buffer[80];
+
+      time (&rawtime);
+      timeinfo = localtime(&rawtime);
+
+      strftime(buffer,80,"%d-%m-%Y %I:%M:%S",timeinfo);
+      theCurrentStatus_.Starttime.assign(buffer);
+
+    }
+  theCurrentStatus_.CompletedValid=(event!=0);
+  theCurrentStatus_.Completed=event;
+  theCurrentStatus_.EventValid=(event!=0);
+  theCurrentStatus_.Event=event;
+  theCurrentStatus_.DifidValid=(difid!=0);
+  
+  theCurrentStatus_.GtcValid=(difid!=0);
+  theCurrentStatus_.DtcValid=(difid!=0);
+  theCurrentStatus_.BcidValid=(difid!=0);
+  if (difid==0) return;
+  std::vector<int>::iterator itd = std::find(theCurrentStatus_.Difid.begin(),theCurrentStatus_.Difid.end(),difid);
+  if (itd==theCurrentStatus_.Difid.end())
+    {
+      theCurrentStatus_.Difid.push_back(difid);
+      theCurrentStatus_.Gtc.push_back(gtc);
+      theCurrentStatus_.Dtc.push_back(dtc);
+      theCurrentStatus_.Bcid.push_back(bcid);
+
+    }
+  else
+    {
+      size_t index = std::distance(theCurrentStatus_.Difid.begin(), itd);
+      theCurrentStatus_.Gtc[index]=gtc;
+      theCurrentStatus_.Dtc[index]=dtc;
+      theCurrentStatus_.Bcid[index]=bcid;
+    }
+}
+
+void Evb::StatemachineServerImpl:: Start(const Runconfig & Runconf,Evb::Status & Res)
+{
+
   this->Subscribe();
+  theRunconf_=Runconf;
+  if (theProxy_ != NULL)
+    {
+      theProxy_->setSetupName(Runconf.Dbstate);
+
+      theProxy_->setNumberOfDIF(Runconf.Numberoffragment);
+
+      theProxy_->purgeShm(); // remove old data not written
+      theProxy_->Start(Runconf.Run,theConf_.Outputpath);
+
+    }
+  updateStatus(Runconf.Run);
+  Res=theCurrentStatus_;
   Res.Evbstatus="STARTED";
-  running_=true;
+
 }
 void Evb::StatemachineServerImpl::Processdifmsg(yami::incoming_message & im)
 {
@@ -138,7 +203,7 @@ void Evb::StatemachineServerImpl::Processdifmsg(yami::incoming_message & im)
 void Evb::StatemachineServerImpl::Processdif(const Difhw::Data & Buf)
 {
 
- const char* buf=Buf.Payload.data();int* ibuf=(int*) buf;
+  unsigned char* buf= (unsigned char*) Buf.Payload.data();int* ibuf=(int*) buf;
  std::cout << "received update: " << Buf.Difid<<" "<<Buf.Gtc <<" "<<Buf.Payload.size()<<"->"<<ibuf[0]<<" "<<ibuf[1]<<" "<<ibuf[2]<< std::endl;
  ShmProxy::transferToFile(buf,
 			  Buf.Payload.size(),
@@ -146,10 +211,21 @@ void Evb::StatemachineServerImpl::Processdif(const Difhw::Data & Buf)
 			  ShmProxy::getBufferDTC(buf),
 			  ShmProxy::getBufferGTC(buf),
 			  ShmProxy::getBufferDIF(buf));
-
+ updateStatus(0,0,ShmProxy::getBufferDIF(buf),ShmProxy::getBufferDTC(buf),ShmProxy::getBufferGTC(buf),ShmProxy::getBufferABCID(buf));
 }
 void Evb::StatemachineServerImpl:: Stop(Evb::Status & Res)
 {
+  theProxy_->Stop();
   Res.Evbstatus="STOPPED";
-  running_=false;
+
+}
+void Evb::StatemachineServerImpl:: Currentstatus(Evb::Status & Res)
+{
+  if (theProxy_!=NULL)
+    {
+      updateStatus(theProxy_->getRunNumber(),theProxy_->getEventNumber());
+    }
+  Res=theCurrentStatus_;
+  Res.Evbstatus="UPDATED";
+
 }

@@ -37,6 +37,18 @@ struct Config
     int Publishperiod;
 };
 
+struct Runconfig
+{
+    Runconfig();
+
+    void write(yami::parameters & params) const;
+    void read(const yami::parameters & params);
+
+    int Run;
+    int Numberoffragment;
+    std::string Dbstate;
+};
+
 struct Status
 {
     Status();
@@ -53,6 +65,14 @@ struct Status
     int Completed;
     bool EventValid;
     int Event;
+    bool DifidValid;
+    std::vector<int> Difid;
+    bool GtcValid;
+    std::vector<int> Gtc;
+    bool DtcValid;
+    std::vector<int> Dtc;
+    bool BcidValid;
+    std::vector<int> Bcid;
 };
 
 class Statemachine
@@ -64,8 +84,9 @@ public:
         int timeout = 0);
 
     void Initialise(const Config & Conf, Status & Res);
-    void Start(Status & Res);
+    void Start(const Runconfig & Runconf, Status & Res);
     void Stop(Status & Res);
+    void Currentstatus(Status & Res);
     void Processdif(const Difhw::Data & Buf);
 
 private:
@@ -83,8 +104,9 @@ public:
     virtual ~StatemachineServer() {}
 
     virtual void Initialise(const Config & Conf, Status & Res) = 0;
-    virtual void Start(Status & Res) = 0;
+    virtual void Start(const Runconfig & Runconf, Status & Res) = 0;
     virtual void Stop(Status & Res) = 0;
+    virtual void Currentstatus(Status & Res) = 0;
     virtual void Processdif(const Difhw::Data & Buf) = 0;
 
     void operator()(yami::incoming_message & im_);
