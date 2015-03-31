@@ -1,13 +1,15 @@
-package ZUP is
+package ZUPLV is
 
    type Config is
       Serial : String;
+      Port   : Integer;
    end Config;
 
    
    type Status is
      ZupStatus: String;
      Voltage: Float;
+     Voltageread: Float;
      Current: Float;
     end Status;
 
@@ -17,7 +19,8 @@ package ZUP is
       message On(Res : out Status);
       message Off(Res : out Status);
       message Initialise(Conf : in Config);
+      oneway message Close;
    end StateMachine;
 
-end ZUP;
+end ZUPLV;
 

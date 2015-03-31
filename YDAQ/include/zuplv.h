@@ -1,10 +1,10 @@
 //
-// C++ type definitions for package ZUP.
+// C++ type definitions for package ZUPLV.
 // This file was generated automatically by yami4idl.
 //
 
-#ifndef YAMI4_IDL_ZUP_H_INCLUDED
-#define YAMI4_IDL_ZUP_H_INCLUDED
+#ifndef YAMI4_IDL_ZUPLV_H_INCLUDED
+#define YAMI4_IDL_ZUPLV_H_INCLUDED
 
 #include <yami4-cpp/parameters.h>
 #include <string>
@@ -16,7 +16,7 @@ namespace yami
     class incoming_message;
 }
 
-namespace Zup
+namespace Zuplv
 {
 
 struct Config
@@ -27,6 +27,7 @@ struct Config
     void read(const yami::parameters & params);
 
     std::string Serial;
+    int Port;
 };
 
 struct Status
@@ -38,6 +39,7 @@ struct Status
 
     std::string Zupstatus;
     double Voltage;
+    double Voltageread;
     double Current;
 };
 
@@ -53,6 +55,7 @@ public:
     void On(Status & Res);
     void Off(Status & Res);
     void Initialise(const Config & Conf);
+    void Close();
 
 private:
 
@@ -72,10 +75,11 @@ public:
     virtual void On(Status & Res) = 0;
     virtual void Off(Status & Res) = 0;
     virtual void Initialise(const Config & Conf) = 0;
+    virtual void Close() = 0;
 
     void operator()(yami::incoming_message & im_);
 };
 
-} // namespace Zup
+} // namespace Zuplv
 
-#endif // YAMI4_IDL_ZUP_H_INCLUDED
+#endif // YAMI4_IDL_ZUPLV_H_INCLUDED

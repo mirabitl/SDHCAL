@@ -1,16 +1,16 @@
 //
-// C++ implementations for package ZUP.
+// C++ implementations for package ZUPLV.
 // This file was generated automatically by yami4idl.
 //
 
-#include "zup.h"
+#include "zuplv.h"
 
 #include <yami4-cpp/agent.h>
 #include <yami4-cpp/errors.h>
 #include <yami4-cpp/incoming_message.h>
 #include <yami4-cpp/outgoing_message.h>
 
-using namespace Zup;
+using namespace Zuplv;
 
 Config::Config()
 {
@@ -20,11 +20,13 @@ void Config::write(yami::parameters & params) const
 {
     params.set_string_shallow("serial",
         Serial.c_str(), Serial.size());
+    params.set_integer("port", Port);
 }
 
 void Config::read(const yami::parameters & params)
 {
     Serial = params.get_string("serial");
+    Port = params.get_integer("port");
 }
 
 Status::Status()
@@ -36,6 +38,7 @@ void Status::write(yami::parameters & params) const
     params.set_string_shallow("zupstatus",
         Zupstatus.c_str(), Zupstatus.size());
     params.set_double_float("voltage", Voltage);
+    params.set_double_float("voltageread", Voltageread);
     params.set_double_float("current", Current);
 }
 
@@ -43,6 +46,7 @@ void Status::read(const yami::parameters & params)
 {
     Zupstatus = params.get_string("zupstatus");
     Voltage = params.get_double_float("voltage");
+    Voltageread = params.get_double_float("voltageread");
     Current = params.get_double_float("current");
 }
 
@@ -209,6 +213,11 @@ void Statemachine::Initialise(const Config & Conf)
     }
 }
 
+void Statemachine::Close()
+{
+    agent_.send_one_way(server_location_, object_name_, "close");
+}
+
 void StatemachineServer::operator()(yami::incoming_message & im_)
 {
     const std::string & msg_name_ = im_.get_message_name();
@@ -254,6 +263,11 @@ void StatemachineServer::operator()(yami::incoming_message & im_)
         Initialise(Conf);
 
         im_.reply();
+    }
+    else
+    if (msg_name_ == "close")
+    {
+        Close();
     }
     else
     {

@@ -112,17 +112,17 @@ LIBRARIES.append("ydaq")
 LIBRARY_PATHS.append("./lib")
 env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS)
 
-serverPP=env.Program("serverPP",source=Glob("src/serverPP.cxx"))
+serverPP=env.Program("bin/serverPP",source=Glob("src/serverPP.cxx"))
 
-clientDIF=env.Program("clientDIF",source=Glob("src/clientDIF.cxx"))
-server_ns=env.Program("server_ns",source=Glob("src/server_ns.cxx"))
-mcd=env.Program("mcd",source=Glob("src/mcd.cxx"))
-serverDIF=env.Program("serverDIF",source=Glob("src/serverDIF.cxx"))
-serverEVB=env.Program("serverEVB",source=Glob("src/serverEVB.cxx"))
+clientDIF=env.Program("bin/clientDIF",source=Glob("src/clientDIF.cxx"))
+server_ns=env.Program("bin/server_ns",source=Glob("src/server_ns.cxx"))
+mcd=env.Program("bin/mcd",source=Glob("src/mcd.cxx"))
+serverDIF=env.Program("bin/serverDIF",source=Glob("src/serverDIF.cxx"))
+serverEVB=env.Program("bin/serverEVB",source=Glob("src/serverEVB.cxx"))
 if (USEDB):
-  serverODB=env.Program("serverODB",source=Glob("src/serverODB.cxx"))
-serverZUP=env.Program("serverZUP",source=Glob("src/serverZUP.cxx"))
-serverCCC=env.Program("serverCCC",source=Glob("src/serverCCC.cxx"))
+  serverODB=env.Program("bin/serverODB",source=Glob("src/serverODB.cxx"))
+serverZUP=env.Program("bin/serverZUP",source=Glob("src/serverZUP.cxx"))
+serverCCC=env.Program("bin/serverCCC",source=Glob("src/serverCCC.cxx"))
 
 
 
@@ -131,6 +131,11 @@ serverCCC=env.Program("serverCCC",source=Glob("src/serverCCC.cxx"))
 #MonClient_src=['cslm/NetMessage.cpp','cslm/MessageHandler.cc','cslm/NMClient.cc','cslm/MonClient.cc']
 
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",[ydaq])
-###env.Install("/opt/dhcal/lib",[netlink,cslm])
+if (USEDB):
+    env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[serverDIF,serverEVB,serverZUP,serverCCC,serverODB])
+else:
+    env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[serverDIF,serverEVB,serverZUP,serverCCC])
+###env.Install("/opt/dhcal/lib",SDHCALDimDaq)
+###env.Install("/opt/dhcal/include/readout",myinc)
 
-env.Alias('install',[DHCAL_ROOT+"/opt/dhcal/lib"])
+env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib",DHCAL_ROOT+"/opt/dhcal/bin"])

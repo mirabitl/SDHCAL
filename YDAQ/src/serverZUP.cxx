@@ -15,7 +15,7 @@ int main(int argc, char * argv[])
     }
 
   const std::string server_address = argv[1];
-  Zup::StatemachineServerImpl s;
+  Zuplv::StatemachineServerImpl s;
   s.Open(server_address);
 
 
