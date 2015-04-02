@@ -158,7 +158,7 @@ env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIB
 env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
 serverPP=env.Program("bin/serverPP",source=Glob("src/serverPP.cxx"))
 
-clientDIF=env.Program("bin/clientDIF",source=Glob("src/clientDIF.cxx"))
+#clientDIF=env.Program("bin/clientDIF",source=Glob("src/clientDIF.cxx"))
 server_ns=env.Program("bin/server_ns",source=Glob("src/server_ns.cxx"))
 mcd=env.Program("bin/mcd",source=Glob("src/mcd.cxx"))
 serverDIF=env.Program("bin/serverDIF",source=Glob("src/serverDIF.cxx"))
@@ -171,7 +171,7 @@ serverCCC=env.Program("bin/serverCCC",source=Glob("src/serverCCC.cxx"))
 
 
 #Python module
-_YDaq=env.PythonModule('_YDaq', ['LYDaq.i'],LIBPATH="#lib",LIBS="ydaq")
+_YDaq=env.PythonModule('_LYDaq', ['LYDaq.i'],LINKFLAGS="-dynamiclib", LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS)
 
 #MonServer_src=['cslm/NetMessage.cpp','cslm/MessageHandler.cc','cslm/NMServer.cc','cslm/MonServer.cc']
 #MonClient_src=['cslm/NetMessage.cpp','cslm/MessageHandler.cc','cslm/NMClient.cc','cslm/MonClient.cc']
