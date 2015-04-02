@@ -143,7 +143,8 @@ LIBRARIES.append(["yamicore","yamicpp","yamicore","yamicpp","pthread",boostsyste
 
 
 # Severs
-LIBRARIES.append("ydaq")
+LIBRARIES=["ydaq"]+LIBRARIES
+
 LIBRARY_PATHS.append("./lib")
 # SWIG
 SWIGSF=["-c++","-classic"]
@@ -154,13 +155,13 @@ for i in INCLUDES:
 
 
 
-env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS,SWIGFLAGS=SWIGSF)
+env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS="-O2", LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS,SWIGFLAGS=SWIGSF)
 env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
 serverPP=env.Program("bin/serverPP",source=Glob("src/serverPP.cxx"))
 
 #clientDIF=env.Program("bin/clientDIF",source=Glob("src/clientDIF.cxx"))
-server_ns=env.Program("bin/server_ns",source=Glob("src/server_ns.cxx"))
-mcd=env.Program("bin/mcd",source=Glob("src/mcd.cxx"))
+#server_ns=env.Program("bin/server_ns",source=Glob("src/server_ns.cxx"))
+#mcd=env.Program("bin/mcd",source=Glob("src/mcd.cxx"))
 serverDIF=env.Program("bin/serverDIF",source=Glob("src/serverDIF.cxx"))
 serverEVB=env.Program("bin/serverEVB",source=Glob("src/serverEVB.cxx"))
 if (USEDB):

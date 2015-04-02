@@ -1,0 +1,24 @@
+#!/bin/bash
+if [ -f /usr/include/ILCConfDB ];then
+    cd netLink;scons -c;scons install -j 6;scons;cd -
+    cd SDHCAL_common;scons -c;scons install -j 6;scons;cd -
+    cd SDHCAL_Readout;scons -c;scons install -j 6;scons;cd -
+    cd SDHCAL_DB;scons -c;scons install -j 6;scons;cd -
+    cd SDHCAL_Client;scons -c;scons install -j 6;scons;cd -
+    cd SDHCAL_EventReader;scons -c;scons install -j 6;scons;cd -
+    sudo ln -s /opt/dhcal/dim /usr/local
+    cd DimDaq; scons -c;scons install -j 6;scons;cd -
+    cd DimDb;scons -c;scons install -j 6;scons;cd -
+    cd DimCtrl;scons -c;scons install -j 6;scons;cd -
+    cd YDAQ;scons -c;scons install -j 6;scons;cd -
+else
+    cd netLink;scons -c;scons install -j 6;scons;cd -
+    cd SDHCAL_common;scons -c;scons install -j 6;scons;cd -
+    cd SDHCAL_Readout;scons -c;scons install -j 6;scons;cd -
+    cd SDHCAL_EventReader;scons -c;scons install -j 6;scons;cd -
+    sudo ln -s /opt/dhcal/dim /usr/local
+    cd DimDaq; scons -c;scons install -j 6;scons;cd -
+    cd DimCtrl;scons -c;scons install -j 6;scons;cd -
+    cd YDAQ;scons -c;scons install -j 6;scons;cd -
+
+fi

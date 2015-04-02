@@ -43,48 +43,48 @@
 
 
 # DB installation
-   cd /opt/dhcal/
-   svn co https://lyosvn.in2p3.fr/repository/ilc/src/online/database/ILCConfDB
-   cd ILCConfDB/
-   source setEnv.sh 
-   cd src
+#   cd /opt/dhcal/
+#   svn co https://lyosvn.in2p3.fr/repository/ilc/src/online/database/ILCConfDB
+#   cd ILCConfDB/
+#   source setEnv.sh 
+#   cd src
 # Change python to 2.7  and -Wl,--nos-as-needed
-   vi Makefile 
-   make -j 8
+#   vi Makefile 
+#   make -j 8
+#
+#   cd -
+#   sudo cp lib64/libclntsh.so.11.1 /usr/lib/libclntsh.so
+#   sudo cp lib64/libnnz11.so /usr/lib/libnnz11.so
+#   sudo cp lib64/libocci.so.11.1 /usr/lib/libocci.so
+#   sudo cp lib64/libociei.so /usr/lib/libociei.so
+#   sudo cp lib64/libociicus.so /usr/lib/libociicus.so
+#   sudo cp lib64/libocijdbc11.so /usr/lib/libocijdbc11.so
+#   sudo cp lib64/libclntsh.so.11.1 /usr/lib/libclntsh.so
+#   sudo cp lib64/libnnz11.so /usr/lib/libnnz11.so
+#   sudo cp lib64/libocci.so.11.1 /usr/lib/libocci.so
+#   sudo cp lib64/libociicus.so /usr/lib/libociicus.so
+#   sudo cp lib64/libocijdbc11.so /usr/lib/libocijdbc11.so
+#   sudo cp lib64/libilcconfdb.so.0.1 /usr/lib/libilcconfdb.so
+#   #Installation des headers oracle
+#   sudo cp include/*.h /usr/include/
+#   #Installation de la librairie ilcconfdb
+#   sudo cp lib64/libilcconfdb.so.0.1 /usr/lib/libilcconfdb.so
+#   #Installation des headers ilcconfdb
+#   sudo mkdir /usr/include/ILCConfDB
+#   sudo mkdir /usr/include/ILCConfDB/Exceptions
+#   sudo mkdir /usr/include/ILCConfDB/configObjects
+#   sudo mkdir /usr/include/ILCConfDB/daq
+#   sudo mkdir /usr/include/ILCConfDB/db
+#   sudo cp src/*.h /usr/include/ILCConfDB/
+#   sudo cp src/Exceptions/*.h /usr/include/ILCConfDB/Exceptions/
+#   sudo cp src/daq/*.h /usr/include/ILCConfDB/daq/
+#   sudo cp src/configObjects/*.h /usr/include/ILCConfDB/configObjects/
+#   sudo cp src/db/*.h /usr/include/ILCConfDB/db/
+#   cd src
+#   make ../lib64/_ilcconfdb.so
+#   sudo cp swig/ilcconfdb.py /usr/lib/python2.7/dist-packages/
+#   sudo cp ../lib64/_ilcconfdb.so /usr/lib/python2.7/dist-packages/
 
-   cd -
-   sudo cp lib64/libclntsh.so.11.1 /usr/lib/libclntsh.so
-   sudo cp lib64/libnnz11.so /usr/lib/libnnz11.so
-   sudo cp lib64/libocci.so.11.1 /usr/lib/libocci.so
-   sudo cp lib64/libociei.so /usr/lib/libociei.so
-   sudo cp lib64/libociicus.so /usr/lib/libociicus.so
-   sudo cp lib64/libocijdbc11.so /usr/lib/libocijdbc11.so
-   sudo cp lib64/libclntsh.so.11.1 /usr/lib/libclntsh.so
-   sudo cp lib64/libnnz11.so /usr/lib/libnnz11.so
-   sudo cp lib64/libocci.so.11.1 /usr/lib/libocci.so
-   sudo cp lib64/libociicus.so /usr/lib/libociicus.so
-   sudo cp lib64/libocijdbc11.so /usr/lib/libocijdbc11.so
-   sudo cp lib64/libilcconfdb.so.0.1 /usr/lib/libilcconfdb.so
-   #Installation des headers oracle
-   sudo cp include/*.h /usr/include/
-   #Installation de la librairie ilcconfdb
-   sudo cp lib64/libilcconfdb.so.0.1 /usr/lib/libilcconfdb.so
-   #Installation des headers ilcconfdb
-   sudo mkdir /usr/include/ILCConfDB
-   sudo mkdir /usr/include/ILCConfDB/Exceptions
-   sudo mkdir /usr/include/ILCConfDB/configObjects
-   sudo mkdir /usr/include/ILCConfDB/daq
-   sudo mkdir /usr/include/ILCConfDB/db
-   sudo cp src/*.h /usr/include/ILCConfDB/
-   sudo cp src/Exceptions/*.h /usr/include/ILCConfDB/Exceptions/
-   sudo cp src/daq/*.h /usr/include/ILCConfDB/daq/
-   sudo cp src/configObjects/*.h /usr/include/ILCConfDB/configObjects/
-   sudo cp src/db/*.h /usr/include/ILCConfDB/db/
-   cd src
-   make ../lib64/_ilcconfdb.so
-   sudo cp swig/ilcconfdb.py /usr/lib/python2.7/dist-packages/
-   sudo cp ../lib64/_ilcconfdb.so /usr/lib/python2.7/dist-packages/
 
-
-   cd ${HOME}/SDHCAL
-   . compile
+#   cd ${HOME}/SDHCAL
+#   . compile
