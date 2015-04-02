@@ -10,7 +10,12 @@ if [ -f /usr/include/ILCConfDB ];then
     cd DimDaq; scons -c;scons install -j 6;scons;cd -
     cd DimDb;scons -c;scons install -j 6;scons;cd -
     cd DimCtrl;scons -c;scons install -j 6;scons;cd -
+    cp YDAQ/extras/yami.tgz /tmp;cd  /opt/dhcal; tar zxvf /tmp/yami.tgz;cd -
+    export USER_COMPILER_OPTIONS='-fPIC'
+    cd /opt/dhcal/yami/src/core; make clean;make all -j6;cd -
+    cd /opt/dhcal/yami/src/cpp; make clean;make all -j6;cd -   
     cd YDAQ;scons -c;scons install -j 6;scons;cd -
+
 else
     cd netLink;scons -c;scons install -j 6;scons;cd -
     cd SDHCAL_common;scons -c;scons install -j 6;scons;cd -
@@ -18,7 +23,12 @@ else
     cd SDHCAL_EventReader;scons -c;scons install -j 6;scons;cd -
     sudo ln -s /opt/dhcal/dim /usr/local
     cd DimDaq; scons -c;scons install -j 6;scons;cd -
-    cd DimCtrl;scons -c;scons install -j 6;scons;cd -
+    cd DimCtrl;scons -c;scons install -j6;scons;cd -
+    cp YDAQ/extras/yami.tgz /tmp;cd  /opt/dhcal; tar zxvf /tmp/yami.tgz;cd -
+    export USER_COMPILER_OPTIONS='-fPIC'
+    cd /opt/dhcal/yami/src/core; make clean;make all -j6;cd -
+    cd /opt/dhcal/yami/src/cpp; make clean;make all -j6;cd -   
     cd YDAQ;scons -c;scons install -j 6;scons;cd -
 
 fi
+    
