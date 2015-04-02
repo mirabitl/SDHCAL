@@ -28,6 +28,7 @@ namespace Difhw {
     void Configure(int32_t reg,std::string dbs);
     void LoadSlowControl();
     void Print();
+    Difhw::Difstatus& getStatus(){return dst;}
     void Subscribe();
   private:
     Difhw::Statemachine *s;

@@ -2,6 +2,38 @@ import sys,os,commands
 import  os
 import re
 import sys
+
+def SWIGSharedLibrary(env, library, sources, **args):
+  swigre = re.compile('(.*).i')
+  if env.WhereIs('swig') is None:
+    sourcesbis = []
+    for source in sources:
+      cName = swigre.sub(r'\1_wrap.c', source)
+      cppName = swigre.sub(r'\1_wrap.cc', source)
+      if os.path.exists(cName):
+        sourcesbis.append(cName)
+      elif os.path.exists(cppName):
+        sourcesbis.append(cppName)
+      else:
+        sourcesbis.append(source)
+  else:
+    sourcesbis = sources
+ 
+  if 'SWIGFLAGS' in args:
+    args['SWIGFLAGS'] += ['-python']
+  else:
+    args['SWIGFLAGS'] = ['-python'] + env['SWIGFLAGS']
+  args['SHLIBPREFIX']=""
+  if sys.version >= '2.5':
+    args['SHLIBSUFFIX']=".pyd"
+ 
+  cat=env.SharedLibrary(library, sourcesbis, **args)
+  return cat
+ 
+
+
+
+
 DHCAL_ROOT=os.path.abspath("..")
 
 fres=os.popen('uname -r')
@@ -60,6 +92,7 @@ if USEDB:
 #	print "please specify SDHCAL_RPI"
 #	exit()
 #INCLUDES.append(SDHCAL_RPI+"/include")
+INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
 
 #Library ROOT + some of XDAQ + DB 
 ROOT_LIBS=[lib[2:] for lib in filter(lambda x: (x[:2]=="-l"), commands.getoutput("$ROOTSYS/bin/root-config --libs --ldflags --glibs").split(" "))
@@ -74,7 +107,7 @@ ROOT_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getout
 
 
 
-LIBRARIES=ROOT_LIBS+["pthread",boostsystem,boostthread]
+LIBRARIES=ROOT_LIBS+["pthread","jsoncpp",boostsystem,boostthread]
 LIBRARY_PATHS=ROOT_LIBPATH
 if ( platform=="SLC5" and osv=="x86_64"):
     LIBRARY_PATHS=ROOT_LIBPATH+["/usr/lib64/boost141","/usr/lib64","/usr/local/lib"]
@@ -90,13 +123,15 @@ LIBRARY_PATHS.append("/opt/dhcal/yami/lib")
 #Daq lib path
 LIBRARY_PATHS.append(DHCAL_ROOT+"/opt/dhcal/lib")
 LIBRARY_PATHS.append(os.path.join(os.getenv("LCIODIR"),"lib"))
+LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
+
+
 LDFLAGS=["-fPIC","-dynamiclib"]
 
 #DAQ libraries
 LIBRARIES.append(["lcio","sio","netlink","cslm","SDHCALcommon","SDHCALReadout","SDHCALEventReader"])
 if (USEDB):
     LIBRARIES.append(['dl','uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c','SDHCALDB'])
-
 
 
 
@@ -110,8 +145,17 @@ LIBRARIES.append(["yamicore","yamicpp","yamicore","yamicpp","pthread",boostsyste
 # Severs
 LIBRARIES.append("ydaq")
 LIBRARY_PATHS.append("./lib")
-env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS)
+# SWIG
+SWIGSF=["-c++","-classic"]
 
+for i in INCLUDES:
+    SWIGSF.append("-I"+i)
+
+
+
+
+env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS,SWIGFLAGS=SWIGSF)
+env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
 serverPP=env.Program("bin/serverPP",source=Glob("src/serverPP.cxx"))
 
 clientDIF=env.Program("bin/clientDIF",source=Glob("src/clientDIF.cxx"))
@@ -126,6 +170,8 @@ serverCCC=env.Program("bin/serverCCC",source=Glob("src/serverCCC.cxx"))
 
 
 
+#Python module
+_YDaq=env.PythonModule('_YDaq', ['LYDaq.i'],LIBPATH="#lib",LIBS="ydaq")
 
 #MonServer_src=['cslm/NetMessage.cpp','cslm/MessageHandler.cc','cslm/NMServer.cc','cslm/MonServer.cc']
 #MonClient_src=['cslm/NetMessage.cpp','cslm/MessageHandler.cc','cslm/NMClient.cc','cslm/MonClient.cc']
