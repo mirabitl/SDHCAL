@@ -23,7 +23,9 @@ void onedifhandler::operator()(yami::incoming_message & message)
   char* buf=d.Payload.data();int* ibuf=(int*) buf;
   std::cout << "received update: " << d.Difid<<" "<<d.Gtc <<" "<<d.Payload.size()<<"->"<<ibuf[0]<<" "<<ibuf[1]<<" "<<ibuf[2]<< std::endl;
 }
+void onedifhandler::Destroy(){s->Destroy(dst);}
 void onedifhandler::Stop(){s->Stop(dst);}
+
 void onedifhandler::Start(){s->Start(dst);}
 void onedifhandler::Scan(){s->Scan(Res);}
 void onedifhandler::Initialise(){s->Initialise(Res,dst);}

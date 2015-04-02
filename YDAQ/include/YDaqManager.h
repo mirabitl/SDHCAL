@@ -45,6 +45,7 @@ public:
   // Getters Statemachine
   Evb::Statemachine* getEvb(){return evbs;}
   Odb::Statemachine* getOdb(){return odbs;}
+  Ccc::Statemachine* getCcc(){return cccs;}
   Zuplv::Statemachine* getZup(){return zups;}
   Difhw::onedifhandler* getDifHandler(std::string name){return difsmap[name];}
 

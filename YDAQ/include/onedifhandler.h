@@ -22,6 +22,7 @@ namespace Difhw {
 
     void operator()(yami::incoming_message & message);
     void Stop();
+    void Destroy();
     void Start();
     void Scan();
     void Initialise();
