@@ -372,11 +372,15 @@ void StatemachineServerImpl::Stop(Difstatus & Res)
 void StatemachineServerImpl::Destroy(Difstatus & Res)
 {
 readoutStarted_=false;
+ std::cout <<"Stop readout"<<std::endl;
  g_d.join_all();
+  std::cout <<"Loop on DIFReadout"<<std::endl;
+
  for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
    {
      
-     
+     std::cout <<"DIF "<<itd->first<<" at address "<<itd->second<<std::endl;
+
      //m_Thread_d[itd->first].join();
      if (itd->second!=NULL)
        {
@@ -392,12 +396,18 @@ readoutStarted_=false;
 	     
 	   }
        }
- 
+      
+
       std::stringstream s("");
       s<<"/DIFSERVER/DIF"<<itd->first<<"/DESTROYED";
       Res.Status.push_back(0XDEAD0);
       Res.Debug.push_back(s.str());
    }
+ theDIFMap_.clear();
+ databuf.clear();
+ for (std::map<uint32_t,yami::value_publisher*>::iterator itvp=datapublisher.begin();itvp!=datapublisher.end();itvp++)
+   delete itvp->second;
+ datapublisher.clear();
 }
 void Difhw::StatemachineServerImpl::Subscribe()
 {
