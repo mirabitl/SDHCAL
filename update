@@ -1,0 +1,24 @@
+#!/bin/bash
+if [ -f /usr/include/ILCConfDB ];then
+    cd netLink;scons install -j 6;scons;cd -
+    cd SDHCAL_common;scons install -j 6;scons;cd -
+    cd SDHCAL_Readout;scons install -j 6;scons;cd -
+    cd SDHCAL_DB;scons install -j 6;scons;cd -
+    cd SDHCAL_Client;scons install -j 6;scons;cd -
+    cd SDHCAL_EventReader;scons install -j 6;scons;cd -
+    cd DimDaq; scons install -j 6;scons;cd -
+    cd DimDb;scons install -j 6;scons;cd -
+    cd DimCtrl;scons install -j 6;scons;cd -
+    cd YDAQ;scons install -j 6;scons;cd -
+
+else
+    cd netLink;scons install -j 6;scons;cd -
+    cd SDHCAL_common;scons install -j 6;scons;cd -
+    cd SDHCAL_Readout;scons install -j 6;scons;cd -
+    cd SDHCAL_EventReader;scons install -j 6;scons;cd -
+    cd DimDaq; scons install -j 6;scons;cd -
+    cd DimCtrl;scons install -j6;scons;cd -
+    cd YDAQ;scons install -j 6;scons;cd -
+
+fi
+    
