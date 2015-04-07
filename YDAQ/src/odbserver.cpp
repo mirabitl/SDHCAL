@@ -137,7 +137,9 @@ void StatemachineServerImpl::Download(const Config & Conf,Odb::Status & Res)
 	  if (it==dbm.end()) continue;
 	  unsigned char* bframe=it->second;
 	  uint32_t       framesize=bframe[0];
-	  itdf->second->Payload.assign(&bframe[1],&bframe[1]+framesize);
+	  //itdf->second->Payload.assign(&bframe[1],&bframe[1]+framesize);
+	  for (int k=0;k<framesize;k++)
+	    itdf->second->Payload.push_back(bframe[1+k]);
 	  itdf->second->Nasic++;
 
 	}
@@ -153,6 +155,8 @@ void StatemachineServerImpl::Dispatch(Odb::Status & Res)
       std::cout<<"Dispatching "<<itvp->first<<std::endl;
       yami::parameters Conf_;
       std::map<uint32_t,Odb::Dbbuffer*>::iterator itd=databuf.find(itvp->first);
+      // Print out
+      
       itd->second->write(Conf_); 
       itvp->second->publish(Conf_);
 
