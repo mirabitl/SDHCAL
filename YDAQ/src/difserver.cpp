@@ -255,9 +255,11 @@ void StatemachineServerImpl::Loadslowcontrol(Difstatus & Res)
 	  continue;
 	}
       itr->second->setControlRegister(theConf_.Trigger);
-      itr->second->setNumberOfAsics(itd->second.Nasic);
-      itr->second->configureRegisters();
-
+      if (itd->second.Nasic!=48)
+	{
+	  itr->second->setNumberOfAsics(itd->second.Nasic);
+	  itr->second->configureRegisters();
+	}
       uint32_t slc=itr->second->configureChips((SingleHardrocV2ConfigurationFrame*)itd->second.Payload.data() );
       std::stringstream s0;
       s0.str(std::string());
@@ -273,7 +275,7 @@ void StatemachineServerImpl::Loadslowcontrol(Difstatus & Res)
       else s0<<"L1 forb   - ";
       std::stringstream s("");
       s<<"/DIFSERVER/DIF"<<itd->first<<"/CONFIGURED/"<<theConf_.Dbstate<<"/"<<s0.str();
-      Res.Status.push_back((itd->first<<8)|0x15);
+      Res.Status.push_back(slc);
       Res.Debug.push_back(s.str());
 
     }
@@ -294,9 +296,11 @@ void StatemachineServerImpl:: Start(Difstatus & Res)
 	  Res.Status.push_back((itd->first<<8)|0x15);
 	  Res.Debug.push_back(s.str());
 	}
-      return;
+     
     }
-  readoutStarted_=true; 
+  else
+    {
+      readoutStarted_=true; 
 
   for (std::map<uint32_t,Difhw::Data*>::iterator itd=databuf.begin();itd!=databuf.end();itd++)
     {
@@ -308,7 +312,7 @@ void StatemachineServerImpl:: Start(Difstatus & Res)
       Res.Status.push_back((itd->first<<8)|0x15);
       Res.Debug.push_back(s.str());
     }
-
+    }
     for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
 	{
 	  try 
