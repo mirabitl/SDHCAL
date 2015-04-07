@@ -19,6 +19,8 @@ package CCC is
    interface StateMachine is
       message Initialise(Conf : in Config;Res : out Status);
       message Configure(Res : out Status);
+      message Start(Res : out Status); 
+      message Stop(Res : out Status); 
       message DIFReset(Res : out Status);
       message BCIDReset(Res : out Status);
       message StartAcquisitionAuto(Res : out Status);

@@ -308,7 +308,21 @@ void StatemachineServerImpl:: Start(Difstatus & Res)
       Res.Status.push_back((itd->first<<8)|0x15);
       Res.Debug.push_back(s.str());
     }
- 
+
+    for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
+	{
+	  try 
+	    {
+	      std::cout<<"Stariting acquisition on "<<itd->first<<std::endl;
+	      itd->second->start();
+	      
+	    }
+	  catch (LocalHardwareException e)
+	    {
+	      std::cout<<itd->first<<" is not started "<<e.what()<<std::endl;
+	    }
+	}
+
 }
 void StatemachineServerImpl::readout(uint32_t difid)
 {
@@ -332,7 +346,7 @@ void StatemachineServerImpl::readout(uint32_t difid)
 	{
 				
 	  uint32_t nread=itr->second->DoHardrocV2ReadoutDigitalData(cbuf);
-	  //printf(" Je lis %d %d \n",difid,nread);
+	  printf(" Je lis %d %d \n",difid,nread);
 	  if (nread==0) continue;
 #ifdef DEBUG_SHM	  
 	  ShmProxy::transferToFile(cbuf,
@@ -368,6 +382,29 @@ void StatemachineServerImpl::readout(uint32_t difid)
 void StatemachineServerImpl::Stop(Difstatus & Res)
 {
   running_=false;
+  Res.Status.clear();
+  Res.Debug.clear();
+  for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
+    {
+      try 
+	{
+	  itd->second->stop();
+	  std::stringstream s("");
+	  s<<"/DIFSERVER/DIF"<<itd->first<<"/STOPPED";
+	  Res.Status.push_back((itd->first<<8)|0x15);
+	  Res.Debug.push_back(s.str());
+	}
+      catch (LocalHardwareException e)
+	{
+	  std::stringstream s("");
+	  s<<"/DIFSERVER/DIF"<<itd->first<<"/STOPPED_FAILED";
+	  Res.Status.push_back((itd->first<<8)|0x00);
+	  Res.Debug.push_back(s.str());
+	  std::cout<<itd->first<<" is not stopped "<<e.what()<<std::endl;
+	}
+      
+
+    }
 }
 void StatemachineServerImpl::Destroy(Difstatus & Res)
 {
@@ -401,6 +438,7 @@ readoutStarted_=false;
       std::stringstream s("");
       s<<"/DIFSERVER/DIF"<<itd->first<<"/DESTROYED";
       Res.Status.push_back(0XDEAD0);
+
       Res.Debug.push_back(s.str());
    }
  theDIFMap_.clear();
@@ -419,7 +457,7 @@ void Difhw::StatemachineServerImpl::Subscribe()
   theDBMsgHandler = boost::bind(&Difhw::StatemachineServerImpl::Processslowcontrolmsg, this, _1);   
   for (std::size_t i_ = 0; i_ != size_; ++i_)
     {
-      if(vnames[i_].substr(0,5).compare("#DB#")!=0) continue;
+      if(vnames[i_].substr(0,5).compare("#ODB#")!=0) continue;
       
       yami::parameters params;
       const std::string update_object_name =
@@ -445,7 +483,7 @@ void Difhw::StatemachineServerImpl::Subscribe()
 void Difhw::StatemachineServerImpl::Processslowcontrolmsg(yami::incoming_message & im)
 {
 
-  //std::cout<<im.get_object_name()<<std::endl;
+  std::cout<<im.get_object_name()<<std::endl;
   Odb::Dbbuffer Buf;
   Buf.read(im.get_parameters());
   
