@@ -40,6 +40,9 @@ public:
   void LoadSlowControl();
   void Start();
   void Pause();
+  void Resume();
+  void EVBStatus();
+  void DestroyDIF();
   void Stop();
   void Clear();
   // Getters Statemachine

@@ -106,12 +106,13 @@ void Evb::StatemachineServerImpl::Subscribe()
 	"update_handler";
       params.set_string("destination_object", update_object_name);
 
-      server_agent.register_object(update_object_name,(theDifMsgHandler));
+      server_agent.register_object(update_object_name,theDifMsgHandler);
       for (int i=0;i<255;i++)
 	{
-	  std::cout<<"Subscirbing " <<i<<std::endl;
+
 	  std::stringstream ss;
 	  ss<<"/DIFSERVER/DIF"<<i<<"/DATA";
+	  std::cout<<"Subscirbing " <<ss.str()<<"@"<<vlocs[i_]<<std::endl;
 	  server_agent.send_one_way(vlocs[i_],
 				    ss.str(), "subscribe", params);
 	}
@@ -145,11 +146,11 @@ void Evb::StatemachineServerImpl::updateStatus(int run,int event,int difid,int g
   theCurrentStatus_.Completed=event;
   theCurrentStatus_.EventValid=(event!=0);
   theCurrentStatus_.Event=event;
-  theCurrentStatus_.DifidValid=(difid!=0);
+  theCurrentStatus_.DifidValid=(difid!=0 || theCurrentStatus_.Difid.size()!=0);
   
-  theCurrentStatus_.GtcValid=(difid!=0);
-  theCurrentStatus_.DtcValid=(difid!=0);
-  theCurrentStatus_.BcidValid=(difid!=0);
+  theCurrentStatus_.GtcValid=(difid!=0 || theCurrentStatus_.Difid.size()!=0);
+  theCurrentStatus_.DtcValid=(difid!=0 || theCurrentStatus_.Difid.size()!=0);
+  theCurrentStatus_.BcidValid=(difid!=0 || theCurrentStatus_.Difid.size()!=0);
   if (difid==0) return;
   std::vector<int>::iterator itd = std::find(theCurrentStatus_.Difid.begin(),theCurrentStatus_.Difid.end(),difid);
   if (itd==theCurrentStatus_.Difid.end())
@@ -176,13 +177,14 @@ void Evb::StatemachineServerImpl:: Start(const Runconfig & Runconf,Evb::Status &
   theRunconf_=Runconf;
   if (theProxy_ != NULL)
     {
+      std::cout <<"Starting the run "<<Runconf.Dbstate<<std::endl;
       theProxy_->setSetupName(Runconf.Dbstate);
-
+      std::cout <<"Starting the run "<<Runconf.Numberoffragment<<std::endl;
       theProxy_->setNumberOfDIF(Runconf.Numberoffragment);
 
       theProxy_->purgeShm(); // remove old data not written
       theProxy_->Start(Runconf.Run,theConf_.Outputpath);
-
+      running_=true;
     }
   updateStatus(Runconf.Run);
   Res=theCurrentStatus_;
@@ -204,7 +206,7 @@ void Evb::StatemachineServerImpl::Processdif(const Difhw::Data & Buf)
 {
 
   unsigned char* buf= (unsigned char*) Buf.Payload.data();int* ibuf=(int*) buf;
- std::cout << "received update: " << Buf.Difid<<" "<<Buf.Gtc <<" "<<Buf.Payload.size()<<"->"<<ibuf[0]<<" "<<ibuf[1]<<" "<<ibuf[2]<< std::endl;
+  //std::cout << "received update: " << Buf.Difid<<" "<<Buf.Gtc <<" "<<Buf.Payload.size()<<"->"<<ibuf[0]<<" "<<ibuf[1]<<" "<<ibuf[2]<< std::endl;
  ShmProxy::transferToFile(buf,
 			  Buf.Payload.size(),
 			  ShmProxy::getBufferABCID(buf),
@@ -215,8 +217,12 @@ void Evb::StatemachineServerImpl::Processdif(const Difhw::Data & Buf)
 }
 void Evb::StatemachineServerImpl:: Stop(Evb::Status & Res)
 {
+  running_=false;
+  sleep((unsigned int) 1);
+  std::cout<<"Stopping"<<std::endl;
   theProxy_->Stop();
   Res.Evbstatus="STOPPED";
+  std::cout<<"Stopped"<<std::endl;
 
 }
 void Evb::StatemachineServerImpl:: Currentstatus(Evb::Status & Res)

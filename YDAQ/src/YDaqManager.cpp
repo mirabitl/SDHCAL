@@ -209,7 +209,50 @@ void YDaqManager::Start()
     }
 }
 void YDaqManager::Pause()
-{}
+{
+ if (cccs!=NULL)
+    {
+      cccs->Stopacquisition(cccstatus);
+    }
+}
+void YDaqManager::Resume()
+{
+ if (cccs!=NULL)
+    {
+      cccs->Startacquisitionauto(cccstatus);
+    }
+}
+
+void YDaqManager::EVBStatus()
+{
+  if (evbs==NULL)
+    {
+      std::cout<<"NO EVB "<<std::endl;
+    }
+   evbs->Currentstatus(evbstatus);
+   if (evbstatus.RunValid)
+     {
+       printf("Run %d started %s #Completed %d \n",evbstatus.Run,evbstatus.Starttime.c_str(),evbstatus.Completed);
+
+       
+     }
+   if (evbstatus.DifidValid)
+     {
+       for (int k=0;k<evbstatus.Difid.size();k++)
+	 {
+	   printf("%4d | %8d | %8d | %12d \n", evbstatus.Difid[k],evbstatus.Gtc[k],evbstatus.Dtc[k],evbstatus.Bcid[k]);
+	 }
+     }
+}
+
+void YDaqManager::DestroyDIF()
+{
+  for (std::map<std::string,Difhw::onedifhandler*>::iterator it=difsmap.begin();it!=difsmap.end();it++)
+    {
+      it->second->Destroy();
+      it->second->Print();
+    }
+}
 void YDaqManager::Stop()
 {
   if (cccs!=NULL)
@@ -222,7 +265,7 @@ void YDaqManager::Stop()
       it->second->Stop();
       it->second->Print();
     }
-
+ std::cout<<"DIF Stopped"<<std::endl;
  if (evbs!=NULL)
     {
       evbs->Stop(evbstatus);
