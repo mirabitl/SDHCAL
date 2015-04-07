@@ -350,8 +350,9 @@ void StatemachineServerImpl::readout(uint32_t difid)
 	{
 				
 	  uint32_t nread=itr->second->DoHardrocV2ReadoutDigitalData(cbuf);
-	  printf(" Je lis %d %d \n",difid,nread);
+	  
 	  if (nread==0) continue;
+	  //printf(" Je lis %d %d \n",difid,nread);
 #ifdef DEBUG_SHM	  
 	  ShmProxy::transferToFile(cbuf,
 				   nread,
@@ -376,11 +377,11 @@ void StatemachineServerImpl::readout(uint32_t difid)
       
 
       // Publish data
-      //std::cout<<"Pushing "<<difid<<" "<<itd->second->Gtc<<std::endl;
+      if (itd->second->Gtc%500==0) std::cout<<"Publishing "<<difid<<" "<<itd->second->Gtc<<std::endl;
       yami::parameters Conf_;
       itd->second->write(Conf_); 
       itvp->second->publish(Conf_);
-      //std::cout<<"exitiing "<<difid<<" "<<itd->second->Gtc<<std::endl;
+      //std::cout<<"exitiing "<<difid<<" "<<itd->second->Bcid<<std::endl;
     }
 }
 void StatemachineServerImpl::Stop(Difstatus & Res)
