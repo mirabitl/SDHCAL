@@ -58,7 +58,8 @@ void StatemachineServerImpl::Open(std::string theAddress)
       server_agent.register_object(s.str(),*this);
 
       std::cout<<"Object "<<s.str()<<" is registered"<<std::endl;
-
+      theDBManager_=NULL;
+      theRunInfo_=NULL;
       databuf.clear();
       datapublisher.clear();
 	  
@@ -81,7 +82,7 @@ void StatemachineServerImpl:: Initialise(Odb::Status & Res)
 void StatemachineServerImpl::Download(const Config & Conf,Odb::Status & Res)
 {
   theConf_=Conf;
-
+  std::cout<<"Making cleanup"<<std::endl;
   for (std::map<uint32_t,Odb::Dbbuffer*>::iterator itd=databuf.begin();itd!=databuf.end();itd++)
     delete itd->second;
   databuf.clear();
@@ -94,8 +95,8 @@ void StatemachineServerImpl::Download(const Config & Conf,Odb::Status & Res)
       delete theDBManager_;
       
     }
-  
-  theDBManager_= new OracleDIFDBManager("74",Conf.Dbstate);
+  std::cout<<"Initialise and download "<<Conf.Dbstate<<std::endl;
+  theDBManager_= new OracleDIFDBManager("2",Conf.Dbstate);
   theDBManager_->initialize();
   theDBManager_->download();
   std::map<uint32_t,unsigned char*> dbm=theDBManager_->getAsicKeyMap();
@@ -105,6 +106,8 @@ void StatemachineServerImpl::Download(const Config & Conf,Odb::Status & Res)
       std::map<uint32_t,Odb::Dbbuffer*>::iterator itdf=databuf.find(id);
       if (itdf==databuf.end())
 	{
+	  std::cout<<"ID found "<<id<<std::endl;
+
 	  Odb::Dbbuffer* d=new Odb::Dbbuffer;
 	  d->Difid=id;
 	  std::pair<uint32_t,Odb::Dbbuffer*> p(id,d);
@@ -147,6 +150,7 @@ void StatemachineServerImpl::Dispatch(Odb::Status & Res)
 {
   for (std::map<uint32_t,yami::value_publisher*>::iterator itvp=datapublisher.begin();itvp!=datapublisher.end();itvp++)
     {
+      std::cout<<"Dispatching "<<itvp->first<<std::endl;
       yami::parameters Conf_;
       std::map<uint32_t,Odb::Dbbuffer*>::iterator itd=databuf.find(itvp->first);
       itd->second->write(Conf_); 

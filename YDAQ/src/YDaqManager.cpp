@@ -173,10 +173,15 @@ void YDaqManager::Download()
 }
 void YDaqManager::LoadSlowControl()
 {
+  if (cccs!=NULL)
+    {
+      cccs->Configure(cccstatus);
+    }
 
   
   for (std::map<std::string,Difhw::onedifhandler*>::iterator it=difsmap.begin();it!=difsmap.end();it++)
     {
+      std::cout<<"Loading slow control "<<it->first<<std::endl;
       it->second->LoadSlowControl();
       it->second->Print();
     }
@@ -200,7 +205,7 @@ void YDaqManager::Start()
     }
   if (cccs!=NULL)
     {
-      cccs->Startacquisitionauto(cccstatus);
+      cccs->Start(cccstatus);
     }
 }
 void YDaqManager::Pause()
@@ -209,7 +214,7 @@ void YDaqManager::Stop()
 {
   if (cccs!=NULL)
     {
-      cccs->Stopacquisition(cccstatus);
+      cccs->Stop(cccstatus);
     }
   
  for (std::map<std::string,Difhw::onedifhandler*>::iterator it=difsmap.begin();it!=difsmap.end();it++)

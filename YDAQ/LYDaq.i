@@ -16,6 +16,8 @@ using std::string;
  using namespace Zuplv;
 #include "evb.h"
  using namespace Evb;
+#include "odb.h"
+ using namespace Odb;
 #include "YDaqManager.h"
  %}
 
@@ -34,12 +36,17 @@ using std::string;
 %rename(Evb_Status) Evb::Status;
 %rename(Evb_Statemachine) Evb::Statemachine;
 %rename(Evb_StatemachineServer) Evb::StatemachineServer;
+%rename(Odb_Config) Odb::Config;
+%rename(Odb_Status) Odb::Status;
+%rename(Odb_Statemachine) Odb::Statemachine;
+%rename(Odb_StatemachineServer) Odb::StatemachineServer;
 %include "YDaqManager.h"
 %include "onedifhandler.h"
 %include "difhw.h"
 %include "ccc.h"
 %include "zuplv.h"
 %include "evb.h"
+%include "odb.h"
 
 
 
