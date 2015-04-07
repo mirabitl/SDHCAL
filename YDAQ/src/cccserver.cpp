@@ -97,7 +97,7 @@ void  StatemachineServerImpl::Stop(Status & Res)
 {
   if (theManager_!=NULL)
     {
-      theManager_->configure();
+      theManager_->stop();
       Res.Cccstatus="STOPPED";
     }
   else
