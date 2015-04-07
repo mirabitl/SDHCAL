@@ -62,6 +62,8 @@ public:
 
     void Initialise(const Config & Conf, Status & Res);
     void Configure(Status & Res);
+    void Start(Status & Res);
+    void Stop(Status & Res);
     void Difreset(Status & Res);
     void Bcidreset(Status & Res);
     void Startacquisitionauto(Status & Res);
@@ -95,6 +97,8 @@ public:
 
     virtual void Initialise(const Config & Conf, Status & Res) = 0;
     virtual void Configure(Status & Res) = 0;
+    virtual void Start(Status & Res) = 0;
+    virtual void Stop(Status & Res) = 0;
     virtual void Difreset(Status & Res) = 0;
     virtual void Bcidreset(Status & Res) = 0;
     virtual void Startacquisitionauto(Status & Res) = 0;

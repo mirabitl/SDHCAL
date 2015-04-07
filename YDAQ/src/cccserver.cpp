@@ -81,6 +81,30 @@ void  StatemachineServerImpl::Configure(Status & Res)
 
   Res.CccregisterValid=false;
 }
+void  StatemachineServerImpl::Start(Status & Res)
+{
+  if (theManager_!=NULL)
+    {
+      theManager_->start();
+      Res.Cccstatus="STARTED";
+    }
+  else
+    Res.Cccstatus="NOCCCFOUND";
+
+  Res.CccregisterValid=false;
+}
+void  StatemachineServerImpl::Stop(Status & Res)
+{
+  if (theManager_!=NULL)
+    {
+      theManager_->configure();
+      Res.Cccstatus="STOPPED";
+    }
+  else
+    Res.Cccstatus="NOCCCFOUND";
+
+  Res.CccregisterValid=false;
+}
 
 void StatemachineServerImpl::Difreset(Status & Res)
 {

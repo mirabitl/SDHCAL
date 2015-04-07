@@ -16,6 +16,8 @@ namespace Ccc {
     
     virtual void Initialise(const Config & Conf, Status & Res);
     virtual void Configure(Status & Res);
+    virtual void Start(Status & Res);
+    virtual void Stop(Status & Res);
     virtual void Difreset(Status & Res);
     virtual void Bcidreset(Status & Res);
     virtual void Startacquisitionauto(Status & Res);

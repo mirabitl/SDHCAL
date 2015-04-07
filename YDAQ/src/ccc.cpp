@@ -157,6 +157,82 @@ void Statemachine::Configure(Status & Res)
     }
 }
 
+void Statemachine::Start(Status & Res)
+{
+    std::auto_ptr<yami::outgoing_message> om_(
+        agent_.send(server_location_, object_name_, "start"));
+
+    if (timeout_ != 0)
+    {
+        bool on_time_ = om_->wait_for_completion(timeout_);
+        if (on_time_ == false)
+        {
+            throw yami::yami_runtime_error("Operation timed out.");
+        }
+    }
+    else
+    {
+        om_->wait_for_completion();
+    }
+
+    const yami::message_state state_ = om_->get_state();
+    switch (state_)
+    {
+    case yami::replied:
+        Res.read(om_->get_reply());
+        break;
+    case yami::abandoned:
+        throw yami::yami_runtime_error(
+            "Operation was abandoned due to communication errors.");
+    case yami::rejected:
+        throw yami::yami_runtime_error(
+            "Operation was rejected: " + om_->get_exception_msg());
+
+    // these are for completeness:
+    case yami::posted:
+    case yami::transmitted:
+        break;
+    }
+}
+
+void Statemachine::Stop(Status & Res)
+{
+    std::auto_ptr<yami::outgoing_message> om_(
+        agent_.send(server_location_, object_name_, "stop"));
+
+    if (timeout_ != 0)
+    {
+        bool on_time_ = om_->wait_for_completion(timeout_);
+        if (on_time_ == false)
+        {
+            throw yami::yami_runtime_error("Operation timed out.");
+        }
+    }
+    else
+    {
+        om_->wait_for_completion();
+    }
+
+    const yami::message_state state_ = om_->get_state();
+    switch (state_)
+    {
+    case yami::replied:
+        Res.read(om_->get_reply());
+        break;
+    case yami::abandoned:
+        throw yami::yami_runtime_error(
+            "Operation was abandoned due to communication errors.");
+    case yami::rejected:
+        throw yami::yami_runtime_error(
+            "Operation was rejected: " + om_->get_exception_msg());
+
+    // these are for completeness:
+    case yami::posted:
+    case yami::transmitted:
+        break;
+    }
+}
+
 void Statemachine::Difreset(Status & Res)
 {
     std::auto_ptr<yami::outgoing_message> om_(
@@ -791,6 +867,28 @@ void StatemachineServer::operator()(yami::incoming_message & im_)
         Status Res;
 
         Configure(Res);
+
+        yami::parameters Res_;
+        Res.write(Res_);
+        im_.reply(Res_);
+    }
+    else
+    if (msg_name_ == "start")
+    {
+        Status Res;
+
+        Start(Res);
+
+        yami::parameters Res_;
+        Res.write(Res_);
+        im_.reply(Res_);
+    }
+    else
+    if (msg_name_ == "stop")
+    {
+        Status Res;
+
+        Stop(Res);
 
         yami::parameters Res_;
         Res.write(Res_);
