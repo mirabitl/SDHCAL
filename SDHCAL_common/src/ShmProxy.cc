@@ -408,12 +408,25 @@ bool ShmProxy::performReadFiles()
 
       unsigned char*  cdata=ShmProxy::packDIFData(cbuf,size_buf,gtc,dtc,dif);
       //memcpy(cbuf,cdata,size_buf);
+      uint64_t idx_storage=gtc; // usually abcid
 
-      std::map<uint64_t,std::vector<unsigned char*> >::iterator it_gtc=theBufferMap_.find(abcid);
+      std::map<uint64_t,std::vector<unsigned char*> >::iterator it_gtc=theBufferMap_.find(idx_storage);
       if (it_gtc!=theBufferMap_.end())
 	it_gtc->second.push_back(cdata);
       else
 	{
+#define ONE_ENTRY_PER_BCID
+#ifdef ONE_ENTRY_PER_BCID
+          std::vector<unsigned char*> v;
+          v.clear();
+          v.push_back(cdata);
+          
+          std::pair<uint64_t,std::vector<unsigned char*> > p(idx_storage,v);
+          theBufferMap_.insert(p);
+          it_gtc=theBufferMap_.find(gtc);
+#else
+	
+
 	  it_gtc=theBufferMap_.find(abcid-1);
 	  if (it_gtc!=theBufferMap_.end())
 	    it_gtc->second.push_back(cdata);
@@ -433,6 +446,7 @@ bool ShmProxy::performReadFiles()
 		  it_gtc=theBufferMap_.find(gtc);
 		}
 	    }
+#endif
 	}
        if (it_gtc->second.size()==theNumberOfDIF_)
          printf("GTC %d %d  %\n",it_gtc->first,it_gtc->second.size(),theNumberOfDIF_);
