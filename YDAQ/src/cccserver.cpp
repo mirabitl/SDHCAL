@@ -59,6 +59,10 @@ void StatemachineServerImpl::Open(std::string theAddress)
 
       std::cout<<"Object "<<s.str()<<" is registered"<<std::endl;
       // block
+      while (true)
+	{
+	  sleep((unsigned int) 1);
+	}
       // block
       std::string dummy;
       std::cin >> dummy;

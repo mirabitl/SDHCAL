@@ -77,6 +77,10 @@ void StatemachineServerImpl::Open(std::string theAddress)
       datapublisher.clear();
 	  
       // block
+      while (true)
+	{
+	  sleep((unsigned int) 1);
+	}
       // block
       std::string dummy;
       std::cin >> dummy;
