@@ -21,7 +21,7 @@ if [ -f /usr/include/ILCConfDB ];then
     mkdir -p /opt/dhcal/bin
     mkdir -p /opt/dhcal/include
     touch /opt/dhcal/include/dummy.xml
-    cp bashrc /opt/dhcal/etc
+    cp bashrc /opt/dhcal/etc/
     source /opt/dhcal/etc/bashrc
     dhcalinstall
 else
@@ -43,7 +43,7 @@ else
     mkdir -p /opt/dhcal/bin
     mkdir -p /opt/dhcal/include
     touch /opt/dhcal/include/dummy.xml
-    cp bashrc /opt/dhcal/etc
+    cp bashrc /opt/dhcal/etc/
     source /opt/dhcal/etc/bashrc
     dhcalinstall
 fi
