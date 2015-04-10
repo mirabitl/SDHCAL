@@ -10,6 +10,10 @@ DEAMON_NAME="yamiodb" #Nom du programme (doit être identique à l'exécutable)
 PATH="/sbin:/bin:/usr/sbin:/usr/bin" #Ne pas toucher
 
 . /etc/yami.cfg
+export CONFDB_DEV='ILC/b0T2FB3yxG@(DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST = ccdbora01.in2p3.fr)(PORT = 1521)) (CONNECT_DATA = (SERVER = DEDICATED) (SERVICE_NAME = ccdev11gtaf.in2p3.fr)))'
+export CONFDB_PROD='ILC/fFQeV52rQy@(DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST = ccdbora01.in2p3.fr)(PORT = 1521)) (CONNECT_DATA = (SERVER = DEDICATED) (SERVICE_NAME = calice.in2p3.fr)))'
+export CONFDB_RO='ILC_RO/mK52WBBB29@(DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST = ccdbora01.in2p3.fr)(PORT = 1521)) (CONNECT_DATA = (SERVER = DEDICATED) (SERVICE_NAME = calice.in2p3.fr)))'
+export CONFDB='ILC/fFQeV52rQy@(DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST = ccdbora01.in2p3.fr)(PORT = 1521)) (CONNECT_DATA = (SERVER = DEDICATED) (SERVICE_NAME = calice.in2p3.fr)))'
 
 test -x $DAEMON || exit 0
 

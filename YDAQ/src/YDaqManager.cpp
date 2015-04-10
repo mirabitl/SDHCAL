@@ -102,6 +102,10 @@ void YDaqManager::StopServer()
   s<<"ssh acqilc@"<<dnshost<<" sudo /etc/init.d/yamidnsd stop";
   rc=system(s.str().c_str());
   std::cout<<s.str()<<"===>"<<rc<<std::endl;
+  s.str(std::string());
+  s<<"ssh acqilc@"<<dnshost<<" sudo killall -9 yami4names";
+  rc=system(s.str().c_str());
+  std::cout<<s.str()<<"===>"<<rc<<std::endl;
 
 
   
