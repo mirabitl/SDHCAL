@@ -1,4 +1,5 @@
 #!/bin/bash
 cp yamidns /opt/dhcal/bin/
+cp /opt/dhcal/yami/src/services/names/yami4names.cfg /opt/dhcal/etc/
 sudo cp yami.cfg /etc/
 sudo cp debian/yami*d /etc/init.d/
