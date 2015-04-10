@@ -1,0 +1,4 @@
+#!/bin/bash
+
+sudo cp yami.cfg /etc
+sudo cp debian/yami*d /etc/init.d/
