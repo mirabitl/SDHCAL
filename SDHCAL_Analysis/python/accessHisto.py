@@ -1,6 +1,6 @@
 from ROOT import *
 import os
-import sqlite3 
+import sqlite3 as sqlite
 import time
 from ROOT import gStyle
 def sumamryBad():
@@ -237,10 +237,11 @@ def GetEff(plan):
   hext.Draw("COLZ")
   
   hnear.Draw("COLZ")
+  rs=8
   if (hext.GetEntries()<1E6):
-    hext.Rebin2D(2,2)
-    hnear.Rebin2D(2,2)
-    hmul.Rebin2D(2,2)
+    hext.Rebin2D(rs,rs)
+    hnear.Rebin2D(rs,rs)
+    hmul.Rebin2D(rs,rs)
   heff = hnear.Clone("heff")
   heff.SetDirectory(0)
   heff.Divide(hnear,hext,100.,1.)

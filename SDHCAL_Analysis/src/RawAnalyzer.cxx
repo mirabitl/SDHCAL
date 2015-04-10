@@ -205,7 +205,7 @@ for (std::vector<uint32_t>::iterator is=seedm.begin();is!=seedm.end();is++)
   allt+=(tp1.tv_sec+1E-9*tp1.tv_nsec-tp0.tv_sec+1E-9*tp0.tv_nsec);
 printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %f T tot %f N Evt %d\n",seedm.size(),seedm.size(),(tp1.tv_sec+1E-9*tp1.tv_nsec-tp0.tv_sec+1E-9*tp0.tv_nsec),
        seedm.size()/(tp1.tv_sec+1E-9*tp1.tv_nsec-tp0.tv_sec+1E-9*tp0.tv_nsec),nst,nst/allt,allt,evt_->getEventNumber()); 
-return;
+//return;
 //getchar();
   for (std::vector<DIFPtr*>::iterator it = reader_->getDIFList().begin();it!=reader_->getDIFList().end();it++)
     {

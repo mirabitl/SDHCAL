@@ -105,8 +105,8 @@ int main(int argc, char** argv ){
   //MulAnalyzer *am= new MulAnalyzer();
   //StripAnalyzer *as= new StripAnalyzer();
   a->setrebuild(rebuild);
-  dher.registerAnalysis(ar);
-  //dher.registerAnalysis(a);
+  //dher.registerAnalysis(ar);
+  dher.registerAnalysis(a);
   
   dher.initJob();
   //if (writing) 
