@@ -15,11 +15,14 @@ if [ -f /usr/include/ILCConfDB ];then
     cd /opt/dhcal/yami/src/core; make clean;make all -j6;cd -
     cd /opt/dhcal/yami/src/cpp; make clean;make all -j6;cd -   
     cd YDAQ;scons -c;scons install -j 6;scons;cd -
-    cd YDAQ/etc;./install_daemon;cd-
+    cd YDAQ/etc;./install_daemon;cd -
     mkdir -p /opt/dhcal/lib
+    mkdir -p /opt/dhcal/etc
     mkdir -p /opt/dhcal/bin
     mkdir -p /opt/dhcal/include
     touch /opt/dhcal/include/dummy.xml
+    cp bashrc /opt/dhcal/etc
+    source /opt/dhcal/etc/bashrc
     dhcalinstall
 else
     cd netLink;scons -c;scons install -j 6;scons;cd -
@@ -34,11 +37,14 @@ else
     cd /opt/dhcal/yami/src/core; make clean;make all -j6;cd -
     cd /opt/dhcal/yami/src/cpp; make clean;make all -j6;cd -   
     cd YDAQ;scons -c;scons install -j 6;scons;cd -
-    cd YDAQ/etc;./install_daemon;cd-
+    cd YDAQ/etc;./install_daemon;cd -
     mkdir -p /opt/dhcal/lib
+    mkdir -p /opt/dhcal/etc
     mkdir -p /opt/dhcal/bin
     mkdir -p /opt/dhcal/include
     touch /opt/dhcal/include/dummy.xml
+    cp bashrc /opt/dhcal/etc
+    source /opt/dhcal/etc/bashrc
     dhcalinstall
 fi
     
