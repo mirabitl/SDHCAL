@@ -28,8 +28,8 @@ public:
   void Parse(std::string conf);
 
   // Server managment
-  void StopServer(std::string name,std::string remoteip);
-  void StartServer(std::string name,std::string remoteip);
+  void StopServer();
+  void StartServer();
 
   // General command
   void Discover();
@@ -70,7 +70,7 @@ private:
 
   //hosts
   std::string name_server,daqconfig;
-  std::string evbhost,ccchost,odbhost,zuphost;
+  std::string dnshost,evbhost,ccchost,odbhost,zuphost;
   std::vector<std::string> difhosts;
   //State Machine 
   Evb::Statemachine *evbs;

@@ -1,6 +1,7 @@
 #include "YDaqManager.h"
 #include <fstream>   
 #include "json/json.h"
+#include <stdlib.h>
 
 YDaqManager::YDaqManager(std::string nameserver,std::string configuration) : name_server(nameserver), daqconfig(configuration)
 {
@@ -33,6 +34,8 @@ void YDaqManager::Parse(std::string conf)
   const Json::Value jdifs = root["DIFHOSTS"];
   for ( int index = 0; index < jdifs.size(); ++index )  // Iterates over the sequence elements.
     difhosts.push_back(jdifs[index].asString());
+ 
+  dnshost= root["DNSHOST"].asString();
   evbhost= root["EVBHOST"].asString();
   ccchost= root["CCCHOST"].asString();
   odbhost= root["ODBHOST"].asString();
@@ -64,10 +67,86 @@ void YDaqManager::Parse(std::string conf)
   odbconf.Dbstate=jodb.get("Dbstate","LPCC_230").asString();
 
 }
-void YDaqManager::StopServer(std::string name,std::string remoteip)
-{}
-void YDaqManager::StartServer(std::string name,std::string remoteip)
-{}
+void YDaqManager::StopServer()
+{
+  // DIF
+  for (std::vector<std::string>::iterator it=difhosts.begin();it!=difhosts.end();it++)
+    {
+      std::stringstream s("");
+      s<<"ssh pi@"<<(*it)<<" sudo /etc/init.d/yamidifd stop";
+      int rc=system(s.str().c_str());
+      std::cout<<s.str()<<"===>"<<rc<<std::endl;
+    }
+  // CCC
+  std::stringstream s;
+  s<<"ssh pi@"<<ccchost<<" sudo /etc/init.d/yamicccd stop";
+  int rc=system(s.str().c_str());
+  std::cout<<s.str()<<"===>"<<rc<<std::endl;
+  //EVB
+  s.str(std::string());
+  s<<"ssh acqilc@"<<evbhost<<" sudo /etc/init.d/yamievbd stop";
+  rc=system(s.str().c_str());
+  std::cout<<s.str()<<"===>"<<rc<<std::endl;
+  //ODB
+  s.str(std::string());
+  s<<"ssh acqilc@"<<odbhost<<" sudo /etc/init.d/yamiodbd stop";
+  rc=system(s.str().c_str());
+  std::cout<<s.str()<<"===>"<<rc<<std::endl;
+  //ZUP
+  s.str(std::string());
+  s<<"ssh pi@"<<zuphost<<" sudo /etc/init.d/yamizupd stop";
+  rc=system(s.str().c_str());
+  std::cout<<s.str()<<"===>"<<rc<<std::endl;
+  //DNS
+  s.str(std::string());
+  s<<"ssh acqilc@"<<dnshost<<" sudo /etc/init.d/yamidnsd stop";
+  rc=system(s.str().c_str());
+  std::cout<<s.str()<<"===>"<<rc<<std::endl;
+
+
+  
+}
+void YDaqManager::StartServer()
+{
+  //DNS
+  std::stringstream s;
+
+  s.str(std::string());
+  s<<"ssh acqilc@"<<dnshost<<" sudo /etc/init.d/yamidnsd start";
+  int rc=system(s.str().c_str());
+  std::cout<<s.str()<<"===>"<<rc<<std::endl;
+
+// DIF
+  for (std::vector<std::string>::iterator it=difhosts.begin();it!=difhosts.end();it++)
+    {
+      s.str(std::string());
+      s<<"ssh pi@"<<(*it)<<" sudo /etc/init.d/yamidifd start";
+      int rc=system(s.str().c_str());
+      std::cout<<s.str()<<"===>"<<rc<<std::endl;
+    }
+  // CCC
+  s.str(std::string());
+
+  s<<"ssh pi@"<<ccchost<<" sudo /etc/init.d/yamicccd start";
+  rc=system(s.str().c_str());
+  std::cout<<s.str()<<"===>"<<rc<<std::endl;
+  //EVB
+  s.str(std::string());
+  s<<"ssh acqilc@"<<evbhost<<" sudo /etc/init.d/yamievbd start";
+  rc=system(s.str().c_str());
+  std::cout<<s.str()<<"===>"<<rc<<std::endl;
+  //ODB
+  s.str(std::string());
+  s<<"ssh acqilc@"<<odbhost<<" sudo /etc/init.d/yamiodbd start";
+  rc=system(s.str().c_str());
+  std::cout<<s.str()<<"===>"<<rc<<std::endl;
+  //ZUP
+  s.str(std::string());
+  s<<"ssh pi@"<<zuphost<<" sudo /etc/init.d/yamizupd start";
+  rc=system(s.str().c_str());
+  std::cout<<s.str()<<"===>"<<rc<<std::endl;
+
+}
 // General command
 void YDaqManager::Discover()
 {
