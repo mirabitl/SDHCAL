@@ -1,0 +1,7 @@
+#!/bin/bash
+
+cd /tmp
+mkdir -p yaminames/data
+cd yaminames
+rm data/*
+/opt/dhcal/bin/yami4names /opt/dhcal/etc/yami4names.cfg
