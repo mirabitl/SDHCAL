@@ -4,6 +4,7 @@ sudo apt-get -y install git g++ scons subversion chromium-browser
 sudo apt-get  -y install cmake
 sudo apt-get -y install libboost-dev
 sudo apt-get -y install libboost-system-dev
+sudo apt-get -y install libboost-filesystem-dev
 sudo apt-get -y install libboost-thread-dev
 sudo apt-get -y install swig
 sudo apt-get -y install python-dev
