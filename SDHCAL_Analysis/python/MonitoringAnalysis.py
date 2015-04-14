@@ -57,6 +57,9 @@ class MonitorService(ServiceBase):
         :param times: The number of times to say hello
         :returns: An array of 'Hello, <name>' strings, repeated <times> times.
         """
+        print directory
+        print ndif
+        print run
         _ma.startMonitoring(directory,ndif,run);
         for i in range(1):
             yield 'Monitoring will start on %s for %d difs and run %d ' % (directory,ndif,run)
@@ -141,7 +144,7 @@ if __name__=='__main__':
     wsgi_application = WsgiApplication(application)
 
     # More daemon boilerplate
-    server = make_server('lyopc252.in2p3.fr', 8000, wsgi_application)
+    server = make_server('lyosdhcal12.in2p3.fr', 8000, wsgi_application)
 
     logging.info("listening to http://127.0.0.1:8000")
     logging.info("wsdl is at: http://localhost:8000/?wsdl")

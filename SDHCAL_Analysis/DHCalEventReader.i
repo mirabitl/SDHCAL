@@ -1,6 +1,7 @@
 %module DHCalEventReader
 %include "std_string.i"
 %include "std_vector.i"
+%include "stdint.i"
  
 %{
 #include "DHCalEventReader.h"
