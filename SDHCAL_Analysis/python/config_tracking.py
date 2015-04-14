@@ -1,11 +1,11 @@
 #marlin="./Slot1_39_MARLIN.xml"
 marlin="./can37.xml"
-rebuild=False
+rebuild=True
 useSynch=True
 #
-minChambersInTime=8;
-tkMinPoint=8;
-tkExtMinPoint=7;
+minChambersInTime=3;
+tkMinPoint=3;
+tkExtMinPoint=3;
 tkChi2Cut=0.00000000000001;  
 tkExtChi2Cut=0.00000000000001;  
 

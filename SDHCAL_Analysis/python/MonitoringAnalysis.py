@@ -18,6 +18,9 @@ class MonitorAnalysis:
         self.dher=dr.DHCalEventReader();
         self.rootHandler=dr.DCHistogramHandler()
         self.dher.ParseSteering(conf.marlin)
+        self.dher.setXdaqShift(24); 
+
+        self.dher.setDropFirstRU(False);
         self.a=dr.ShowerAnalyzer( self.dher,self.rootHandler);
         self.a.presetParameters()
         self.a.setrebuild(conf.rebuild)
