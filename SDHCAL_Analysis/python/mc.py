@@ -40,6 +40,18 @@ class threadedSendCommand(Thread):
          self.dif.configured=True
       except:
          self.dif.failed=True
+
+
+def startFile(host,port,direc):
+   lq={}
+   lq['name']=direc
+   lqs=urllib.urlencode(lq)
+   myurl = host+ ":%d" % (port)
+   conn = httplib.HTTPConnection(myurl)
+   saction = '/startFile?%s' % (lqs)
+   conn.request("GET",saction)
+   r1 = conn.getresponse()
+   print r1.status, r1.reason
          
 def startMonitoring(host,port,direc,nd,nr):
    lq={}
@@ -118,3 +130,48 @@ def getHisto(host,port,hname):
   h=TBufferXML.ConvertFromXML(ET.tostring(tree))
   return h
 
+def GetEff(host,port,plan):
+  l=[]
+  dirname='/Plan%d' % plan
+  extname= dirname+'/ext'
+  nearname= dirname+'/found'
+  mulname= dirname+'/mul'
+  hext = getHisto(host,port,extname)
+  hnear = getHisto(host,port,nearname)
+  hmul = getHisto(host,port,mulname)
+  hext.Draw("COLZ")
+  
+  hnear.Draw("COLZ")
+  rs=8
+  if (hext.GetEntries()<1E6):
+    hext.Rebin2D(rs,rs)
+    hnear.Rebin2D(rs,rs)
+    hmul.Rebin2D(rs,rs)
+  heff = hnear.Clone("heff")
+  heff.SetDirectory(0)
+  heff.Divide(hnear,hext,100.,1.)
+  hmulc = hmul.Clone("hmulc")
+  hmulc.SetDirectory(0)
+  hmulc.Divide(hmul,hnear,1.,1.)
+  hmulc.Draw("COLZ")
+ 
+  l.append(hnear)
+  l.append(hext)
+  l.append(heff)
+  heffsum=TH1F("Summary%d" % plan ,"Summary for plan %d " % plan,404,-0.5,100.5)
+  hmulsum=TH1F("Summul%d" % plan ,"Multiplicity for plan %d " % plan,200,-0.1,7.1)
+  st = ''
+  ntk=0;
+  for i in range(2,heff.GetXaxis().GetNbins()-1):
+    for j in range(2,heff.GetYaxis().GetNbins()-1):
+      st = st + '%f ' % heff.GetBinContent(i+1,j+1)
+      ntk=ntk+hext.GetBinContent(i+1,j+1)
+      if (hext.GetBinContent(i+1,j+1)>5):
+        heffsum.Fill(heff.GetBinContent(i+1,j+1))
+      hmulsum.Fill(hmulc.GetBinContent(i+1,j+1))
+  #print '%s' % st
+  l.append(heffsum)
+  l.append(hmulc)
+  l.append(hmulsum)
+  print plan,heffsum.GetMean(),ntk
+  return l

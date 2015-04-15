@@ -22,7 +22,7 @@ class MonitorAnalysis:
 
         self.dher.setDropFirstRU(False);
         self.a=dr.ShowerAnalyzer( self.dher,self.rootHandler);
-        #self.a.presetParameters()
+        self.a.presetParameters()
         self.a.setrebuild(False)
         #self.a.setuseSynchronised(conf.useSynch);
         #self.a.setminChambersInTime(conf.minChambersInTime);

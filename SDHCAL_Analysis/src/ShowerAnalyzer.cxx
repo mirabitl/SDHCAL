@@ -1413,6 +1413,7 @@ uint32_t ShowerAnalyzer::mergeAmas(array3D<unsigned char> &core,array3D<unsigned
 void ShowerAnalyzer::processEvent()
 {
 
+
   checkTime();
   if (reader_->getEvent()==0) return;
   
@@ -1420,6 +1421,7 @@ void ShowerAnalyzer::processEvent()
   //theSkip_=380;
   if (evt_->getEventNumber()<=theSkip_) return;
   printf("Processing %d - %d \n",evt_->getRunNumber(),evt_->getEventNumber());
+
   if (nAnalyzed_==0)
     {
       std::stringstream s;
@@ -1481,7 +1483,7 @@ void ShowerAnalyzer::processEvent()
       //
       // getchar();
       seed.clear();
-      DEBUG_PRINT("Calling CreaetRaw\n");
+      INFO_PRINT("Calling CreaetRaw %d\n",minChambersInTime_);
       reader_->findDIFSeeds(minChambersInTime_);
       rhcol=reader_->createRawCalorimeterHits(reader_->getDIFSeeds());
       //rhcol=reader_->createRawCalorimeterHits(seed);
@@ -1493,8 +1495,7 @@ void ShowerAnalyzer::processEvent()
   else
     rhcol=(IMPL::LCCollectionVec*) evt_->getCollection(collectionName_);
 
-  DEBUG_PRINT("End of CreaetRaw %d \n",rhcol->getNumberOfElements());  
-
+  INFO_PRINT("End of CreaetRaw %d \n",rhcol->getNumberOfElements());  
   theMonitoring_->FillTimeAsic(rhcol);
 
   //  LCTOOLS::printParameters(rhcol->parameters());
@@ -1548,7 +1549,7 @@ void ShowerAnalyzer::processEvent()
   std::sort(vseeds.begin(),vseeds.end(),std::greater<uint32_t>());
   */
   
-   DEBUG_PRINT("================>  %d  Number of seeds %d \n",evt_->getEventNumber(),(int) vseeds.size());
+   INFO_PRINT("================>  %d  Number of seeds %d \n",evt_->getEventNumber(),(int) vseeds.size());
 
   if (vseeds.size()==0)  { if (rhcoltransient) delete rhcol;return;}
   // getchar();
@@ -9333,7 +9334,8 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	  TrackInfo& tk = theComputerTrack_->getTracks()[i];
 
 	  if (tk.size()<minChambersInTime_) continue;
-	  if (fabs(tk.ax())<0.5 && fabs(tk.ax())<0.5) theNbTracks_++;
+	  if (fabs(tk.ax())<1.E-2) continue;
+	  if (fabs(tk.ax())<0.5 && fabs(tk.ay())<0.5) theNbTracks_++;
 	  //this->draw(tk);
 	  //char c;c=getchar();putchar(c); if (c=='.') exit(0);
 	  uint32_t fch=int(ceil(tk.zmin()*10))/28+1;
