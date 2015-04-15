@@ -94,7 +94,7 @@ int main(int argc, char** argv ){
 
 
 
-  dher.ParseSteering("m3_bonneteau.xml");
+  dher.ParseSteering("m3_avril2015.xml");
   //dher.ParseSteering("tomuvol_agm14.xml");
  
 #define USESTREAM

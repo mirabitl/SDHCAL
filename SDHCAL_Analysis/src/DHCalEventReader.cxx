@@ -206,7 +206,7 @@ void DHCalEventReader::serviceReadMemory()
       
   /* If no files found, make a non-selectable menu item */  
 	if(count <= 0)  
-	  {::sleep(1); continue;}
+	  {usleep(100); continue;}
   
   //printf("Number of files = %d\n",count);  
 	for (i=1; i<count+1; ++i)  
@@ -224,7 +224,7 @@ void DHCalEventReader::serviceReadMemory()
 	    if (fd<0) 
 	      {
 		printf("%d rc\n",fd);
-		::sleep(1);goto wait_end;
+		usleep(100);goto wait_end;
 	      }
 	    int size_buf=::read(fd,cbuf,0x20000);
 	    //printf("%d bytes read %x %d \n",size_buf,cbuf[0],cbuf[1]);

@@ -22,16 +22,16 @@ class MonitorAnalysis:
 
         self.dher.setDropFirstRU(False);
         self.a=dr.ShowerAnalyzer( self.dher,self.rootHandler);
-        self.a.presetParameters()
-        self.a.setrebuild(conf.rebuild)
-        self.a.setuseSynchronised(conf.useSynch);
-        self.a.setminChambersInTime(conf.minChambersInTime);
-        self.a.settkMinPoint(conf.tkMinPoint);
-        self.a.settkExtMinPoint(conf.tkExtMinPoint);
-        self.a.settkChi2Cut(conf.tkChi2Cut);  
-        self.a.settkExtChi2Cut(conf.tkExtChi2Cut);  
-        self.a.settkDistCut(conf.tkDistCut);  
-        self.a.settkExtDistCut(conf.tkExtDistCut);  
+        #self.a.presetParameters()
+        self.a.setrebuild(False)
+        #self.a.setuseSynchronised(conf.useSynch);
+        #self.a.setminChambersInTime(conf.minChambersInTime);
+        #self.a.settkMinPoint(conf.tkMinPoint);
+        #self.a.settkExtMinPoint(conf.tkExtMinPoint);
+        #self.a.settkChi2Cut(conf.tkChi2Cut);  
+        #self.a.settkExtChi2Cut(conf.tkExtChi2Cut);  
+        #self.a.settkDistCut(conf.tkDistCut);  
+        #self.a.settkExtDistCut(conf.tkExtDistCut);  
         self.filein=None
         self.dher.registerAnalysis(self.a);
 
@@ -147,7 +147,7 @@ if __name__=='__main__':
     wsgi_application = WsgiApplication(application)
 
     # More daemon boilerplate
-    server = make_server('lyosdhcal12.in2p3.fr', 8000, wsgi_application)
+    server = make_server('lyosdhcal11', 8000, wsgi_application)
 
     logging.info("listening to http://127.0.0.1:8000")
     logging.info("wsdl is at: http://localhost:8000/?wsdl")
