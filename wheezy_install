@@ -5,8 +5,8 @@
    sudo apt-get install libxerces-c-dev
    sudo apt-get install libaio1 pyqt4-dev-tools emacs
 
-   git clone https://github.com/mirabitl/SDHCAL.git
-   cd SDHCAL/
+   #git clone https://github.com/mirabitl/SDHCAL.git
+   #cd SDHCAL/
    . ubuntu_packages.list 
    sudo mkdir /opt/dhcal
    sudo chmod 777 /opt/dhcal
