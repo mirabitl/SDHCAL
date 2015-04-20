@@ -33,7 +33,7 @@ public:
   friend std::ostream& operator<<(std::ostream& os, const DIFMultiClient& dt);
   inline uint32_t getRunNumber(){return theProxy_->getRunNumber();}
   inline uint32_t getEventNumber(){return theProxy_->getEventNumber();}
-
+  inline uint32_t getNumberOfDIFs(){return theDIFClients_.size();}
  private:
   std::vector<DIFClient*> theDIFClients_;
   CCCClient* theCCCClient_;
