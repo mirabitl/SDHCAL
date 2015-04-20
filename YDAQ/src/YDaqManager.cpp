@@ -328,6 +328,8 @@ void YDaqManager::EVBStatus()
      }
 }
 
+
+
 void YDaqManager::DestroyDIF()
 {
   for (std::map<std::string,Difhw::onedifhandler*>::iterator it=difsmap.begin();it!=difsmap.end();it++)

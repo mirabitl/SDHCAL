@@ -45,6 +45,15 @@ class StartDaq:
         self.state_=config.state
         self.register_=config.register
         self.directory_=config.directory
+        try:
+           self.zuphost_=config.zuphost
+           self.zupdevice_=config.zupdevice
+           self.zupport_=config.zupport
+        except:
+           self.zuphost_=None
+           self.zupdevice_=None
+           self.zupport_=None
+           
     def addHost(self,h):
         self.host_.append(h)
     def addHostRange(self,name,first,last):
@@ -72,6 +81,9 @@ class StartDaq:
          print cmd;os.system(cmd)
          cmd='ssh acqilc@'+self.writer_+' "sudo /etc/init.d/dimwriterd status"'
          print cmd;os.system(cmd)
+         if self.zuphost_!=None:
+            cmd='ssh pi@'+self.zuphost_+' "sudo /etc/init.d/dimzupd status"'
+            print cmd;os.system(cmd)
 
     def host_stop(self):
          for h in self.host_:
@@ -87,6 +99,9 @@ class StartDaq:
          print cmd;os.system(cmd)
          cmd='ssh acqilc@'+self.writer_+' "sudo /etc/init.d/dimwriterd stop"'
          print cmd;os.system(cmd)
+         if self.zuphost_!=None:
+            cmd='ssh pi@'+self.zuphost_+' "sudo /etc/init.d/dimzupd stop"'
+            print cmd;os.system(cmd)
 
     def host_start(self):
          for h in self.host_:
@@ -102,6 +117,10 @@ class StartDaq:
          print cmd;os.system(cmd)
          cmd='ssh acqilc@'+self.writer_+' "sudo /etc/init.d/dimwriterd start"'
          print cmd;os.system(cmd)
+         if self.zuphost_!=None:
+            cmd='ssh pi@'+self.zuphost_+' "sudo /etc/init.d/dimzupd start"'
+            print cmd;os.system(cmd)
+
     def rpi_stop(self):
          for h in self.host_:
             cmd='ssh pi@'+h+' "sudo /etc/init.d/dimdifd stop"'
@@ -126,13 +145,20 @@ class StartDaq:
         self.daq_.scandns()
         self.daq_.download(self.state_)
         self.daq_.initialiseWriter(self.directory_)
+        self.InitializeZup()
     def DiscoverDNS(self):
         self.daq_.scandns()
-
+        self.InitializeZup()
     def DownloadDB(self):
         self.daq_.download(self.state_)
+        
     def InitialiseWriter(self):
         self.daq_.initialiseWriter(self.directory_)
+    def InitialiseZup(self):
+       if self.zuphost_!=None:
+          self.daq_.initialiseZup(self.zupdevice_,self.zupport_)
+
+
     def ChangeState(self,s):
         self.state_=s
         self.daq_.download(self.state_)

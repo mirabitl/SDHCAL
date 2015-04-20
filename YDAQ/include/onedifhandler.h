@@ -29,6 +29,7 @@ namespace Difhw {
     void Configure(int32_t reg,std::string dbs);
     void LoadSlowControl();
     void Print();
+    std::string JSONStatus();
     Difhw::Difstatus& getStatus(){return dst;}
     void Subscribe();
   private:

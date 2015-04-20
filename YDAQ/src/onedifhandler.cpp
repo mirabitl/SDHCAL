@@ -1,4 +1,5 @@
 #include "onedifhandler.h"
+#include "json/json.h"
 
 
 using namespace Difhw;
@@ -43,6 +44,25 @@ void onedifhandler::Print()
 {
   for (int i=0;i<dst.Status.size();i++)
     std::cout<<std::hex<<dst.Status[i]<<std::dec<<" "<<dst.Debug[i]<<std::endl;
+}
+
+
+std::string onedifhandler::JSONStatus()
+{
+  // Creation
+Json::Value minimizer;
+Json::Value minParameters;
+ for (int i=0;i<dst.Status.size();i++)
+   {
+     minParameters[i]["Status"] =dst.Status[i];
+     minParameters[i]["Debug"] = dst.Debug[i];
+   }
+minimizer["host"]["difs"] = minParameters;
+minimizer["host"]["name"] = object_name;
+
+// Output to see the result
+ std::cout<<minimizer.toStyledString()<<std::endl;
+ return minimizer.toStyledString();
 }
 void onedifhandler::Subscribe()
 {

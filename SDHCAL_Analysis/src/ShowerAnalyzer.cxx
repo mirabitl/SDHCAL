@@ -2921,7 +2921,7 @@ void ShowerAnalyzer::drawDisplay()
 
       if (TCPlot==NULL)
 	{
-	  TCPlot=new TCanvas("TCPlot","test1",1300,600);
+	  TCPlot=new TCanvas("TCPlot","tcplot1",1300,600);
 	  TCPlot->Modified();
 	  TCPlot->Draw();
 	  TCPlot->Divide(2,2);
@@ -3074,7 +3074,7 @@ void ShowerAnalyzer::drawHits(std::vector<RecoHit*> vrh)
 
       if (TCHits==NULL)
 	{
-	  TCHits=new TCanvas("TCHits","test1",1300,600);
+	  TCHits=new TCanvas("TCHits","tChits1",1300,600);
 	  TCHits->Modified();
 	  TCHits->Draw();
 	  TCHits->Divide(2,2);
@@ -4220,7 +4220,7 @@ void ShowerAnalyzer::HTOld()
 	}
     }
 #ifdef DRAW_HOUGH
-  TCanvas* c=new TCanvas("test1","test1",1400,800);
+  TCanvas* c=new TCanvas("test1","testhough1",1400,800);
   c->cd();
   c->Draw();
   c->Modified();
@@ -5259,7 +5259,7 @@ void ShowerAnalyzer::ShowerBuilder(std::vector<RecoHit*> &vreco)
 
   if (TCShower==NULL && draw_)
     {
-      TCShower=new TCanvas("TCShower","test1",800,800);
+      TCShower=new TCanvas("TCShower","tcshower1",800,800);
       TCShower->Divide(2,2);
       TCShower->Modified();
       TCShower->Draw();
@@ -7220,7 +7220,7 @@ void ShowerAnalyzer::draw(array3D<unsigned char> &all,array3D<unsigned char> &co
     }
   if (TCPlot==NULL)
     {
-      TCPlot=new TCanvas("TCPlot","test1",1200,800);
+      TCPlot=new TCanvas("TCPlot","tcplot1",1200,800);
       TCPlot->Modified();
       TCPlot->Draw();
       /*
@@ -7373,7 +7373,7 @@ void ShowerAnalyzer::draw(std::vector<RecoCandTk> &tracks,std::vector<RecoPoint>
     }
   if (TCPlot==NULL)
     {
-      TCPlot=new TCanvas("TCPlot","test1",1200,800);
+      TCPlot=new TCanvas("TCPlot","tcplot2",1200,800);
       TCPlot->Modified();
       TCPlot->Draw();
       /*
@@ -7719,7 +7719,7 @@ void ShowerAnalyzer::newHT3(array3D<unsigned char> &cores)
 	
   if (TCHT==NULL)
     {
-      TCHT=new TCanvas("TCHT","hugh",800,900);
+      TCHT=new TCanvas("TCHT","hough",800,900);
       TCHT->Modified();
       TCHT->Draw();
       TCHT->Divide(1,2);
@@ -8460,13 +8460,13 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
 
 #ifdef DRAW_HISTOS
   bool doPlot=draw_;// &&int(hest1->GetEntries())%30==40;
-  //doPlot=true;
+  doPlot=false;
   if (doPlot)
     {
   if (TCCluster==NULL)
     {
 
-      TCCluster=new TCanvas("TCCluster","hugh",1000,900);
+      TCCluster=new TCanvas("TCCluster","hough1",1000,900);
 
       TCCluster->Draw();
       TCCluster->Divide(3,2);
@@ -9581,7 +9581,7 @@ void ShowerAnalyzer::draw(TrackInfo& t)
 
       if (TCHT==NULL)
 	{
-	  TCHT=new TCanvas("TCHT","test1",1300,600);
+	  TCHT=new TCanvas("TCHT","tcht1",1300,600);
 	  TCHT->Modified();
 	  TCHT->Draw();
 	  TCHT->Divide(2,2);

@@ -41,6 +41,7 @@ public:
   void registerstate(uint32_t ctr,std::string sta);
   void configure();
   void start();
+  void initialiseZup(std::string device,int port);
   void on();
   void off();
   void stop();

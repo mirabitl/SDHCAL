@@ -34,7 +34,8 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
     def InitialiseWriter(self):
         self.daq_.InitialiseWriter()
 
-
+    def Quit(self):
+        exit(0)
     def RestartHost(self):
         if self.daq_!=None:
             self.daq_.host_restart();
@@ -201,6 +202,8 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         self.PBStop.clicked.connect(self.Stop)
         self.PBDestroy.clicked.connect(self.Destroy)
         self.PBUpdate.clicked.connect(self.Update)
+        self.pbQuit.clicked.connect(self.Quit)
+
     def main(self):
         self.show()
         

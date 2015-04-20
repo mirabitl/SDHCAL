@@ -193,6 +193,16 @@ void DimDaqControl::download(std::string state)
   sleep((unsigned int) 5);
 }
 
+void DimDaqControl::initialiseZup(std::string device,int port)
+{
+  std::stringstream s0;
+
+  s0.str(std::string());
+  s0<<theZupPrefix_<<"/OPEN";
+  DimClient::sendCommand(s0.str().c_str(),device.c_str()); 
+
+}
+
 void DimDaqControl::on()
 {
   std::stringstream s0;
