@@ -54,11 +54,12 @@ Json::Value minimizer;
 Json::Value minParameters;
  for (int i=0;i<dst.Status.size();i++)
    {
+     minParameters[i]["Id"] =dst.Id[i];
      minParameters[i]["Status"] =dst.Status[i];
      minParameters[i]["Debug"] = dst.Debug[i];
    }
-minimizer["host"]["difs"] = minParameters;
-minimizer["host"]["name"] = object_name;
+minimizer["difs"] = minParameters;
+minimizer["name"] = object_name;
 
 // Output to see the result
  std::cout<<minimizer.toStyledString()<<std::endl;

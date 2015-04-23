@@ -39,6 +39,7 @@ struct Difstatus
     void write(yami::parameters & params) const;
     void read(const yami::parameters & params);
 
+    std::vector<int> Id;
     std::vector<int> Status;
     std::vector<std::string> Debug;
     bool GtcValid;

@@ -132,6 +132,7 @@ void StatemachineServerImpl::Initialise(const Scanstatus & Conf,Difstatus & Res)
 {
   Res.GtcValid=false;
   Res.BcidValid=false;
+  Res.Id.clear();
   Res.Status.clear();
   Res.Debug.clear();
   for( std::vector<int>::const_iterator itd=Conf.Diflist.begin();itd!=Conf.Diflist.end();itd++)
@@ -142,6 +143,7 @@ void StatemachineServerImpl::Initialise(const Scanstatus & Conf,Difstatus & Res)
       if (itf==theFtdiDeviceInfoMap_.end())
 	{
 	  Res.Status.push_back((difid<<8)|0x0);
+	  Res.Id.push_back(difid);
 	  std::stringstream s("");
 	  s<<"No Ftdi device info  found for id "<<difid;
 	  Res.Debug.push_back(s.str());
@@ -157,6 +159,7 @@ void StatemachineServerImpl::Initialise(const Scanstatus & Conf,Difstatus & Res)
       }
       catch (...)
 	{
+	  Res.Id.push_back(difid);
 	  Res.Status.push_back((difid<<8)|0x1);
 	  std::stringstream s("");
 	  s<<"Cannot create a DIFReadout for id "<<difid;
@@ -173,6 +176,7 @@ void StatemachineServerImpl::Initialise(const Scanstatus & Conf,Difstatus & Res)
 #ifdef DEBUG_READ
 	  std::cout<<e.message()<<std::endl;
 #endif
+	  Res.Id.push_back(difid);
 	  Res.Status.push_back((difid<<8)|0x2);
 	  std::stringstream s("");
 	  s<<"Cannot check USB access for id "<<difid<<" -> "<<e.message();
@@ -188,6 +192,7 @@ void StatemachineServerImpl::Initialise(const Scanstatus & Conf,Difstatus & Res)
 #ifdef DEBUG_READ
 	  std::cout<<e.message()<<std::endl;
 #endif
+	  Res.Id.push_back(difid);
 	  Res.Status.push_back((difid<<8)|0x2);
 	  std::stringstream s("");
 	  s<<"Cannot check USB access for id "<<difid<<" -> "<<e.message();
@@ -223,6 +228,7 @@ void StatemachineServerImpl::Initialise(const Scanstatus & Conf,Difstatus & Res)
 	  server_agent.register_value_publisher(s.str(),*vp);
 	  std::pair<uint32_t,yami::value_publisher*> pp((*itd),vp);
 	  datapublisher.insert(pp);
+	  Res.Id.push_back((*itd));
 	  Res.Status.push_back(((*itd)<<8)|0x15);
 	  s<<" is created";
 	  Res.Debug.push_back(s.str());
@@ -232,12 +238,17 @@ void StatemachineServerImpl::Initialise(const Scanstatus & Conf,Difstatus & Res)
 }
 void StatemachineServerImpl::Registerdb(const Config & Conf,Difstatus & Res)
 {
+  Res.Id.clear();
+  Res.Status.clear();
+  Res.Debug.clear();
+
   theConf_=Conf;
   this->Subscribe();
   for (std::map<uint32_t,Difhw::Data*>::iterator itd=databuf.begin();itd!=databuf.end();itd++)
     {
       std::stringstream s("");
       s<<"/DIFSERVER/DIF"<<itd->first<<"/REGISTERED/"<<theConf_.Dbstate<<"/"<<theConf_.Trigger;
+      Res.Id.push_back(itd->first);
       Res.Status.push_back((itd->first<<8)|0x15);
       Res.Debug.push_back(s.str());
 
@@ -246,12 +257,17 @@ void StatemachineServerImpl::Registerdb(const Config & Conf,Difstatus & Res)
 
 void StatemachineServerImpl::Loadslowcontrol(Difstatus & Res)
 {
+  Res.Id.clear();
+  Res.Status.clear();
+  Res.Debug.clear();
+
   for ( std::map<uint32_t,Odb::Dbbuffer>::iterator itd=slowbufmap.begin();itd!=slowbufmap.end();itd++)
     {
       uint32_t difid=itd->first;
       std::map<uint32_t,DIFReadout*>::iterator itr=theDIFMap_.find(difid);      
       if (itr==theDIFMap_.end())
 	{
+	  Res.Id.push_back(difid);
 	  Res.Status.push_back((difid<<8)|0x0);
 	  std::stringstream s("");
 	  s<<"No DIFReadout object for id "<<difid;
@@ -279,6 +295,7 @@ void StatemachineServerImpl::Loadslowcontrol(Difstatus & Res)
       else s0<<"L1 forb   - ";
       std::stringstream s("");
       s<<"/DIFSERVER/DIF"<<itd->first<<"/CONFIGURED/"<<theConf_.Dbstate<<"/"<<s0.str();
+      Res.Id.push_back(itd->first);
       Res.Status.push_back(slc);
       Res.Debug.push_back(s.str());
 
@@ -288,6 +305,10 @@ void StatemachineServerImpl::Loadslowcontrol(Difstatus & Res)
 
 void StatemachineServerImpl:: Start(Difstatus & Res)
 {
+  Res.Id.clear();
+  Res.Status.clear();
+  Res.Debug.clear();
+
   running_=true;
   if (readoutStarted_)
     {
@@ -299,6 +320,7 @@ void StatemachineServerImpl:: Start(Difstatus & Res)
 	  s<<"/DIFSERVER/DIF"<<itd->first<<"/ALRSTARTED";
 	  Res.Status.push_back((itd->first<<8)|0x15);
 	  Res.Debug.push_back(s.str());
+	  Res.Id.push_back(itd->first);
 	}
      
     }
@@ -315,6 +337,7 @@ void StatemachineServerImpl:: Start(Difstatus & Res)
       s<<"/DIFSERVER/DIF"<<itd->first<<"/STARTED";
       Res.Status.push_back((itd->first<<8)|0x15);
       Res.Debug.push_back(s.str());
+      Res.Id.push_back(itd->first);
     }
     }
     for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
@@ -393,6 +416,9 @@ void StatemachineServerImpl::Stop(Difstatus & Res)
   running_=false;
   Res.Status.clear();
   Res.Debug.clear();
+  Res.Id.clear();
+
+
   for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
     {
       try 
@@ -402,6 +428,7 @@ void StatemachineServerImpl::Stop(Difstatus & Res)
 	  s<<"/DIFSERVER/DIF"<<itd->first<<"/STOPPED";
 	  Res.Status.push_back((itd->first<<8)|0x15);
 	  Res.Debug.push_back(s.str());
+	  Res.Id.push_back(itd->first);
 	}
       catch (LocalHardwareException e)
 	{
@@ -409,6 +436,7 @@ void StatemachineServerImpl::Stop(Difstatus & Res)
 	  s<<"/DIFSERVER/DIF"<<itd->first<<"/STOPPED_FAILED";
 	  Res.Status.push_back((itd->first<<8)|0x00);
 	  Res.Debug.push_back(s.str());
+	  Res.Id.push_back(itd->first);
 	  std::cout<<itd->first<<" is not stopped "<<e.what()<<std::endl;
 	}
       
@@ -417,6 +445,10 @@ void StatemachineServerImpl::Stop(Difstatus & Res)
 }
 void StatemachineServerImpl::Destroy(Difstatus & Res)
 {
+  Res.Status.clear();
+  Res.Debug.clear();
+  Res.Id.clear();
+
 readoutStarted_=false;
  std::cout <<"Stop readout"<<std::endl;
  g_d.join_all();
@@ -447,7 +479,7 @@ readoutStarted_=false;
       std::stringstream s("");
       s<<"/DIFSERVER/DIF"<<itd->first<<"/DESTROYED";
       Res.Status.push_back(0XDEAD0);
-
+      Res.Id.push_back(itd->first);
       Res.Debug.push_back(s.str());
    }
  theDIFMap_.clear();

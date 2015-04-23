@@ -42,6 +42,9 @@ public:
   void Pause();
   void Resume();
   void EVBStatus();
+  std::string JSONDIFStatus();
+  std::string JSONEVBStatus();
+
   void DestroyDIF();
   void Stop();
   void Clear();

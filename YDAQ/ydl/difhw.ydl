@@ -7,6 +7,7 @@ package DIFHW is
    end Config;
 
    type DIFStatus is
+      Id : Integer_Array;
       Status : Integer_Array;
       Debug : String_Array;
       GTC : optional Integer_Array;

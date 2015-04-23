@@ -328,7 +328,61 @@ void YDaqManager::EVBStatus()
      }
 }
 
+std::string YDaqManager::JSONEVBStatus()
+{
+  Json::Value minimizer;
+  Json::Value minParameters;
+  if (evbs==NULL)
+    {
+      minimizer["Status"]="NO EVB";
+      std::cout<<"NO EVB "<<std::endl;
+    }
+  else
+    {
+      evbs->Currentstatus(evbstatus);
+      if (evbstatus.RunValid)
+	{
+	  //  printf("Run %d started %s #Completed %d \n",evbstatus.Run,evbstatus.Starttime.c_str(),evbstatus.Completed);
+	  minimizer["Status"]="VALID";
+	  minimizer["Info"]["Run"]=evbstatus.Run;
+	  minimizer["Info"]["Starttime"]=evbstatus.Starttime;
+	  minimizer["Info"]["Completed"]=evbstatus.Completed;
+       
+	}
+      if (evbstatus.DifidValid)
+	{
+	  for (int k=0;k<evbstatus.Difid.size();k++)
+	    {
+	      minParameters[k]["Difid"]=evbstatus.Difid[k];
+	      minParameters[k]["Gtc"]=evbstatus.Gtc[k];
+	      minParameters[k]["Dtc"]=evbstatus.Dtc[k];
+	      minParameters[k]["Bcid"]=evbstatus.Bcid[k];
+	      //printf("%4d | %8d | %8d | %12d \n", evbstatus.Difid[k],evbstatus.Gtc[k],evbstatus.Dtc[k],evbstatus.Bcid[k]);
+	    }
+	}
+      minimizer["difs"]=minParameters;
+    }
+  // Output to see the result
+ std::cout<<minimizer.toStyledString()<<std::endl;
+ return minimizer.toStyledString();
+}
 
+
+
+std::string YDaqManager::JSONDIFStatus()
+{
+  Json::Value minimizer;
+
+  Json::Reader reader;
+   for (std::map<std::string,Difhw::onedifhandler*>::iterator it=difsmap.begin();it!=difsmap.end();it++)
+    {
+      Json::Value rd;
+      reader.parse(it->second->JSONStatus(),rd);
+      minimizer[it->first]=rd;
+    }
+   std::cout<<minimizer.toStyledString()<<std::endl;
+   return minimizer.toStyledString();
+}
 
 void YDaqManager::DestroyDIF()
 {

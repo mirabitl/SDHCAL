@@ -37,6 +37,8 @@ Difstatus::Difstatus()
 
 void Difstatus::write(yami::parameters & params) const
 {
+    params.set_integer_array_shallow("id",
+        &Id[0], Id.size());
     params.set_integer_array_shallow("status",
         &Status[0], Status.size());
     {
@@ -61,6 +63,12 @@ void Difstatus::write(yami::parameters & params) const
 
 void Difstatus::read(const yami::parameters & params)
 {
+    {
+        std::size_t size_;
+        const int * buf_ = params.get_integer_array(
+            "id", size_);
+        Id.assign(buf_, buf_ + size_);
+    }
     {
         std::size_t size_;
         const int * buf_ = params.get_integer_array(
