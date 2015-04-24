@@ -19,7 +19,8 @@ import time
 class wddClient:
    def __init__ (self,host,port):
       self.host=host
-      slef.port=port
+      self.port=port
+
    def createDaq(self,name):
       lq={}
       lq['name']=name
@@ -96,15 +97,15 @@ class wddClient:
        conn.request("GET",saction)
        r1 = conn.getresponse()
        print r1.status, r1.reason
-    def DownloadDB(self):
-       myurl = self.host+ ":%d" % (self.port)
-       conn = httplib.HTTPConnection(myurl)
-       saction = '/DownloadDB'
-       conn.request("GET",saction)
-       r1 = conn.getresponse()
-       print r1.status, r1.reason
+   def DownloadDB(self):
+      myurl = self.host+ ":%d" % (self.port)
+      conn = httplib.HTTPConnection(myurl)
+      saction = '/DownloadDB'
+      conn.request("GET",saction)
+      r1 = conn.getresponse()
+      print r1.status, r1.reason
 
-    def initialiseZup(self):
+   def initialiseZup(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/initialiseZup'
@@ -112,98 +113,98 @@ class wddClient:
        r1 = conn.getresponse()
        print r1.status, r1.reason
        
-    def initialiseWriter(self):
+   def initialiseWriter(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/initialiseWriter'
        conn.request("GET",saction)
        r1 = conn.getresponse()
        print r1.status, r1.reason
-    def scan(self):
+   def scan(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/scan'
        conn.request("GET",saction)
        r1 = conn.getresponse()
        print r1.status, r1.reason
-    def Print(self):
+   def Print(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/Print'
        conn.request("GET",saction)
        r1 = conn.getresponse()
        print r1.status, r1.reason
-    def Initialise(self):
+   def Initialise(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/Initialise'
        conn.request("GET",saction)
        r1 = conn.getresponse()
        print r1.status, r1.reason
-    def Configure(self):
+   def Configure(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/Configure'
        conn.request("GET",saction)
        r1 = conn.getresponse()
        print r1.status, r1.reason
-    def Start(self):
+   def Start(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/Start'
        conn.request("GET",saction)
        r1 = conn.getresponse()
        print r1.status, r1.reason
-    def Stop(self):
+   def Stop(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/Stop'
        conn.request("GET",saction)
        r1 = conn.getresponse()
        print r1.status, r1.reason
-    def Destroy(self):
+   def Destroy(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/Destroy'
        conn.request("GET",saction)
        r1 = conn.getresponse()
        print r1.status, r1.reason
-    def Halt(self):
+   def Halt(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/Halt'
        conn.request("GET",saction)
        r1 = conn.getresponse()
        print r1.status, r1.reason
-    def LVOff(self):
+   def LVOff(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/LVOff'
        conn.request("GET",saction)
        r1 = conn.getresponse()
        print r1.status, r1.reason
-    def LVOn(self):
+   def LVOn(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/LVOn'
        conn.request("GET",saction)
        r1 = conn.getresponse()
        print r1.status, r1.reason
-    def zon(self):
+   def zon(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/zon'
        conn.request("GET",saction)
        r1 = conn.getresponse()
        print r1.status, r1.reason
-    def zoff(self):
+   def zoff(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/zoff'
        conn.request("GET",saction)
        r1 = conn.getresponse()
        print r1.status, r1.reason
-    def HVOn(self):
+   def HVOn(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/HVOn'
@@ -211,7 +212,7 @@ class wddClient:
        r1 = conn.getresponse()
        print r1.status, r1.reason
 
-    def HVOff(self):
+   def HVOff(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/HVOff'
@@ -219,7 +220,7 @@ class wddClient:
        r1 = conn.getresponse()
        print r1.status, r1.reason
 
-    def DifStatus(self):
+   def DifStatus(self):
        myurl = self.host+ ":%d" % (self.port)
        conn = httplib.HTTPConnection(myurl)
        saction = '/DifStatus'
@@ -228,7 +229,7 @@ class wddClient:
        print r1.status, r1.reason
        return r1.read()
        
-    def HVSetVoltage(self,v,f,l):
+   def HVSetVoltage(self,v,f,l):
         lq={}
         lq['voltage']=v
         lq['firstchannel']=f
@@ -240,7 +241,7 @@ class wddClient:
         conn.request("GET",saction)
         r1 = conn.getresponse()
        
-    def HVSwitchOn(self,f,l):
+   def HVSwitchOn(self,f,l):
         lq={}
         lq['firstchannel']=f
         lq['lastchannel']=l
@@ -252,7 +253,7 @@ class wddClient:
         r1 = conn.getresponse()
        
 
-    def HVSwitchOff(self,f,l):
+   def HVSwitchOff(self,f,l):
         lq={}
         lq['firstchannel']=f
         lq['lastchannel']=l
@@ -264,7 +265,7 @@ class wddClient:
         r1 = conn.getresponse()
        
 
-    def HVDump(self,f,l):
+   def HVDump(self,f,l):
         lq={}
         lq['firstchannel']=f
         lq['lastchannel']=l
@@ -276,7 +277,7 @@ class wddClient:
         r1 = conn.getresponse()
         return r1.read()
 
-    def HVGet(self,f,l):
+   def HVGet(self,f,l):
         lq={}
         lq['firstchannel']=f
         lq['lastchannel']=l
@@ -288,29 +289,5 @@ class wddClient:
         r1 = conn.getresponse()
         return r1.read()
 
-
-    def zoff(self):
-       myurl = self.host+ ":%d" % (self.port)
-       conn = httplib.HTTPConnection(myurl)
-       saction = '/zoff'
-       conn.request("GET",saction)
-       r1 = conn.getresponse()
-       print r1.status, r1.reason
-
-    def zoff(self):
-       myurl = self.host+ ":%d" % (self.port)
-       conn = httplib.HTTPConnection(myurl)
-       saction = '/zoff'
-       conn.request("GET",saction)
-       r1 = conn.getresponse()
-       print r1.status, r1.reason
-
-    def zoff(self):
-       myurl = self.host+ ":%d" % (self.port)
-       conn = httplib.HTTPConnection(myurl)
-       saction = '/zoff'
-       conn.request("GET",saction)
-       r1 = conn.getresponse()
-       print r1.status, r1.reason
 
 

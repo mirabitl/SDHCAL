@@ -1,19 +1,28 @@
 #!/usr/bin/env python
 import logging
-from spyne import Application, srpc, ServiceBase, Iterable, UnsignedInteger,String,Float
+from spyne import Application, srpc, ServiceBase, Iterable, UnsignedInteger,String,Float,Unicode
 from spyne.protocol.json import JsonDocument
 from spyne.protocol.xml import XmlDocument
 from spyne.protocol.csv import Csv
 from spyne.protocol.http import HttpRpc
 from spyne.server.wsgi import WsgiApplication
-
+from spyne.model.complex import ComplexModelMeta
 import StartDaq as sd
-import os,sys
+import os,sys,json
 from ROOT import *
 import time
-
-
-
+class DifinfoModel:
+    def __init__(self, difid, slc,gtc,dtc,bcid,bread,host,state):
+        self.difid=difid
+        self.slc = slc
+        self.gtc=gtc
+        self.dtc=dtc
+        self.bcid=bcid
+        self.bread=bread
+        self.host=host
+        self.state=state
+def jdefault(o):
+    return o.__dict__
 _wdd=None
 
 class wddService(ServiceBase):
@@ -181,7 +190,21 @@ class wddService(ServiceBase):
        _wdd.HVOn()
        yield 'all HV channels On'
 
-
+    @srpc( _returns=Iterable(String))
+    def DifStatus():
+       global _wdd
+       #_wdd.daq_.getDifInfo()
+       v=[]
+       for i in range(0,100):
+           v.append([i,i,10*i,10000*i,100*i,1000*i,"lyosdhcal12","Dummy"])
+#       for i in range(0,_wdd.daq_.seenNumberOfDif()):
+#           d=DifinfoModel(ID=_wdd.daq_.seenId(i),SLC=_wdd.daq_.seenSlc(i),GTC= _wdd.daq_.seenGtc(i),
+#                        BCID= _wdd.daq_.seenBcid(i),READBYTES=_wdd.daq_.seenBytes(i),HOST=_wdd.daq_.seenHost(i),
+#                        STATE=_wdd.daq_.seenState(i))
+#           v.append(d)
+       for l in v:
+           yield l 
+#       yield v
     @srpc(Float,UnsignedInteger,UnsignedInteger, _returns=Iterable(String))
     def HVSetVoltage(voltage,firstchannel,lastchannel):
        global _wdd
