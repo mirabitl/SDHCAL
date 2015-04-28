@@ -33,8 +33,10 @@ class MonitorAnalysis:
         #self.a.settkDistCut(conf.tkDistCut);  
         #self.a.settkExtDistCut(conf.tkExtDistCut);  
         self.filein=None
+        self.ar=dr.RawAnalyzer();
         self.dher.registerAnalysis(self.a);
-
+        self.dher.registerAnalysis(self.ar);
+        self.run=0
     def writeHistos(self,name):
         self.rootHandler.writeHistograms(name)
     def getHistoList(self):
@@ -42,9 +44,16 @@ class MonitorAnalysis:
     def getHisto(self,name):
         return self.rootHandler.getXMLHisto(name)
     def startMonitoring(self,directory,nd,nr):
+        if (self.run==0):
+            self.run=nr
+        else:
+            self.run=self.run+1
         self.dher.startReadMemory(directory,nd,nr)
+
     def stopMonitoring(self):
         self.dher.stopReadMemory()
+        name="/tmp/Monitoring%d.root" % self.run
+        self.writeHistos(name)
     def startFile(self,file):
         self.dher.startReadFile(file)
  
@@ -147,7 +156,7 @@ if __name__=='__main__':
     wsgi_application = WsgiApplication(application)
 
     # More daemon boilerplate
-    server = make_server('lyosdhcal12', 8000, wsgi_application)
+    server = make_server('lyosdhcal11', 8000, wsgi_application)
 
     logging.info("listening to http://127.0.0.1:8000")
     logging.info("wsdl is at: http://localhost:8000/?wsdl")

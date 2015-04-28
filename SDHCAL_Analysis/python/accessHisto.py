@@ -268,7 +268,13 @@ def GetEff(plan):
   l.append(heffsum)
   l.append(hmulc)
   l.append(hmulsum)
-  print plan,heffsum.GetMean(),ntk
+  #print plan,heffsum.GetMean(),ntk
+  l.append(plan)
+  l.append(heffsum.GetMean())
+  l.append(ntk)
+  l.append(hext.GetEntries())
+  l.append(hnear.GetEntries())
+  
   return l
  
 
