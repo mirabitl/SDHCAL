@@ -65,6 +65,8 @@ if (HT.getSysMainSwitch() == "on"):
             P=P/10
             T=T/10
             print "Current Values are %f mb %f K" % (P,T)
+            lbad=[]
+            vbad=[]
             for i in range(0, 49):
                 cur.execute("select CHANNEL,HV,P0,T0 FROM HVREF WHERE CHANNEL=%d" % (i+1))
                 rows = cur.fetchall()
@@ -79,7 +81,7 @@ if (HT.getSysMainSwitch() == "on"):
 
 
                 #Alice correction
-                Vexpected=HV0*P0*T/(P*T0)
+                Vexpected=HV0*P*T0/(P0*T)
 
 
                 module=i/8
@@ -90,16 +92,27 @@ if (HT.getSysMainSwitch() == "on"):
                 vmon=abs(HT.getOutputMeasurementSenseVoltage(module,voie))
                 imon=HT.getOutputMeasurementCurrent(module,voie)
                 status=HT.getOutputStatus(module,voie)
+                
+                Veff = vmon*P0/T0*T/P
+                
+                correction = ((Veff/HV0-1)*100)
+                vcor =abs(Veff-HV0)
+                
+                if  vcor>40 and vcor<200:
+                    print "Channel %d Current voltage is %f and is effectively be %f => correction %f or %f " % (i,vmon,Veff,((Veff/vmon-1)*100),Vexpected )
+                    lbad.append(i)
+                    vbad.append(Vexpected)
+                #else:
+                #    print "Channel %d is OK" % i
 
-                correction = ((Vexpected/vmon-1)*100)
-                if  abs(correction)>1:
-                    print "Current voltage is %f and should be %f => correction %f " % (vmon,Vexpected,((Vexpected/vmon-1)*100) )
-                    
-                else:
-                    print "Channel %d is OK" % i
-
+            print "Number of channels needing correction %d \n" % len(lbad)
+            for i in range(0,len(lbad)):
+                print lbad[i],int(vbad[i])
+                module=lbad[i]/8
+                voie=lbad[i]%8
+                HT.setOutputVoltage(module,voie,vbad[i])
             con.close()
-            time.sleep(300)
+            time.sleep(20)
 	
 
 else:
