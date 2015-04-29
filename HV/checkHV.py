@@ -112,7 +112,7 @@ if (HT.getSysMainSwitch() == "on"):
                 voie=lbad[i]%8
                 HT.setOutputVoltage(module,voie,vbad[i])
             con.close()
-            time.sleep(20)
+            time.sleep(300)
 	
 
 else:

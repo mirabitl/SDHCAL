@@ -237,7 +237,7 @@ def GetEff(plan):
   hext.Draw("COLZ")
   
   hnear.Draw("COLZ")
-  rs=8
+  rs=4
   if (hext.GetEntries()<1E6):
     hext.Rebin2D(rs,rs)
     hnear.Rebin2D(rs,rs)
@@ -253,7 +253,7 @@ def GetEff(plan):
   l.append(hnear)
   l.append(hext)
   l.append(heff)
-  heffsum=TH1F("Summary%d" % plan ,"Summary for plan %d " % plan,404,-0.5,100.5)
+  heffsum=TH1F("Summary%d" % plan ,"Summary for plan %d " % plan,424,-0.5,105.5)
   hmulsum=TH1F("Summul%d" % plan ,"Multiplicity for plan %d " % plan,200,-0.1,7.1)
   st = ''
   ntk=0;
@@ -261,7 +261,7 @@ def GetEff(plan):
     for j in range(2,heff.GetYaxis().GetNbins()-1):
       st = st + '%f ' % heff.GetBinContent(i+1,j+1)
       ntk=ntk+hext.GetBinContent(i+1,j+1)
-      if (hext.GetBinContent(i+1,j+1)>5):
+      if (hext.GetBinContent(i+1,j+1)>15):
         heffsum.Fill(heff.GetBinContent(i+1,j+1))
       hmulsum.Fill(hmulc.GetBinContent(i+1,j+1))
   #print '%s' % st

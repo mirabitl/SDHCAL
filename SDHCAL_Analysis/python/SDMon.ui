@@ -214,6 +214,12 @@
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
         <widget class="QTreeWidget" name="tvHistos">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <column>
           <property name="text">
            <string notr="true">1</string>
@@ -323,7 +329,7 @@
      <x>0</x>
      <y>0</y>
      <width>1252</width>
-     <height>25</height>
+     <height>29</height>
     </rect>
    </property>
   </widget>
