@@ -234,7 +234,7 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
 	//if (theTotalTime_<1.) continue;
 	//if ((theTotalCount_[d->getID()-1][d->getFrameAsicHeader(i)]/theTotalTime_)<700.) continue;
 	std::stringstream s;
-	s<<"/DIF"<<d->getID()<<"/Asic"<<d->getFrameAsicHeader(i);
+	s<<"/RAW/DIF"<<d->getID()<<"/Asic"<<d->getFrameAsicHeader(i);
 	TH1* han=rootHandler_->GetTH1(s.str()+"/Hits");
 	TH1* han20=rootHandler_->GetTH1(s.str()+"/Hits20");
 	TH1* hfr=rootHandler_->GetTH1(s.str()+"/Frequency");
@@ -289,7 +289,7 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
 	  if (theTotalTime_<1.) continue;
 	  if ((theTotalCount_[i][j]/theTotalTime_)<0.) continue;
 	  std::stringstream s;
-	  s<<"/DIF"<<i+1<<"/Asic"<<j;
+	  s<<"/RAW/DIF"<<i+1<<"/Asic"<<j;
 	  TH1* han=rootHandler_->GetTH1(s.str()+"/Hits");
 	  TH1* hfr=rootHandler_->GetTH1(s.str()+"/Frequency");
 	  if (han==NULL) continue;

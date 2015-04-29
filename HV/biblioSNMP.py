@@ -5,7 +5,7 @@ import os
 import subprocess
 
 #IP = "128.141.61.46"
-IP="128.141.174.125"
+IP="lyoilchv01"
 #192.168.0.2"
 
 MODULE_0 = 0
@@ -229,11 +229,15 @@ def getOutputStatus(module, voie):
 	
 	stdout = subprocess.check_output(commande, shell=True)
 	elts = stdout.split(' ')
+	#s1= int(elts[3],16)
+	#s2= int(elts[4],16)
+	#s3= int(elts[5],16)
 	#print stdout
 	#print elts[3]
 	#res = elts[3].split('(')
 	#print res
 	#return res #[0]
+	
 	return stdout
 	
 

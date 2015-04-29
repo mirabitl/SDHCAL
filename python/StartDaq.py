@@ -145,10 +145,10 @@ class StartDaq:
         self.daq_.scandns()
         self.daq_.download(self.state_)
         self.daq_.initialiseWriter(self.directory_)
-        self.InitializeZup()
+        self.InitialiseZup()
     def DiscoverDNS(self):
         self.daq_.scandns()
-        self.InitializeZup()
+        self.InitialiseZup()
     def DownloadDB(self):
         self.daq_.download(self.state_)
         

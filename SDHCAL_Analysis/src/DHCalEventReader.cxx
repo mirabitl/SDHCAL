@@ -242,21 +242,22 @@ void DHCalEventReader::serviceReadMemory()
 	    dtc=ShmProxy::getBufferDTC(cbuf,ib0);
 	    uint32_t difid=ShmProxy::getBufferDIF(cbuf,ib0);
 	    
-	    //      printf("FIFO read %d : %d %d \n",difid,dtc,gtc);
-	    
-	    std::map<uint64_t,std::vector<unsigned char*> >::iterator it_gtc=theBufferMap_.find(abcid);
+	    printf("FIFO read %d : %d %d %d \n",difid,dtc,gtc,abcid);
+	    uint32_t idx_abcid=gtc;
+	    std::map<uint64_t,std::vector<unsigned char*> >::iterator it_gtc=theBufferMap_.find(idx_abcid);
 	    
 	    
 	    if (it_gtc!=theBufferMap_.end())
 	      it_gtc->second.push_back(cdata);
 	    else
 	      {
-		it_gtc=theBufferMap_.find(abcid-1);
+#ifdef USINGABCID
+		it_gtc=theBufferMap_.find(idx_abcid-1);
 		if (it_gtc!=theBufferMap_.end())
 		  it_gtc->second.push_back(cdata);
 		else
 		  {
-		    it_gtc=theBufferMap_.find(abcid+1);
+		    it_gtc=theBufferMap_.find(idx_abcid+1);
 		    if (it_gtc!=theBufferMap_.end())
 		      it_gtc->second.push_back(cdata);
 		    else
@@ -265,11 +266,21 @@ void DHCalEventReader::serviceReadMemory()
 			v.clear();
 			v.push_back(cdata);
 			
-			std::pair<uint64_t,std::vector<unsigned char*> > p(abcid,v);
+			std::pair<uint64_t,std::vector<unsigned char*> > p(idx_abcid,v);
 			theBufferMap_.insert(p);
 			it_gtc=theBufferMap_.find(gtc);
 		      }
 		  }
+#else
+		std::vector<unsigned char*> v;
+		v.clear();
+		v.push_back(cdata);
+		
+		std::pair<uint64_t,std::vector<unsigned char*> > p(idx_abcid,v);
+		theBufferMap_.insert(p);
+		it_gtc=theBufferMap_.find(gtc);
+		
+#endif
 	      }
 	    
 	    

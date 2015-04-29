@@ -90,7 +90,7 @@ void SDHCALMonitor::FillTimeAsic(IMPL::LCCollectionVec* rhcol)
 		uint32_t asicid =(it->first)&0xFF;
 		
 		std::stringstream namec("");
-		namec<<"/Chamber"<<chid<<"/DIF"<<difid;
+		namec<<"/Noise/Chamber"<<chid<<"/DIF"<<difid;
 		
 
 		TH1* hocc= (TProfile*) rootHandler_->GetTH1(namec.str()+"/AsicOccupancy");	   
@@ -164,7 +164,7 @@ void SDHCALMonitor::DIFStudy( IMPL::LCCollectionVec* rhcol)
 
 		//INFO_PRINT("%d %d %d %d %d %d \n",x,y,difLocalI,difLocalJ,chamberLocalI,chamberLocalJ);
 		std::stringstream namec("");
-		namec<<"/Chamber"<<chid<<"/DIF"<<difid;
+		namec<<"/Noise/Chamber"<<chid<<"/DIF"<<difid;
 
 		TH1* hhits0 = rootHandler_->GetTH1(namec.str()+"/Hits0");	   
 		TH1* hhits1 = rootHandler_->GetTH1(namec.str()+"/Hits1");	   
@@ -192,7 +192,7 @@ void SDHCALMonitor::DIFStudy( IMPL::LCCollectionVec* rhcol)
 		hetdz->Fill(bc*1.);
 
 		std::stringstream namech("");
-		namech<<"/Chamber"<<chid;
+		namech<<"/Noise/Chamber"<<chid;
 
 		TH2* hthr0 = rootHandler_->GetTH2(namech.str()+"/Seuil0");
 		TH2* hthr1 = rootHandler_->GetTH2(namech.str()+"/Seuil1");
