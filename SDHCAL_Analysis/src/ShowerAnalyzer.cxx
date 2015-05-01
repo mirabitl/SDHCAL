@@ -8133,11 +8133,13 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
   float *h_z=(float *) malloc(1024*sizeof(float));
   unsigned int *h_layer=(unsigned int *) malloc(1024*sizeof(unsigned int));
   uint32_t nshower=0;
+  uint32_t nh0=0,nh1=0,nh2=0;
   //ComputerTrack ch(&cuts);
   //ch.DefaultCuts();
 #ifdef CLUSTER_SIZE_METHOD
   for (std::vector<RecoHit*>::iterator ih=vrh.begin();ih<vrh.end();ih++)
     {
+ 
       bool merged=false;
       for (std::vector<RECOCluster*>::iterator ic=clusters.begin();ic!=clusters.end();ic++)
 	{
@@ -8175,7 +8177,9 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
     }
   for (std::vector<RecoHit*>::iterator ih=vrh.begin();ih<vrh.end();ih++)
     {
-
+     if ((*ih)->getAmplitude()==2) nh0++;
+      if ((*ih)->getAmplitude()==1) nh1++;
+      if ((*ih)->getAmplitude()==3) nh2++;
       Components* ch=(Components*) (*ih)->Components();
       double w=0;
       if (ch->l2!=0) w=sqrt((ch->l1)/ch->l2);
@@ -8282,6 +8286,10 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
   TH1* hest3 = rootHandler_->GetTH1("/Clusters/HighRateNumberOfHit");
   TH1* hlom = rootHandler_->GetTH1("/Clusters/TrackLengthOverMip");
   TProfile* hrate=(TProfile*) rootHandler_->GetTH1("/Clusters/RATE");
+  TProfile* hrate0=(TProfile*) rootHandler_->GetTH1("/Clusters/RATE0");
+  TProfile* hrate1=(TProfile*) rootHandler_->GetTH1("/Clusters/RATE1");
+  TProfile* hrate2=(TProfile*) rootHandler_->GetTH1("/Clusters/RATE2");
+
   TProfile* hspill=(TProfile*) rootHandler_->GetTH1("/Clusters/MeanSpillRate");
   TH1* hpion = rootHandler_->GetTH1("/Clusters/pions");
   TH1* helectron = rootHandler_->GetTH1("/Clusters/electrons");
@@ -8297,6 +8305,9 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
       hest2 =rootHandler_->BookTH1("/Clusters/LowRateNumberOfHit",1000,0.,3000.);
       hest3 =rootHandler_->BookTH1("/Clusters/HighRateNumberOfHit",1000,0.,3000.);
       hrate =rootHandler_->BookProfile("/Clusters/RATE",200,0.,1000.,0.,2000.);
+      hrate0 =rootHandler_->BookProfile("/Clusters/RATE0",200,0.,1000.,0.,2000.);
+      hrate1 =rootHandler_->BookProfile("/Clusters/RATE1",200,0.,1000.,0.,2000.);
+      hrate2 =rootHandler_->BookProfile("/Clusters/RATE2",200,0.,1000.,0.,2000.);
       hspill =rootHandler_->BookProfile("/Clusters/MeanSpillRate",150,0.,20.,0.,2000.);
   
       hzx =(TH2F*)rootHandler_->BookTH2("/Clusters/HZXPOS",120,0.,170.,120,-10.,110.);
@@ -8615,6 +8626,9 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
   if (hest!=NULL) hest->Fill(nmip*1./vrh.size());
   if (hest1!=NULL) hest1->Fill(1.*vrh.size());
   if (hrate!=NULL) hrate->Fill(theLastRate_,1.*vrh.size());
+  if (hrate0!=NULL) hrate0->Fill(theLastRate_,1.*nh0);
+  if (hrate1!=NULL) hrate1->Fill(theLastRate_,1.*nh1);
+  if (hrate2!=NULL) hrate2->Fill(theLastRate_,1.*nh2);
   if (hspill!=NULL) hspill->Fill((theBCID_-currentTime_-theBCIDSpill_)*2E-7,theLastRate_);
   if (theLastRate_<120) 
     hest2->Fill(1.*vrh.size());

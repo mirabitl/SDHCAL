@@ -98,12 +98,16 @@ if (HT.getSysMainSwitch() == "on"):
                 correction = ((Veff/HV0-1)*100)
                 vcor =abs(Veff-HV0)
                 
+
+                print "|%d|%7.1f|%7.1f|%7.1f|%7.1f|%7.1f|" % (i+1,vset,vmon,Veff,Vexpected,vcor)
                 if  vcor>40 and vcor<200:
                     print "Channel %d Current voltage is %f and is effectively be %f => correction %f or %f " % (i,vmon,Veff,((Veff/vmon-1)*100),Vexpected )
                     lbad.append(i)
                     vbad.append(Vexpected)
+                if vcor>200:
+                    print "Channel %d is realy not OK Va falloir bouger  mn gars! Vmon %f Veff %f Vexp %f Vcor %f" % (i,vmon,Veff,Vexpected,vcor)
                 #else:
-                #    print "Channel %d is OK" % i
+                #    print "Channel %d is OK Vmon %f Veff %f Vexp %f Vcor %f" % (i,vmon,Veff,Vexpected,vcor)
 
             print "Number of channels needing correction %d \n" % len(lbad)
             for i in range(0,len(lbad)):
