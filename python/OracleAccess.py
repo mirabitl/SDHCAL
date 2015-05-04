@@ -178,6 +178,31 @@ class OracleAccess:
                 print e.getMessage()
             a.setModified(1)
 
+    def SetAsicGain(self,idif,iasic,vnew):
+        """
+        Modify gain of all asics by a factor gain1/gain0 on HR2
+        If not specified all Asics of a given DIF is changed
+        if idif is not specified all Asics of all Difs are changed
+        """
+
+        for a in self.asics:
+            if (a.getInt("DIF_ID") != idif and idif!=0 ):
+                continue;
+            if (a.getInt("HEADER") != iasic and iasic!=0 ):
+                continue;
+
+            vg=a.getIntVector("PAGAIN")
+            if (vnew==0):
+                vnew=1
+            for ipad in range(0,64):
+                vg[ipad]=vnew
+
+            try:
+                a.setIntVector("PAGAIN",vg)
+            except Exception, e:
+                print e.getMessage()
+            a.setModified(1)
+
 
     def RescaleGain(self,gain0,gain1,idif=0,iasic=0):
         """
