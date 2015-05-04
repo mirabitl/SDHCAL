@@ -1079,7 +1079,7 @@ IMPL::LCCollectionVec* DHCalEventReader::createRawCalorimeterHits(std::vector<ui
 
 	  //	  std::cout<<"rebd "<<TTT<<" "<<hit->getCellID1()<<std::endl;
 	   RawVec->addElement(hit);
-	   if (RawVec->getNumberOfElements()>100000) break; //too may noise
+	   //if (RawVec->getNumberOfElements()>100000) break; //too may noise
 	}
       }
     }
