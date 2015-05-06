@@ -184,6 +184,7 @@ bool ShmProxy::performWrite()
 	  int count = scandir("/dev/shm/monitor/closed/", &files, file_select_1, alphasort);  
 	  if (count<10*theNumberOfDIF_)
 	    {
+	      //ShmProxy::run2DevShm(theRunNumber_,"/dev/shm/monitor");
 	      for (std::vector<unsigned char*>::iterator iv=it->second.begin();iv!=it->second.end();iv++) 
 		{
 		  unsigned char* cdata=(*iv);
@@ -500,6 +501,25 @@ void ShmProxy::save2DevShm(unsigned char* cbuf,uint32_t size_buf,uint32_t dif_sh
    fd= ::open(st.str().c_str(),O_CREAT| O_RDWR | O_NONBLOCK,S_IRWXU);
    //std::cout<<st.str().c_str()<<" "<<fd<<std::endl;
    //write(fd,b,1);
+   ::close(fd);
+}
+void ShmProxy::run2DevShm(uint32_t &run,std::string memory_dir)
+{
+  std::stringstream s("");
+  s<<memory_dir<<"/RUN";
+  int fd= ::open(s.str().c_str(),O_CREAT| O_RDWR | O_NONBLOCK,S_IRWXU);
+   if (fd<0)
+     {
+       perror("No way to store to file :");
+       //std::cout<<" No way to store to file"<<std::endl;
+       return;
+     }
+   int ier=write(fd,&run,4);
+   if (ier!=4) 
+     {
+       std::cout<<"pb in write "<<ier<<std::endl;
+       return;
+     }
    ::close(fd);
 }
 

@@ -238,7 +238,7 @@ bool ShowerAnalyzer::decodeTrigger(LCCollection* rhcol, double tcut)
     }
   //streamlog_out(DEBUG)<<lbc <<" "<<tdif<<" # hits "<<rhcol->getNumberOfElements()<<std::endl;
 #endif
-
+  isNewSpill_=(tdif>tcut);
   if (tdif>tcut) 
     {
       lastSpill_=tTrigger_;
@@ -1496,6 +1496,7 @@ void ShowerAnalyzer::processEvent()
     rhcol=(IMPL::LCCollectionVec*) evt_->getCollection(collectionName_);
 
   INFO_PRINT("End of CreaetRaw %d \n",rhcol->getNumberOfElements());  
+  if (rhcol->getNumberOfElements()>4E6) return;
   theMonitoring_->FillTimeAsic(rhcol);
 
   //  LCTOOLS::printParameters(rhcol->parameters());
@@ -1506,7 +1507,7 @@ void ShowerAnalyzer::processEvent()
   // TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
   if (!decodeTrigger(rhcol,spillSize_) ) { if (rhcoltransient) delete rhcol;return;}
 
-
+  if (isNewSpill_) return;
   if (evt_->getEventNumber()%100 ==0)
     rootHandler_->writeSQL();
   //    rootHandler_->writeXML(theMonitoringPath_);
@@ -8304,11 +8305,11 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
       hest1 =rootHandler_->BookTH1("/Clusters/ShowerNumberOfHit",1000,0.,3000.);
       hest2 =rootHandler_->BookTH1("/Clusters/LowRateNumberOfHit",1000,0.,3000.);
       hest3 =rootHandler_->BookTH1("/Clusters/HighRateNumberOfHit",1000,0.,3000.);
-      hrate =rootHandler_->BookProfile("/Clusters/RATE",200,0.,1000.,0.,2000.);
-      hrate0 =rootHandler_->BookProfile("/Clusters/RATE0",200,0.,1000.,0.,2000.);
-      hrate1 =rootHandler_->BookProfile("/Clusters/RATE1",200,0.,1000.,0.,2000.);
-      hrate2 =rootHandler_->BookProfile("/Clusters/RATE2",200,0.,1000.,0.,2000.);
-      hspill =rootHandler_->BookProfile("/Clusters/MeanSpillRate",150,0.,20.,0.,2000.);
+      hrate =rootHandler_->BookProfile("/Clusters/RATE",50,0.,500.,0.,2000.);
+      hrate0 =rootHandler_->BookProfile("/Clusters/RATE0",50,0.,500.,0.,2000.);
+      hrate1 =rootHandler_->BookProfile("/Clusters/RATE1",50,0.,500.,0.,2000.);
+      hrate2 =rootHandler_->BookProfile("/Clusters/RATE2",50,0.,500.,0.,2000.);
+      hspill =rootHandler_->BookProfile("/Clusters/MeanSpillRate",80,0.,20.,0.,2000.);
   
       hzx =(TH2F*)rootHandler_->BookTH2("/Clusters/HZXPOS",120,0.,170.,120,-10.,110.);
 

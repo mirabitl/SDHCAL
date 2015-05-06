@@ -7,8 +7,12 @@ db='lyosdhcal11'
 writer='lyosdhcal11'
 register=0x89580000
 #register=0x815a1b00
+# State 145 with gain adjustment of arnaud  with max 254
+state="Dome_42chambres_Reference_v4_169"
+# State 145 with gain adjustment of arnaud  with max 147
+#state="Dome_42chambres_Reference_v4_168"
 # State 145 with 128 on all PAGAIN
-state="Dome_42chambres_Reference_v4_167"
+#state="Dome_42chambres_Reference_v4_167"
 # State 180 masque LM
 # state="Dome_42chambres_Reference_v4_162"
 # 115 + petit seup
