@@ -1045,6 +1045,17 @@ IMPL::LCCollectionVec* DHCalEventReader::createRawCalorimeterHits(std::vector<ui
 	//printf("\t %d %d %d \n",d->getID(),d->getFrameTimeToTrigger(i),d->getFrameAsicHeader(i));
       // Loop on Hits
       //      std::cout<<f->getDifId()<<" new frame "<<f->getAsicId()<<std::endl;
+	uint32_t np=0;
+      for (uint32_t j=0;j<64;j++)
+	{
+	  if (!(d->getFrameLevel(i,j,0) || d->getFrameLevel(i,j,1))) continue; 
+	  np++;
+	}
+      if (np==64)
+	{
+	  //std::cout<<"Full ASIC skipped "<<d->getID()<<":"<<d->getFrameAsicHeader(i)<<std::endl;
+	    continue;
+	}
       for (uint32_t j=0;j<64;j++)
 	{
 	  if (!(d->getFrameLevel(i,j,0) || d->getFrameLevel(i,j,1))) continue; // skip empty pads

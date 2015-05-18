@@ -661,8 +661,16 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   // DEBUG_PRINT("Building voulume for %d \n",seed);
   //uint32_t nhits=buildVolume(rhcol,seed);
   //  DEBUG_ DEBUG_PRINT("1");
+  std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> >::iterator iseed=reader_->getPhysicsEventMap().find(seed);
+   if (iseed==reader_->getPhysicsEventMap().end()) 
+   {
+      INFO_PRINT("Impossible \n");
+      return ;
+   }
+   if (iseed->second.size()<30) return;
   uint32_t nhits=buildVolume(seed);
   if (nhits==0) return;
+  if (nhits<30) return;
   //return;
   //DEBUG_PRINT("Edge detection for %d \n",seed);
   buildEdges();
@@ -688,8 +696,9 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 	      found=true;}
       if (found) theNplans_++;
     }
-  //  DEBUG_PRINT("On a trouve                                    %d hits                    %d plans -> %d \n",theHitVector_.size(),theNplans_,minChambersInTime_);
+  INFO_PRINT("On a trouve                                    %d hits                    %d plans -> %d \n",theHitVector_.size(),theNplans_,minChambersInTime_);
   // DEBUG_PRINT("3");
+  if (theHitVector_.size()<30) return;
   if (theNplans_<minChambersInTime_) return;  
   //this->drawHits(theHitVector_);getchar();
   //if (theNplans_<5) return;  
@@ -699,7 +708,7 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   Shower::computePrincipalComponents(tkhits,(double*) &ish);
 #undef KEEPTRACK
 #ifndef KEEPTRACK 
-  // DEBUG_PRINT(" Mean event parameter %f %f %f => %f \n",ish.lambda[0],ish.lambda[1],ish.lambda[2],sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])); 
+  INFO_PRINT(" Mean event parameter %f %f %f => %f \n",ish.lambda[0],ish.lambda[1],ish.lambda[2],sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])); 
   //  getchar();
   if (true && sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1)
     {
@@ -739,11 +748,11 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   std::cout<<t.bx_<<std::endl;
   */
 #endif
-  //  DEBUG_PRINT("Edge detection for %d \n",seed);
+  INFO_PRINT("Edge detection for %d \n",seed);
   //  buildEdges();
 
   uint32_t nshower=buildClusters(theHitVector_);
-
+  INFO_PRINT("After buildCluster for %d \n",seed);
   theEvent_.tracklength=theComputerTrack_->Length()*1.;
 
   uint32_t counts[3][5];
@@ -8129,10 +8138,10 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
   realc.clear();
   intc.clear();
   HoughCut cuts;
-  float *h_x=(float *) malloc(1024*sizeof(float));
-  float *h_y= (float *) malloc(1024*sizeof(float));
-  float *h_z=(float *) malloc(1024*sizeof(float));
-  unsigned int *h_layer=(unsigned int *) malloc(1024*sizeof(unsigned int));
+  float *h_x=(float *) malloc(4096*sizeof(float));
+  float *h_y= (float *) malloc(4096*sizeof(float));
+  float *h_z=(float *) malloc(4096*sizeof(float));
+  unsigned int *h_layer=(unsigned int *) malloc(4096*sizeof(unsigned int));
   uint32_t nshower=0;
   uint32_t nh0=0,nh1=0,nh2=0;
   //ComputerTrack ch(&cuts);
@@ -9237,10 +9246,10 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
   realc.clear();
   intc.clear();
   HoughCut cuts;
-  float *h_x=(float *) malloc(1024*sizeof(float));
-  float *h_y= (float *) malloc(1024*sizeof(float));
-  float *h_z=(float *) malloc(1024*sizeof(float));
-  unsigned int *h_layer=(unsigned int *) malloc(1024*sizeof(unsigned int));
+  float *h_x=(float *) malloc(4096*sizeof(float));
+  float *h_y= (float *) malloc(4096*sizeof(float));
+  float *h_z=(float *) malloc(4096*sizeof(float));
+  unsigned int *h_layer=(unsigned int *) malloc(4096*sizeof(unsigned int));
   uint32_t nshower=0;
   //ComputerTrack ch(&cuts);
   //ch.DefaultCuts();
