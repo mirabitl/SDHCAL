@@ -19,7 +19,7 @@
     </parameter>
     <!-- limit the number of processed records (run+evt): -->  
     <parameter name="MaxRecordNumber" value="8000" />  
-    <parameter name="SkipNEvents" value="0" />  
+    <parameter name="SkipNEvents" value="10" />  
     <parameter name="SupressCheck" value="false" />  
     <!--parameter name="GearXMLFile"> gear_ldc.xml </parameter-->  
     <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> DEBUG  </parameter> 

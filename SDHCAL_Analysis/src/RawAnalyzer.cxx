@@ -109,7 +109,7 @@ void RawAnalyzer::processEvent()
   struct timespec tp0,tp1;
   clock_gettime(CLOCK_REALTIME,&tp0);
   int64_t tlast=0;
-  
+#ifdef ENBEAMTEST  
   // reader_->findTimeSeeds(5);
 #define MAPSEARCH
   std::vector<uint32_t> seeds=reader_->getTimeSeeds();
@@ -207,6 +207,7 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
        seedm.size()/(tp1.tv_sec+1E-9*tp1.tv_nsec-tp0.tv_sec+1E-9*tp0.tv_nsec),nst,nst/allt,allt,evt_->getEventNumber()); 
 //return;
 //getchar();
+#endif
   for (std::vector<DIFPtr*>::iterator it = reader_->getDIFList().begin();it!=reader_->getDIFList().end();it++)
     {
       DIFPtr* d = (*it);

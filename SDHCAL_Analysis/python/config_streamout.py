@@ -5,7 +5,7 @@ useSynch=True
 #
 minChambersInTime=3;
 #filePath="/data/online/Results/DHCAL_%d_I%d_%d.slcio"
-filePath="/data/NAS/December2014/DHCAL_%d_I%d_%d.slcio"
-#fileOut="/tmp/DHCAL_%d_SO.slcio"
-fileOut="/data/NAS/December2014/STREAMOUT_tmp/DHCAL_%d_SO.slcio"
+filePath="/data/NAS/Avril2015/DHCAL_%d_I%d_%d.slcio"
+fileOut="/tmp/DHCAL_%d_SO.slcio"
+#fileOut="/data/NAS/December2014/STREAMOUT_tmp/DHCAL_%d_SO.slcio"
 nevent=0

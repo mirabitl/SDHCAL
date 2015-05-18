@@ -100,7 +100,7 @@ int main(int argc, char** argv ){
 #define USESTREAM
 #ifdef USESTREAM
   ShowerAnalyzer *a= new ShowerAnalyzer( &dher,&rootHandler);
-  //a->setminChambersInTime(3);
+  a->setminChambersInTime(7);
   RawAnalyzer *ar= new RawAnalyzer();
   //MulAnalyzer *am= new MulAnalyzer();
   //StripAnalyzer *as= new StripAnalyzer();
