@@ -1,0 +1,170 @@
+import sys,os,commands
+import  os
+import re
+import sys
+
+def SWIGSharedLibrary(env, library, sources, **args):
+  swigre = re.compile('(.*).i')
+  if env.WhereIs('swig') is None:
+    sourcesbis = []
+    for source in sources:
+      cName = swigre.sub(r'\1_wrap.c', source)
+      cppName = swigre.sub(r'\1_wrap.cc', source)
+      if os.path.exists(cName):
+        sourcesbis.append(cName)
+      elif os.path.exists(cppName):
+        sourcesbis.append(cppName)
+      else:
+        sourcesbis.append(source)
+  else:
+    sourcesbis = sources
+ 
+  if 'SWIGFLAGS' in args:
+    args['SWIGFLAGS'] += ['-python']
+  else:
+    args['SWIGFLAGS'] = ['-python'] + env['SWIGFLAGS']
+  args['SHLIBPREFIX']=""
+  if sys.version >= '2.5':
+    args['SHLIBSUFFIX']=".pyd"
+ 
+  cat=env.SharedLibrary(library, sourcesbis, **args)
+  return cat
+ 
+
+
+# environment
+#import xdaq
+#print xdaq.INCLUDES
+#print xdaq.LIBRARY_PATHS
+#print xdaq.LIBRARIES
+
+#print "----------------------------------------------"
+Decider('MD5-timestamp')
+XDAQ_ROOT="/opt/xdaq"
+DIM_ROOT="/usr/local/dim"
+DHCAL_ROOT=os.path.abspath("../..")
+
+fres=os.popen('uname -r')
+kl=fres.readline().split(".")
+
+platform="UBUNTU"
+if (kl[len(kl)-1][0:3] == 'el5'):
+    platform="SLC5"
+
+if (kl[len(kl)-2][0:3] == 'el6'):
+    platform="SLC6"
+print kl[len(kl)-2][0:3]
+fres=os.popen('uname -p')
+kp=fres.readline()
+osv=kp[0:len(kp)-1]
+
+print platform,osv
+
+Bit64=False
+Bit64=os.uname()[4]=='x86_64'
+
+NetLink=DHCAL_ROOT+"/netLink"
+if ( not os.path.exists(NetLink)):
+  NetLink=os.getenv("HOME")+"/netLink"
+kl=os.uname()[2].split(".")
+platform="UBUNTU"
+if (kl[len(kl)-1][0:3] == 'el5'):
+    platform="SLC5"
+
+if (kl[len(kl)-2][0:3] == 'el6'):
+    platform="SLC6"
+
+Arm=os.uname()[4]=='armv7l'
+
+if Arm or platform=="UBUNTU":
+  boostsystem='boost_system'
+  boostthread='boost_thread'
+else:
+  boostsystem='boost_system-mt'
+  boostthread='boost_thread-mt'
+
+Use_Dim=True
+#os.environ.has_key("DIM_DNS_NODE")
+
+# includes
+INCLUDES=['include',"/usr/include/boost141/"]
+
+if (Use_Dim):
+  INCLUDES.append(DIM_ROOT+"/dim")
+  if (platform=="SLC5"):
+    INCLUDES.append("/opt/xdaq/include/dim")
+INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
+
+CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2"]
+
+#Library ROOT + some of XDAQ + DB 
+
+
+#LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
+LIBRARIES=['pthread',  'm', 'stdc++',boostsystem,boostthread,'dim','netlink','cslm']
+
+
+
+#Library path XDAQ,DHCAL and ROOT + Python
+if (Bit64):
+	LIBRARY_PATHS=["/usr/lib64","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib"]
+else:
+  LIBRARY_PATHS=["/usr/lib","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib"]
+LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
+
+if Use_Dim:
+   CPPFLAGS.append("-DUSE_DIM")
+   if (platform=="SLC5"):
+     LIBRARY_PATHS.append("/opt/xdaq/lib")
+#   INCLUDES.append("/opt/xdaq/include/dim")
+#   LIBRARIES.append("dim")
+#   
+
+
+#link flags
+LDFLAGS=["-fPIC","-dynamiclib"]
+
+# SWIG
+SWIGSF=["-c++","-classic"]
+
+for i in INCLUDES:
+    SWIGSF.append("-I"+i)
+print SWIGSF
+
+# Create the Environment
+env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS,SWIGFLAGS=SWIGSF)
+
+#print "CC is:",env.subst('$CPPPATH')
+
+env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
+
+
+# Library source
+LIBRARY_SOURCES=Glob("#src/*.cc")
+
+#Shared library
+DimDS1820Server=env.SharedLibrary("#lib/DimDS1820Server",LIBRARY_SOURCES)
+
+
+#Daemon 
+EXE_LIBPATH=LIBRARY_PATHS
+EXE_LIBPATH.append("#lib")
+EXE_LIBS=LIBRARIES
+EXE_LIBS.append("DimDS1820Server")
+dds1820s=env.Program("bin/dimds1820",source="src/dds1820.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+
+#Python module
+_DimDS1820Server=env.PythonModule('_LDimDS1820Server', ['LDimDS1820Server.i'],LIBPATH="#lib",LIBS="DimDS1820Server")
+
+myinc=[]
+for x in Glob("#include/*.h"):
+  myinc.append("include/"+x.name)
+print myinc
+env.Install(DHCAL_ROOT+"/opt/dhcal/lib",DimDS1820Server)
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[dds1820s])
+###env.Install("/opt/dhcal/lib",DimDS1820Server)
+
+env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib",DHCAL_ROOT+"/opt/dhcal/bin"])
+
+
+
