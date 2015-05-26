@@ -3,7 +3,7 @@ import time
 import LSDHCALDimCtrl
 import subprocess
 import biblioSNMP as HT
-
+import mc
 
 from threading import Thread
 
@@ -53,7 +53,10 @@ class StartDaq:
            self.zuphost_=None
            self.zupdevice_=None
            self.zupport_=None
-           
+        try:
+           self.monitor_=config.monitor
+        except:
+           self.monitor_=None
     def addHost(self,h):
         self.host_.append(h)
     def addHostRange(self,name,first,last):
@@ -85,6 +88,10 @@ class StartDaq:
             cmd='ssh pi@'+self.zuphost_+' "sudo /etc/init.d/dimzupd status"'
             print cmd;os.system(cmd)
 
+         if self.monitor_!=None:
+            cmd='ssh acqilc@'+self.monitor_+' "sudo /etc/init.d/spinemonitord status"'
+            print cmd;os.system(cmd)
+
     def host_stop(self):
          for h in self.host_:
             cmd='ssh pi@'+h+' "sudo /etc/init.d/dimdifd stop"'
@@ -102,6 +109,10 @@ class StartDaq:
          if self.zuphost_!=None:
             cmd='ssh pi@'+self.zuphost_+' "sudo /etc/init.d/dimzupd stop"'
             print cmd;os.system(cmd)
+         if self.monitor_!=None:
+            cmd='ssh acqilc@'+self.monitor_+' "sudo /etc/init.d/spinemonitord stop"'
+            print cmd;os.system(cmd)
+
 
     def host_start(self):
          for h in self.host_:
@@ -120,6 +131,10 @@ class StartDaq:
          if self.zuphost_!=None:
             cmd='ssh pi@'+self.zuphost_+' "sudo /etc/init.d/dimzupd start"'
             print cmd;os.system(cmd)
+         if self.monitor_!=None:
+            cmd='ssh acqilc@'+self.monitor_+' "sudo /etc/init.d/spinemonitord start"'
+            print cmd;os.system(cmd)
+
 
     def rpi_stop(self):
          for h in self.host_:
@@ -180,6 +195,14 @@ class StartDaq:
         self.daq_.configure()
     def Start(self):
         self.daq_.start()
+
+    def StartMonitoring(self,run,ndif):
+       if self.monitor_!=None:
+          mc.startMonitoring(self.monitor_,8000,"/dev/shm/monitor",ndif,run)
+    def StopMonitoring(self):
+       if self.monitor_!=None:
+          mc.stopMonitoring(self.monitor_,8000)
+         
     def Stop(self):
         self.daq_.stop()
     def Destroy(self):

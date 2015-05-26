@@ -31,7 +31,7 @@
        <item>
         <widget class="QLineEdit" name="leHost">
          <property name="text">
-          <string>lyosdhcal12</string>
+          <string>lyosdhcal11</string>
          </property>
         </widget>
        </item>
@@ -116,6 +116,9 @@
        </item>
        <item>
         <widget class="QSpinBox" name="sbNbDIF">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="minimum">
           <number>1</number>
          </property>
@@ -142,6 +145,9 @@
        </item>
        <item>
         <widget class="QPushButton" name="pbStartMonitoring">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>Start Monitoring</string>
          </property>
@@ -149,6 +155,9 @@
        </item>
        <item>
         <widget class="QPushButton" name="pbStopMonitoring">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>Stop Monitoring</string>
          </property>
@@ -198,6 +207,9 @@
        </item>
        <item>
         <widget class="QPushButton" name="pbStartReadFile">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>Start Read file</string>
          </property>

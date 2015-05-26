@@ -119,6 +119,9 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
             self.PBStart.setEnabled(False)
             self.PBStop.setEnabled(True)
             self.PBDestroy.setEnabled(True)
+            self.daq_.daq_.getDifInfo()
+            nd=self.daq_.daq_.seenNumberOfDif()
+            self.daq_.StartMonitoring(self.daq_.daq_.getCurrentRun(),nd)
 
     def Stop(self):
         if self.daq_!=None:
@@ -127,7 +130,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
             self.PBStart.setEnabled(True)
             self.PBConfigure.setEnabled(True)
             self.PBDestroy.setEnabled(True)
-            
+            self.daq_.StopMonitoring()
     def Destroy(self):
         if self.daq_!=None:
             self.daq_.Destroy()
