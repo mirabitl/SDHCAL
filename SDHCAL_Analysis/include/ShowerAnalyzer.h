@@ -169,6 +169,9 @@ public:
 	void track2Db(std::vector<RecoCandTk> &tracks,std::vector<RecoPoint> &points);
 	void drawph(houghParam* p);
 
+	uint32_t CerenkovTagger(uint32_t difid,uint32_t seed);
+
+
 private:
 
 
@@ -288,6 +291,6 @@ private:
 	unsigned long long theLastBCID_,theIdxSpill_;
 	float theTimeInSpill_[20],theCountSpill_[20],theLastRate_;
 	float coreRatio_;
-	bool isNewSpill_,isPion_,isElectron_,isMuon_;
+	bool isNewSpill_,isPion_,isElectron_,isMuon_,isShower_;
 };
 #endif

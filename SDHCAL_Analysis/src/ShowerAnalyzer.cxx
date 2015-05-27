@@ -42,6 +42,39 @@ typedef std::vector<RecoHit*>::iterator recit;
 #endif
 
 
+uint32_t ShowerAnalyzer::CerenkovTagger(uint32_t difid,uint32_t seed)
+{
+  uint32_t tag=0;
+  for (std::vector<DIFPtr*>::iterator it = reader_->getDIFList().begin();it!=reader_->getDIFList().end();it++)
+    {
+      DIFPtr* d = (*it);
+      if (d->getID()!=difid) continue;
+      // Loop on frames
+      
+      for (uint32_t i=0;i<d->getNumberOfFrames();i++)
+  	{
+  	  //if (abs(d->getFrameTimeToTrigger(i)-seed)<2500)
+  	  //printf("\t Cerenkov %d \n",d->getFrameTimeToTrigger(i));
+
+  	  if (abs(seed-d->getFrameTimeToTrigger(i))<10)
+  	    {
+
+	      
+	      for (uint32_t j=0;j<64;j++)
+		{
+		  if (d->getFrameLevel(i,j,0)) tag +=1;
+		  if (d->getFrameLevel(i,j,1)) tag +=2;
+		}
+	      return tag;
+
+  	    }
+  	}
+
+	    
+    }
+  return 0;
+}
+
 void ShowerAnalyzer::initHistograms()
 {
   //  rootHandler_->BookTH1("/Clusters/EST1",100,0.,300.);
@@ -700,9 +733,59 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   // DEBUG_PRINT("3");
   if (theHitVector_.size()<30) return;
   if (theNplans_<minChambersInTime_) return;  
+
+  uint32_t tag=this->CerenkovTagger(3,seed);
+
+  //printf("TAG=======================> %d \n",tag);
+  TH1* hnoctag= rootHandler_->GetTH1("NoCTag");
+  TH1* hctag1= rootHandler_->GetTH1("CTag1");
+  TH1* hctag2= rootHandler_->GetTH1("CTag2");
+  TH1* hctag3= rootHandler_->GetTH1("CTag3");
+  TH1* hctag3notk= rootHandler_->GetTH1("CTag3Notk");
+  if (hnoctag==NULL)
+    {
+      hnoctag =rootHandler_->BookTH1( "NoCTag",1000,0.,3000.);
+      hctag1 =rootHandler_->BookTH1( "CTag1",1000,0.,3000.);
+      hctag2 =rootHandler_->BookTH1( "CTag2",1000,0.,3000.);
+      hctag3 =rootHandler_->BookTH1( "CTag3",1000,0.,3000.);
+      hctag3notk =rootHandler_->BookTH1( "CTag3Notk",1000,0.,3000.);
+
+    }
+
+  
+  if (tag==0)
+    hnoctag->Fill(theHitVector_.size());
+  if (tag==1)
+    hctag1->Fill(theHitVector_.size());
+  if (tag==2)
+    hctag2->Fill(theHitVector_.size());
+  if (tag==3)
+    hctag3->Fill(theHitVector_.size());
+
   //this->drawHits(theHitVector_);getchar();
   //if (theNplans_<5) return;  
   //this->drawHits(theHitVector_);getchar();
+  // for (std::vector<DIFPtr*>::iterator it = reader_->getDIFList().begin();it!=reader_->getDIFList().end();it++)
+  //   {
+  //     DIFPtr* d = (*it);
+  //     if (d->getID()!=3) continue;
+  //     // Loop on frames
+      
+  //     for (uint32_t i=0;i<d->getNumberOfFrames();i++)
+  // 	{
+  // 	  //if (abs(d->getFrameTimeToTrigger(i)-seed)<2500)
+  // 	  //printf("\t Cerenkov %d \n",d->getFrameTimeToTrigger(i));
+
+  // 	  if (abs(seed-d->getFrameTimeToTrigger(i))<20)
+  // 	    {
+  // 	      printf("\t Seed found %d \n",seed,d->getFrameTimeToTrigger(i));
+  // 	      this->drawHits(theHitVector_);getchar();
+  // 	      break;
+  // 	    }
+  // 	}
+
+	    
+  //   }
 
   // DEBUG_PRINT("4");
   Shower::computePrincipalComponents(tkhits,(double*) &ish);
@@ -716,6 +799,8 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
       
       this->buildTracks(theHitVector_);
       //  DEBUG_PRINT("6\n");
+      if (theComputerTrack_->getTracks().size()>0) tag+=4;
+
       if (theComputerTrack_->getTracks().size()>0 &&false)
 	{
 	  this->drawHits(theHitVector_);getchar();  }
@@ -728,6 +813,8 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 	  //return;
     }
   // return;
+  if (tag==3)
+    hctag3notk->Fill(theHitVector_.size());
   if (sqrt((ish.lambda[0])/ish.lambda[2])<0.05) return;
 
   if (ish.xm[0]<5) return;
@@ -757,6 +844,9 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
     {
       printf("Pion seed %d \n",seed);
     }
+  else
+    if (isShower_)
+       printf("Shower seed %d \n",seed);
   theEvent_.tracklength=theComputerTrack_->Length()*1.;
 
   uint32_t counts[3][5];
@@ -1496,7 +1586,7 @@ void ShowerAnalyzer::processEvent()
       //
       // getchar();
       seed.clear();
-      INFO_PRINT("Calling CreaetRaw %d\n",minChambersInTime_);
+      //INFO_PRINT("Calling CreaetRaw %d\n",minChambersInTime_);
       reader_->findDIFSeeds(minChambersInTime_);
       rhcol=reader_->createRawCalorimeterHits(reader_->getDIFSeeds());
       //rhcol=reader_->createRawCalorimeterHits(seed);
@@ -1508,7 +1598,7 @@ void ShowerAnalyzer::processEvent()
   else
     rhcol=(IMPL::LCCollectionVec*) evt_->getCollection(collectionName_);
 
-  INFO_PRINT("End of CreaetRaw %d \n",rhcol->getNumberOfElements());  
+  //INFO_PRINT("End of CreaetRaw %d \n",rhcol->getNumberOfElements());  
   if (rhcol->getNumberOfElements()>4E6) return;
   theMonitoring_->FillTimeAsic(rhcol);
 
@@ -1574,28 +1664,43 @@ void ShowerAnalyzer::processEvent()
  
   theNbShowers_=0;
   theNbTracks_=0;
-
+  bool hasPion=false;
   for (uint32_t is=0;is<vseeds.size();is++)
     {
 
       this->processSeed(rhcol,vseeds[is]);
+      hasPion= isPion_||hasPion;
 
+      
     }
 
-  // for (std::vector<DIFPtr*>::iterator it = reader_->getDIFList().begin();it!=reader_->getDIFList().end();it++)
-  //   {
-  //     DIFPtr* d = (*it);
-  // 	  if (d->getID()!=3) continue;
-  // 	  // Loop on frames
+  if (hasPion || true)
+    {
+      // for (std::vector<DIFPtr*>::iterator it = reader_->getDIFList().begin();it!=reader_->getDIFList().end();it++)
+      // 	{
+      // 	  DIFPtr* d = (*it);
+      // 	  if (d->getID()!=3) continue;
+      // 	  // Loop on frames
 	  
-  // 	  for (uint32_t i=0;i<d->getNumberOfFrames();i++)
-  // 	    {
-  // 	      //if (abs(d->getFrameTimeToTrigger(i)-seed)<2500)
-  // 	    printf("\t Cerenkov %d \n",d->getFrameTimeToTrigger(i));
+      // 	  for (uint32_t i=0;i<d->getNumberOfFrames();i++)
+      // 	    {
+      // 	      //if (abs(d->getFrameTimeToTrigger(i)-seed)<2500)
+      // 	    printf("\t Cerenkov %d \n",d->getFrameTimeToTrigger(i));
+
+      // 	    for (uint32_t is=0;is<vseeds.size();is++)
+      // 	      {
+      // 		if (abs(vseeds[is]-d->getFrameTimeToTrigger(i))<20)
+      // 		  {
+      // 		    printf("\t Seed found %d \n",vseeds[is]);
+      // 		    break;
+      // 		  }
+      // 	      }
+
 	    
-  // 	    }
-  //   }
-  // getchar();
+      // 	    }
+      // 	}
+      // //      getchar();
+    }
 
   //if (rhcoltransient) delete rhcol;return;  
   if ((theBCID_-theLastBCID_)*2E-7>5)
@@ -8502,6 +8607,14 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
 #ifdef DRAW_HISTOS
   bool doPlot=draw_;// &&int(hest1->GetEntries())%30==40;
   doPlot=false;
+  uint32_t seed=currentTime_;
+
+
+
+
+
+
+
   if (doPlot)
     {
   if (TCCluster==NULL)
@@ -8605,6 +8718,8 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
   isPion_=(lom>1E-2 && lom<0.5) && fpi<15 ;
   isElectron_=lom<1E-2;
   isMuon_=lom>0.5;
+
+  isShower_=true;
   //  if ((lom>1E-2 && lom<0.5) &&theLastRate_<520. && fpi>3 && fpi<15  )
   if (isPion_)
     {
