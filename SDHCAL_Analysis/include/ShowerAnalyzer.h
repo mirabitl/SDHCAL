@@ -288,6 +288,6 @@ private:
 	unsigned long long theLastBCID_,theIdxSpill_;
 	float theTimeInSpill_[20],theCountSpill_[20],theLastRate_;
 	float coreRatio_;
-	bool isNewSpill_;
+	bool isNewSpill_,isPion_,isElectron_,isMuon_;
 };
 #endif

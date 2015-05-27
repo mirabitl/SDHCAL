@@ -696,7 +696,7 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 	      found=true;}
       if (found) theNplans_++;
     }
-  INFO_PRINT("On a trouve                                    %d hits                    %d plans -> %d \n",theHitVector_.size(),theNplans_,minChambersInTime_);
+  //INFO_PRINT("On a trouve                                    %d hits                    %d plans -> %d \n",theHitVector_.size(),theNplans_,minChambersInTime_);
   // DEBUG_PRINT("3");
   if (theHitVector_.size()<30) return;
   if (theNplans_<minChambersInTime_) return;  
@@ -708,7 +708,7 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   Shower::computePrincipalComponents(tkhits,(double*) &ish);
 #undef KEEPTRACK
 #ifndef KEEPTRACK 
-  INFO_PRINT(" Mean event parameter %f %f %f => %f \n",ish.lambda[0],ish.lambda[1],ish.lambda[2],sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])); 
+  //INFO_PRINT(" Mean event parameter %f %f %f => %f \n",ish.lambda[0],ish.lambda[1],ish.lambda[2],sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])); 
   //  getchar();
   if (true && sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1)
     {
@@ -748,11 +748,15 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   std::cout<<t.bx_<<std::endl;
   */
 #endif
-  INFO_PRINT("Edge detection for %d \n",seed);
+  //INFO_PRINT("Edge detection for %d \n",seed);
   //  buildEdges();
 
   uint32_t nshower=buildClusters(theHitVector_);
-  INFO_PRINT("After buildCluster for %d \n",seed);
+  //INFO_PRINT("After buildCluster for %d \n",seed);
+  if (isPion_)
+    {
+      printf("Pion seed %d \n",seed);
+    }
   theEvent_.tracklength=theComputerTrack_->Length()*1.;
 
   uint32_t counts[3][5];
@@ -1570,12 +1574,28 @@ void ShowerAnalyzer::processEvent()
  
   theNbShowers_=0;
   theNbTracks_=0;
+
   for (uint32_t is=0;is<vseeds.size();is++)
     {
 
       this->processSeed(rhcol,vseeds[is]);
 
     }
+
+  // for (std::vector<DIFPtr*>::iterator it = reader_->getDIFList().begin();it!=reader_->getDIFList().end();it++)
+  //   {
+  //     DIFPtr* d = (*it);
+  // 	  if (d->getID()!=3) continue;
+  // 	  // Loop on frames
+	  
+  // 	  for (uint32_t i=0;i<d->getNumberOfFrames();i++)
+  // 	    {
+  // 	      //if (abs(d->getFrameTimeToTrigger(i)-seed)<2500)
+  // 	    printf("\t Cerenkov %d \n",d->getFrameTimeToTrigger(i));
+	    
+  // 	    }
+  //   }
+  // getchar();
 
   //if (rhcoltransient) delete rhcol;return;  
   if ((theBCID_-theLastBCID_)*2E-7>5)
@@ -8582,16 +8602,45 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
        return nshower;
     }
 #ifdef FILL_HISTOS
-  if ((lom>1E-2 && lom<0.5) &&theLastRate_<520. && fpi>3 && fpi<15  )
-    hpion->Fill(vrh.size());
-  if ((lom<1E-2))
+  isPion_=(lom>1E-2 && lom<0.5) && fpi<15 ;
+  isElectron_=lom<1E-2;
+  isMuon_=lom>0.5;
+  //  if ((lom>1E-2 && lom<0.5) &&theLastRate_<520. && fpi>3 && fpi<15  )
+  if (isPion_)
+    {
+      hpion->Fill(vrh.size());
+      for (std::vector<RecoHit*>::iterator ih=vrh.begin();ih<vrh.end();ih++)
+	{
+	  bool thr[3];
+	  thr[0]=(*ih)->getAmplitude()==2;
+	  thr[1]=(*ih)->getAmplitude()==1;
+	  thr[2]=(*ih)->getAmplitude()==3;
+      
+	  std::stringstream namech("");
+	  namech<<"/Clusters/Pions/Chamber"<<(*ih)->chamber();
+
+	  TH2* hthr0 = rootHandler_->GetTH2(namech.str()+"/Seuil0");
+	  TH2* hthr1 = rootHandler_->GetTH2(namech.str()+"/Seuil1");
+	  TH2* hthr2 = rootHandler_->GetTH2(namech.str()+"/Seuil2");
+	  if (hthr0==NULL)
+	    {
+	      hthr0 =rootHandler_->BookTH2( namech.str()+"/Seuil0",96,0.,96.,96,0.,96.);
+	      hthr1 =rootHandler_->BookTH2( namech.str()+"/Seuil1",96,0.,96.,96,0.,96.);
+	      hthr2 =rootHandler_->BookTH2( namech.str()+"/Seuil2",96,0.,96.,96,0.,96.);
+	    }
+	  int chamberLocalI=(*ih)->I();
+	  int chamberLocalJ=(*ih)->J();
+	  if (thr[1]||thr[2]) hthr0->Fill(chamberLocalI*1.,chamberLocalJ*1.);
+	  hthr1->Fill(chamberLocalI*1.,chamberLocalJ*1.);
+	  if (thr[2]) hthr2->Fill(chamberLocalI*1.,chamberLocalJ*1.);
+	}
+
+    }
+  if (isElectron_)
     helectron->Fill(vrh.size());
-  if ((lom>0.5))
+  if (isMuon_)
     hmuon->Fill(vrh.size());
 #endif
-   //if (lom>1E-4) //select electrons
-    {
-    }
 #ifdef DRAW_HISTOS
   TLine* l[100];
   TLine* l1[100];
