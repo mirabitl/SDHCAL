@@ -5,12 +5,16 @@ import sys
 import StartDaq
 import postelog
 import DaqUI
+from ROOT import *
+import mc
+
 class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow): 
     def __init__(self, parent=None):
         super(ImageViewer, self).__init__(parent)
         self.setupUi(self)
         self.daq_=None
         self.isLVOn_=False
+        self.canvas =None
         self.connectActions()
     def CreateDaq(self):
         print "On y est"
@@ -169,6 +173,128 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
                     QtGui.QMessageBox.about(self,"One DIF  failed" ,"Debug la %d Mon gros !" % self.daq_.daq_.seenId(i))
 
                 self.TWDIF.setItem(i+1, 6,it_state)
+    def Refresh(self):
+        host=self.daq_.monitor_
+        if (host!=None):
+            self.histoList=mc.getHistoList(host,8000)
+            self.fillTvhistos()
+    def fillTvhistos(self):
+        hl=self.histoList
+        self.tvHistos.clear()
+        # Found largest level
+        maxlevel=0
+        for hn in sorted(hl):
+            fdirs= hn.split("/")
+            if (len(fdirs)>(maxlevel+1)): 
+                maxlevel=len(fdirs)-1
+        print maxlevel
+        
+        # Loop on level
+        topLevelItem=None
+        for hn in sorted(hl):
+            #print hn,"----------------------------------------------"
+            fdirs= hn.split("/")
+
+            
+            splitFileName = QtCore.QString(hn).split("/");
+            #print len(splitFileName)
+
+            # add root folder as top level item if treeWidget doesn't already have it
+            #print "TEST ",self.tvHistos.findItems(splitFileName[0], QtCore.Qt.MatchFixedString),len(self.tvHistos.findItems(splitFileName[0], QtCore.Qt.MatchFixedString)),splitFileName[0]
+            if (len(self.tvHistos.findItems(splitFileName[0], QtCore.Qt.MatchFixedString))==0):
+            
+                topLevelItem = QtGui.QTreeWidgetItem();
+                topLevelItem.setText(0, splitFileName[0]);
+                self.tvHistos.addTopLevelItem(topLevelItem);
+            
+
+            parentItem = topLevelItem;
+
+            # iterate through non-root directories (file name comes after)
+            for i in range(1,len(splitFileName)):
+            
+                # iterate through children of parentItem to see if this directory exists
+                thisDirectoryExists = False;
+                for j in range(0,parentItem.childCount()):
+                    if (splitFileName[i] == parentItem.child(j).text(0)):
+                        thisDirectoryExists = True;
+                        parentItem = parentItem.child(j);
+                        break;
+                    
+                
+
+                if (not thisDirectoryExists):
+                    parentItem = QtGui.QTreeWidgetItem(parentItem);
+                    parentItem.setText(0, splitFileName[i]);
+                
+            
+
+            #childItem = QtGui.QTreeWidgetItem(parentItem);
+            #childItem.setText(0, splitFileName.last());
+        
+
+        #setCentralWidget(self.tvHistos);
+
+
+
+
+
+
+
+
+
+
+    def GetEff(self):
+        host=self.daq_.monitor_
+        if (host!=None):
+            l=mc.GetEff(host,8000,self.sbPlane.value())
+            print l
+            if (self.canvas==None):
+                self.canvas=TCanvas("HistoGrams","Histograms")
+            self.heff=TH2F(l[2])
+            self.canvas.cd()
+        
+            self.heff.Draw("COLZ")
+            self.canvas.Update()
+    def histoClick(self):
+        host=self.daq_.monitor_
+        if (host==None):
+            return
+        print "Clicked"
+        sel=self.tvHistos.currentItem()
+        ldir=[]
+        c=sel
+        subd=False
+        while c!=None:
+            ldir.append(c.text(0).toAscii())
+            c=c.parent()
+        if (len(ldir)==1):
+            hn=ldir[0]
+        else:
+            subd=True
+            hn=""
+            for i in reversed(ldir):
+                hn=hn+i+"/"
+        if (subd):
+            hn=hn[0:len(hn)-1]
+        print hn
+        h=mc.getHisto(host,8000,hn)
+        if (self.canvas==None):
+            self.canvas=TCanvas("HistoGrams","Histograms")
+        
+        if (h==None): 
+            return
+        self.canvas.cd()
+        if (h.IsA().GetName() == 'TH2F'):
+            if (self.cb2DOptions.currentText().toAscii() !='NONE'):
+                dopt=self.cb2DOptions.currentText().toAscii()
+                print str(dopt)
+                h.Draw(str(dopt))
+            else:
+                h.Draw()
+        else:
+            h.Draw()
+        self.canvas.Update()
             
     def accept(self):
         print "titi"
@@ -206,7 +332,9 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         self.PBDestroy.clicked.connect(self.Destroy)
         self.PBUpdate.clicked.connect(self.Update)
         self.pbQuit.clicked.connect(self.Quit)
-
+        self.pbRefresh.clicked.connect(self.Refresh)
+        self.pbGetEff.clicked.connect(self.GetEff)
+        self.tvHistos.doubleClicked.connect(self.histoClick)
     def main(self):
         self.show()
         
