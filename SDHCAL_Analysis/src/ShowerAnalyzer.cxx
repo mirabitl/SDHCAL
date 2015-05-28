@@ -815,6 +815,7 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   // return;
   if (tag==3)
     hctag3notk->Fill(theHitVector_.size());
+  theCerenkovTag_=tag;
   if (sqrt((ish.lambda[0])/ish.lambda[2])<0.05) return;
 
   if (ish.xm[0]<5) return;
@@ -8427,6 +8428,7 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
 
   TProfile* hspill=(TProfile*) rootHandler_->GetTH1("/Clusters/MeanSpillRate");
   TH1* hpion = rootHandler_->GetTH1("/Clusters/pions");
+  TH1* hproton = rootHandler_->GetTH1("/Clusters/protons");
   TH1* helectron = rootHandler_->GetTH1("/Clusters/electrons");
   TH1* hmuon = rootHandler_->GetTH1("/Clusters/muons");
 
@@ -8434,6 +8436,7 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
     {
        DEBUG_PRINT("Booking\n");
       hpion =rootHandler_->BookTH1("/Clusters/pions",1000,0.,3000.);
+      hproton =rootHandler_->BookTH1("/Clusters/protons",1000,0.,3000.);
       helectron =rootHandler_->BookTH1("/Clusters/electrons",1000,0.,3000.);
       hmuon =rootHandler_->BookTH1("/Clusters/muons",1000,0.,1000.);
       hest1 =rootHandler_->BookTH1("/Clusters/ShowerNumberOfHit",1000,0.,3000.);
@@ -8715,12 +8718,19 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
        return nshower;
     }
 #ifdef FILL_HISTOS
-  isPion_=(lom>1E-2 && lom<0.5) && fpi<15 ;
+  isPion_=(lom>1E-2 && lom<0.5) && fpi<15 && theCerenkovTag_!=0 ;
+  isProton_=(lom>1E-2 && lom<0.5) && fpi<15 && theCerenkovTag_==0 ;
   isElectron_=lom<1E-2;
   isMuon_=lom>0.5;
-
+  
   isShower_=true;
+  // printf("Ck tag = %d %d %d\n",theCerenkovTag_,isPion_,isProton_);
   //  if ((lom>1E-2 && lom<0.5) &&theLastRate_<520. && fpi>3 && fpi<15  )
+  if (isProton_)
+    {
+      printf("Filling hproton\n");
+      hproton->Fill(vrh.size());
+    }
   if (isPion_)
     {
       hpion->Fill(vrh.size());
