@@ -59,6 +59,12 @@ void DimCCCServer::allocateCommands()
   s0.str(std::string());
   s0<<"/DCS/"<<hname<<"/TESTREGISTERWRITE";
   testregisterwriteCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
+  s0.str(std::string());
+  s0<<"/DCS/"<<hname<<"/REGISTERREAD";
+  registerreadCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
+  s0.str(std::string());
+  s0<<"/DCS/"<<hname<<"/REGISTERWRITE";
+  registerwriteCommand_=new DimCommand(s0.str().c_str(),"I:2",this);
 
 }
 void DimCCCServer::doInitialise(std::string device)
@@ -151,5 +157,22 @@ void DimCCCServer::commandHandler()
 	register_=theManager_->getCCCReadout()->DoReadRegister(2);
       registerService_->updateService();
 	}
+
+  if (currCmd==registerwriteCommand_)
+    {
+      int32_t* regctrl=(int32_t*) currCmd->getData();
+      if (theManager_!=NULL)
+	theManager_->getCCCReadout()->DoWriteRegister(regctrl[0],regctrl[1]);
+    }
+
+  if (currCmd==registerreadCommand_)
+    {
+      
+      int32_t regaddr=currCmd->getInt();
+      register_=0;
+      if (theManager_!=NULL)
+	register_=theManager_->getCCCReadout()->DoReadRegister(regaddr);
+      registerService_->updateService();
+    }
   return;
 }
