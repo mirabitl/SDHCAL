@@ -844,7 +844,8 @@ void  DimDIFServer::infoHandler( )
   for (int i=0;i<255;i++)
     {
       if (curr!=theDBDimInfo_[i]) continue;
-      memcpy(&theDIFDbInfo_[i],curr->getData(),sizeof(DIFDbInfo));
+      //memcpy(&theDIFDbInfo_[i],curr->getData(),sizeof(DIFDbInfo));
+      memcpy(&theDIFDbInfo_[i],curr->getData(),curr->getSize());
       printf("Dim info read %d %d \n",theDIFDbInfo_[i].id,theDIFDbInfo_[i].nbasic);
     }
 }
