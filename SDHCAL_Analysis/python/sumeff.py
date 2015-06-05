@@ -1,11 +1,10 @@
 import accessHisto as ah;from ROOT import *
 import os,sys
 #f=TFile("/scratch/LMNewAnalyzer_999999.root")
-if len(sys.argv) > 2:
+if len(sys.argv) > 1:
     run=int(sys.argv[1] )
-    hv=sys.argv[2]
-#f=TFile("/tmp/LMNewAnalyzer_%d.root" % run)
-f=TFile("/dev/shm/LMonitoring.root" )
+f=TFile("/tmp/Monitoring%d.root" % run)
+#f=TFile("/dev/shm/LMonitoring.root" )
 
 l={}
 for i in range(1,50):

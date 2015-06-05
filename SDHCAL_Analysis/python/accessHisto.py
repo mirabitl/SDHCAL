@@ -230,9 +230,13 @@ def GetEff(plan):
   dirname='/Plan%d' % plan
   extname= dirname+'/ext'
   nearname= dirname+'/found'
+  nearname1= dirname+'/found1'
+  nearname2= dirname+'/found2'
   mulname= dirname+'/mul'
   hext = getth2(extname)
   hnear = getth2(nearname)
+  hnear1 = getth2(nearname1)
+  hnear2 = getth2(nearname2)
   hmul = getth2(mulname)
   hext.Draw("COLZ")
   
@@ -274,6 +278,8 @@ def GetEff(plan):
   l.append(ntk)
   l.append(hext.GetEntries())
   l.append(hnear.GetEntries())
+  l.append(hnear1.GetEntries())
+  l.append(hnear2.GetEntries())
   
   return l
  

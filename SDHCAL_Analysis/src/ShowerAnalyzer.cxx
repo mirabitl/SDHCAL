@@ -8427,6 +8427,7 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
   TProfile* hrate2=(TProfile*) rootHandler_->GetTH1("/Clusters/RATE2");
 
   TProfile* hspill=(TProfile*) rootHandler_->GetTH1("/Clusters/MeanSpillRate");
+  TH1* hhadron = rootHandler_->GetTH1("/Clusters/hadrons");
   TH1* hpion = rootHandler_->GetTH1("/Clusters/pions");
   TH1* hproton = rootHandler_->GetTH1("/Clusters/protons");
   TH1* helectron = rootHandler_->GetTH1("/Clusters/electrons");
@@ -8435,6 +8436,7 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
   if (hest1==NULL)
     {
        DEBUG_PRINT("Booking\n");
+      hhadron =rootHandler_->BookTH1("/Clusters/hadrons",1000,0.,3000.);
       hpion =rootHandler_->BookTH1("/Clusters/pions",1000,0.,3000.);
       hproton =rootHandler_->BookTH1("/Clusters/protons",1000,0.,3000.);
       helectron =rootHandler_->BookTH1("/Clusters/electrons",1000,0.,3000.);
@@ -8734,6 +8736,10 @@ uint32_t ShowerAnalyzer::buildClusters(std::vector<RecoHit*> &vrh)
   if (isPion_)
     {
       hpion->Fill(vrh.size());
+    }
+  if (isPion_ || isProton_ )
+    {
+      hhadron->Fill(vrh.size());
       for (std::vector<RecoHit*>::iterator ih=vrh.begin();ih<vrh.end();ih++)
 	{
 	  bool thr[3];
