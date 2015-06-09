@@ -194,7 +194,7 @@ void DHCalEventReader::serviceReadMemory()
   theBufferMap_.clear();
   while (monitoringStart_)
     {
-      printf("On liste \n");
+      //printf("On liste \n");
         int count,i;  
 	struct direct **files;  
 	unsigned char cbuf[0x20000];
@@ -242,7 +242,7 @@ void DHCalEventReader::serviceReadMemory()
 	    dtc=ShmProxy::getBufferDTC(cbuf,ib0);
 	    uint32_t difid=ShmProxy::getBufferDIF(cbuf,ib0);
 	    
-	    printf("FIFO read %d : %d %d %d \n",difid,dtc,gtc,abcid);
+	    //printf("FIFO read %d : %d %d %d \n",difid,dtc,gtc,abcid);
 	    uint32_t idx_abcid=gtc;
 	    std::map<uint64_t,std::vector<unsigned char*> >::iterator it_gtc=theBufferMap_.find(idx_abcid);
 	    

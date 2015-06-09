@@ -1,0 +1,14 @@
+#!/bin/bash
+
+
+trap 'kill -TERM $PID' TERM INT
+
+source /home/acqilc/SDHCAL/bashrc
+cd  /home/acqilc/SDHCAL/SDHCAL_Analysis
+export LD_LIBRARY_PATH=.:./lib:$LD_LIBRARY_PATH
+python/MonitoringAnalysis.py &
+PID=$!
+wait $PID
+trap - TERM INT
+wait $PID
+EXIT_STATUS=$?

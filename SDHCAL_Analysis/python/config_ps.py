@@ -1,18 +1,21 @@
-marlin="/home/mirabito/Analysis_21Mai2012/Slot1_39_MARLIN.xml"
-rebuild=True
-useSynch=True
+#marlin="./Slot1_39_MARLIN.xml"
+marlin="./m3_avril2015.xml"
+rebuild=False
+useSynch=False
 #
-minChambersInTime=12;
-tkMinPoint=8;
-tkExtMinPoint=7;
-tkChi2Cut=0.000100000000001;  
-tkExtChi2Cut=0.000100000000001;  
+minChambersInTime=8;
+tkMinPoint=5;
+tkExtMinPoint=4;
+tkChi2Cut=0.00000000000001;  
+tkExtChi2Cut=0.00000000000001;  
 
-tkDistCut=5.;  
+tkDistCut=9.;  
 tkExtDistCut=5.;
 
 #
-filePath="/data/NAS/Results/PS_04_2012/DHCAL_%d_I%d_%d.slcio"
+#filePath="/data/NAS/Results/PS_04_2012/DHCAL_%d_I%d_0.slcio"
+#filePath="/data/NAS/BeamTest2012Compressed/DHCAL_%d_I%d_%d.slcio"
+filePath="/data/NAS/May2015/DHCAL_%d_I%d_%d.slcio"
 nevent=0
-rootFilePath="/home/mirabito/Tracks%d.root"
+rootFilePath="../Tracks%d_%d.root"
 treeName="./showers_%d_%d.root"

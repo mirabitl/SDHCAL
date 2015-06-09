@@ -17,6 +17,7 @@
 #include "DHCALAnalyzer.h"
 #include "ChamberAnalyzer.h"
 #include "ShowerAnalyzer.h"
+#include "TrackAnalyzer.h"
 #include "RawAnalyzer.h"
 
 #include "FilterAnalyzer.h"
@@ -37,6 +38,7 @@
 %include "DHCALAnalyzer.h"
 %include "ChamberAnalyzer.h"
 %include "ShowerAnalyzer.h"
+%include "TrackAnalyzer.h"
 %include "RawAnalyzer.h"
 %include "FilterAnalyzer.h"
 %include "IO/LCRunListener.h"
