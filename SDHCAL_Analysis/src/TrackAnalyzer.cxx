@@ -32,6 +32,82 @@ typedef std::vector<RecoHit*>::iterator recit;
 
 #define posError 0.5
 
+uint32_t TrackAnalyzer::PMAnalysis(uint32_t bifid)
+{
+
+ 
+  TH1* hpattag= rootHandler_->GetTH1("PatternTagNoSeed");
+
+  if (hpattag==NULL)
+    {
+      hpattag =rootHandler_->BookTH1( "PatternTagNoSeed",100,0.1,100.1);
+
+
+    }
+
+
+  for (std::vector<DIFPtr*>::iterator itb = reader_->getDIFList().begin();itb!=reader_->getDIFList().end();itb++)
+    {
+      DIFPtr* d = (*itb);
+      if (d->getID()!=bifid) continue;
+      // Loop on frames
+      
+      for (uint32_t i=0;i<d->getNumberOfFrames();i++)
+  	{
+  	  //if (abs(d->getFrameTimeToTrigger(i)-seed)<200)
+	  //printf(" Frame %d  Cerenkov time %d  \n",i,d->getFrameTimeToTrigger(i));
+	  float ti=d->getFrameTimeToTrigger(i)*1.;
+	  
+	  std::bitset<64> chb(0);
+	  for (std::vector<DIFPtr*>::iterator it = reader_->getDIFList().begin();it!=reader_->getDIFList().end();it++)
+	    {
+	      DIFPtr* dc = (*it);
+
+
+	      std::map<unsigned int,DifGeom>::iterator idg = reader_->getDifMap().find(dc->getID());
+	      DifGeom& difgeom = idg->second;
+	      uint32_t chid = idg->second.getChamberId();
+	      std::stringstream s;
+	      s<<"BIFPOS"<<chid;
+	      TH1* hpattag1= rootHandler_->GetTH1(s.str());
+	      if (hpattag1==NULL)
+		hpattag1 =rootHandler_->BookTH1(s.str(),200,-30.,30.);
+	      for (uint32_t j=0;j<dc->getNumberOfFrames();j++)
+		{
+		  
+		  float tj=dc->getFrameTimeToTrigger(j)*1.;
+		  hpattag1->Fill(ti-tj); 
+		  //if (chid==10)
+		  // printf(" Slot10 Frame %d time %d %f %f %f\n",j,dc->getFrameTimeToTrigger(j),ti,tj,ti-tj);
+		  if ((ti-tj)>=-4.5 && (ti-tj)<=-1.5)
+		    {chb[chid]=1;}
+
+		   if ((ti-tj)>=-0.5 && (ti-tj)<=2.5)
+		    {chb[50+chid]=1;}
+		}
+
+	    }
+	  
+	  for(int i=0;i<64;i++)
+	    {
+	      if (chb[i]!=0) hpattag->Fill(i*1.);
+	    }
+	  hpattag->Fill(100.);
+
+	  if (chb[60]==0) getchar();
+
+
+	}
+
+      
+
+
+    }
+
+ 
+  //  getchar();
+  return 0;
+}
 
 
 uint32_t TrackAnalyzer::CerenkovTagger(uint32_t difid,uint32_t seed)
@@ -932,12 +1008,12 @@ void TrackAnalyzer::processEvent()
   //DEBUG_PRINT("Calling decodeTrigger\n");
   // TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
   if (!decodeTrigger(rhcol,spillSize_) ) { if (rhcoltransient) delete rhcol;return;}
-
-  if (isNewSpill_) return;
+  
+  //if (isNewSpill_) return;
   if (evt_->getEventNumber()%100 ==0)
     rootHandler_->writeSQL();
   //    rootHandler_->writeXML(theMonitoringPath_);
- 
+  PMAnalysis(3);
 
   reader_->findTimeSeeds(minChambersInTime_);
 
