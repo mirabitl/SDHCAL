@@ -1074,8 +1074,28 @@ class OracleAccess:
             dv.append(gain)
         d.setIntVector('PAGAIN',dv)
         return d
-
-
+	
+	# Modification Victor
+	
+    def TricotCR(self,dif,num) :
+       
+        print "Change Tricot C and R parameters " 
+	d=Asic('HR2',dif,num)
+	d.setInt('SW50F0',1)
+        d.setInt('SW100F0',0)
+        d.setInt('SW100K0',0)
+        d.setInt('SW50K0',0)
+        d.setInt('SW50F1',0)
+        d.setInt('SW100F1',1)
+        d.setInt('SW100K1',0)
+        d.setInt('SW50K1',0)
+        d.setInt('SW50F2',1)
+        d.setInt('SW100F2',0)
+        d.setInt('SW100K2',0)
+        d.setInt('SW50K2',0)
+	return d
+	
+	# Fin de TricotCR
 
     def end(self):
         """

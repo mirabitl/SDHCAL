@@ -21,7 +21,7 @@ class MonitorAnalysis:
         self.dher.setXdaqShift(24); 
 
         self.dher.setDropFirstRU(False);
-        self.a=dr.ShowerAnalyzer( self.dher,self.rootHandler);
+        self.a=dr.TrackAnalyzer( self.dher,self.rootHandler);
         self.a.presetParameters()
         self.a.setrebuild(False)
         #self.a.setuseSynchronised(conf.useSynch);
