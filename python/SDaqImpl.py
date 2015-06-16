@@ -113,6 +113,16 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
             self.PBConfigure.setEnabled(True)
             self.PBStart.setEnabled(True)
             self.PBDestroy.setEnabled(True)
+    def SetThresholds(self):
+        if self.daq_!=None:
+            self.daq_.SetThresholds(self.SBTHR0L.value(),self.SBTHR1L.value(),self.SBTHR2L.value())
+            self.daq_.Configure()
+    def Pause(self):
+        if self.daq_!=None:
+            self.daq_.Pause()
+    def Resume(self):
+        if self.daq_!=None:
+            self.daq_.Resume()
 
     def Start(self):
         if self.daq_!=None:
@@ -329,6 +339,9 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         self.PBConfigure.clicked.connect(self.Configure)
         self.PBStart.clicked.connect(self.Start)
         self.PBStop.clicked.connect(self.Stop)
+        self.PBPause.clicked.connect(self.Pause)
+        self.PBResume.clicked.connect(self.Resume)
+        self.PBSetThresholds.clicked.connect(self.SetThresholds)        
         self.PBDestroy.clicked.connect(self.Destroy)
         self.PBUpdate.clicked.connect(self.Update)
         self.pbQuit.clicked.connect(self.Quit)
