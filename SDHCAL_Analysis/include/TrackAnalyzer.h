@@ -112,6 +112,7 @@ public:
 	void processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed);
 
 	uint32_t CerenkovTagger(uint32_t difid,uint32_t seed);
+	uint32_t PMAnalysis(uint32_t difid);
 
 
 private:

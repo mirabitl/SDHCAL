@@ -31,6 +31,7 @@ dher.ParseSteering(config.marlin)
 
 
 
+ar=dr.RawAnalyzer();
 
 a=dr.TrackAnalyzer( dher,rootHandler);
 a.presetParameters()
@@ -62,6 +63,7 @@ print fileList
 time.sleep(5)
 
 dher.registerAnalysis(a);
+dher.registerAnalysis(ar);
 for x in fileList:
     print "================================>",x
     print "================================>",x

@@ -45,6 +45,8 @@ public:
   void on();
   void off();
   void stop();
+  void pause();
+  void resume();
   void download(std::string s);
   void destroy();
   int getCurrentRun();

@@ -478,6 +478,28 @@ void DimDaqControl::stop()
 
 
 }
+
+void DimDaqControl::pause()
+{
+  std::stringstream s0;
+
+  s0.str(std::string());
+  s0<<theCCCPrefix_<<"/PAUSE";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 	
+}
+
+void DimDaqControl::resume()
+{
+  std::stringstream s0;
+
+  s0.str(std::string());
+  s0<<theCCCPrefix_<<"/RESUME";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 	
+}
+
+
+
+
 void DimDaqControl::doDestroy(DimDDSClient* c)
 {
   c->destroy();
