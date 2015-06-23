@@ -100,7 +100,7 @@ if (HT.getSysMainSwitch() == "on"):
                 
 
                 print "|%d|%7.1f|%7.1f|%7.1f|%7.1f|%7.1f|" % (i+1,vset,vmon,Veff,Vexpected,vcor)
-                if  vcor>40 and vcor<200:
+                if  vcor>20 and vcor<200:
                     print "Channel %d Current voltage is %f and is effectively be %f => correction %f or %f " % (i,vmon,Veff,((Veff/vmon-1)*100),Vexpected )
                     lbad.append(i)
                     vbad.append(Vexpected)

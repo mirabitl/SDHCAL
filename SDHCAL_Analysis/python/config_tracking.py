@@ -1,11 +1,13 @@
 #marlin="./Slot1_39_MARLIN.xml"
-marlin="./m3_avril2015.xml"
+#marlin="./m3_avril2015.xml"
+#marlin="./m3_avril2015.xml"
+marlin="./chinese_avril2015_1.xml"
 rebuild=False
 useSynch=False
 #
-minChambersInTime=5;
-tkMinPoint=5;
-tkExtMinPoint=4;
+minChambersInTime=3;
+tkMinPoint=3;
+tkExtMinPoint=2;
 tkChi2Cut=0.00000000000001;  
 tkExtChi2Cut=0.00000000000001;  
 

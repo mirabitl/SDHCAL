@@ -34,6 +34,8 @@ private:
   DimCommand *cccresetCommand_;
   DimCommand *testregisterreadCommand_;
   DimCommand *testregisterwriteCommand_;
+  DimCommand *registerreadCommand_;
+  DimCommand *registerwriteCommand_;
  
   CCCManager* theManager_;
 };

@@ -21,7 +21,7 @@ class MonitorAnalysis:
         self.dher.setXdaqShift(24); 
 
         self.dher.setDropFirstRU(False);
-        self.a=dr.ShowerAnalyzer( self.dher,self.rootHandler);
+        self.a=dr.TrackAnalyzer( self.dher,self.rootHandler);
         self.a.presetParameters()
         self.a.setrebuild(False)
         #self.a.setuseSynchronised(conf.useSynch);
@@ -156,7 +156,7 @@ if __name__=='__main__':
     wsgi_application = WsgiApplication(application)
 
     # More daemon boilerplate
-    server = make_server('lyosdhcal11', 8000, wsgi_application)
+    server = make_server('lyoac29', 8000, wsgi_application)
 
     logging.info("listening to http://127.0.0.1:8000")
     logging.info("wsdl is at: http://localhost:8000/?wsdl")
