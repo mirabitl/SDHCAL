@@ -174,6 +174,17 @@ class bmp183():
 		self.MB = numpy.int16(self.read_word(self.BMP183_REG['CAL_MB']))
 		self.MC = numpy.int16(self.read_word(self.BMP183_REG['CAL_MC']))
 		self.MD = numpy.int16(self.read_word(self.BMP183_REG['CAL_MD']))
+		print ("AC1", self.AC1);
+		print ("AC2", self.AC2);
+		print ("AC3", self.AC3);
+		print ("AC4", self.AC4);
+		print ("AC5", self.AC5);
+		print ("AC6", self.AC6);
+		print ("B1", self.B1);
+		print ("B2", self.B2);
+		print ("MB", self.MB);
+		print ("MC", self.MC);
+		print ("MD", self.MD);
 
 	def measure_temperature(self):
 		# Start temperature measurement
@@ -183,7 +194,8 @@ class bmp183():
 		# Read uncmpensated temperature
 		self.UT = numpy.int32 (self.read_word(self.BMP183_REG['DATA']))
 		self.calculate_temperature()
-
+		print("UT",self.UT);
+	
 	def measure_pressure(self):
 		# Measure temperature - required for calculations
 		self.measure_temperature()
@@ -198,25 +210,41 @@ class bmp183():
 			UP[i] = numpy.int32 (self.read_word(self.BMP183_REG['DATA'], 3))
 	
 		self.UP = (UP[0] + UP[1] + UP[2]) / 3
+		print("UP=",UP)
 		self.calculate_pressure()
 
 	def calculate_pressure(self):
 		# Calculate atmospheric pressure in [Pa]
 		self.B6 = self.B5 - 4000
+		print("B6=",self.B6)
 		X1 = (self.B2 * (self.B6 * self.B6 / 2**12)) / 2**11
+		print("X1=",X1)
 		X2 = self.AC2 * self.B6 / 2**11
+		print("X2=",X2)
 		X3 = X1 + X2
+		print("X3=",X3)
 		self.B3 = (((self.AC1 * 4 + X3) << self.BMP183_CMD['OVERSAMPLE_3']) + 2 ) / 4
+		print("B3=",self.B3)
 		X1 = self.AC3 * self.B6 / 2**13
+		print("X1=",X1)
 		X2 = (self.B1 * (self.B6 * self.B6 / 2**12)) / 2**16
+		print("X2=",X2)
 		X3 = ((X1 + X2) + 2) / 2**2
+		print("X3=",X3)
 		self.B4 = numpy.uint32 (self.AC4 * (X3 + 32768) / 2**15)
+		print("B4=",self.B4)
 		self.B7 = (numpy.uint32 (self.UP) - self.B3) * (50000 >> self.BMP183_CMD['OVERSAMPLE_3'])
+		print("B7=",self.B7)
 		p = numpy.uint32 ((self.B7 * 2) / self.B4)
+		print("p=",p)
 		X1 = (p / 2**8) * ( p / 2**8)
+		print("X1=",X1)
 		X1 = int (X1 * 3038) / 2**16
+		print("X1=",X1)
 		X2 = int (-7357 * p) / 2**16
+		print("X2=",X2)
 		self.pressure = p + (X1 + X2 +3791) / 2**4
+		print("pressure=",self.pressure)
 
 	def calculate_temperature(self):
 		#Calculate temperature in [degC]
@@ -225,4 +253,9 @@ class bmp183():
 		self.B5 = X1 + X2
 		self.T = (self.B5 + 8) / 2**4
 		self.temperature = self.T / 10.0
+		print ("X1=",X1)
+		print ("X2=",X2)
+		print ("B5=",self.B5)
+		print ("T=",self.T)
+		
 
