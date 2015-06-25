@@ -140,8 +140,9 @@ int BMP183GetCalibration(void)
 
 float BMP183TemperatureRead(void)
 {
-	int temp_msb, temp_lsb, UT;
+  int temp_msb, temp_lsb,UT;
 	int X1, X2;
+	int T;
 	float temperature;
 
 	myAnalogWrite(node, CTRL_MEAS, 0x2E);
@@ -162,15 +163,17 @@ float BMP183TemperatureRead(void)
 
 float BMP183PressionRead(void)
 {
+#define CCVERS
 #ifdef CCVERS
 	float pression;
 	int UP1_lsb, UP1_msb, UP1_xsb;	
-	long UP1, B3, B4,  B6;	
-	unsigned long X1, X2, X3;
-	unsigned long p;
-	unsigned long B7;
-
-	myAnalogWrite(node, CTRL_MEAS, 0x34 );
+	long UP1, B3,  B6;	
+        long X1, X2, X3;
+	long p;
+        long B7;
+	unsigned long B4;
+	unsigned int oss=3;
+	myAnalogWrite(node, CTRL_MEAS, 0x34+(oss<<6) );
 	//myAnalogWrite(node, CTRL_MEAS, 0x34 |(0x3<<4));
 	usleep (50000);//50ms
 	UP1_msb=myAnalogRead(node, DATA);
@@ -178,19 +181,22 @@ float BMP183PressionRead(void)
 	UP1_xsb=myAnalogRead(node, DATA+2);
 
 	UP1 = ((UP1_msb<<16)+(UP1_lsb<<8)+UP1_xsb);
-	UP1=UP1>>5;
+	UP1=UP1>>(8-oss);
 // Calculate atmospheric pressure in [Pa]
 	B6 = B5 - 4000;
-	X1 = ((B2 * B6 * B6)>>23)>>11;
+	X1 = (B2 * (B6 * B6)>>12)>>11;
 	X2 = (AC2 * B6) >>11;
 	X3 = X1 + X2;
-	B3 = (((AC1 * 4 + X3) << 3) + 2 ) / 4;
+	B3 = (((AC1 * 4 + X3) << oss) + 2 ) / 4;
 	X1 = (AC3 * B6)>>13;
-	X2 = (B1 * B6 * B6)>>28;
+	X2 = (B1 * (B6 * B6)>>12)>>16;
 	X3 = (X1 + X2 + 2)>>2;
-	B4 = (AC4 * (X3 + 32768)) >>15;
-	B7 = (UP1 - B3) * 6250;
-	p =  ((B7 * 2) / B4);
+	B4 = (AC4 * (unsigned long)(X3 + 32768)) >>15;
+	B7 = ((unsigned long)UP1 - B3) * (50000>>oss);
+	if (B7<0x80000000)
+	  p=(B7*2)/B4;
+	else
+	  p =  (B7/ B4)*2;
 	X1 = (p >>8) * ( p >>8);
 	X1 = (X1 * 3038) >>16;
 	X2 = (-7357 * p) >>16;
@@ -254,9 +260,9 @@ private:
 		short AC1;
 		short AC2;
 		short AC3;
-		short AC4;
-		short AC5;
-		short AC6;
+		unsigned short AC4;
+		unsigned short AC5;
+		unsigned short AC6;
 		short B1;
 		short B2;
 		short MB;
