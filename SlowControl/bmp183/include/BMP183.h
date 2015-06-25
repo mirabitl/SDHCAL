@@ -162,6 +162,7 @@ float BMP183TemperatureRead(void)
 
 float BMP183PressionRead(void)
 {
+#ifdef CCVERS
 	float pression;
 	int UP1_lsb, UP1_msb, UP1_xsb;	
 	long UP1, B3, B4,  B6;	
@@ -169,7 +170,8 @@ float BMP183PressionRead(void)
 	unsigned long p;
 	unsigned long B7;
 
-	myAnalogWrite(node, CTRL_MEAS, 0x34);
+	myAnalogWrite(node, CTRL_MEAS, 0x34 );
+	//myAnalogWrite(node, CTRL_MEAS, 0x34 |(0x3<<4));
 	usleep (50000);//50ms
 	UP1_msb=myAnalogRead(node, DATA);
 	UP1_lsb=myAnalogRead(node, DATA+1);
@@ -196,6 +198,52 @@ float BMP183PressionRead(void)
 	pression= pression/100.0;
 	printf ("pression = %f hPa \n",pression);
 	return pression;
+#else
+	float pression;
+	int UP1_lsb, UP1_msb, UP1_xsb;	
+        int UP[3];
+	long UP1, B3, B4,  B6;	
+	unsigned long X1, X2, X3;
+	unsigned long p;
+	unsigned long B7;
+
+	for (int i=0;i<3;i++)
+{
+	myAnalogWrite(node, CTRL_MEAS, 0x34 |(0x3<<4));
+        for (int k=0;k<30;k++)	
+	usleep (1);//50ms
+	UP1_msb=myAnalogRead(node, DATA);
+	UP1_lsb=myAnalogRead(node, DATA+1);
+	UP1_xsb=myAnalogRead(node, DATA+2);
+
+	UP1 = ((UP1_msb<<16)+(UP1_lsb<<8)+UP1_xsb);
+        //printf("%d %x %x \n",UP1,UP1,UP1>>5);
+	UP1=UP1>>5;
+        UP[i]=UP1;
+}
+        int UPF=(UP[0]+UP[1]+UP[2])/3;
+        printf("%d %x \n",UPF,UPF);
+// Calculate atmospheric pressure in [Pa]
+	B6 = B5 - 4000;
+	X1 = (B2 * (B6 * B6)/4096)/2048;
+	X2 = (AC2 * B6)/2048;
+	X3 = X1 + X2;
+	B3 = (((AC1 * 4 + X3) << 3)+2)/4;
+	X1 = (AC3 * B6)/8192;
+	X2 = (B1 * (B6 * B6)/4096)/65536;
+	X3 = (X1 + X2 + 2)/4;
+	B4 = (AC4 * (X3 + 32768)/32768);
+	B7 = (UPF - B3) * (50000>>3);
+	p =  ((B7 * 2) / B4);
+        p = (B7/B4)*2;
+	X1 = (p/256) * ( p /256);
+	X1 = (X1 * 3038)/65536;
+	X2 = (-7357 * p)/65536;
+	pression= p + ((X1 + X2 +3791)/16);
+	pression= pression/100.0;
+	printf ("pression = %f hPa \n",pression);
+	return pression;
+#endif
 }
  
 private:

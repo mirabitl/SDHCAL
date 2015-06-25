@@ -40,7 +40,7 @@ DimBMP183Server::~DimBMP183Server()
 
 void DimBMP183Server::Loop()
 {
-  g_d.create_thread(boost::bind(&DimBMP183Server::readout, this,0));
+  g_d.create_thread(boost::bind(&DimBMP183Server::readout, this));
 }
 
 void DimBMP183Server::readout()
