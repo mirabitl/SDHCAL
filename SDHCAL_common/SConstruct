@@ -84,7 +84,7 @@ CPPFLAGS=["-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "
 
 
 
-LIBRARIES=['pthread',  'm', 'stdc++',boostsystem,boostthread]
+LIBRARIES=['pthread',  'm', 'stdc++','mysqlclient',boostsystem,boostthread]
 
 
 
