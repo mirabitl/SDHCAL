@@ -2,7 +2,7 @@
 
 #define _DimBMP183Server_h
 #include <iostream>
-
+#include <string>
 #include <string.h>
 #include <stdio.h>
 #include "/opt/dhcal/dim/dim/dis.hxx"
@@ -11,6 +11,7 @@
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
+#include "MyInterface.h"
 
 using namespace std;
 
@@ -23,6 +24,7 @@ public:
   void getPression();
   void Loop();
   void readout();
+  void store();
 
   void commandHandler();
 
@@ -37,6 +39,10 @@ private:
 
   int32_t thePeriod_;
   DimCommand *periodCommand_;
+  std::string theAccount_;
+  bool storeDb_;
+  MyInterface* my_;
+  DimCommand *storeCommand_;
 
   BMP183* theBMP183_;
 };
