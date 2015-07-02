@@ -74,6 +74,7 @@ void DimCAENHVServer::Initialise(std::string account,std::string setup)
   theHVRACKMyProxy_= new HVRACKMyProxy(my);
   theSETUPMyProxy_= new SETUPMyProxy(my);
   theDETECTORMyProxy_= new DETECTORMyProxy(my);
+  theHVMONMyProxy_= new HVMONMyProxy(my);
   
   std::stringstream s0;
   s0.str(std::string());
@@ -232,31 +233,37 @@ DimCAENHVServer::~DimCAENHVServer()
   delete theCAENHV_;
 }
 
-void DimCAENHVServer::Loop()
+void DimCAENHVServer::monitorLoop(uint32_t period)
 {
-  g_d.create_thread(boost::bind(&DimCAENHVServer::readout, this));
+  monitorRunning_=true;
+  g_d.create_thread(boost::bind(&DimCAENHVServer::readout, this,period));
 }
 
-void DimCAENHVServer::store()
+void DimCAENHVServer::storeCurrentChannel()
 {
-  if (!storeDb_) return;
-  if (my_==NULL) return;
-  my_->connect();
-  std::stringstream ss;
-  ss<<"INSERT INTO PT (P, T) VALUES ("<<TemperatureReadValues_<<","<<PressionReadValues_<<")";
 
-  my_->executeQuery(ss.str());
-  my_->disconnect();
+  if (theHVMONMyProxy_==NULL) return;
+
+  memcpy(theHVMONMyProxy_->getCurrent(),&currentChannel_,sizeof(HVMONDescription));
+  theHVMONMyProxy_->insert();
 }
 
-void DimCAENHVServer::readout()
+void DimCAENHVServer::readout(uint32_t period)
 {
-  while (true)
+  while (monitorRunning_ && theDETECTORMyProxy_!=NULL )
     {
-      this->getTemperature();
-      this->getPression();
-      this->store();
-      sleep((unsigned int) thePeriod_);
+
+      std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
+      for (std::map<uint32_t,DETECTORDescription>::iterator it=det.begin();it!=det.end();it++)
+	{
+	  this->readChannel(it->getHVCHANNEL());
+	  this->storeCurrentChannel();
+	  
+	}
+
+
+
+      sleep((unsigned int) period);
     }
 }
 void DimCAENHVServer::commandHandler()
