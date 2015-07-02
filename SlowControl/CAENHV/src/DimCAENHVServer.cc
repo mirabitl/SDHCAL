@@ -75,6 +75,7 @@ void DimCAENHVServer::Initialise(std::string account,std::string setup)
   theSETUPMyProxy_= new SETUPMyProxy(my);
   theDETECTORMyProxy_= new DETECTORMyProxy(my);
   theHVMONMyProxy_= new HVMONMyProxy(my);
+  thePTMONMyProxy_= new PTMONMyProxy(my);
   
   std::stringstream s0;
   s0.str(std::string());
@@ -233,7 +234,7 @@ DimCAENHVServer::~DimCAENHVServer()
   delete theCAENHV_;
 }
 
-void DimCAENHVServer::monitorLoop(uint32_t period)
+void DimCAENHVServer::monitorStart(uint32_t period)
 {
   monitorRunning_=true;
   g_d.create_thread(boost::bind(&DimCAENHVServer::readout, this,period));
@@ -266,6 +267,101 @@ void DimCAENHVServer::readout(uint32_t period)
       sleep((unsigned int) period);
     }
 }
+void DimCAENHVServer::monitorStop()
+{
+  monitorRunning_=false;
+  g_d.join_all();
+
+
+}
+
+
+void DimCAENHVServer::regulationStart(uint32_t period)
+{
+  regulationRunning_=true;
+  g_r.create_thread(boost::bind(&DimCAENHVServer::regulate, this,period));
+}
+
+void DimCAENHVServer::storeCurrentChannel()
+{
+
+  if (theHVMONMyProxy_==NULL) return;
+
+  memcpy(theHVMONMyProxy_->getCurrent(),&currentChannel_,sizeof(HVMONDescription));
+  theHVMONMyProxy_->insert();
+}
+void DimCAENHVServer::regulate(uint32_t period)
+{
+  while (regulationRunning_ && theDETECTORMyProxy_!=NULL )
+    {
+
+      std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
+      // Read last P and T Value
+      thePTMONMyProxy_->select("NOW()-HEURE<1000");
+      std::map<uint32_t,PTMONDescription> ptm=thePTMONMyProxy_->getMap();
+      uint32_t nsample=0;float P=0,T=0;
+      for (std::map<uint32_t,PTMONDescription>::iterator it=ptm.begin();it!=ptm.end();it++)
+	{
+	  nsample++;
+	  P+=it->getPRESSURE();
+	  T+=it->getTEMPERATURE();
+	}
+
+      if (nsample<1) {sleep((unsigned int) period); continue;}
+      P/=nsample;
+      T/=nsample;
+     
+
+      for (std::map<uint32_t,DETECTORDescription>::iterator it=det.begin();it!=det.end();it++)
+	{
+	  // Read values of HV
+
+	  float P0=it->getPREF();
+	  float T0=it->getTREF();
+	  float HV0=it->getVREF();
+
+	  float Vexpected=HV0*P*T0/(P0*T);
+	  // Current value
+	  this->readChannel(it->getHVCHANNEL());
+	  float vmon=currentChannel_.getVMON();
+
+	  float Veff = vmon*P0/T0*T/P;
+                
+	  float correction = ((Veff/HV0-1)*100);
+	  float vcor =abs(Veff-HV0);
+
+	  if (vcor>20 && vcor<=200)
+	    {
+	      theHV_->setVoltage(it->getHVCHANNEL(),Vexpected);
+	      std::cout<<"REGULATION >>>> Voltage changed on channel"<< it->getHVCHANNEL()<<std::endl;
+	      std::cout<<"\t Current Voltage is "<<vmon<<" leading to an effective voltage of "<<Veff<<" where  one expects "<<Vexpected<< "beeing applied"<<std:;endl;
+
+	    }
+	  if (vcor>200)
+	    {
+	      std::cout<<"ERROR >>>> Voltage not changed on channel"<< it->getHVCHANNEL()<<std::endl;
+	      std::cout<<"\t Current Voltage is "<<vmon<<" leading to an effective voltage of "<<Veff<<" where  one expects "<<Vexpected<< "beeing applied"<<std:;endl;
+	    }
+	  
+
+	  
+	}
+
+
+
+      sleep((unsigned int) period);
+    }
+}
+
+void DimCAENHVServer::regulationStop()
+{
+  regulationRunning_=false;
+  g_r.join_all();
+
+
+}
+
+
 void DimCAENHVServer::commandHandler()
 {
   DimCommand *currCmd = getCommand();
