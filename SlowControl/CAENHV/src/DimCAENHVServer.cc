@@ -1,7 +1,7 @@
 
 #include "DimCAENHVServer.h"
 
-DimCAENHVServer::DimCAENHVServer() :thePeriod_(5),storeDb_(false),my_(NULL)
+DimCAENHVServer::DimCAENHVServer() :my_(NULL)
 {
 
   
@@ -63,38 +63,36 @@ DimCAENHVServer::DimCAENHVServer() :thePeriod_(5),storeDb_(false),my_(NULL)
   gethostname(hname,80);
   s0<<"DimCAENHVServer-"<<hname;
   DimServer::start(s0.str().c_str()); 
-  Loop();
+
 }
 
 
 void DimCAENHVServer::Initialise(std::string account,std::string setup)
 {
   my_=new MyInterface(account);
-  my_>connect();
-  theHVRACKMyProxy_= new HVRACKMyProxy(my);
-  theSETUPMyProxy_= new SETUPMyProxy(my);
-  theDETECTORMyProxy_= new DETECTORMyProxy(my);
-  theHVMONMyProxy_= new HVMONMyProxy(my);
-  thePTMONMyProxy_= new PTMONMyProxy(my);
+  my_->connect();
+  theHVRACKMyProxy_= new HVRACKMyProxy(my_);
+  theSETUPMyProxy_= new SETUPMyProxy(my_);
+  theDETECTORMyProxy_= new DETECTORMyProxy(my_);
+  theHVMONMyProxy_= new HVMONMyProxy(my_);
+  thePTMONMyProxy_= new PTMONMyProxy(my_);
   
   std::stringstream s0;
   s0.str(std::string());
-  s0<<" NAME="<<setup;
+  s0<<" NAME=\""<<setup<<"\"";
   theSETUPMyProxy_->select(s0.str());
   theSetupId_=theSETUPMyProxy_->getDescription(0).getIDX();
 
-  std::stringstream s0;
   s0.str(std::string());
   s0<<" SETUPID="<<theSetupId_;
   theDETECTORMyProxy_->select(s0.str());
   theHvrackId_=theDETECTORMyProxy_->getDescription(0).getIDX();
 
-  std::stringstream s0;
   s0.str(std::string());
   s0<<" IDX="<<theHvrackId_;
   theHVRACKMyProxy_->select(s0.str());
   
-  theHV_= new HVCaenInterface(std::string(theHVRACKMyProxy_->->getDescription(0).getHOSTNAME()),std::string(theHVRACKMyProxy_->->getDescription(0).getUSERNAME()),std::string(theHVRACKMyProxy_->->getDescription(0).getPWD()));
+  theHV_= new HVCaenInterface(std::string(theHVRACKMyProxy_->getDescription(0).getHOSTNAME()),std::string(theHVRACKMyProxy_->getDescription(0).getUSERNAME()),std::string(theHVRACKMyProxy_->getDescription(0).getPWD()));
   
 }
 
@@ -103,14 +101,14 @@ void DimCAENHVServer::ReadChannel(uint32_t chan)
   if (theHV_==NULL) return;
   //  if (theDETECTORMyProxy_==NULL) return;
   // std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
-  currentChannel.setHVRACKID(theHvrackId_);
-  currentChannel.setHVCHANNEL(chan);
-  currentChannel.setVSET(theHV_->GetVoltageSet(chan));
-  currentChannel.setVMON(theHV_->GetVoltageRead(chan));
-  currentChannel.setIMON(theHV_->GetCurrentRead(chan));
-  currentChannel.setSTATUS(theHV_->GetStatus(chan));
+  currentChannel_.setHVRACKID(theHvrackId_);
+  currentChannel_.setHVCHANNEL(chan);
+  currentChannel_.setVSET(theHV_->GetVoltageSet(chan));
+  currentChannel_.setVMON(theHV_->GetVoltageRead(chan));
+  currentChannel_.setIMON(theHV_->GetCurrentRead(chan));
+  currentChannel_.setSTATUS(theHV_->GetStatus(chan));
  
-  channelReadService_->updateService(&currentChannel_);
+  channelReadService_->updateService(&currentChannel_,sizeof(HVMONDescription));
 }
 void DimCAENHVServer::setV0(uint32_t chan,float v)
 {
@@ -119,14 +117,14 @@ void DimCAENHVServer::setV0(uint32_t chan,float v)
   // std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
   if (chan!=0xFFFF)
     {
-      currentChannel.setHVRACKID(theHvrackId_);
-      currentChannel.setHVCHANNEL(chan);
+      currentChannel_.setHVRACKID(theHvrackId_);
+      currentChannel_.setHVCHANNEL(chan);
       theHV_->SetVoltage(chan,v);
-      currentChannel.setVSET(theHV_->GetVoltageSet(chan));
-      currentChannel.setVMON(theHV_->GetVoltageRead(chan));
-      currentChannel.setIMON(theHV_->GetCurrentRead(chan));
-      currentChannel.setSTATUS(theHV_->GetStatus(chan));
-      channelReadService_->updateService(&currentChannel_);
+      currentChannel_.setVSET(theHV_->GetVoltageSet(chan));
+      currentChannel_.setVMON(theHV_->GetVoltageRead(chan));
+      currentChannel_.setIMON(theHV_->GetCurrentRead(chan));
+      currentChannel_.setSTATUS(theHV_->GetStatus(chan));
+      channelReadService_->updateService(&currentChannel_,sizeof(HVMONDescription));
     }
   else
     {
@@ -136,7 +134,7 @@ void DimCAENHVServer::setV0(uint32_t chan,float v)
       std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
       for (std::map<uint32_t,DETECTORDescription>::iterator it=det.begin();it!=det.end();it++)
 	{
-	  theHV_->SetVoltage(it->getHVCHANNEL(),v);
+	  theHV_->SetVoltage(it->second.getHVCHANNEL(),v);
 	}
 
     }
@@ -148,14 +146,14 @@ void DimCAENHVServer::setI0(uint32_t chan,float v)
   // std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
   if (chan!=0xFFFF)
     {
-      currentChannel.setHVRACKID(theHvrackId_);
-      currentChannel.setHVCHANNEL(chan);
+      currentChannel_.setHVRACKID(theHvrackId_);
+      currentChannel_.setHVCHANNEL(chan);
       theHV_->SetCurrent(chan,v);
-      currentChannel.setVSET(theHV_->GetVoltageSet(chan));
-      currentChannel.setVMON(theHV_->GetVoltageRead(chan));
-      currentChannel.setIMON(theHV_->GetCurrentRead(chan));
-      currentChannel.setSTATUS(theHV_->GetStatus(chan));
-      channelReadService_->updateService(&currentChannel_);
+      currentChannel_.setVSET(theHV_->GetVoltageSet(chan));
+      currentChannel_.setVMON(theHV_->GetVoltageRead(chan));
+      currentChannel_.setIMON(theHV_->GetCurrentRead(chan));
+      currentChannel_.setSTATUS(theHV_->GetStatus(chan));
+      channelReadService_->updateService(&currentChannel_,sizeof(HVMONDescription));
     }
   else
     {
@@ -165,7 +163,7 @@ void DimCAENHVServer::setI0(uint32_t chan,float v)
       std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
       for (std::map<uint32_t,DETECTORDescription>::iterator it=det.begin();it!=det.end();it++)
 	{
-	  theHV_->SetVoltageSet(it->getHVCHANNEL(),v);
+	  theHV_->SetVoltage(it->second.getHVCHANNEL(),v);
 	}
 
     }
@@ -177,14 +175,14 @@ void DimCAENHVServer::setOn(uint32_t chan)
   // std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
   if (chan!=0xFFFF)
     {
-      currentChannel.setHVRACKID(theHvrackId_);
-      currentChannel.setHVCHANNEL(chan);
+      currentChannel_.setHVRACKID(theHvrackId_);
+      currentChannel_.setHVCHANNEL(chan);
       theHV_->SetOn(chan);
-      currentChannel.setVSET(theHV_->GetVoltageSet(chan));
-      currentChannel.setVMON(theHV_->GetVoltageRead(chan));
-      currentChannel.setIMON(theHV_->GetCurrentRead(chan));
-      currentChannel.setSTATUS(theHV_->GetStatus(chan));
-      channelReadService_->updateService(&currentChannel_);
+      currentChannel_.setVSET(theHV_->GetVoltageSet(chan));
+      currentChannel_.setVMON(theHV_->GetVoltageRead(chan));
+      currentChannel_.setIMON(theHV_->GetCurrentRead(chan));
+      currentChannel_.setSTATUS(theHV_->GetStatus(chan));
+      channelReadService_->updateService(&currentChannel_,sizeof(HVMONDescription));
     }
   else
     {
@@ -194,7 +192,7 @@ void DimCAENHVServer::setOn(uint32_t chan)
       std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
       for (std::map<uint32_t,DETECTORDescription>::iterator it=det.begin();it!=det.end();it++)
 	{
-	  theHV_->SetOn(it->getHVCHANNEL());
+	  theHV_->SetOn(it->second.getHVCHANNEL());
 	}
 
     }
@@ -206,14 +204,14 @@ void DimCAENHVServer::setOff(uint32_t chan)
   // std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
   if (chan!=0xFFFF)
     {
-      currentChannel.setHVRACKID(theHvrackId_);
-      currentChannel.setHVCHANNEL(chan);
+      currentChannel_.setHVRACKID(theHvrackId_);
+      currentChannel_.setHVCHANNEL(chan);
       theHV_->SetOff(chan);
-      currentChannel.setVSET(theHV_->GetVoltageSet(chan));
-      currentChannel.setVMON(theHV_->GetVoltageRead(chan));
-      currentChannel.setIMON(theHV_->GetCurrentRead(chan));
-      currentChannel.setSTATUS(theHV_->GetStatus(chan));
-      channelReadService_->updateService(&currentChannel_);
+      currentChannel_.setVSET(theHV_->GetVoltageSet(chan));
+      currentChannel_.setVMON(theHV_->GetVoltageRead(chan));
+      currentChannel_.setIMON(theHV_->GetCurrentRead(chan));
+      currentChannel_.setSTATUS(theHV_->GetStatus(chan));
+      channelReadService_->updateService(&currentChannel_,sizeof(HVMONDescription));
     }
   else
     {
@@ -223,7 +221,7 @@ void DimCAENHVServer::setOff(uint32_t chan)
       std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
       for (std::map<uint32_t,DETECTORDescription>::iterator it=det.begin();it!=det.end();it++)
 	{
-	  theHV_->SetOff(it->getHVCHANNEL());
+	  theHV_->SetOff(it->second.getHVCHANNEL());
 	}
 
     }
@@ -231,7 +229,7 @@ void DimCAENHVServer::setOff(uint32_t chan)
 
 DimCAENHVServer::~DimCAENHVServer()
 {
-  delete theCAENHV_;
+  delete theHV_;
 }
 
 void DimCAENHVServer::monitorStart(uint32_t period)
@@ -257,7 +255,7 @@ void DimCAENHVServer::readout(uint32_t period)
       std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
       for (std::map<uint32_t,DETECTORDescription>::iterator it=det.begin();it!=det.end();it++)
 	{
-	  this->readChannel(it->getHVCHANNEL());
+	  this->ReadChannel(it->second.getHVCHANNEL());
 	  this->storeCurrentChannel();
 	  
 	}
@@ -282,14 +280,6 @@ void DimCAENHVServer::regulationStart(uint32_t period)
   g_r.create_thread(boost::bind(&DimCAENHVServer::regulate, this,period));
 }
 
-void DimCAENHVServer::storeCurrentChannel()
-{
-
-  if (theHVMONMyProxy_==NULL) return;
-
-  memcpy(theHVMONMyProxy_->getCurrent(),&currentChannel_,sizeof(HVMONDescription));
-  theHVMONMyProxy_->insert();
-}
 void DimCAENHVServer::regulate(uint32_t period)
 {
   while (regulationRunning_ && theDETECTORMyProxy_!=NULL )
@@ -303,8 +293,8 @@ void DimCAENHVServer::regulate(uint32_t period)
       for (std::map<uint32_t,PTMONDescription>::iterator it=ptm.begin();it!=ptm.end();it++)
 	{
 	  nsample++;
-	  P+=it->getPRESSURE();
-	  T+=it->getTEMPERATURE();
+	  P+=it->second.getPRESSURE();
+	  T+=it->second.getTEMPERATURE();
 	}
 
       if (nsample<1) {sleep((unsigned int) period); continue;}
@@ -316,13 +306,13 @@ void DimCAENHVServer::regulate(uint32_t period)
 	{
 	  // Read values of HV
 
-	  float P0=it->getPREF();
-	  float T0=it->getTREF();
-	  float HV0=it->getVREF();
+	  float P0=it->second.getPREF();
+	  float T0=it->second.getTREF();
+	  float HV0=it->second.getVREF();
 
 	  float Vexpected=HV0*P*T0/(P0*T);
 	  // Current value
-	  this->readChannel(it->getHVCHANNEL());
+	  this->ReadChannel(it->second.getHVCHANNEL());
 	  float vmon=currentChannel_.getVMON();
 
 	  float Veff = vmon*P0/T0*T/P;
@@ -332,15 +322,15 @@ void DimCAENHVServer::regulate(uint32_t period)
 
 	  if (vcor>20 && vcor<=200)
 	    {
-	      theHV_->setVoltage(it->getHVCHANNEL(),Vexpected);
-	      std::cout<<"REGULATION >>>> Voltage changed on channel"<< it->getHVCHANNEL()<<std::endl;
-	      std::cout<<"\t Current Voltage is "<<vmon<<" leading to an effective voltage of "<<Veff<<" where  one expects "<<Vexpected<< "beeing applied"<<std:;endl;
+	      theHV_->SetVoltage(it->second.getHVCHANNEL(),Vexpected);
+	      std::cout<<"REGULATION >>>> Voltage changed on channel"<< it->second.getHVCHANNEL()<<std::endl;
+	      std::cout<<"\t Current Voltage is "<<vmon<<" leading to an effective voltage of "<<Veff<<" where  one expects "<<Vexpected<< "beeing applied"<<std::endl;
 
 	    }
 	  if (vcor>200)
 	    {
-	      std::cout<<"ERROR >>>> Voltage not changed on channel"<< it->getHVCHANNEL()<<std::endl;
-	      std::cout<<"\t Current Voltage is "<<vmon<<" leading to an effective voltage of "<<Veff<<" where  one expects "<<Vexpected<< "beeing applied"<<std:;endl;
+	      std::cout<<"ERROR >>>> Voltage not changed on channel"<< it->second.getHVCHANNEL()<<std::endl;
+	      std::cout<<"\t Current Voltage is "<<vmon<<" leading to an effective voltage of "<<Veff<<" where  one expects "<<Vexpected<< "beeing applied"<<std::endl;
 	    }
 	  
 
@@ -366,27 +356,56 @@ void DimCAENHVServer::commandHandler()
 {
   DimCommand *currCmd = getCommand();
   printf(" J'ai recu %s COMMAND  \n",currCmd->getName());
-  if (currCmd==periodCommand_)
+  if (currCmd==initialiseCommand_)
     {
-      thePeriod_=currCmd->getInt();
+      std::string s;s.assign(currCmd->getString());
+      int ipass = s.find(";");
+      theAccount_.clear();
+      theAccount_=s.substr(0,ipass); 
+      theSetup_=s.substr(ipass+1,s.size()-ipass);
+      this->Initialise(theAccount_,theSetup_);
     }
-  if (currCmd==storeCommand_)
+  if (currCmd==readChannelCommand_)
     {
-      theAccount_.assign(currCmd->getString());
-      my_=new MyInterface(theAccount_);
-      storeDb_=true;
+      this->ReadChannel(currCmd->getInt());
     }
-
-}
-void DimCAENHVServer::getTemperature()
-{
-  TemperatureReadValues_=theCAENHV_->CAENHVTemperatureRead();
-  TemperatureReadService_->updateService();
-
-}
-void DimCAENHVServer::getPression()
-{
-  PressionReadValues_=theCAENHV_->CAENHVPressionRead();
-  PressionReadService_->updateService();
+  if (currCmd==setV0Command_)
+    {
+      int* idat=(int*) currCmd->getData();
+      float* fdat=(float*) currCmd->getData();
+      this->setV0(idat[0],fdat[1]);
+    }
+  if (currCmd==setI0Command_)
+    {
+      int* idat=(int*) currCmd->getData();
+      float* fdat=(float*) currCmd->getData();
+      this->setI0(idat[0],fdat[1]);
+    }
+  if (currCmd==setOnCommand_)
+    {
+      this->setOn(currCmd->getInt());
+    }
+  if (currCmd==setOffCommand_)
+    {
+      this->setOn(currCmd->getInt());
+    }
+  if (currCmd==startMonitorCommand_)
+    {
+      theMonitorPeriod_=currCmd->getInt();
+      this->monitorStart(theMonitorPeriod_);
+    }
+  if (currCmd==stopMonitorCommand_)
+    {
+      this->monitorStop();
+    }
+  if (currCmd==startRegulationCommand_)
+    {
+      theRegulationPeriod_=currCmd->getInt();
+      this->regulationStart(theRegulationPeriod_);
+    }
+  if (currCmd==stopRegulationCommand_)
+    {
+      this->regulationStop();
+    }
 
 }
