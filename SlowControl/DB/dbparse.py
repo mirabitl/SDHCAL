@@ -93,6 +93,7 @@ class dbparser:
             #fout.write(ls[lenst-2])
             ## Constructor
             fout.write("\n   public: \n \t %sDescription(){;} \n" %x)
+
             ls=[]
             ls1=[]
             for st in y:
@@ -192,9 +193,11 @@ class dbparser:
             fout.write("\t MyInterface* my_;\n")
             fout.write("public:\n")
             fout.write("\t %sMyProxy(std::string acc);\n" %x)
+            fout.write("\t %sMyProxy(MyInterface* m){my_=m;} \n" %x)
             fout.write("\t void select(std::string cut=\"\");")
             fout.write("\t std::map<uint32_t,%sDescription>& getMap();\n" %x)
             fout.write("\t %sDescription& getDescription(uint32_t idx);\n" %x)
+            fout.write("\t %sDescription* getCurrent(){return theDescription_;}\n" %x)
             fout.write("\t void insert(); \n")
             fout.write("};\n")
             fout.write("#endif\n")
