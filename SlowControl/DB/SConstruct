@@ -162,7 +162,7 @@ EXE_LIBS.append("SlowDB")
 #dbmp183=env.Program("bin/dimbmp183",source="src/dbmp183.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
 #Python module
-_SlowDB=env.PythonModule('_LSlowDB', ['LSlowDB.i'],LIBPATH="#lib",LIBS="SlowDB")
+#_SlowDB=env.PythonModule('_LSlowDB', ['LSlowDB.i'],LIBPATH="#lib",LIBS="SlowDB")
 
 myinc=[]
 for x in Glob("#include/*.h"):
