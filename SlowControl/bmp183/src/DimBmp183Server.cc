@@ -53,8 +53,11 @@ void DimBMP183Server::store()
   if (my_==NULL) return;
   my_->connect();
   std::stringstream ss;
+#ifdef SLOW2015
   ss<<"INSERT INTO PT (P, T) VALUES ("<<TemperatureReadValues_<<","<<PressionReadValues_<<")";
-
+#else
+  ss<<"INSERT INTO PTMON (TEMPERATURE, PRESSURE) VALUES ("<<TemperatureReadValues_<<","<<PressionReadValues_<<")";
+#endif
   my_->executeQuery(ss.str());
   my_->disconnect();
 }
