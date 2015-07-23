@@ -20,7 +20,7 @@ public:
   
 private:
   int32_t processStatus_;
-  float readValues_;
+  float readValues_[16];
   DimService* readService_; //State of the last register read 
  
   DS1820* theDS1820_;
