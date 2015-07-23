@@ -30,7 +30,7 @@ class dbparser:
                         ls.append("%s INTEGER PRIMARY KEY AUTO_INCREMENT" % m)
                         continue;
                     if b=="TIMESTAMP":
-                        ls.append("%s TIMESTAMP NULL DEFAULT NULL" % m)
+                        ls.append("%s TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" % m)
                         #print m, "TIMESTAMP NULL DEFAULT NULL"
                         continue;
                     if b=="BOOL":
@@ -40,9 +40,9 @@ class dbparser:
                     if b[0:4]=="CHAR":
                         lenc=int(b[4:len(b)])
                         #print m,"VARCHAR(",lenc,")"
-                        ls.append("%s VARCHAR(%d) " % (m,lenc))
+                        ls.append("%s VARCHAR(%d) DEFAULT \"NONE\" " % (m,lenc))
                         continue
-                    ls.append("%s %s" % (m,b))
+                    ls.append("%s %s DEFAULT 0" % (m,b))
             lenst=len(ls)
             for i in range(0,lenst-1):
                 fout.write("%s,\n" % ls[i])
@@ -232,7 +232,7 @@ class dbparser:
             select=select+ls[lenst-1]+" from %s \"" %x
             
             se=se+" if (cut.length()==0) \n my_->executeSelect(%s);\n else \n" % select
-            se=se+"{ std::stringstream ss(%s);ss<<\" WHERE \"<<cut; my_->executeSelect(ss.str());}\n" % select
+            se=se+"{ std::stringstream ss;ss<<%s;ss<<\" WHERE \"<<cut; my_->executeSelect(ss.str());}\n" % select
             ## FILL THE MAP
             sf="theMap_.clear();\n"
             sf="MYSQL_ROW row=NULL;\n"
@@ -270,12 +270,17 @@ class dbparser:
             for i in range(0,lenst-1):
                 if (lst[i]=="PRIMARY"):
                     continue
+                if (lst[i]=="TIMESTAMP"):
+                    continue
                 se=se+ls[i]+","
             se=se+ls[lenst-1]
             se=se+") VALUES(\""
             for i in range(0,lenst-1):
                 if (lst[i]=="PRIMARY"):
                     continue
+                if (lst[i]=="TIMESTAMP"):
+                    continue
+
                 se=se+"<<theDescription_->get%s()<<\",\"" % ls[i]
             se=se+"<<theDescription_->get%s()<<\")\";\n" % ls[lenst-1]
             se=se+"my_->executeQuery(stmt.str());\n"

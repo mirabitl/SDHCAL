@@ -83,7 +83,6 @@
 	    {"Y0":"REAL"},
 	    {"Y1":"REAL"},
 	    {"START":"TIMESTAMP"},
-	    {"STOP":"TIMESTAMP"},
 	    {"VALID":"BOOL"}
 	],
 	"SETUP":
@@ -91,7 +90,6 @@
 	    {"IDX":"PRIMARY"},
 	    {"NAME":"CHAR50"},
 	    {"START":"TIMESTAMP"},
-	    {"STOP":"TIMESTAMP"},
 	    {"VALID":"BOOL"}
 	],
 	"RUNS":
