@@ -193,7 +193,7 @@ class dbparser:
             fout.write("\t MyInterface* my_;\n")
             fout.write("public:\n")
             fout.write("\t %sMyProxy(std::string acc);\n" %x)
-            fout.write("\t %sMyProxy(MyInterface* m){my_=m;} \n" %x)
+            fout.write("\t %sMyProxy(MyInterface* m); \n" %x)
             fout.write("\t void select(std::string cut=\"\");")
             fout.write("\t std::map<uint32_t,%sDescription>& getMap();\n" %x)
             fout.write("\t %sDescription& getDescription(uint32_t idx);\n" %x)
@@ -213,6 +213,11 @@ class dbparser:
             s0+="theDescription_ = new %sDescription();\n" %x
             s0+="my_=new MyInterface(acc);\n}\n"
             fout.write(s0) 
+            s0="%sMyProxy::%sMyProxy(MyInterface* m) \n {" % (x,x)
+            s0+="theIdx_=0;theMap_.clear();\n"
+            s0+="theDescription_ = new %sDescription();\n" %x
+            s0+="my_=m;\n}\n"
+            fout.write(s0) 
 
             ## select
             y=self.data['TABLES'][x]
@@ -223,6 +228,7 @@ class dbparser:
                     ls.append(m)
                     lst.append(b)
             se="void %sMyProxy::select(std::string cut){\n" % x
+            se=se+"my_->connect();\n"
             select="\"SELECT "
             lenst=len(ls)
 
@@ -256,7 +262,8 @@ class dbparser:
             sf=sf+"theMap_.insert(p);\n" 
             sf=sf+"}\n"
             se=se+sf
-            se+="}\n"
+            se=se+"my_->disconnect();\n"
+            se=se+"}\n"
             fout.write(se)
             ## Map access
             se="std::map<uint32_t,%sDescription>& %sMyProxy::getMap(){ return theMap_;}\n" % (x,x)
@@ -265,6 +272,7 @@ class dbparser:
             fout.write(se)
             ## Update
             se="void %sMyProxy::insert(){ \n" %x
+            se=se+"my_->connect();\n"
             se=se+"std::stringstream stmt;stmt.str(std::string());\n"
             se=se+"stmt<<\"INSERT INTO %s(" %x
             for i in range(0,lenst-1):
@@ -284,6 +292,7 @@ class dbparser:
                 se=se+"<<theDescription_->get%s()<<\",\"" % ls[i]
             se=se+"<<theDescription_->get%s()<<\")\";\n" % ls[lenst-1]
             se=se+"my_->executeQuery(stmt.str());\n"
+            se=se+"my_->disconnect();\n"
             se=se+"}\n"
             fout.write(se)
             

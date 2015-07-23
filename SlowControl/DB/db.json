@@ -32,6 +32,14 @@
 	    {"HEURE":"TIMESTAMP"},
 	    {"VALID":"BOOL"}
 	],
+	"DS1820MON":
+	[
+	    {"IDX":"PRIMARY"},
+	    {"TIN":"REAL"},
+	    {"TOUT":"REAL"},
+	    {"HEURE":"TIMESTAMP"},
+	    {"VALID":"BOOL"}
+	],
 
 	"DETECTOR":
 	[
