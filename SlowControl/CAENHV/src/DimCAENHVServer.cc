@@ -102,20 +102,20 @@ void DimCAENHVServer::Initialise(std::string account,std::string setup)
 
 
   printf("%s %s %s \n",hvm.begin()->second.getHOSTNAME(),hvm.begin()->second.getUSERNAME(),hvm.begin()->second.getPWD());
-  theHV_->Connect();
+
   my_->disconnect();
 }
 
 void DimCAENHVServer::ReadChannel(uint32_t chan)
 {
   if (theHV_==NULL) return;
-  //theHV_->Connect();
+  theHV_->Connect();
   //  if (theDETECTORMyProxy_==NULL) return;
   // std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
-  std::cout<<theHV_->GetVoltageSet(chan)<<std::endl;
-  std::cout<<theHV_->GetVoltageRead(chan)<<std::endl;
-  std::cout<<theHV_->GetCurrentRead(chan)<<std::endl;
-  std::cout<<theHV_->GetStatus(chan)<<std::endl;
+  // std::cout<<theHV_->GetVoltageSet(chan)<<std::endl;
+  // std::cout<<theHV_->GetVoltageRead(chan)<<std::endl;
+  // std::cout<<theHV_->GetCurrentRead(chan)<<std::endl;
+  // std::cout<<theHV_->GetStatus(chan)<<std::endl;
 
   currentChannel_.setHVRACKID(theHvrackId_);
   currentChannel_.setHVCHANNEL(chan);
@@ -124,7 +124,7 @@ void DimCAENHVServer::ReadChannel(uint32_t chan)
   currentChannel_.setIMON(theHV_->GetCurrentRead(chan));
   currentChannel_.setSTATUS(theHV_->GetStatus(chan));
   currentChannel_.setVALID(1);
-  // theHV_->Disconnect();
+   theHV_->Disconnect();
   printf("%d %f %f %f %f %d %d \n",currentChannel_.getHVCHANNEL(),currentChannel_.getVSET(),currentChannel_.getVMON(),currentChannel_.getIMON(),currentChannel_.getSTATUS(),sizeof(HVMONDescription));
   channelReadService_->updateService(&currentChannel_,sizeof(HVMONDescription));
 }
@@ -133,6 +133,7 @@ void DimCAENHVServer::setV0(uint32_t chan,float v)
   if (theHV_==NULL) return;
   //  if (theDETECTORMyProxy_==NULL) return;
   // std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
+  theHV_->Connect();
   if (chan!=0xFFFF)
     {
       currentChannel_.setHVRACKID(theHvrackId_);
@@ -156,12 +157,14 @@ void DimCAENHVServer::setV0(uint32_t chan,float v)
 	}
 
     }
+  theHV_->Disconnect();
 }
 void DimCAENHVServer::setI0(uint32_t chan,float v)
 {
   if (theHV_==NULL) return;
   //  if (theDETECTORMyProxy_==NULL) return;
   // std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
+  theHV_->Connect();
   if (chan!=0xFFFF)
     {
       currentChannel_.setHVRACKID(theHvrackId_);
@@ -185,12 +188,14 @@ void DimCAENHVServer::setI0(uint32_t chan,float v)
 	}
 
     }
+  theHV_->Disconnect();
 }
 void DimCAENHVServer::setOn(uint32_t chan)
 {
   if (theHV_==NULL) return;
   //  if (theDETECTORMyProxy_==NULL) return;
   // std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
+  theHV_->Connect();
   if (chan!=0xFFFF)
     {
       currentChannel_.setHVRACKID(theHvrackId_);
@@ -214,12 +219,14 @@ void DimCAENHVServer::setOn(uint32_t chan)
 	}
 
     }
+  theHV_->Disconnect();
 }
 void DimCAENHVServer::setOff(uint32_t chan)
 {
   if (theHV_==NULL) return;
   //  if (theDETECTORMyProxy_==NULL) return;
   // std::map<uint32_t,DETECTORDescription> det=theDETECTORMyProxy_->getMap();
+  theHV_->Connect();
   if (chan!=0xFFFF)
     {
       currentChannel_.setHVRACKID(theHvrackId_);
@@ -243,6 +250,7 @@ void DimCAENHVServer::setOff(uint32_t chan)
 	}
 
     }
+  theHV_->Disconnect();
 }
 
 DimCAENHVServer::~DimCAENHVServer()
@@ -259,11 +267,11 @@ void DimCAENHVServer::monitorStart(uint32_t period)
 void DimCAENHVServer::storeCurrentChannel()
 {
   // return;
-  // if (theHVMONMyProxy_==NULL) return;
+  if (theHVMONMyProxy_==NULL) return;
 
-  // memcpy(theHVMONMyProxy_->getCurrent(),&currentChannel_,sizeof(HVMONDescription));
-  // theHVMONMyProxy_->insert();
-
+  memcpy(theHVMONMyProxy_->getCurrent(),&currentChannel_,sizeof(HVMONDescription));
+  theHVMONMyProxy_->insert();
+  return;
 
   std::stringstream ss;
   ss<<"INSERT INTO HVMON (HVRACKID,HVCHANNEL,VSET,VMON,IMON,STATUS) VALUES ("<<
@@ -359,10 +367,11 @@ void DimCAENHVServer::regulate(uint32_t period)
 
 	  if (vcor>20 && vcor<=200)
 	    {
+	      theHV_->Connect();
 	      theHV_->SetVoltage(it->second.getHVCHANNEL(),Vexpected);
 	      std::cout<<"REGULATION >>>> Voltage changed on channel"<< it->second.getHVCHANNEL()<<std::endl;
 	      std::cout<<"\t Current Voltage is "<<vmon<<" leading to an effective voltage of "<<Veff<<" where  one expects "<<Vexpected<< "beeing applied"<<std::endl;
-
+	      theHV_->Disconnect();
 	    }
 	  if (vcor>200)
 	    {
