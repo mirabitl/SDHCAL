@@ -152,26 +152,27 @@ env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
 LIBRARY_SOURCES=Glob("#src/*.cc")
 
 #Shared library
-SlowCAENHV=env.SharedLibrary("#lib/SlowCAENHV",LIBRARY_SOURCES)
+InterfaceCAENHV=env.SharedLibrary("#lib/InterfaceCAENHV",LIBRARY_SOURCES)
 
 
 #Daemon 
 EXE_LIBPATH=LIBRARY_PATHS
 EXE_LIBPATH.append("#lib")
 EXE_LIBS=LIBRARIES
-EXE_LIBS.append("SlowCAENHV")
+EXE_LIBS.append("InterfaceCAENHV")
 dcaenhv=env.Program("bin/dimcaenhv",source="src/dcaenhv.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+hvc=env.Program("bin/hvc",source="src/hvcaen.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
 #Python module
-#_SlowCAENHV=env.PythonModule('_LSlowCAENHV', ['LSlowCAENHV.i'],LIBPATH="#lib",LIBS="SlowCAENHV")
+#_InterfaceCAENHV=env.PythonModule('_LInterfaceCAENHV', ['LInterfaceCAENHV.i'],LIBPATH="#lib",LIBS="InterfaceCAENHV")
 
 myinc=[]
 for x in Glob("#include/*.h"):
   myinc.append("include/"+x.name)
 print myinc
-env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SlowCAENHV)
-env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[dcaenhv])
-###env.Install("/opt/dhcal/lib",SlowCAENHV)
+env.Install(DHCAL_ROOT+"/opt/dhcal/lib",InterfaceCAENHV)
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[hvc,dcaenhv])
+###env.Install("/opt/dhcal/lib",InterfaceCAENHV)
 
 env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib",DHCAL_ROOT+"/opt/dhcal/bin"])
 
