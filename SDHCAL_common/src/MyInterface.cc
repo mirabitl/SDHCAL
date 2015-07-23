@@ -7,6 +7,7 @@ MyInterface::MyInterface(std::string account) : theAccount_(account)
 {
   MyInterface::decodeAccount(account,theName_,thePwd_,theHost_,theDatabase_);
   theMysqlRes_=NULL;
+  connected_=false;
 }
 void MyInterface::decodeAccount(std::string account,std::string &Name,std::string &Pwd,std::string &Host,std::string &Database)
 {
@@ -26,7 +27,7 @@ void MyInterface::decodeAccount(std::string account,std::string &Name,std::strin
   std::cout<<Pwd<<std::endl;
   std::cout<<Host<<std::endl;
   std::cout<<Database<<std::endl;
-
+  
 }
 void MyInterface::connect()
 {
@@ -36,18 +37,23 @@ void MyInterface::connect()
     {
       fprintf(stderr, "Failed to connect to database: Error: %s\n",
 	      mysql_error(&theMysql_));
-      exit(0);
+      return;
     }
+  connected_=true;
 }
 
 void MyInterface::disconnect()
 {
-  mysql_close(&theMysql_);
+  if (connected_)
+    {
+      mysql_close(&theMysql_);
+      connected_=false;
+    }
 }
 int32_t MyInterface::executeQuery(std::string stmt)
 {
   int32_t retval =-1;
- 
+  if (!connected_) return retval;
   
       do {
 	retval=mysql_query (&theMysql_,stmt.c_str());
@@ -69,6 +75,7 @@ int32_t MyInterface::executeSelect(std::string stmt)
 {
   // Retrieve mainframe information (address, username, meteo, ...)
   int32_t retval=-1;
+  if (!connected_) return retval;
   if (theMysqlRes_!=NULL)
     mysql_free_result(theMysqlRes_);
   if (retval=mysql_query(&theMysql_,stmt.c_str())) {

@@ -16,6 +16,7 @@ class MyInterface {
   std::string theAccount_,theName_,thePwd_,theHost_,theDatabase_;
   MYSQL theMysql_;
   MYSQL_RES* theMysqlRes_;
+  bool connected_;
     };
 
 #endif
