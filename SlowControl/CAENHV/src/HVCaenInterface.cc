@@ -10,34 +10,13 @@
 HVCaenInterface::HVCaenInterface(std::string host,std::string user,std::string pwd) :theHost_(host),theUser_(user),thePassword_(pwd)
 {
   theHandle_=-1;
-}
 
-HVCaenInterface::~HVCaenInterface()
-{
-  if (theHandle_!=-1) Disconnect();
-}
-void HVCaenInterface::Disconnect()
-{
-  if (theHandle_==-1) return;
-
-  int ret = CAENHV_DeinitSystem(theHandle_);
-  //if( ret == CAENHV_OK )
-  //  printf("CAENHV_DeinitSystem: Connection closed (num. %d)\n\n", ret);
-  if( ret != CAENHV_OK )
-    printf("CAENHV_DeinitSystem: %s (num. %d)\n\n", CAENHV_GetError(theHandle_), ret);
-
-  theHandle_=-1;
-}
-
-
-void HVCaenInterface::Connect()
-{
-
+  theIp_="";
   struct hostent *he;
   struct in_addr **addr_list;
   int i;
   char ip[30];
-         
+
   if ( (he = gethostbyname( theHost_.c_str() ) ) == NULL) 
     {
       // get the host info
@@ -53,19 +32,44 @@ void HVCaenInterface::Connect()
       strcpy(ip , inet_ntoa(*addr_list[i]) );
       break;
     }
+  theIp_.assign(ip);
+  connected_=false;
+}
 
+HVCaenInterface::~HVCaenInterface()
+{
+  if (theHandle_!=-1) Disconnect();
+}
+void HVCaenInterface::Disconnect()
+{
+  if (theHandle_==-1) return;
+
+  int ret = CAENHV_DeinitSystem(theHandle_);
+  //if( ret == CAENHV_OK )
+  //  printf("CAENHV_DeinitSystem: Connection closed (num. %d)\n\n", ret);
+  if( ret != CAENHV_OK )
+    printf("CAENHV_DeinitSystem: %s (num. %d)\n\n", CAENHV_GetError(theHandle_), ret);
+  connected_=false;
+  theHandle_=-1;
+}
+
+
+void HVCaenInterface::Connect()
+{
+
+  
   // Now connect to the CAEN crate
   int32_t ret,sysHndl;
   int32_t sysType=0;
   int32_t link=LINKTYPE_TCPIP;
-  ret = CAENHV_InitSystem((CAENHV_SYSTEM_TYPE_t)sysType, link, ip,theUser_.c_str(),thePassword_.c_str(), &sysHndl);
+  ret = CAENHV_InitSystem((CAENHV_SYSTEM_TYPE_t)sysType, link,(char*) theIp_.c_str(),theUser_.c_str(),thePassword_.c_str(), &sysHndl);
 
 
   if( ret == CAENHV_OK )
     {
-      i = 0;
       theID_=ret;
       theHandle_=sysHndl;
+      connected_=true;
     }
   else
     printf("\nCAENHV_InitSystem: %s (num. %d) handle %d \n\n", CAENHV_GetError(sysHndl), ret,sysHndl);    
