@@ -18,6 +18,7 @@
 #include "DETECTORMyProxy.h"
 #include "HVMONMyProxy.h"
 #include "PTMONMyProxy.h"
+#include "DS1820MONMyProxy.h"
 using namespace std;
 
 class DimCAENHVServer: public DimServer
@@ -52,6 +53,7 @@ private:
   DETECTORMyProxy*   theDETECTORMyProxy_;
   HVMONMyProxy*   theHVMONMyProxy_;
   PTMONMyProxy*   thePTMONMyProxy_;
+  DS1820MONMyProxy*   theDS1820MONMyProxy_;
 
 
   int32_t theSetupId_,theHvrackId_;

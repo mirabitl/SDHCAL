@@ -203,7 +203,7 @@ void DimSlowControl::CAENHVSetOff(uint32_t chan)
   std::stringstream s0;
   s0.str(std::string());
   s0<<theCAENHVPrefix_<<"/SETOFF";
-  DimClient::sendCommand(s0.str().c_str(),(int) 1); 
+  DimClient::sendCommand(s0.str().c_str(),(int) chan); 
     
   
 
@@ -219,6 +219,52 @@ void DimSlowControl::CAENHVRead(uint32_t chan)
   
 
 }
+void DimSlowControl::CAENHVStartMonitor(uint32_t period)
+{
+  if (theCAENHVPrefix_.compare("")==0) return;
+  std::stringstream s0;
+  s0.str(std::string());
+  s0<<theCAENHVPrefix_<<"/STARTMONITOR";
+  DimClient::sendCommand(s0.str().c_str(),(int) period); 
+    
+  
+
+}
+void DimSlowControl::CAENHVStopMonitor()
+{
+  if (theCAENHVPrefix_.compare("")==0) return;
+  std::stringstream s0;
+  s0.str(std::string());
+  s0<<theCAENHVPrefix_<<"/STOPMONITOR";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 
+    
+  
+
+}
+
+void DimSlowControl::CAENHVStartRegulation(uint32_t period)
+{
+  if (theCAENHVPrefix_.compare("")==0) return;
+  std::stringstream s0;
+  s0.str(std::string());
+  s0<<theCAENHVPrefix_<<"/STARTREGUL";
+  DimClient::sendCommand(s0.str().c_str(),(int) period); 
+    
+  
+
+}
+void DimSlowControl::CAENHVStopRegulation()
+{
+  if (theCAENHVPrefix_.compare("")==0) return;
+  std::stringstream s0;
+  s0.str(std::string());
+  s0<<theCAENHVPrefix_<<"/STOPREGUL";
+  DimClient::sendCommand(s0.str().c_str(),(int) 1); 
+    
+  
+
+}
+
 
 void DimSlowControl::OpenGPIO()
 {

@@ -46,6 +46,10 @@ public:
   void CAENHVSetOn(uint32_t chan);
   void CAENHVSetOff(uint32_t chan);
   void CAENHVRead(uint32_t chan);
+  void CAENHVStartMonitor(uint32_t period);
+  void CAENHVStopMonitor();
+  void CAENHVStartRegulation(uint32_t period);
+  void CAENHVStopRegulation();
   void OpenGPIO();
   void CloseGPIO();
   void VMEOn();
