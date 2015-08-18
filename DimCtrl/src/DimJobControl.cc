@@ -1,8 +1,8 @@
-#include "LCIOWritterInterface.h"
 
 #include "DimJobControl.h"
 #include <stdint.h>
-
+#include "cgicc/CgiDefs.h"
+#include "cgicc/Cgicc.h"
 #include <iostream>
 #include <sstream>
 #include <fcntl.h>
@@ -17,55 +17,114 @@
 #include <cstring>
 
 #include <string.h>
+#include <cstdio>
+#include <cstring>
+#include <iostream>     // std::cout
+#include <fstream>      // std::ifstream
+#include <vector>
+#include <iostream>
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdint.h>
+
+#include <dirent.h>
+#include <sys/types.h>
+#include <sstream>
+#include <string>
+#include <iostream>
+#include <fstream>      // std::ifstream
+// #define DEBUG_PRINT_ENABLED 1  // uncomment to enable DEBUG statements
+#define INFO_PRINT_ENABLED 1
+#if DEBUG_PRINT_ENABLED
+#define INFO_PRINT_ENABLED 1
+#define DEBUG_PRINT printf
+#else
+#define DEBUG_PRINT(format, args...) ((void)0)
+#endif
+#if INFO_PRINT_ENABLED
+#define INFO_PRINT printf
+#else
+#define INFO_PRINT(format, args...) ((void)0)
+#endif
 
 #define _jobControl_NMAX 4096
 #define _jobControl_MMAX 16
 #define _jobControl_MAXENV 100
-
+std::string ReplaceAll(std::string str, const std::string& from, const std::string& to) {
+    size_t start_pos = 0;
+    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
+    }
+    return str;
+}
 DimProcessData::DimProcessData(std::string json_string)
 {
   Json::Reader reader;
-  bool parsingSuccessful = reader.parse(json_string,_processInfo, parsedFromString);
+  bool parsedFromString;
+  Json::StyledWriter styledWriter;
+  std::cout<<"Parsing" <<json_string<<std::endl;
+  //  std::string jj=ReplaceAll(json_string, std::string("'"), std::string("\""));
+  //bool parsingSuccessful = reader.parse(jj,_processInfo);
+  bool parsingSuccessful = reader.parse(json_string,_processInfo);
   if (parsingSuccessful)
     {
-      std::cout << styledWriter.write(parsedFromString) << std::endl;
+      std::cout << styledWriter.write(_processInfo) << std::endl;
     }
   _childPid=0;
-  _status=notcreated;
+  _status=DimProcessData::notcreated;
+}
+std::string proc_find(uint32_t lpid) 
+{
+    std::stringstream s;
+    s<< "/proc/"<<lpid<<"/status";
+
+    std::ifstream infile(s.str().c_str());
+    if (!infile.good())
+      return std::string("DEAD");
+    std::string line;
+    while (std::getline(infile, line))
+      {
+	if (line.substr(0,6).compare("State:")==0)
+	  return line.substr(6);
+	//std::cout<<"PID"<<lpid<<" "<<line.substr(6)<<std::endl;
+      }
+    infile.close();
+
 }
 
-void startProcess(DimProcessData* p)
+void DimJobControl::startProcess(DimProcessData* p)
 {
-  if (p->_status!=DimProcessStatus::notcreated) return;
+  if (p->_status!=DimProcessData::notcreated) return;
 
   std::string sprog=p->_processInfo["Program"].asString();
   std::vector<std::string> sarg;
   for (uint32_t ia=0;ia<p->_processInfo["Arguments"].size();ia++)
     {
-      sarg.append(p->_processInfo["Arguments"][ia].asString());
+      sarg.push_back(p->_processInfo["Arguments"][ia].asString());
     }
- std::vector<std::string> senv=p->_processInfo["Environnement"].getMemberNames();
- std::map<std::string,std::string> menv;
+ //std::map<std::string,std::string> menv;
   std::vector<std::string> venv;
- for (std::vector<std::string>::iterator it=senv.begin();it!=senv.end();it++)
-   {
-     std::stringstream ss;
-     
-     ss<<"export "<<(*it)<<"="<<p->_processInfo["Environnement"][(*it)];
-     venv.push_back(ss.str());
-     menv[(*it)]=p->_processInfo["Environnement"][(*it)];
-   }
+  for (uint32_t ia=0;ia<p->_processInfo["Environnement"].size();ia++)
+    {
+      venv.push_back(p->_processInfo["Environnement"][ia].asString());
+    }
+
+ signal(SIGCHLD, SIG_IGN);
  // forking
  pid_t pid = fork();
 
  if (pid!=0) //Parent
    {
      p->_childPid=pid;
-     p->_status=DimProcessStatus::running;
+     p->_status=DimProcessData::running;
      return;
    }
  // client
-    / 
+  
   // we are in the child 
   //
 
@@ -105,10 +164,10 @@ void startProcess(DimProcessData* p)
   // brute force close 
   // xdaq only opens first 5.
   //
-  close(0);
-  for (int i = 3; i < 32; i++) {
-    close(i);
-  }
+   close(0);
+   for (int i = 3; i < 32; i++) {
+     close(i);
+   }
   
  // Fills environment list
 
@@ -124,12 +183,13 @@ void startProcess(DimProcessData* p)
   pEnvp[i] = NULL;
 
   // set new user id to root
+  int ret=0;
   ret = setuid(0);
   if ( ret != 0 ) {
 	//Let's try a second time
   	ret = setuid(0);
   	if ( ret != 0 ) {
-	  DEBUG_PRINT("child: FATAL couldn't setuid() to %i.\n",execUid);
+	  INFO_PRINT("child: FATAL couldn't setuid() to %i.\n",0);
 	}
   }
   
@@ -139,6 +199,7 @@ void startProcess(DimProcessData* p)
 
 
   // open procID+log for stdout and stderr
+  
   char logPath[100];
   
   pid_t mypid = getpid();                                          // get my pid to append to filename 	
@@ -150,22 +211,22 @@ void startProcess(DimProcessData* p)
 	  close( tmpout );                                       // close unused descriptor
   }
   catch (std::exception &e) {
-    DEBUG_PRINT("child: FATAL couldn't write log file to %s.\n", logPath);
+    INFO_PRINT("child: FATAL couldn't write log file to %s.\n", logPath);
     exit(-1);
   }
   catch (...)
     {
-      DEBUG_PRINT("child: FATAL couldn't write log file to %s.\n", logPath);
+      INFO_PRINT("child: FATAL couldn't write log file to %s.\n", logPath);
       exit(-1);
     }
 
 
-  int ret = execve( executivePath, pArgv, pEnvp); 	      
+  ret = execve( executivePath, pArgv, pEnvp); 	      
 
-  DEBUG_PRINT("jobControl: FATAL OOps, we came back with ret = %i , dying",ret);
+  INFO_PRINT("jobControl: FATAL OOps, we came back with ret = %i , dying",ret);
   exit(-1);
 }
-DimJobControl::DimJobControl() :theProxy_(NULL)  
+DimJobControl::DimJobControl() 
 {
   
 
@@ -173,141 +234,109 @@ DimJobControl::DimJobControl() :theProxy_(NULL)
   std::stringstream s0;
   char hname[80];
   gethostname(hname,80);
-  s0<<"/DSP/"<<hname<<"/STATUS";
-  aliveService_ = new DimService(s0.str().c_str(),processStatus_);
+  _hostname.assign(hname);
   s0.str(std::string());
-  processStatus_=DimJobControl::ALIVED;
-  aliveService_->updateService();
+  s0<<"/DJC/"<<hname<<"/JOBSTATUS";
+  _jobService = new DimService(s0.str().c_str(),"CREATED");
+  //_jobService->updateService();
   s0.str(std::string());
-  run_=0;
-  s0<<"/DSP/"<<hname<<"/RUN";
-  runService_ = new DimService(s0.str().c_str(),run_);
-  runService_->updateService();
-  event_=0;
-
-  s0.str(std::string());
-  s0<<"/DSP/"<<hname<<"/EVENT";
-  eventService_ = new DimService(s0.str().c_str(),event_);
-  eventService_->updateService();
+  s0<<"/DJC/"<<hname<<"/LOGSTATUS";
+  _logService = new DimService(s0.str().c_str(),"CREATED");
+  //_logService->updateService();
   allocateCommands();
   s0.str(std::string());
   s0<<"DimJobControl-"<<hname;
 
   DimServer::start(s0.str().c_str()); 
   //  cout<<"Starting DimDaqCtrl"<<endl;
-  memset(difState_,0,255*sizeof(DimInfo*));
 
 }
 DimJobControl::~DimJobControl()
 {
-  delete aliveService_;
-  delete initialiseCommand_;
-  delete startCommand_;
-  delete stopCommand_;
-  delete directoryCommand_;
-  delete setupCommand_;
-  delete destroyCommand_;
-  for (uint32_t i=1;i<255;i++)
-    if (difState_[i]!=NULL)			
-      {
-	delete difState_[i];
-	delete difInfo_[i];
-	delete difData_[i];
-      }
+  clear();
+  delete _startCommand;
+  delete _killCommand;
+  delete _statusCommand;
+  delete _logCommand;
+  delete _jobService;
+  delete _logService;
 
 }
-void DimJobControl::clearInfo()
+void DimJobControl::killProcess(pid_t pid,uint32_t  sig)
 {
-   for (int i=0;i<255;i++)
+  // for (std::map<pid_t,DimProcessData*>::iterator it=_processMap.begin();it!=_processMap.end();it++)
+  //   {
+  //     if (it->second->_status==DimProcessData::running && pid==it->first)
+  // 	{
+  // 	  ::kill(it->first,sig);
+  // 	  it->second->_status=DimProcessData::killed;
+  // 	}
+
+  //   }
+  
+  
+
+
+  std::map<pid_t, DimProcessData*>::iterator itr = _processMap.begin();
+  while (itr != _processMap.end()) 
     {
-      if (difState_[i]!=NULL)			
+      if (itr->second->_status==DimProcessData::running && pid==itr->first) 
 	{
-	  delete difState_[i];
-	  delete difInfo_[i];
-	  delete difData_[i];
+	std::map<pid_t, DimProcessData*>::iterator toErase = itr;
+	::kill(itr->first,sig);
+	itr->second->_status=DimProcessData::killed;
+	delete itr->second;
+	++itr;
+	_processMap.erase(toErase);
+	} 
+      else 
+	{
+	++itr;
 	}
     }
-   delete runInfo_;
+
+
+
 }
-void  DimJobControl::registerDifs()
+
+void::DimJobControl::clear()
 {
-  for (int i=0;i<255;i++)
+  for (std::map<pid_t,DimProcessData*>::iterator it=_processMap.begin();it!=_processMap.end();it++)
     {
-      if (difState_[i]!=NULL)			
-	{
-	  delete difState_[i];
-	  delete difInfo_[i];
-	  delete difData_[i];
-	}
-
-      std::stringstream s0;
-      s0.str(std::string());
-      s0<<"/DDS/DIF"<<i<<"/STATE";
-      memset(theState_,0,255);
-      difState_[i]=new DimInfo(s0.str().c_str(),theState_,this);
-      s0.str(std::string());
-      s0<<"/DDS/DIF"<<i<<"/INFO";
-      memset(&theInfo_,0,sizeof(DIFStatus));
-      difInfo_[i]=new DimInfo(s0.str().c_str(),(void*) &theInfo_,sizeof(DIFStatus),this);
-      s0.str(std::string());
-      s0<<"/DDS/DIF"<<i<<"/DATA";
-      memset(theBuffer_,0,32*1024*sizeof(uint32_t));
-      difData_[i]=new DimInfo(s0.str().c_str(),theBuffer_,32*1024*sizeof(uint32_t),this);
-
-      
+      if (it->second->_status==DimProcessData::running)
+	::kill(it->first,SIGKILL);
+      delete it->second;
     }
-  runInfo_=new DimInfo("/DB/RUNFROMDB",theRun_,this);
-  dbstateInfo_=new DimInfo("/DB/DBSTATE",theState_,this);
-   
+  _processMap.clear();
 }
-void DimJobControl::infoHandler()
+
+std::string DimJobControl::status()
 {
-   DimInfo *curr = getInfo(); // get current DimInfo address 
-   if (curr->getSize()==1) return;
-   if (curr==runInfo_)
-     {
-       theRun_=curr->getInt();
-       std::cout<<"The current Run is "<<theRun_<<std::endl;
-       return;
-     }
-   if (curr==dbstateInfo_)
-     {
-
-       dbState_.assign(curr->getString());
-       std::cout<<"The current DbState is "<<dbState_<<std::endl;
-       return;
-     }
-   for (int i=0;i<255;i++)
-      {
-
-	if (curr==difData_[i])
-	  {
-	    memcpy(&theBuffer_,curr->getData(),curr->getSize());
-       // copy to Shm
-	    uint8_t* cdata=(uint8_t*)  curr->getData();
-	    JobControl::transferToFile(cdata,
-				     curr->getSize(),
-				     JobControl::getBufferABCID(cdata),
-				     JobControl::getBufferDTC(cdata),
-				     JobControl::getBufferGTC(cdata),
-				     JobControl::getBufferDIF(cdata));
-
-	    if (JobControl::getBufferDTC(cdata)%1000 == 0 &&JobControl::getBufferDTC(cdata)!=0 )
-	      printf("%s DIF %d receieve %d  bytes, BCID %lld DTC %d GTC %d DIF %d \n",__PRETTY_FUNCTION__,i,
-		     curr->getSize(),
-		     JobControl::getBufferABCID(cdata),
-		     JobControl::getBufferDTC(cdata),
-		     JobControl::getBufferGTC(cdata),
-		     JobControl::getBufferDIF(cdata));
-	  }
-
-      }
+  //  std::stringstream s0;
+  // s0.str(std::string());
+  Json::FastWriter fastWriter;
+  Json::Value fromScratch;
+  Json::Value array;
+  
+  for (std::map<pid_t,DimProcessData*>::iterator it=_processMap.begin();it!=_processMap.end();it++)
+    {
+      Json::Value pinf;
+      pinf["HOST"]=_hostname;
+      pinf["PID"]=it->first;
+      pinf["NAME"]=it->second->_processInfo["Name"];
+      pinf["STATUS"]=proc_find(it->first);
+      array.append(pinf);
+    }
+  fromScratch["JOBS"]=array;
+ return fastWriter.write(fromScratch);
 }
-
-
-
-
-
+std::string DimJobControl::log(pid_t pid)
+{
+  std::stringstream s0;
+  s0.str(std::string());
+  s0<<"Not yet done "<<std::endl;
+  return s0.str();
+}
 void DimJobControl::allocateCommands()
 {
   std::stringstream s0;
@@ -315,22 +344,19 @@ void DimJobControl::allocateCommands()
   gethostname(hname,80);
   s0.str(std::string());
   s0<<"/DJC/"<<hname<<"/CLEAR";
-  initialiseCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
+  _clearCommand=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
-  s0<<"/DSP/"<<hname<<"/START";
-  startCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
+  s0<<"/DJC/"<<hname<<"/START";
+  _startCommand=new DimCommand(s0.str().c_str(),"C",this);
   s0.str(std::string());
-  s0<<"/DSP/"<<hname<<"/STOP";
-  stopCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
+  s0<<"/DJC/"<<hname<<"/KILL";
+  _killCommand=new DimCommand(s0.str().c_str(),"I:2",this);
   s0.str(std::string());
-  s0<<"/DSP/"<<hname<<"/DESTROY";
-  destroyCommand_=new DimCommand(s0.str().c_str(),"I:1",this);
+  s0<<"/DJC/"<<hname<<"/STATUS";
+  _statusCommand=new DimCommand(s0.str().c_str(),"I:1",this);
   s0.str(std::string());
-  s0<<"/DSP/"<<hname<<"/SETUP";
-  setupCommand_=new DimCommand(s0.str().c_str(),"C",this);
-  s0.str(std::string());
-  s0<<"/DSP/"<<hname<<"/DIRECTORY";
-  directoryCommand_=new DimCommand(s0.str().c_str(),"C",this);
+  s0<<"/DJC/"<<hname<<"/LOG";
+  _logCommand=new DimCommand(s0.str().c_str(),"I:1",this);
   
 }
 
@@ -339,105 +365,55 @@ void DimJobControl::commandHandler()
 {
   DimCommand *currCmd = getCommand();
   printf(" J'ai recu %s COMMAND  \n",currCmd->getName());
-  if (currCmd==initialiseCommand_)
+  if (currCmd==_clearCommand)
     {
-      if (theProxy_ == NULL)
-	{
-	  int nd=currCmd->getInt();
-	  LCIOWritterInterface* lc= new LCIOWritterInterface();
-	  theProxy_=new JobControl(15,true,lc);
-	  theProxy_->Initialise();
-	  theProxy_->Configure();
-	  this->registerDifs();
-	  processStatus_=DimJobControl::INITIALISED;
-	  aliveService_->updateService();
-
-	}
+      this->clear();
+      _jobService->updateService((char*) this->status().c_str());
       return ;
 
     }
 
-  if (currCmd==destroyCommand_)
+  if (currCmd==_startCommand)
     {
-      if (theProxy_ != NULL)
-	{
-	  //delete theProxy_;
-	  //this->clearInfo();
 
-	}
+      std::cout<<currCmd->getString()<<std::endl;
+      std::cout<<std::string(currCmd->getString())<<std::endl;
+      DimProcessData* dp=new DimProcessData(std::string(currCmd->getString()));
+      this->startProcess(dp);
+      std::pair<pid_t, DimProcessData*> pp(dp->_childPid,dp);
+      _processMap.insert(pp);
+      usleep(2000);
+      _jobService->updateService((char*) this->status().c_str());
+      
+      return;
     }
 
-  if (currCmd==setupCommand_)
+  if (currCmd==_killCommand)
     {
-       if (theProxy_ != NULL)
-	{
-	  std::string s;
-	  s.assign(currCmd->getString());
-	  theProxy_->setSetupName(s);
-	}
+
+      int* data=(int*) currCmd->getData();
+      this->killProcess(data[0],data[1]);
+      usleep(2000);
+      _jobService->updateService((char*) this->status().c_str());
+      
+      return;
+    }
+
+  if (currCmd==_statusCommand)
+    {
+      _jobService->updateService((char*) this->status().c_str());
+      
        return;
     }
-
-  if (currCmd==directoryCommand_)
+  if (currCmd==_logCommand)
     {
-       if (theProxy_ != NULL)
-	{
-	  std::stringstream s;
-	  s<<currCmd->getString();
-	  std::cout<<" Directory is set to "<<currCmd->getString()<<std::endl;
-	  theProxy_->setDirectoryName(s.str());
-	}
-       return;
-    }
-  if (currCmd==startCommand_)
-    {
-      int nb=currCmd->getInt();
-      if (theProxy_ != NULL)
-	{
-	  cout<<" Changing Proxy setup to  "<<dbState_<<endl;
-	  theProxy_->setSetupName(dbState_);
-	  cout<<" Number of DIF "<<nb<<endl;
-	  theProxy_->setNumberOfDIF(nb);
-	  cout<<" Number of DIF "<<theProxy_->getNumberOfDIF()<<endl;
-	  theProxy_->purgeShm(); // remove old data not written
-	  theProxy_->Start(theRun_,"/tmp");
-
-	  processStatus_=DimJobControl::STARTED;
-	  aliveService_->updateService();
-	  run_=theRun_;
-	  runService_->updateService();
-	  theThread_ = boost::thread(&DimJobControl::svc, this);
-	}
+      _logService->updateService((char*) this->log(currCmd->getInt()).c_str());
       return ;
 
     }
 
-  if (currCmd==stopCommand_)
-    {
-      if (theProxy_ != NULL)
-	{
-	  theProxy_->Stop();
-	  processStatus_=DimJobControl::STOPPED;
-	  aliveService_->updateService();
-	  //theThread_.join();
-	}
-      return ;
-
-    }
+  
   cout<<"Unknown command"<<currCmd->getName()<<" \n";
     
   return ;
 }
-void DimJobControl::svc()
-{
-  while (1)
-    {
-      sleep((unsigned int) 1);
-      if (theProxy_!=NULL)
-	{
-	  event_=theProxy_->getEventNumber();
-	  //printf("Event is %x %d \n",theProxy_,event_);
-	  eventService_->updateService();
-	}
-    }
-}   

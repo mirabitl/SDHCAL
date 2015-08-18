@@ -8,7 +8,6 @@
 #include "dis.hxx"
 #include "dic.hxx"
 
-#include "JobControl.h"
 #include "DIFReadoutConstant.h"
 using namespace std;
 #include <sstream>
@@ -19,9 +18,13 @@ using namespace std;
 #include <boost/bind.hpp>
 
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
+#include <sys/types.h>
+#include <signal.h>
+#include "json/json.h"
 
 #include <string>
-enum class DimProcessStatus {notcreated,running,killed};
+#include <stdint.h>
+
 
 class DimProcessData
 {
@@ -29,10 +32,10 @@ class DimProcessData
  public:
   DimProcessData(std::string json_string);
   
-
+  enum {notcreated=0,running=1,killed=2};
   Json::Value _processInfo;
   pid_t _childPid;
-  DimProcessStatus _status;
+  uint32_t _status;
 
 };
 
@@ -47,22 +50,22 @@ public:
   void allocateCommands();
   
   void startProcess(DimProcessData* p);
-  void killProcess(DimProcessData* p,uint32_t sig);
+  void killProcess(pid_t pid,uint32_t sig);
 
-  std::string status(pid_t pid);
+  std::string status();
   std::string log(pid_t pid);
   void clear();
 
 private:
-
+  std::string _hostname;
   std::map<pid_t,DimProcessData*> _processMap;
-  std::map<pid_t,DimService*> _statusMap;
-  std::map<pid_t,DimService*> _logMap;
   DimCommand* _startCommand;
+  DimCommand* _clearCommand;
   DimCommand* _killCommand;
   DimCommand* _statusCommand;
   DimCommand* _logCommand;
-  
+  DimService* _jobService;
+  DimService* _logService;
 };
 #endif
 
