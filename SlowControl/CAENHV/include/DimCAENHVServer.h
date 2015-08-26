@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <string.h>
+#include <semaphore.h>
 #include <stdio.h>
 #include "/opt/dhcal/dim/dim/dis.hxx"
 #include "HVCaenInterface.h"
@@ -84,6 +85,8 @@ private:
   bool monitorRunning_;
   bool regulationRunning_;
   HVCaenInterface* theHV_;
+
+ sem_t theMutex_;
 };
 #endif
 

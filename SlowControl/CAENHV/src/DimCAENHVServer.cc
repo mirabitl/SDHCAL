@@ -5,7 +5,8 @@ DimCAENHVServer::DimCAENHVServer() :my_(NULL)
 {
 
   
-
+  //  theMutex_.unlock();
+  sem_init(&theMutex_,0,1);
   std::stringstream s0;
   char hname[80];
   gethostname(hname,80);
@@ -83,7 +84,7 @@ void DimCAENHVServer::Initialise(std::string account,std::string setup)
   s0<<" NAME=\""<<setup<<"\"";
 
   std::cout<<"STMT :"<<s0.str()<<std::endl;
-    std::cout<<"Setup :"<<setup<<std::endl;
+  std::cout<<"Setup :"<<setup<<std::endl;
   theSETUPMyProxy_->select(s0.str());
   std::map<uint32_t,SETUPDescription*> stm=theSETUPMyProxy_->getMap();
   
@@ -98,7 +99,7 @@ void DimCAENHVServer::Initialise(std::string account,std::string setup)
   s0.str(std::string());
   s0<<" IDX="<<theHvrackId_;
   theHVRACKMyProxy_->select(s0.str());
-   std::map<uint32_t,HVRACKDescription*> hvm=theHVRACKMyProxy_->getMap();
+  std::map<uint32_t,HVRACKDescription*> hvm=theHVRACKMyProxy_->getMap();
   theHV_= new HVCaenInterface(std::string(hvm.begin()->second->getHOSTNAME()),std::string(hvm.begin()->second->getUSERNAME()),std::string(hvm.begin()->second->getPWD()));
 
 
@@ -131,7 +132,7 @@ void DimCAENHVServer::ReadChannel(uint32_t chan)
   currentChannel_.setIMON(theHV_->GetCurrentRead(chan));
   currentChannel_.setSTATUS(theHV_->GetStatus(chan));
   currentChannel_.setVALID(1);
-   //theHV_->Disconnect();
+  //theHV_->Disconnect();
   printf("%d %f %f %f %f %d %d \n",currentChannel_.getHVCHANNEL(),currentChannel_.getVSET(),currentChannel_.getVMON(),currentChannel_.getIMON(),currentChannel_.getSTATUS(),sizeof(HVMONDescription));
   channelReadService_->updateService(&currentChannel_,sizeof(HVMONDescription));
 }
@@ -302,25 +303,36 @@ void DimCAENHVServer::readout(uint32_t period)
 {
   while (monitorRunning_ && theDETECTORMyProxy_!=NULL )
     {
-
-      std::map<uint32_t,DETECTORDescription*> det=theDETECTORMyProxy_->getMap();
-      for (std::map<uint32_t,DETECTORDescription*>::iterator it=det.begin();it!=det.end();it++)
+      if (true)
 	{
-	  this->ReadChannel(it->second->getHVCHANNEL());
-	  this->storeCurrentChannel();
+	  printf("Lock %s \n",__FUNCTION__);
+	  sem_wait(&theMutex_);
+	  std::map<uint32_t,DETECTORDescription*> det=theDETECTORMyProxy_->getMap();
+	  for (std::map<uint32_t,DETECTORDescription*>::iterator it=det.begin();it!=det.end();it++)
+	    {
+	      this->ReadChannel(it->second->getHVCHANNEL());
+	      this->storeCurrentChannel();
 	  
+	    }
+	  sem_post(&theMutex_); printf("Unlock %s \n",__FUNCTION__);
+	  
+
+
+
+	  sleep((unsigned int) period);
+      	}
+      else
+	{
+	  printf("Cannot lock %s \n",__FUNCTION__);
+	  sleep(5);
 	}
-
-
-
-      sleep((unsigned int) period);
     }
   printf("On a fini \n");
 }
 void DimCAENHVServer::monitorStop()
 {
   monitorRunning_=false;
-    printf("On stoppe \n");
+  printf("On stoppe \n");
   //g_d.join_all();
 
 
@@ -337,83 +349,93 @@ void DimCAENHVServer::regulate(uint32_t period)
 {
   while (regulationRunning_ && theDETECTORMyProxy_!=NULL )
     {
-
-      std::map<uint32_t,DETECTORDescription*> det=theDETECTORMyProxy_->getMap();
-      // Read last P and T Value
-      thePTMONMyProxy_->select("NOW()-HEURE<1000");
-      std::map<uint32_t,PTMONDescription*> ptm=thePTMONMyProxy_->getMap();
-      uint32_t nsample=0;float P=0,T=0;
-      for (std::map<uint32_t,PTMONDescription*>::iterator it=ptm.begin();it!=ptm.end();it++)
+      if (true)
 	{
-	  nsample++;
-	  P+=it->second->getPRESSURE();
-	  T+=it->second->getTEMPERATURE();
-	}
+	  printf("Lock %s \n",__FUNCTION__);
 
-      if (nsample<1) {sleep((unsigned int) period); continue;}
-      P/=nsample;
-      T/=nsample;
-      T+=ZEROCELSIUS;
+	  sem_wait(&theMutex_);
+	  std::map<uint32_t,DETECTORDescription*> det=theDETECTORMyProxy_->getMap();
+	  // Read last P and T Value
+	  thePTMONMyProxy_->select("NOW()-HEURE<1000");
+	  std::map<uint32_t,PTMONDescription*> ptm=thePTMONMyProxy_->getMap();
+	  uint32_t nsample=0;float P=0,T=0;
+	  for (std::map<uint32_t,PTMONDescription*>::iterator it=ptm.begin();it!=ptm.end();it++)
+	    {
+	      nsample++;
+	      P+=it->second->getPRESSURE();
+	      T+=it->second->getTEMPERATURE();
+	    }
 
-      // Read last P and T Value
-      theDS1820MONMyProxy_->select("NOW()-HEURE<1000");
-      std::map<uint32_t,DS1820MONDescription*> ttm=theDS1820MONMyProxy_->getMap();
-      uint32_t nsample1=0;float TIN=0,TOUT=0;
-      for (std::map<uint32_t,DS1820MONDescription*>::iterator it=ttm.begin();it!=ttm.end();it++)
-	{
-	  nsample1++;
-	  TIN+=it->second->getTIN();
-	  TOUT+=it->second->getTOUT();
-	}
+	  if (nsample<1) { sem_post(&theMutex_);printf("Unlock %s \n",__FUNCTION__);sleep((unsigned int) period); continue;}
+	  P/=nsample;
+	  T/=nsample;
+	  T+=ZEROCELSIUS;
 
-      if (nsample1<1) {sleep((unsigned int) period); continue;}
-      TIN/=nsample1;
-      TOUT/=nsample1;
-      TOUT+=ZEROCELSIUS;
+	  // Read last P and T Value
+	  theDS1820MONMyProxy_->select("NOW()-HEURE<1000");
+	  std::map<uint32_t,DS1820MONDescription*> ttm=theDS1820MONMyProxy_->getMap();
+	  uint32_t nsample1=0;float TIN=0,TOUT=0;
+	  for (std::map<uint32_t,DS1820MONDescription*>::iterator it=ttm.begin();it!=ttm.end();it++)
+	    {
+	      nsample1++;
+	      TIN+=it->second->getTIN();
+	      TOUT+=it->second->getTOUT();
+	    }
 
-      // Force T to TOUT
-      T=TOUT;
+	  if (nsample1<1) { sem_post(&theMutex_);printf("Unlock %s \n",__FUNCTION__);sleep((unsigned int) period); continue;}
+	  TIN/=nsample1;
+	  TOUT/=nsample1;
+	  TOUT+=ZEROCELSIUS;
+
+	  // Force T to TOUT
+	  T=TOUT;
       
-      for (std::map<uint32_t,DETECTORDescription*>::iterator it=det.begin();it!=det.end();it++)
-	{
-	  // Read values of HV
+	  for (std::map<uint32_t,DETECTORDescription*>::iterator it=det.begin();it!=det.end();it++)
+	    {
+	      // Read values of HV
 
-	  float P0=it->second->getPREF();
-	  float T0=it->second->getTREF()+ZEROCELSIUS;
-	  float HV0=it->second->getVREF();
-	  printf("Expected values are %f at P=%f and T=%f\n",HV0,P0,T0);
-	  float Vexpected=HV0*P*T0/(P0*T);
-	  printf("That gives %f V at P=%f and T=%f \n",Vexpected,P,T);
-	  // Current value
-	  this->ReadChannel(it->second->getHVCHANNEL());
-	  float vmon=currentChannel_.getVMON();
+	      float P0=it->second->getPREF();
+	      float T0=it->second->getTREF()+ZEROCELSIUS;
+	      float HV0=it->second->getVREF();
+	      printf("Expected values are %f at P=%f and T=%f ",HV0,P0,T0);
+	      float Vexpected=HV0*P*T0/(P0*T);
+	      printf("That gives %f V at P=%f and T=%f \n",Vexpected,P,T);
+	      // Current value
+	      this->ReadChannel(it->second->getHVCHANNEL());
+	      float vmon=currentChannel_.getVMON();
 
-	  float Veff = vmon*P0/T0*T/P;
+	      float Veff = vmon*P0/T0*T/P;
                 
-	  float correction = ((Veff/HV0-1)*100);
-	  float vcor =abs(Veff-HV0);
+	      float correction = ((Veff/HV0-1)*100);
+	      float vcor =abs(Veff-HV0);
 
-	  if (vcor>20 && vcor<=200)
-	    {
-	      if (!theHV_->isConnected()) theHV_->Connect();
-	      theHV_->SetVoltage(it->second->getHVCHANNEL(),Vexpected);
-	      std::cout<<"REGULATION >>>> Voltage changed on channel"<< it->second->getHVCHANNEL()<<std::endl;
-	      std::cout<<"\t Current Voltage is "<<vmon<<" leading to an effective voltage of "<<Veff<<" where  one expects "<<Vexpected<< "beeing applied"<<std::endl;
-	      //theHV_->Disconnect();
-	    }
-	  if (vcor>200)
-	    {
-	      std::cout<<"ERROR >>>> Voltage not changed on channel"<< it->second->getHVCHANNEL()<<std::endl;
-	      std::cout<<"\t Current Voltage is "<<vmon<<" leading to an effective voltage of "<<Veff<<" where  one expects "<<Vexpected<< "beeing applied"<<std::endl;
-	    }
+	      if (vcor>20 && vcor<=200)
+		{
+		  if (!theHV_->isConnected()) theHV_->Connect();
+		  theHV_->SetVoltage(it->second->getHVCHANNEL(),Vexpected);
+		  std::cout<<"REGULATION >>>> Voltage changed on channel"<< it->second->getHVCHANNEL()<<std::endl;
+		  std::cout<<"\t Current Voltage is "<<vmon<<" leading to an effective voltage of "<<Veff<<" where  one expects "<<Vexpected<< "beeing applied"<<std::endl;
+		  //theHV_->Disconnect();
+		}
+	      if (vcor>200)
+		{
+		  std::cout<<"ERROR >>>> Voltage not changed on channel"<< it->second->getHVCHANNEL()<<std::endl;
+		  std::cout<<"\t Current Voltage is "<<vmon<<" leading to an effective voltage of "<<Veff<<" where  one expects "<<Vexpected<< "beeing applied"<<std::endl;
+		}
 	  
 
 	  
-	}
+	    }
 
+	  sem_post(&theMutex_);printf("Unlock %s \n",__FUNCTION__);
 
-
-      sleep((unsigned int) period);
+	  sleep((unsigned int) period);
+     	}
+      else
+	{
+	  printf("Cannot lock %s \n",__FUNCTION__);
+	  sleep(5);
+	} 
     }
 }
 
@@ -432,7 +454,7 @@ void DimCAENHVServer::commandHandler()
   printf(" J'ai recu %s COMMAND  \n",currCmd->getName());
   if (currCmd==initialiseCommand_)
     {
-           char* sdb=getenv("SLOWDB");
+      char* sdb=getenv("SLOWDB");
       std::string s;s.assign(sdb);
 
       //std::string s;s.assign(currCmd->getString());
@@ -472,9 +494,9 @@ void DimCAENHVServer::commandHandler()
       this->monitorStart(theMonitorPeriod_);
     }
   if (currCmd==stopMonitorCommand_)
-     {
-       this->monitorStop();
-     }
+    {
+      this->monitorStop();
+    }
   if (currCmd==startRegulationCommand_)
     {
       theRegulationPeriod_=currCmd->getInt();
