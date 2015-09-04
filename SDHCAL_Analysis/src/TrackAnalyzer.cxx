@@ -1,4 +1,4 @@
-#define NPLANS_USED 6
+#define NPLANS_USED 7
 
 #include "TrackAnalyzer.h"
 #include "DIFUnpacker.h"
@@ -71,7 +71,7 @@ uint32_t TrackAnalyzer::PMAnalysis(uint32_t bifid)
 	      s<<"BIFPOS"<<chid;
 	      TH1* hpattag1= rootHandler_->GetTH1(s.str());
 	      if (hpattag1==NULL)
-		hpattag1 =rootHandler_->BookTH1(s.str(),200,-30.,30.);
+		hpattag1 =rootHandler_->BookTH1(s.str(),801,-400.,400.);
 	      for (uint32_t j=0;j<dc->getNumberOfFrames();j++)
 		{
 		  
@@ -79,22 +79,26 @@ uint32_t TrackAnalyzer::PMAnalysis(uint32_t bifid)
 		  hpattag1->Fill(ti-tj); 
 		  //if (chid==10)
 		  // printf(" Slot10 Frame %d time %d %f %f %f\n",j,dc->getFrameTimeToTrigger(j),ti,tj,ti-tj);
-		  if ((ti-tj)>=-4.5 && (ti-tj)<=-1.5)
-		    {chb[chid]=1;}
+		  if ((ti-tj)>=-20. && (ti-tj)<0)
+		    {
+		      //printf("in %d-> %f %f \n",chid,ti,tj);
+		      chb[chid]=1;}
 
-		   if ((ti-tj)>=-0.5 && (ti-tj)<=2.5)
-		    {chb[50+chid]=1;}
+		   if ((ti-tj)>=0 && (ti-tj)<=20.)
+		    {
+		      //printf("out %d-> %f %f \n",chid,ti,tj);
+		      chb[50+chid]=1;}
 		}
 
 	    }
 	  
 	  for(int i=0;i<64;i++)
 	    {
-	      if (chb[i]!=0) hpattag->Fill(i*1.);
+	      if (chb[i]==1) hpattag->Fill(i*1.+0.1);
 	    }
-	  hpattag->Fill(100.);
+	  hpattag->Fill(99.1);
 
-	  if (chb[60]==0) getchar();
+	  //if (chb[60]==0) getchar();
 
 
 	}
@@ -861,7 +865,7 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
       hpattag =rootHandler_->BookTH1( "PatternTag",100,0.1,100.1);
 
     }
-
+  //this->drawHits(theHitVector_);getchar();  
   
   if (theCerenkovTag_==0)
     {
@@ -890,8 +894,13 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 
  
   Shower::computePrincipalComponents(theHitVector_,(double*) &isha);
+  if (sqrt((isha.lambda[0]+isha.lambda[1])/isha.lambda[2])>0.3) return;
   this->buildTracks(theHitVector_,"/TrackNoCut");
+  if (theComputerTrack_->getTracks().size()>0) {
+  INFO_PRINT(" Mean event parameter %f %f %f => %f \n",isha.lambda[0],isha.lambda[1],isha.lambda[2],sqrt((isha.lambda[0]+isha.lambda[1])/isha.lambda[2]));
   
+  // this->drawHits(theHitVector_);getchar();
+  }
   if (tag!=0)
     {
       
@@ -909,7 +918,7 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 
       if (theComputerTrack_->getTracks().size()==0 && false)
 	{
-	  this->drawHits(theHitVector_);getchar();  }
+	}
       return;
 
     }
@@ -917,7 +926,7 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
     if (tag==0)
       {
 	this->buildTracks(theHitVector_,"/TrackNOPM");
-	if (theHitVector_.size()>500)
+	if (theHitVector_.size()>500 && false)
 	  {this->drawHits(theHitVector_);getchar();  }
       return;
     }
@@ -1251,7 +1260,7 @@ void TrackAnalyzer::drawHits(std::vector<RecoHit*> vrh)
   TH3* hcgposi = rootHandler_->GetTH3("InstantHitMap");
   if (hcgposi==NULL)
     {
-      hcgposi =rootHandler_->BookTH3("InstantHitMap",66,0.,200.,200,-50.,150.,200,-50.,150.);
+      hcgposi =rootHandler_->BookTH3("InstantHitMap",100,0.,50.,71,-10.,60.,71,-10.,60.);
     }
   else
     {

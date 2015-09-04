@@ -225,9 +225,9 @@ def DrawSummary(run,i):
   c.SaveAs("Summary_%d_Plan%d.bmp" % (run,i))
   c.SaveAs("Summary_%d_Plan%d.pdf" % (run,i)) 
   time.sleep(3)
-def GetEff(plan):
+def GetEff(dirp,plan):
   l=[]
-  dirname='/Plan%d' % plan
+  dirname=dirp+'/Plan%d' % plan
   extname= dirname+'/ext'
   nearname= dirname+'/found'
   nearname1= dirname+'/found1'
@@ -282,8 +282,18 @@ def GetEff(plan):
   l.append(hnear2.GetEntries())
   
   return l
- 
 
+def drawEff(c,l):
+ 
+  
+  c.cd(1);l[0].Draw("COLZ")
+  c.cd(2);l[1].Draw("COLZ")
+  c.cd(3);l[2].Draw("COLZ")
+  c.cd(4);l[4].Draw("COLZ")
+  c.cd(5);l[3].Draw("")
+  c.cd(6);l[5].Draw("")
+  c.Update();
+  
 def getDifList(chamber):
   difl={}
   path="/Chamber%d" % chamber
