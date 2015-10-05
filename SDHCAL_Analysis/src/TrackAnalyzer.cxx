@@ -36,11 +36,16 @@ uint32_t TrackAnalyzer::PMAnalysis(uint32_t bifid)
 {
 
  
-  TH1* hpattag= rootHandler_->GetTH1("PatternTagNoSeed");
+  for (int itag=1;itag<=3;itag++)
+    {
+      std::stringstream ss;
+      ss<<"/PMAnalysis/Tag"<<itag<<"/";
+
+      TH1* hpattag= rootHandler_->GetTH1(ss.str()+"PatternTagNoSeed");
 
   if (hpattag==NULL)
     {
-      hpattag =rootHandler_->BookTH1( "PatternTagNoSeed",100,0.1,100.1);
+      hpattag =rootHandler_->BookTH1( ss.str()+"PatternTagNoSeed",100,0.,100.);
 
 
     }
@@ -57,8 +62,15 @@ uint32_t TrackAnalyzer::PMAnalysis(uint32_t bifid)
   	  //if (abs(d->getFrameTimeToTrigger(i)-seed)<200)
 	  //printf(" Frame %d  Cerenkov time %d  \n",i,d->getFrameTimeToTrigger(i));
 	  float ti=d->getFrameTimeToTrigger(i)*1.;
-	  
-	  std::bitset<64> chb(0);
+	  uint32_t tag=0;
+	  for (uint32_t j=0;j<64;j++)
+	    {
+	      if (d->getFrameLevel(i,j,0)) tag +=1;
+	      if (d->getFrameLevel(i,j,1)) tag +=2;
+	    }
+	  if (tag!=itag) continue;
+	  float chb[100];
+	  memset(chb,0,100*sizeof(float));
 	  for (std::vector<DIFPtr*>::iterator it = reader_->getDIFList().begin();it!=reader_->getDIFList().end();it++)
 	    {
 	      DIFPtr* dc = (*it);
@@ -68,33 +80,66 @@ uint32_t TrackAnalyzer::PMAnalysis(uint32_t bifid)
 	      DifGeom& difgeom = idg->second;
 	      uint32_t chid = idg->second.getChamberId();
 	      std::stringstream s;
-	      s<<"BIFPOS"<<chid;
+	      s<<ss.str()<<"BIFPOS"<<chid;
 	      TH1* hpattag1= rootHandler_->GetTH1(s.str());
 	      if (hpattag1==NULL)
 		hpattag1 =rootHandler_->BookTH1(s.str(),801,-400.,400.);
+
+	      s.str(std::string());
+	      s<<ss.str()<<"HITPOS"<<chid;
+
+	      TH2* hpatpos= rootHandler_->GetTH2(s.str());
+	      if (hpatpos==NULL)
+		hpatpos =rootHandler_->BookTH2(s.str(),32,0.1,32.1,48,0.1,48.1);
 	      for (uint32_t j=0;j<dc->getNumberOfFrames();j++)
 		{
 		  
 		  float tj=dc->getFrameTimeToTrigger(j)*1.;
+		  if (chid==0)
+		    {
+		      uint32_t tag=0;
+		      for (uint32_t k=0;k<64;k++)
+			{
+			  if (dc->getFrameLevel(j,k,0)) tag +=1;
+			  if (dc->getFrameLevel(j,k,1)) tag +=2;
+			}
+		      if (tag!=itag) continue;
+		    }
+
+		    
+
 		  hpattag1->Fill(ti-tj); 
 		  //if (chid==10)
 		  // printf(" Slot10 Frame %d time %d %f %f %f\n",j,dc->getFrameTimeToTrigger(j),ti,tj,ti-tj);
-		  if ((ti-tj)>=-20. && (ti-tj)<0)
+		  if ((ti-tj)>=-10. && (ti-tj)<0)
 		    {
 		      //printf("in %d-> %f %f \n",chid,ti,tj);
-		      chb[chid]=1;}
+		      chb[chid]+=1.;
+		      int iasic=dc->getFrameAsicHeader(j);
+		      for (uint32_t k=0;k<64;k++)
+			{
+			  if (dc->getFrameLevel(j,k,0) || dc->getFrameLevel(j,k,1))
+			    {
+			      int ip,jp;
+			      DifGeom::PadConvert(iasic,k,ip,jp,2);
+			      hpatpos->Fill(ip*1.,jp*1.);
+			       
+			    }
+			}
 
-		   if ((ti-tj)>=0 && (ti-tj)<=20.)
+		    }
+
+		   if ((ti-tj)>=0 && (ti-tj)<=10.)
 		    {
 		      //printf("out %d-> %f %f \n",chid,ti,tj);
-		      chb[50+chid]=1;}
+		      chb[50+chid]+=1.;}
 		}
 
 	    }
 	  
 	  for(int i=0;i<64;i++)
 	    {
-	      if (chb[i]==1) hpattag->Fill(i*1.+0.1);
+	      if (chb[i]) hpattag->Fill(i*1.+0.1,chb[i]);
 	    }
 	  hpattag->Fill(99.1);
 
@@ -102,12 +147,12 @@ uint32_t TrackAnalyzer::PMAnalysis(uint32_t bifid)
 
 
 	}
-
+    
       
 
 
     }
-
+    }
  
   //  getchar();
   return 0;
@@ -996,9 +1041,9 @@ void TrackAnalyzer::processEvent()
       // getchar();
       seed.clear();
       //INFO_PRINT("Calling CreaetRaw %d\n",minChambersInTime_);
-      reader_->findDIFSeeds(minChambersInTime_);
-      rhcol=reader_->createRawCalorimeterHits(reader_->getDIFSeeds());
-      //rhcol=reader_->createRawCalorimeterHits(seed);
+      //reader_->findDIFSeeds(minChambersInTime_);
+      //rhcol=reader_->createRawCalorimeterHits(reader_->getDIFSeeds());
+      rhcol=reader_->createRawCalorimeterHits(seed);
       evt_->addCollection(rhcol,"DHCALRawHits");
       rhcoltransient=false; 
 

@@ -85,6 +85,8 @@ void RawAnalyzer::processEvent()
   
   if (evt_->getEventNumber()<=theSkip_) return;
   TH1* hacqtime=rootHandler_->GetTH1("AcquisitionTime");
+
+  
   TH2* hfr2=rootHandler_->GetTH2("HitFrequency");
   if (hacqtime==NULL)
     {
@@ -213,12 +215,25 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
       DIFPtr* d = (*it);
       if (d->getID()>255) continue;
      // Loop on frames
+      uint32_t dmin=1000;
+      uint32_t npd=0;
       for (uint32_t i=0;i<d->getNumberOfFrames();i++)
       {
 	double t=d->getFrameTimeToTrigger(i)*2E-7;
+	if (d->getFrameTimeToTrigger(i)<dmin) 
+	  {
+	    dmin=d->getFrameTimeToTrigger(i);
+	    npd=0;
+	    for (uint32_t j=0;j<64;j++)
+	      {
+		if (!(d->getFrameLevel(i,j,0) || d->getFrameLevel(i,j,1))) continue;
+		npd++;
+	      }
+
+	  }
 
 	if (t>3.8) {
-	  printf("Wrong Time %f %x \n",t,d->getFrameTimeToTrigger(i));
+	  printf("Wrong Time %f %x %d %d %x %x \n",t,d->getFrameTimeToTrigger(i),d->getBCID(),d->getFrameBCID(i),d->getBCID(),d->getFrameBCID(i));
 	  continue;
 	}
 	if (dbase->getDTC()==17 && d->getFrameTimeToTrigger(i)>80385 && d->getFrameTimeToTrigger(i)<80395 )
@@ -266,7 +281,51 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
 	       han20->Fill(j*1.);
 	   }
       }
+
+      
+      std::stringstream s0;
+      s0<<"/TIME/DIF"<<d->getID();
+      TH1* hfratime=rootHandler_->GetTH1(s0.str()+"/FrameTime");
+      TH1* hnpd=rootHandler_->GetTH1(s0.str()+"/Npad");
+  
+
+      TH2* hmit=rootHandler_->GetTH2(s0.str()+"/HitMapIT");
+      if (hmit==NULL)
+	{
+	  hfratime =rootHandler_->BookTH1(s0.str()+ "/FrameTime",2000,0.,2000.);
+	  hnpd =rootHandler_->BookTH1( s0.str()+"/Npad",64,0.1,64.1);
+	  hmit=rootHandler_->BookTH2(s0.str()+"/HitMapIT",48,0.1,48.1,32,0.1,32.1);
+	}
+
+      hfratime->Fill(dmin*1.);
+      if (dmin>10 && dmin<20)
+	for (uint32_t i=0;i<d->getNumberOfFrames();i++)
+	  {
+
+	    if (d->getFrameTimeToTrigger(i)==dmin) 
+	      {
+		npd=0;
+		for (uint32_t j=0;j<64;j++)
+		  {
+		    if (!(d->getFrameLevel(i,j,0) || d->getFrameLevel(i,j,1))) continue;
+		    int asic=d->getFrameAsicHeader(i),channel=j+1,x=0,y=0;
+
+		    DifGeom::PadConvert(asic,channel,x,y,2);
+		    //printf("%d %d => %d %d \n",asic,channel,x,y);
+		    hmit->Fill(x*1.,y*1.,1.);
+		    npd++;
+		  }
+		hnpd->Fill(npd*1.);
+
+	      }
+
+	  }
+
+
+      
+
     }
+
   hacqtime->Fill(theEventTotalTime_);
   theTotalTime_+=theEventTotalTime_;
   printf("Processing %d - %d GTC %d Total time %f Acquition time %f\n",evt_->getRunNumber(),evt_->getEventNumber(),dbase->getGTC(),(dbase->getAbsoluteBCID()-theStartBCID_)*2E-7,theTotalTime_);
