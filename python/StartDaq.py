@@ -32,6 +32,50 @@ class threadedSendCommand(Thread):
 
 
 class StartDaq:
+    def parseTriggerRegister(self):
+       """
+11:32:34) tkdaqboss: All=0x81180000
+(11:32:51) tkdaqboss: BT =+0x40
+(11:33:09) tkdaqboss: PP=0x9000000
+(11:33:24) tkdaqboss: TEMPERATURE=+0x20000
+(11:34:06) tkdaqboss: NOPP=+0x1b00
+(11:37:52) tkdaqboss: ANALOG=0x801B00
+(11:49:00) tkdaqboss: DIGITAL+=0x400000
+       """
+       self.r_ilc_= (self.register_ & 0x40 == 0x0)
+       self.r_powerpulsing_= (self.register_ & 0x9000000 == 0x9000000)
+       self.r_temperature_= (self.register_ & 0x20000 == 0x20000)
+       self.r_analog_= (self.register_ & 0x801B00 == 0x801B00) and not self.r_powerpulsing_
+       self.r_digital_ = (self.register_ & 0x400000 == 0x400000)
+       print " Trigger register = 0X%x" % self.register_
+       print "ILC  ",self.r_ilc_
+       print "PP   ",self.r_powerpulsing_
+       print "TEMP ",self.r_temperature_
+       print "ANA  ",self.r_analog_
+       print "DIG ",self.r_digital_
+
+    def setTriggerRegister(self):
+       self.register_=0x81180000
+       if (not self.r_ilc_):
+          self.register_=self.register_ | 0x40
+       if (self.r_powerpulsing_): 
+          self.register_=self.register_ | 0x9000000
+       else:
+          self.register_=self.register_ | 0x1B00
+       if (self.r_temperature_):
+          self.register_=self.register_ | 0x20000
+       if (self.r_analog_):
+          self.register_=self.register_ | 0x801B00
+       if (self.r_digital_):
+          self.register_=self.register_ | 0x400000
+       print " Trigger register = 0X%x" % self.register_
+       print "ILC  ",self.r_ilc_
+       print "PP   ",self.r_powerpulsing_
+       print "TEMP ",self.r_temperature_
+       print "ANA  ",self.r_analog_
+       print "DIG ",self.r_digital_
+       
+
     def __init__(self,mod_name):
         exec("import %s  as config" % mod_name)
         self.host_=config.host
@@ -44,6 +88,12 @@ class StartDaq:
         self.daq_=LSDHCALDimCtrl.DimDaqControl(mod_name)
         self.state_=config.state
         self.register_=config.register
+        self.r_ilc_=False
+        self.r_powerpulsing_=False
+        self.r_temperature_=False
+        self.r_analog_=False
+        self.r_digital_=False
+        self.parseTriggerRegister()
         self.directory_=config.directory
         try:
            self.zuphost_=config.zuphost
@@ -57,6 +107,10 @@ class StartDaq:
            self.monitor_=config.monitor
         except:
            self.monitor_=None
+       
+
+
+
     def addHost(self,h):
         self.host_.append(h)
     def addHostRange(self,name,first,last):
