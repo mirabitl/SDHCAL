@@ -191,7 +191,7 @@ void SDHCALMonitor::DIFStudy( IMPL::LCCollectionVec* rhcol)
       if (thr[1]||thr[0]||thr[2])
 	{
 	  hhits1->SetBinContent((asic-1)*64+channel+1,hhits1->GetBinContent((asic-1)*64+channel+1)+1);
-	  if (bc>12 && bc<20)
+	  if (bc>8 && bc<20)
 	    hhits1it->SetBinContent((asic-1)*64+channel+1,hhits1->GetBinContent((asic-1)*64+channel+1)+1);
 	}
       if (thr[2]) hhits2->SetBinContent((asic-1)*64+channel+1,hhits2->GetBinContent((asic-1)*64+channel+1)+1);
@@ -239,7 +239,7 @@ void SDHCALMonitor::DIFStudy( IMPL::LCCollectionVec* rhcol)
 
 
       unsigned int bc = hit->getTimeStamp();
-      if (bc<12 || bc>20) continue;
+      if (bc<8 || bc>20) continue;
       unsigned int difid = hit->getCellID0()&0xFF;
       if (difid<1 || difid>255) continue;
       int asicid = (hit->getCellID0()&0xFF00)>>8;
@@ -369,17 +369,57 @@ void SDHCALMonitor::DIFStudy( IMPL::LCCollectionVec* rhcol)
 
 
       TH1* hnp= (TH1F*) rootHandler_->GetTH1(namec.str()+"/Npad");
+      TH1* hnp0= (TH1F*) rootHandler_->GetTH1(namec.str()+"/Npad0");
+      TH1* hnp1= (TH1F*) rootHandler_->GetTH1(namec.str()+"/Npad1");
+      TH1* hnp2= (TH1F*) rootHandler_->GetTH1(namec.str()+"/Npad2");
+
       
       TH2* hpos= (TH2F*) rootHandler_->GetTH2(namec.str()+"/ClusterPos");
+      TH2* hpos0= (TH2F*) rootHandler_->GetTH2(namec.str()+"/ClusterPos0");
+      TH2* hpos1= (TH2F*) rootHandler_->GetTH2(namec.str()+"/ClusterPos1");
+      TH2* hpos2= (TH2F*) rootHandler_->GetTH2(namec.str()+"/ClusterPos2");
 	
       if (hnp==0)
 	{
-	  hnp=rootHandler_->BookTH1(namec.str()+"/Npad",65,-0.9,64.1);
+	  hnp=rootHandler_->BookTH1(namec.str()+"/Npad",32,0.,32.);
+	  hnp0=rootHandler_->BookTH1(namec.str()+"/Npad0",32,0.,32.);
+	  hnp1=rootHandler_->BookTH1(namec.str()+"/Npad1",32,0.,32.);
+	  hnp2=rootHandler_->BookTH1(namec.str()+"/Npad2",32,0.,32.);
 	  hpos=rootHandler_->BookTH2(namec.str()+"/ClusterPos",100,0.,100.,100,0.,100.);
+	  hpos0=rootHandler_->BookTH2(namec.str()+"/ClusterPos0",100,0.,100.,100,0.,100.);
+	  hpos1=rootHandler_->BookTH2(namec.str()+"/ClusterPos1",100,0.,100.,100,0.,100.);
+	  hpos2=rootHandler_->BookTH2(namec.str()+"/ClusterPos2",100,0.,100.,100,0.,100.);
 	}
       hnp->Fill(ic->size()*1.);
       
       hpos->Fill(ic->X(),ic->Y());
+      bool th0=false;
+      bool th1=false;
+      bool th2=false;
+      uint32_t np0=0,np1=0,np2=0;
+      for (int j=0;j<ic->size();j++)
+	{
+	  RecoHit& h=ic->getHits()->at(j);
+	  if (h.getFlag(RecoHit::THR0)!=0) np0++;
+	  if (h.getFlag(RecoHit::THR1)!=0) np1++;
+	  if (h.getFlag(RecoHit::THR2)!=0) np2++;
+	}
+      if (np0>0) 
+	{
+	  hpos0->Fill(ic->X(),ic->Y());
+	  hnp0->Fill(np0*1.);
+	}
+      if (np1>0) 
+	{
+	  hpos1->Fill(ic->X(),ic->Y());
+	  hnp1->Fill(np1*1.);
+	}
+      if (np2>0) 
+	{
+	  hpos2->Fill(ic->X(),ic->Y());
+	  hnp2->Fill(np2*1.);
+	}
+
     }
   if (theHitVector_.size()!=0)
     for (std::vector<RecoHit*>::iterator ih=theHitVector_.begin();ih!=theHitVector_.end();ih++) delete (*ih);
