@@ -4,11 +4,13 @@ from PyQt4 import QtGui, QtCore
 import sys
 import StartDaq
 import postelog
-import DaqUI
+import DaqUI3
 from ROOT import *
+import time
+import json
 import mc
 
-class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow): 
+class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow): 
     def __init__(self, parent=None):
         super(ImageViewer, self).__init__(parent)
         self.setupUi(self)
@@ -17,6 +19,8 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         self.isLVOn_=False
         self.canvas =None
         self.connectActions()
+        self.job_selected_row_=None
+
     def CreateDaq(self):
         print "On y est"
         name=str(self.LEconfig.text().toAscii())
@@ -29,10 +33,14 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         self.CBDigital.setChecked(self.daq_.r_digital_)
         self.CBTemperature.setChecked(self.daq_.r_temperature_)
         self.PBCreateDaq.setEnabled(False)
-        self.PBDiscover.setEnabled(True)
+        #self.PBDiscover.setEnabled(True)
         self.PBDiscoverDNS.setEnabled(True)
         self.PBDownloadDB.setEnabled(True)
         self.PBInitialiseWriter.setEnabled(True)
+        self.LEDataDirectory.setText(self.daq_.directory_)
+        self.LEZupDevice.setText(self.daq_.zupdevice_)
+        self.SBZupPort.setValue(self.daq_.zupport_)
+        self.LEMonitoringHost.setText(self.daq_.monitor_)
     def SetDBState(self):
         print "On y est"
         name=str(self.LEDBState.text().toAscii())
@@ -44,10 +52,71 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         self.daq_.r_digital_= self.CBDigital.isChecked()
         self.daq_.r_temperature_= self.CBTemperature.isChecked()
         self.daq_.setTriggerRegister()
+    def StartMonitorProcess(self):
+        name=str(self.LEMonitoringHost.text().toAscii())
+        self.daq_.monitor_=name
+        self.daq_.spine_start()
+    def StopMonitorProcess(self):
+        name=str(self.LEMonitoringHost.text().toAscii())
+        self.daq_.monitor_=name
+        self.daq_.spine_stop()
+    def StartAll(self):
+        self.daq_.JobStartAll()
+    def KillAll(self):
+        self.daq_.JobKillAll()
+    def UpdateStatus(self):
+        str_joblist=self.daq_.JobUpdateStatus().replace('\t','')
+        #print str_joblist
+        rootjson=json.loads(str_joblist)
+        i=0
+        self.TWJOB.clear()
+        for x in rootjson:
+            #print i,x['PID'],x['NAME'],x['HOST'],x['STATUS'],x['DAQ']
+            it_id = QtGui.QTableWidgetItem(str(x['PID']))
+            self.TWJOB.setItem(i, 0,it_id)
+            it_name = QtGui.QTableWidgetItem(x['NAME'])
+            self.TWJOB.setItem(i, 1,it_name)
+            it_host = QtGui.QTableWidgetItem(x['HOST'])
+            self.TWJOB.setItem(i, 2,it_host)
+            it_status = QtGui.QTableWidgetItem(x['STATUS'])
+            self.TWJOB.setItem(i, 3,it_status)
+            it_idaq = QtGui.QTableWidgetItem(x['DAQ'])
+            self.TWJOB.setItem(i, 4,it_idaq)
+            i=i+1
+ 
+    def job_cell_clicked(self,row,col):
+        print row,col
+        self.job_selected_row_=row
+        it_host=self.TWJOB.item(row,2)
+        self.LEHostSelected.setText(it_host.text())
+        self.job_PID=int(self.TWJOB.item(row,0).text().toAscii())
+        self.job_NAME=str(self.TWJOB.item(row,1).text().toAscii())
+        self.job_HOST=str(self.TWJOB.item(row,2).text().toAscii())
+
+    def JobStartHost(self):
+        if (self.job_selected_row_!=None):
+            self.daq_.JobStartHost(str(self.LEHostSelected.text().toAscii()))
+    def JobKillHost(self):
+        if (self.job_selected_row_!=None):
+            self.daq_.JobKillHost(str(self.LEHostSelected.text().toAscii()))
+    def JobStart(self):
+        if (self.job_selected_row_!=None):
+            self.daq_.JobStart(self.job_HOST,self.job_NAME)
+    def JobKill(self):
+        if (self.job_selected_row_!=None):
+            self.daq_.JobKill(self.job_HOST,self.job_PID)
+    def JobRestart(self):
+        if (self.job_selected_row_!=None):
+            self.daq_.JobRestart(self.job_HOST,self.job_NAME,self.job_PID)
+
+    def InitialiseZup(self):
+        self.daq_.zupdevice_=str(self.LEZupDevice.text().toAscii())
+        self.daq_.zupport_=self.SBZupPort.value()
+        self.daq_.InitialiseZup()
     def Discover(self):
         self.daq_.Discover()
         self.PBInitialise.setEnabled(True)
-        self.PBDiscover.setEnabled(False)
+        #self.PBDiscover.setEnabled(False)
     def DiscoverDNS(self):
         self.daq_.DiscoverDNS()
         self.PBInitialise.setEnabled(True)
@@ -55,6 +124,20 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         self.daq_.DownloadDB()
     def InitialiseWriter(self):
         self.daq_.InitialiseWriter()
+
+    def Dummies(self):
+        self.CreateDaq()
+        self.KillAll()
+        time.sleep(1)
+        self.StartAll()
+        time.sleep(1)
+        self.UpdateStatus()
+        time.sleep(1)
+        self.DiscoverDNS()
+        self.DownloadDB()
+        self.InitialiseWriter()
+        self.InitialiseZup()
+        self.LVOn()
 
     def Quit(self):
         exit(0)
@@ -344,13 +427,13 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         #self.PBCreateDaq.setEnabled(False)
         self.PBCreateDaq.clicked.connect(self.CreateDaq)
         self.PBSetDBState.clicked.connect(self.SetDBState)
-        self.PBRestartHost.clicked.connect(self.RestartHost)
-        self.PBStartHost.clicked.connect(self.StartHost)
-        self.PBStopHost.clicked.connect(self.StopHost)  
-        self.PBStartRPI.clicked.connect(self.StartRPI)
-        self.PBStopRPI.clicked.connect(self.StopRPI)
-        self.PBSynchronizeRPI.clicked.connect(self.SynchronizeRPI)
-        self.PBDiscover.clicked.connect(self.Discover)
+        #self.PBRestartHost.clicked.connect(self.RestartHost)
+        #self.PBStartHost.clicked.connect(self.StartHost)
+        #self.PBStopHost.clicked.connect(self.StopHost)  
+        #self.PBStartRPI.clicked.connect(self.StartRPI)
+        #self.PBStopRPI.clicked.connect(self.StopRPI)
+        #self.PBSynchronizeRPI.clicked.connect(self.SynchronizeRPI)
+        #self.PBDiscover.clicked.connect(self.Discover)
         self.PBDiscoverDNS.clicked.connect(self.DiscoverDNS)
         self.PBDownloadDB.clicked.connect(self.DownloadDB)
         self.PBInitialiseWriter.clicked.connect(self.InitialiseWriter)
@@ -374,6 +457,19 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         self.pbRefresh.clicked.connect(self.Refresh)
         self.pbGetEff.clicked.connect(self.GetEff)
         self.tvHistos.doubleClicked.connect(self.histoClick)
+        self.PBStartMonitorProcess.clicked.connect(self.StartMonitorProcess)
+        self.PBStopMonitorProcess.clicked.connect(self.StopMonitorProcess)
+        self.PBInitialiseZup.clicked.connect(self.InitialiseZup)
+        self.PBDummies.clicked.connect(self.Dummies)
+        self.PBStartAll.clicked.connect(self.StartAll)
+        self.PBKillAll.clicked.connect(self.KillAll)
+        self.PBJobStatus.clicked.connect(self.UpdateStatus)
+        self.TWJOB.cellClicked.connect(self.job_cell_clicked)
+        self.PBStartHost.clicked.connect(self.JobStartHost)
+        self.PBKillHost.clicked.connect(self.JobKillHost)
+        self.PBStartJob.clicked.connect(self.JobStart)
+        self.PBKillJob.clicked.connect(self.JobKill)
+        self.PBRestartJob.clicked.connect(self.JobRestart)
     def main(self):
         self.show()
         
