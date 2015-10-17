@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="Control">
        <attribute name="title">
@@ -33,6 +33,9 @@
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
             <widget class="QCheckBox" name="CBExpert">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Expert Mode&lt;/p&gt;&lt;p&gt;It enables all possible commands&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Expert Mode</string>
              </property>
@@ -45,6 +48,9 @@
                <width>231</width>
                <height>0</height>
               </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Name of the configuration file&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>config_dome1</string>
@@ -481,6 +487,9 @@
                <bold>true</bold>
               </font>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:400;&quot;&gt;It Creates the DAQ script&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:400;&quot;&gt;It kills all running porcess and restart them&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:400;&quot;&gt;it browses the DIM DNS, download the DB state, initiliase the data writing and put LV on&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>GO!</string>
              </property>
@@ -490,6 +499,9 @@
             <widget class="QPushButton" name="PBCreateDaq">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Parse the File and create the StartDaq Object&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Create DAQ</string>
@@ -501,6 +513,9 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Browse the DNS and find available services&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>ScanDNS</string>
              </property>
@@ -508,6 +523,9 @@
            </item>
            <item>
             <widget class="QPushButton" name="pbQuit">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Exit the application&lt;/p&gt;&lt;p&gt;The process are not killed&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Quit</string>
              </property>
@@ -527,6 +545,9 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Start all processes listed in the &lt;span style=&quot; font-style:italic;&quot;&gt;jsonfile&lt;/span&gt; set in the configuration file&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Start All</string>
              </property>
@@ -537,6 +558,9 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Kill all running process&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Kill All</string>
              </property>
@@ -544,6 +568,9 @@
            </item>
            <item row="0" column="2">
             <widget class="QPushButton" name="PBJobStatus">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Query the status of the processes&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Update status</string>
              </property>
@@ -567,12 +594,18 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Selected host&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
             </widget>
            </item>
            <item row="1" column="2">
             <widget class="QPushButton" name="PBStartHost">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Start all jobs on the selected host&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Start Host Jobs</string>
@@ -583,6 +616,9 @@
             <widget class="QPushButton" name="PBKillHost">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Kill all jobs on the selected host&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Kill Host Jobs</string>
@@ -607,6 +643,9 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Start the selected job&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Start Single Job</string>
              </property>
@@ -617,6 +656,9 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;kill the slected job&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Kill Single  Job</string>
              </property>
@@ -626,6 +668,9 @@
             <widget class="QPushButton" name="PBRestartJob">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Restart the selected job&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Restart Job</string>
@@ -652,6 +697,9 @@
                <width>632</width>
                <height>0</height>
               </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Display of the DAQ processes&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="sortingEnabled">
               <bool>true</bool>
@@ -976,6 +1024,9 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Download the selected DB State&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Download DB</string>
              </property>
@@ -998,6 +1049,9 @@
             <widget class="QPushButton" name="PBSetDBState">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Update values of DB state and trigger register&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; text-decoration: underline;&quot;&gt;Download is needed to actually use them&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Set DB State</string>
@@ -1022,6 +1076,9 @@
                <height>0</height>
               </size>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DB state name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>oyonax_11</string>
              </property>
@@ -1031,6 +1088,9 @@
             <widget class="QCheckBox" name="CBILC">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Trigger register ILC mode&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>ILC</string>
@@ -1045,6 +1105,9 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Trigger register Power Pulsing mode&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>PP</string>
              </property>
@@ -1055,6 +1118,9 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Trigger register Analog readout&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Analog</string>
              </property>
@@ -1064,6 +1130,9 @@
             <widget class="QCheckBox" name="CBDigital">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Trigger register Digital readout&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>digital</string>
@@ -1077,6 +1146,9 @@
             <widget class="QCheckBox" name="CBTemperature">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Trigger register temperature reading&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>temp</string>
@@ -1104,6 +1176,9 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Data storage directory&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>/data/NAS</string>
              </property>
@@ -1113,6 +1188,9 @@
             <widget class="QPushButton" name="PBInitialiseWriter">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Initialise the data writing&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Init Writing</string>
@@ -1153,6 +1231,9 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ZUP LV power supply serial device&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>/dev/ttyUSB0</string>
              </property>
@@ -1163,6 +1244,9 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ZUP LV power supply Address&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="minimum">
               <number>1</number>
              </property>
@@ -1172,6 +1256,9 @@
             <widget class="QPushButton" name="PBInitialiseZup">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Open ZUP LV serial devices&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Open</string>
@@ -1407,6 +1494,9 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DAQ Initialise&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;List all FTDI devices (DIF and SDCC) connected and try an USB access &lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; text-decoration: underline;&quot;&gt;Check the CCCServer process status &lt;/span&gt;in Process Control panel, if DEAD, click the Destroy button, switch SDCC Off/On, restart (expert mode) the SDCC job and re-click this button&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; text-decoration: underline;&quot;&gt;Click Update to display a DIF summary&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;In case of DIF failure check 1) HDMI connectors 2) power supplies&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Initialise</string>
              </property>
@@ -1416,6 +1506,9 @@
             <widget class="QPushButton" name="PBConfigure">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Configure Asics from the downloaded DB state&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Configure</string>
