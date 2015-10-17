@@ -41,6 +41,52 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
         self.LEZupDevice.setText(self.daq_.zupdevice_)
         self.SBZupPort.setValue(self.daq_.zupport_)
         self.LEMonitoringHost.setText(self.daq_.monitor_)
+    def ExpertMode(self):
+        if (self.CBExpert.isChecked()):
+            self.PBCreateDaq.setEnabled(True)
+            self.PBDiscoverDNS.setEnabled(True)
+            self.PBStartAll.setEnabled(True)
+            self.PBKillAll.setEnabled(True)
+            self.PBStartHost.setEnabled(True)
+            self.PBKillHost.setEnabled(True)
+            self.PBStartJob.setEnabled(True)
+            self.PBKillJob.setEnabled(True)
+            self.PBDownloadDB.setEnabled(True)
+            self.LEDBState.setEnabled(True)
+            self.CBILC.setEnabled(True)
+            self.CBPowerPulsing.setEnabled(True)
+            self.CBAnalog.setEnabled(True)
+            self.CBDigital.setEnabled(True)
+            self.CBTemperature.setEnabled(True)
+            self.PBSetDBState.setEnabled(True)
+            self.LEDataDirectory.setEnabled(True)
+            self.PBInitialiseWriter.setEnabled(True)
+            self.LEZupDevice.setEnabled(True)
+            self.SBZupPort.setEnabled(True)
+            self.PBInitialiseZup.setEnabled(True)
+        else:
+            self.PBCreateDaq.setEnabled(False)
+            self.PBDiscoverDNS.setEnabled(False)
+            self.PBStartAll.setEnabled(False)
+            self.PBKillAll.setEnabled(False)
+            self.PBStartHost.setEnabled(False)
+            self.PBKillHost.setEnabled(False)
+            self.PBStartJob.setEnabled(False)
+            self.PBKillJob.setEnabled(False)
+            self.PBDownloadDB.setEnabled(False)
+            self.LEDBState.setEnabled(False)
+            self.CBILC.setEnabled(False)
+            self.CBPowerPulsing.setEnabled(False)
+            self.CBAnalog.setEnabled(False)
+            self.CBDigital.setEnabled(False)
+            self.CBTemperature.setEnabled(False)
+            self.PBSetDBState.setEnabled(False)
+            self.LEDataDirectory.setEnabled(False)
+            self.PBInitialiseWriter.setEnabled(False)
+            self.LEZupDevice.setEnabled(False)
+            self.SBZupPort.setEnabled(False)
+            self.PBInitialiseZup.setEnabled(False)
+
     def SetDBState(self):
         print "On y est"
         name=str(self.LEDBState.text().toAscii())
@@ -82,8 +128,11 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
             self.TWJOB.setItem(i, 3,it_status)
             it_idaq = QtGui.QTableWidgetItem(x['DAQ'])
             self.TWJOB.setItem(i, 4,it_idaq)
+            it_log = QtGui.QTableWidgetItem('/tmp/dimjCPID%d.log' % x['PID'])
+            self.TWJOB.setItem(i, 5,it_log)
             i=i+1
  
+
     def job_cell_clicked(self,row,col):
         print row,col
         self.job_selected_row_=row
@@ -138,6 +187,12 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
         self.InitialiseWriter()
         self.InitialiseZup()
         self.LVOn()
+
+    def selectFile(self):
+        self.LEconfig.setText(QtGui.QFileDialog.getOpenFileName())
+
+
+
 
     def Quit(self):
         exit(0)
@@ -470,6 +525,8 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
         self.PBStartJob.clicked.connect(self.JobStart)
         self.PBKillJob.clicked.connect(self.JobKill)
         self.PBRestartJob.clicked.connect(self.JobRestart)
+        self.PBChooseFile.clicked.connect(self.selectFile)
+        self.CBExpert.stateChanged.connect(self.ExpertMode)
     def main(self):
         self.show()
         
