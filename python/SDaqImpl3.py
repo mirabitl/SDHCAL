@@ -64,6 +64,8 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
             self.LEZupDevice.setEnabled(True)
             self.SBZupPort.setEnabled(True)
             self.PBInitialiseZup.setEnabled(True)
+            self.PBStartMonitorProcess.setEnabled(True)
+            self.PBStopMonitorProcess.setEnabled(True)
         else:
             self.PBCreateDaq.setEnabled(False)
             self.PBDiscoverDNS.setEnabled(False)
@@ -86,6 +88,9 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
             self.LEZupDevice.setEnabled(False)
             self.SBZupPort.setEnabled(False)
             self.PBInitialiseZup.setEnabled(False)
+            self.PBStartMonitorProcess.setEnabled(False)
+            self.PBStopMonitorProcess.setEnabled(False)
+
 
     def SetDBState(self):
         print "On y est"
@@ -115,7 +120,8 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
         #print str_joblist
         rootjson=json.loads(str_joblist)
         i=0
-        self.TWJOB.clear()
+        #self.TWJOB.clear()
+
         for x in rootjson:
             #print i,x['PID'],x['NAME'],x['HOST'],x['STATUS'],x['DAQ']
             it_id = QtGui.QTableWidgetItem(str(x['PID']))
@@ -131,7 +137,9 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
             it_log = QtGui.QTableWidgetItem('/tmp/dimjCPID%d.log' % x['PID'])
             self.TWJOB.setItem(i, 5,it_log)
             i=i+1
- 
+        for j in range(i,255):
+            for k in range(0,6):
+                self.TWJOB.setItem(j,k,None)
 
     def job_cell_clicked(self,row,col):
         print row,col

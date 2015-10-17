@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="Control">
        <attribute name="title">
@@ -1495,7 +1495,7 @@
               <bool>false</bool>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DAQ Initialise&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;List all FTDI devices (DIF and SDCC) connected and try an USB access &lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; text-decoration: underline;&quot;&gt;Check the CCCServer process status &lt;/span&gt;in Process Control panel, if DEAD, click the Destroy button, switch SDCC Off/On, restart (expert mode) the SDCC job and re-click this button&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; text-decoration: underline;&quot;&gt;Click Update to display a DIF summary&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;In case of DIF failure check 1) HDMI connectors 2) power supplies&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DAQ Initialise&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;List all FTDI devices (DIF and SDCC) connected and try an USB access &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; text-decoration: underline;&quot;&gt;Check the CCCServer process status &lt;/span&gt;in Process Control panel, if DEAD, click the Destroy button, switch SDCC Off/On, restart (expert mode) the SDCC job and re-click this button&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; text-decoration: underline;&quot;&gt;Click Update to display a DIF summary&lt;/span&gt;&lt;/p&gt;&lt;p&gt;In case of DIF failure check 1) HDMI connectors 2) power supplies&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Initialise</string>
@@ -1508,7 +1508,7 @@
               <bool>false</bool>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Configure Asics from the downloaded DB state&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Configure Asics from the downloaded DB state or the DIF memory stored values&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Configure</string>
@@ -1520,6 +1520,9 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Start a run&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Start</string>
              </property>
@@ -1529,6 +1532,9 @@
             <widget class="QPushButton" name="PBStop">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Stop a run&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Stop</string>
@@ -1540,6 +1546,9 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Destroy daq structure and go back to pre Initialise state&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Destroy</string>
              </property>
@@ -1549,6 +1558,9 @@
             <widget class="QPushButton" name="PBUpdate">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Update DIF display&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Update</string>
@@ -1638,6 +1650,9 @@
            </item>
            <item>
             <widget class="QSpinBox" name="SBTHR0L">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Threshold 0 setting&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="minimum">
               <number>110</number>
              </property>
@@ -1658,6 +1673,9 @@
            </item>
            <item>
             <widget class="QSpinBox" name="SBTHR1L">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Threshold 1 setting&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="minimum">
               <number>110</number>
              </property>
@@ -1671,6 +1689,9 @@
            </item>
            <item>
             <widget class="QLabel" name="label_8">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Threshold 2 setting&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>THR 2</string>
              </property>
@@ -1704,6 +1725,9 @@
            </item>
            <item>
             <widget class="QPushButton" name="PBSetThresholds">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Change thresholds in DIF memory &lt;span style=&quot; text-decoration: underline;&quot;&gt;Configure &lt;/span&gt; is required to actually load it in Asics&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Set Threshold</string>
              </property>
@@ -1718,6 +1742,9 @@
            <font>
             <pointsize>7</pointsize>
            </font>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;DIF status display&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="rowCount">
            <number>255</number>
