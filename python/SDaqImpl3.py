@@ -51,6 +51,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
             self.PBKillHost.setEnabled(True)
             self.PBStartJob.setEnabled(True)
             self.PBKillJob.setEnabled(True)
+            self.PBRestartJob.setEnabled(True)
             self.PBDownloadDB.setEnabled(True)
             self.LEDBState.setEnabled(True)
             self.CBILC.setEnabled(True)
@@ -66,6 +67,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
             self.PBInitialiseZup.setEnabled(True)
             self.PBStartMonitorProcess.setEnabled(True)
             self.PBStopMonitorProcess.setEnabled(True)
+            self.LEMonitoringHost.setEnabled(True)
         else:
             self.PBCreateDaq.setEnabled(False)
             self.PBDiscoverDNS.setEnabled(False)
@@ -74,6 +76,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
             self.PBStartHost.setEnabled(False)
             self.PBKillHost.setEnabled(False)
             self.PBStartJob.setEnabled(False)
+            self.PBRestartJob.setEnabled(False)
             self.PBKillJob.setEnabled(False)
             self.PBDownloadDB.setEnabled(False)
             self.LEDBState.setEnabled(False)
@@ -90,6 +93,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
             self.PBInitialiseZup.setEnabled(False)
             self.PBStartMonitorProcess.setEnabled(False)
             self.PBStopMonitorProcess.setEnabled(False)
+            self.LEMonitoringHost.setEnabled(False)
 
 
     def SetDBState(self):
