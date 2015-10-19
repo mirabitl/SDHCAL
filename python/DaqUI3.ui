@@ -1726,7 +1726,7 @@
            <item>
             <widget class="QPushButton" name="PBSetThresholds">
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Change thresholds in DIF memory &lt;span style=&quot; text-decoration: underline;&quot;&gt;Configure &lt;/span&gt; is required to actually load it in Asics&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Change thresholds in DIF memory and load new values in ASIC, &lt;span style=&quot; text-decoration: underline;&quot;&gt;Configure &lt;/span&gt;is required before at least once&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Set Threshold</string>
