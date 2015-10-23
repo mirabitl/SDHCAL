@@ -138,7 +138,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
             self.TWJOB.setItem(i, 3,it_status)
             it_idaq = QtGui.QTableWidgetItem(x['DAQ'])
             self.TWJOB.setItem(i, 4,it_idaq)
-            it_log = QtGui.QTableWidgetItem('/tmp/dimjCPID%d.log' % x['PID'])
+            it_log = QtGui.QTableWidgetItem('/tmp/dimjcPID%d.log' % x['PID'])
             self.TWJOB.setItem(i, 5,it_log)
             i=i+1
         for j in range(i,255):
@@ -285,7 +285,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
         if self.daq_!=None:
             self.daq_.SetThresholds(self.SBTHR0L.value(),self.SBTHR1L.value(),self.SBTHR2L.value())
             self.thresholdUsed_=True
-            self.daq_.Configure()
+            self.daq_.daq_.configure()
     def Pause(self):
         if self.daq_!=None:
             self.daq_.Pause()
