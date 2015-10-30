@@ -65,7 +65,7 @@ public:
 	virtual void endRun(){;}
 
 	bool decodeTrigger(LCCollection* rhcol, double tcut);
-	void drawHits(std::vector<RecoHit*> vrh);
+	void drawHits(std::vector<RecoHit*> vrh,ShowerParams* ish=NULL);
 	void draw(TrackInfo& t);
   
 
@@ -83,6 +83,7 @@ public:
 	void FillTimeAsic(IMPL::LCCollectionVec* rhcol);
 	void DIFStudy(IMPL::RawCalorimeterHitImpl* hit);
 	uint32_t buildTracks(std::vector<RecoHit*> &vreco,std::string vdir="/Track");
+	uint32_t buildPrincipal(std::vector<RecoHit*> &vreco,std::string vdir="/Track");
 	void drawDisplay();
 	double checkTime();
 	inline void setuseSynchronised(bool t){useSynchronised_=t; }

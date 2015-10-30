@@ -1,4 +1,4 @@
-#define NPLANS_USED 7
+#define NPLANS_USED 8
 
 #include "TrackAnalyzer.h"
 #include "DIFUnpacker.h"
@@ -937,14 +937,25 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   if (tag==3)
     hctag3->Fill(theHitVector_.size());
 
- 
-  Shower::computePrincipalComponents(theHitVector_,(double*) &isha);
+  //this->drawHits(theHitVector_);
+
+  //Shower::computePrincipalComponents(theHitVector_,(double*) &isha);
+  //Shower::PrintComponents(isha);
+  Shower::TPrincipalComponents(theHitVector_,(double*) &isha);
+  // Shower::PrintComponents(isha);
+
   if (sqrt((isha.lambda[0]+isha.lambda[1])/isha.lambda[2])>0.3) return;
-  this->buildTracks(theHitVector_,"/TrackNoCut");
-  if (theComputerTrack_->getTracks().size()>0) {
   INFO_PRINT(" Mean event parameter %f %f %f => %f \n",isha.lambda[0],isha.lambda[1],isha.lambda[2],sqrt((isha.lambda[0]+isha.lambda[1])/isha.lambda[2]));
-  
-  // this->drawHits(theHitVector_);getchar();
+  //this->drawHits(theHitVector_,&isha);
+  //char c;c=getchar();putchar(c); if (c=='.') exit(0);
+  this->buildPrincipal(theHitVector_,"/TrackPrincipal");
+
+  //this->buildTracks(theHitVector_,"/TrackNoCut");
+  return;
+  if (theComputerTrack_->getTracks().size()>0) {
+  INFO_PRINT("  Track Found Mean event parameter %f %f %f => %f \n",isha.lambda[0],isha.lambda[1],isha.lambda[2],sqrt((isha.lambda[0]+isha.lambda[1])/isha.lambda[2]));
+  //char c;c=getchar();putchar(c); if (c=='.') exit(0);
+ 
   }
   if (tag!=0)
     {
@@ -1299,7 +1310,7 @@ void TrackAnalyzer::drawDisplay()
     }
 
 }
-void TrackAnalyzer::drawHits(std::vector<RecoHit*> vrh)
+void TrackAnalyzer::drawHits(std::vector<RecoHit*> vrh,ShowerParams* ish)
 {
 
   TH3* hcgposi = rootHandler_->GetTH3("InstantHitMap");
@@ -1340,19 +1351,86 @@ void TrackAnalyzer::drawHits(std::vector<RecoHit*> vrh)
       hcgposi->SetMarkerStyle(25);
       hcgposi->SetMarkerColor(kRed);
       hcgposi->Draw("P");
+      if (ish!=0)
+	{
+	  TPolyLine3D *pl3d1 = new TPolyLine3D(2);
+	  double* v=ish->l0;    
+	  double* x=ish->xm;
+	  double r=ish->lambda[0]*100;
+	  pl3d1->SetPoint(0,x[2],x[0],x[1]);
+	  pl3d1->SetPoint(1,x[2]+v[2]*r,x[0]+v[0]*r,x[1]+v[1]*r);
+			
+	  pl3d1->SetLineWidth(3);
+	  pl3d1->SetLineColor(1);
+	  pl3d1->Draw("SAME");
+	  TPolyLine3D *pl3d2 = new TPolyLine3D(2);
+	  v=ish->l1;    
+	  r=ish->lambda[1]*100;
+	  pl3d2->SetPoint(0,x[2],x[0],x[1]);
+	  pl3d2->SetPoint(1,x[2]+v[2]*r,x[0]+v[0]*r,x[1]+v[1]*r);
+			
+	  pl3d2->SetLineWidth(3);
+	  pl3d2->SetLineColor(2);
+	  pl3d2->Draw("SAME");
+	  TPolyLine3D *pl3d3 = new TPolyLine3D(2);
+	  v=ish->l2;    
+	  r=ish->lambda[2]*100;
+	  pl3d3->SetPoint(0,x[2],x[0],x[1]);
+	  pl3d3->SetPoint(1,x[2]+v[2]*r,x[0]+v[0]*r,x[1]+v[1]*r);
+
+
+
+			
+	  pl3d3->SetLineWidth(3);
+	  pl3d3->SetLineColor(3);
+	  pl3d3->Draw("SAME");
+	}
 
       TCHits->cd(2);
       TProfile2D* hpy1=hcgposi->Project3DProfile("zx");
       hpy1->SetLineColor(kGreen);
-		
-
       hpy1->Draw("BOX");
+      if (ish!=0)
+	{
+	  double* x=ish->xm;
+	  double* v=ish->l2;
+	  // Z X
+	  double x0=x[2];
+	  double y0=x[1];
+	  double x1=x[2]+v[2];
+	  double y1=x[1]+v[1];
+	  double a=(y1-y0)/(x1-x0);
+	  double b=y1-a*x1;
+	  TLine* l = new TLine(0.,b,100.,a*100+b);
+	  l->SetLineColor(4);
+	  l->Draw("SAME");
+	}
+
+
       TCHits->cd(3);
       TProfile2D* hpy2=hcgposi->Project3DProfile("yx");
       hpy2->SetLineColor(kBlue);
 		
 
       hpy2->Draw("BOX");
+      if (ish!=0)
+	{
+	  double* x=ish->xm;
+	  double* v=ish->l2;
+	  // Z X
+	  double x0=x[2];
+	  double y0=x[0];
+	  double x1=x[2]+v[2];
+	  double y1=x[0]+v[0];
+	  double a=(y1-y0)/(x1-x0);
+	  double b=y1-a*x1;
+	  TLine* l = new TLine(0.,b,100.,a*100+b);
+	  l->SetLineColor(4);
+	  l->Draw("SAME");
+	}
+
+
+
       TCHits->cd(4);
       TCHits->Modified();
       TCHits->Draw();
@@ -1709,8 +1787,8 @@ uint32_t TrackAnalyzer::buildTracks(std::vector<RecoHit*> &vrh,std::string vdir)
       nstub++;
     }
   //  theComputerTrack_->associate(nstub,h_x,h_y,h_z,h_layer);
-  theComputerTrack_->telescope(nstub,h_x,h_y,h_z,h_layer,NPLANS_USED);
-  //theComputerTrack_->muonFinder(nstub,h_x,h_y,h_z,h_layer);
+  //theComputerTrack_->telescope(nstub,h_x,h_y,h_z,h_layer,NPLANS_USED);
+  theComputerTrack_->muonFinder(nstub,h_x,h_y,h_z,h_layer);
  
 
   //  if (theComputerTrack_->getTracks().size()>0) theNbTracks_++;
@@ -1796,6 +1874,7 @@ uint32_t TrackAnalyzer::buildTracks(std::vector<RecoHit*> &vrh,std::string vdir)
 		   yext =tex.yext((*ich).second.getZ0());
 		   break;
 		}
+	      if (yext< 5 || yext>30 || xext<2 || xext>29) continue;
 	      if (hext==NULL)
 		{
 		  
@@ -1895,6 +1974,281 @@ uint32_t TrackAnalyzer::buildTracks(std::vector<RecoHit*> &vrh,std::string vdir)
    free(h_layer);
    return nshower;
 }
+
+uint32_t TrackAnalyzer::buildPrincipal(std::vector<RecoHit*> &vrh,std::string vdir)
+{
+  
+  std::vector<RECOCluster*> realc;
+  realc.clear();
+
+  float *h_x=(float *) malloc(4096*sizeof(float));
+  float *h_y= (float *) malloc(4096*sizeof(float));
+  float *h_z=(float *) malloc(4096*sizeof(float));
+  unsigned int *h_layer=(unsigned int *) malloc(4096*sizeof(unsigned int));
+  uint32_t nshower=0;
+  //ComputerTrack ch(&cuts);
+  //ch.DefaultCuts();
+  //INFO_PRINT("Avant Cluster \n");
+  for (std::vector<RecoHit*>::iterator ih=vrh.begin();ih<vrh.end();ih++)
+    {
+      bool merged=false;
+      for (std::vector<RECOCluster*>::iterator ic=realc.begin();ic!=realc.end();ic++)
+	{
+	  if ((*ih)->chamber()!=(*ic)->chamber()) continue;
+	  merged=(*ic)->Append((*(*ih)),2.); // avant 4 et normalement 2
+	  if (merged) break;
+	}
+      if (merged) continue;
+      RECOCluster* c= new RECOCluster((*(*ih)));
+      realc.push_back(c);
+
+    }
+  
+  
+
+  uint32_t nstub=0;
+  for (std::vector<RECOCluster*>::iterator ic=realc.begin();ic!=realc.end();ic++)
+    {
+
+      ChamberPos& cp=reader_->getPosition((*ic)->chamber());
+	  // DEBUG_PRINT(" %d (%f,%f,%f) (%f,%f,%f) (%d,%d) \n",
+	  //	 cp.getId(),cp.getX0(),cp.getY0(),cp.getZ0(),cp.getX1(),cp.getY1(),cp.getZ1(),cp.getXsize(),cp.getYsize());
+      double x,y,z;
+      cp.calculateGlobal((*ic)->X(),(*ic)->Y(),x,y,z);
+
+      h_x[nstub]=x;//(*ic)->X();
+      h_y[nstub]=y;//(*ic)->Y();
+      h_z[nstub]=z;//(*ic)->Z();
+      h_layer[nstub]=(*ic)->plan();
+
+      // DEBUG_PRINT("\t %d :  %d %f %f %f \n",nstub,h_layer[nstub],h_x[nstub],h_y[nstub],h_z[nstub]);
+      nstub++;
+    }
+  //  theComputerTrack_->associate(nstub,h_x,h_y,h_z,h_layer);
+  //theComputerTrack_->telescope(nstub,h_x,h_y,h_z,h_layer,NPLANS_USED);
+  //INFO_PRINT("Avant Principal %d\n",nstub);
+  ShowerParams isha;
+  Shower::TPrincipalComponents(nstub,h_x,h_y,h_z,h_layer,(double*) &isha);
+  
+
+  //  if (theComputerTrack_->getTracks().size()>0) theNbTracks_++;
+  uint32_t nmip=0;
+  
+  TrackInfo tk;
+  tk.clear();
+  double* x=isha.xm;
+  double* v=isha.l2;
+  // Z X
+  double z0=x[2];
+  double x0=x[0];
+  double y0=x[1];
+
+  double x1=x[0]+v[0];
+  double y1=x[1]+v[1];
+  double z1=x[2]+v[2];
+  double ax,ay,bx,by;
+  ax=(x1-x0)/(z1-z0);
+  bx=x1-ax*z1;
+  ay=(y1-y0)/(z1-z0);
+  by=y1-ay*z1;
+  tk.set_ax(ax);
+  tk.set_bx(bx);
+  tk.set_ay(ay);
+  tk.set_by(by);
+  //INFO_PRINT("Avant regression\n");
+  for (uint32_t i=0;i<nstub;i++)
+    {
+      if (abs(tk.closestApproach(h_x[i],h_y[i],h_z[i]))<2.)
+	{
+	  // 3 hits on tag
+	  tk.add_point(h_x[i],h_y[i],h_z[i],h_layer[i]);
+	  tk.regression();
+	}
+      
+    }
+  if (tk.size()<3) return 0;
+  //if (tk.size()<minChambersInTime_) continue;
+  //if (fabs(tk.ax())<1.E-2) continue;
+  //if (fabs(tk.ax())<0.5 && fabs(tk.ay())<0.5) theNbTracks_++;
+  //this->draw(tk);
+  //char c;c=getchar();putchar(c); if (c=='.') exit(0);
+  uint32_t fch=int(ceil(tk.zmin()*10))/28+1;
+  uint32_t lch=int(ceil(tk.zmax()*10))/28+1;
+
+  std::stringstream st;
+  st<<vdir<<"/";
+  TH1* hnp= rootHandler_->GetTH1(st.str()+"Npoints");
+  TH1* hnpl= rootHandler_->GetTH1(st.str()+"Nplanes");
+  TH1* hax= rootHandler_->GetTH1(st.str()+"ax");
+  TH1* hay= rootHandler_->GetTH1(st.str()+"ay");
+  TH1* hwt= rootHandler_->GetTH1(st.str()+"hitweight");
+  if (hnp==NULL)
+    {
+      hnp=  rootHandler_->BookTH1(st.str()+"Npoints",51,-0.1,50.9);
+      hnpl=  rootHandler_->BookTH1(st.str()+"Nplanes",51,-0.1,50.9);
+      hax=  rootHandler_->BookTH1(st.str()+"ax",200,-5.,5.);
+      hay=  rootHandler_->BookTH1(st.str()+"ay",200,-5.,5.);
+
+
+    }
+
+  // Calcul de l'efficacite
+
+  // Track info
+	  
+  hnp->Fill(tk.size()*1.);
+  hax->Fill(tk.ax());
+  hay->Fill(tk.ay());
+  fch=1;lch=NPLANS_USED;
+  for (int ip=fch;ip<=lch;ip++)
+    if (tk.plane(ip)) hnpl->Fill(ip*1.);
+  //	  std::cout<<tk.planes_<<std::endl;
+  //getchar();
+  for (uint32_t ip=fch;ip<=lch;ip++)
+    {
+	      
+      TrackInfo tex;
+	      
+      tk.exclude_layer(ip,tex);
+      uint32_t npext=tex.size();
+      /*
+	if (npext<minChambersInTime_) continue; // Au moins 4 plans dans l'estrapolation touches 
+
+	if (ip>1 && !tex.plane(ip-1)) 
+	if (ip>2 && !tex.plane(ip-2)) continue;
+
+	if (ip<lch && !tex.plane(ip+1))
+	if (ip<(lch-1) && !tex.plane(ip+2)) continue;
+      */
+      if (npext<3) continue;
+
+      std::stringstream s;
+      s<<st.str()<<"Plan"<<ip<<"/";
+	      
+      TH2* hext= rootHandler_->GetTH2(s.str()+"ext");
+      TH2* hfound= rootHandler_->GetTH2(s.str()+"found");
+      TH2* hnear= rootHandler_->GetTH2(s.str()+"near");
+      TH2* hfound1= rootHandler_->GetTH2(s.str()+"found1");
+      TH2* hfound2= rootHandler_->GetTH2(s.str()+"found2");
+      TH2* hmul= rootHandler_->GetTH2(s.str()+"mul");
+      TH1* hdx= rootHandler_->GetTH1(s.str()+"dx");
+      TH1* hdy= rootHandler_->GetTH1(s.str()+"dy");
+      float dz0=0.,distz=60.; // 2.8
+      float xext=tex.xext(dz0+(ip-1)*distz);
+      float yext =tex.xext(dz0+(ip-1)*distz);
+      std::map<uint32_t,ChamberPos>& pos= reader_->getPositionMap();
+      for (std::map<uint32_t,ChamberPos>::iterator ich=pos.begin();ich!=pos.end();ich++)
+	{
+	  if ((*ich).second.getPlan()!=ip) continue;
+	  xext=tex.xext((*ich).second.getZ0());
+	  yext =tex.yext((*ich).second.getZ0());
+	  break;
+	}
+      if (yext< 5 || yext>30 || xext<2 || xext>29) continue;
+      if (hext==NULL)
+	{
+		  
+	  double xi=1000,xa=-1000,yi=1000,ya=-1000;
+	  for (std::map<uint32_t,ChamberPos>::iterator ich=pos.begin();ich!=pos.end();ich++)
+	    {
+	      if ((*ich).second.getPlan()!=ip) continue;
+	      if ((*ich).second.getX0()<xi) xi= (*ich).second.getX0();
+	      if ((*ich).second.getY0()<yi) yi= (*ich).second.getY0();
+	      if ((*ich).second.getX0()>xa) xa= (*ich).second.getX0();
+	      if ((*ich).second.getY0()>ya) ya= (*ich).second.getY0();
+	      if ((*ich).second.getX1()<xi) xi= (*ich).second.getX1();
+	      if ((*ich).second.getY1()<yi) yi= (*ich).second.getY1();
+	      if ((*ich).second.getX1()>xa) xa= (*ich).second.getX1();
+	      if ((*ich).second.getY1()>ya) ya= (*ich).second.getY1();
+		      
+	    }
+	  int nx=int(xa-xi)+1;
+	  int ny=int(ya-yi)+1;
+
+	  hext= rootHandler_->BookTH2(s.str()+"ext",nx,xi,xa,ny,yi,ya);
+	  hfound= rootHandler_->BookTH2(s.str()+"found",nx,xi,xa,ny,yi,ya);
+	  hnear= rootHandler_->BookTH2(s.str()+"near",nx,xi,xa,ny,yi,ya);
+	  hfound1= rootHandler_->BookTH2(s.str()+"found1",nx,xi,xa,ny,yi,ya);
+	  hfound2= rootHandler_->BookTH2(s.str()+"found2",nx,xi,xa,ny,yi,ya);
+	  hmul= rootHandler_->BookTH2(s.str()+"mul",nx,xi,xa,ny,yi,ya);
+	  hdx=  rootHandler_->BookTH1(s.str()+"dx",400,-4.,4.);
+	  hdy=  rootHandler_->BookTH1(s.str()+"dy",400,-4.,4.);
+	}
+	   
+      hext->Fill(xext,yext);
+      //bool 
+      float dist=1E9;
+      bool th1=false,th2=false;
+      float dxi,dyi,xn,yn,nhi;
+      for (std::vector<RECOCluster*>::iterator ic=realc.begin();ic!=realc.end();ic++)
+	{
+	  if ((*ic)->plan()!=ip) continue;
+	  ChamberPos& cp=reader_->getPosition((*ic)->chamber());
+	  // DEBUG_PRINT(" %d (%f,%f,%f) (%f,%f,%f) (%d,%d) \n",
+	  //	 cp.getId(),cp.getX0(),cp.getY0(),cp.getZ0(),cp.getX1(),cp.getY1(),cp.getZ1(),cp.getXsize(),cp.getYsize());
+	  double x,y,z;
+	  cp.calculateGlobal((*ic)->X(),(*ic)->Y(),x,y,z);
+	  xext=tex.xext(z);
+	  yext=tex.yext(z);
+	  float dx=xext-x;
+	  float dy=yext-y;
+
+	  double dap=tex.closestApproach(x,y,z);
+	  //  DEBUG_PRINT(" (%f,%f,%f) %f %f \n",x,y,z,dap,sqrt(dx*dx+dy*dy));
+	  //getchar();
+	  if (dap<dist)
+	    {
+		      
+	      dist=dap;
+	      dxi=dx;
+	      dyi=dy;
+	      nhi=(*ic)->size();
+	      xn=x;
+	      yn=y;
+	      th1=false,th2=false;
+	      for (std::vector<RecoHit>::iterator ih=(*ic)->getHits()->begin();ih!=(*ic)->getHits()->end();ih++)
+		{
+		  if ((*ih).getFlag(RecoHit::THR1)!=0) th1=true;
+		  if ((*ih).getFlag(RecoHit::THR2)!=0) th2=true;
+		}
+
+	    }
+
+	}
+      // Cut a 1.5 au lieu de 6
+      if (dist<2.5)
+	{
+	  hdx->Fill(dxi);
+	  hdy->Fill(dyi);
+	  hmul->Fill(xext,yext,nhi*1.);
+	  hfound->Fill(xext,yext);
+	  hnear->Fill(xn,yn);
+	  if (th1||th2)  hfound1->Fill(xext,yext);
+	  if (th2)  hfound2->Fill(xext,yext);
+	}
+    }
+
+
+
+  //this->draw(tk);
+
+	
+   DEBUG_PRINT("==> MIPS hit %d -> %.2f\n",nmip,nmip*100./vrh.size()); 
+ 
+ 
+   for (std::vector<RECOCluster*>::iterator ic=realc.begin();ic!=realc.end();ic++)
+     delete (*ic);
+   free(h_x);
+   free(h_y);
+   free(h_z);
+   free(h_layer);
+   return nshower;
+}
+
+
+
+
+
 void TrackAnalyzer::draw(TrackInfo& t)
 {
 
