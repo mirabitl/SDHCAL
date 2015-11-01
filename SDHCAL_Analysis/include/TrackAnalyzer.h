@@ -111,7 +111,9 @@ public:
 
 	void findTimeSeeds( IMPL::LCCollectionVec* rhcol, int32_t nhit_min,std::vector<uint32_t>& candidate);
 	void processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed);
-
+	uint32_t fillVolume(uint32_t seed);
+	void TagIsolated(uint32_t fp,uint32_t lp);
+	uint32_t fillVector(uint32_t seed);
 	uint32_t CerenkovTagger(uint32_t difid,uint32_t seed);
 	uint32_t PMAnalysis(uint32_t difid);
 
@@ -215,6 +217,7 @@ private:
 	unsigned char theImageEdgeBuffer_[60*96*96];
 	float image3Buf_[60*96*96];
 	std::vector<RecoHit*> theHitVector_;
+	std::vector<RecoHit*> theTkHitVector_;
 	  
 
 	std::vector<Amas> theAmas_;

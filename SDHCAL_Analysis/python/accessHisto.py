@@ -241,17 +241,18 @@ def GetEff(dirp,plan):
   hext.Draw("COLZ")
   
   hnear.Draw("COLZ")
+  hnearm=hnear.Clone("hnearm")
   rs=4
   if (hext.GetEntries()<1E6):
     hext.Rebin2D(rs,rs)
     hnear.Rebin2D(rs,rs)
-    hmul.Rebin2D(rs,rs)
+    #hmul.Rebin2D(rs,rs)
   heff = hnear.Clone("heff")
   heff.SetDirectory(0)
   heff.Divide(hnear,hext,100.,1.)
   hmulc = hmul.Clone("hmulc")
   hmulc.SetDirectory(0)
-  hmulc.Divide(hmul,hnear,1.,1.)
+  hmulc.Divide(hmul,hnearm,1.,1.)
   hmulc.Draw("COLZ")
  
   l.append(hnear)
@@ -267,7 +268,10 @@ def GetEff(dirp,plan):
       ntk=ntk+hext.GetBinContent(i+1,j+1)
       if (hext.GetBinContent(i+1,j+1)>15):
         heffsum.Fill(heff.GetBinContent(i+1,j+1))
-      hmulsum.Fill(hmulc.GetBinContent(i+1,j+1))
+  for i in range(2,hmulc.GetXaxis().GetNbins()-1):
+    for j in range(2,hmulc.GetYaxis().GetNbins()-1):
+      if (hnearm.GetBinContent(i+1,j+1)):
+        hmulsum.Fill(hmulc.GetBinContent(i+1,j+1))
   #print '%s' % st
   l.append(heffsum)
   l.append(hmulc)
@@ -280,7 +284,7 @@ def GetEff(dirp,plan):
   l.append(hnear.GetEntries())
   l.append(hnear1.GetEntries())
   l.append(hnear2.GetEntries())
-  
+  l.append(hmulsum.GetMean())
   return l
 
 def drawEff(c,l):

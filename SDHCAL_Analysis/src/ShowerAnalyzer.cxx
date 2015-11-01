@@ -700,10 +700,10 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
       INFO_PRINT("Impossible \n");
       return ;
    }
-   if (iseed->second.size()<30) return;
+   if (iseed->second.size()<20) return;
   uint32_t nhits=buildVolume(seed);
   if (nhits==0) return;
-  if (nhits<30) return;
+  if (nhits<20) return;
   //return;
   //DEBUG_PRINT("Edge detection for %d \n",seed);
   buildEdges();
@@ -731,7 +731,7 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
     }
   //INFO_PRINT("On a trouve                                    %d hits                    %d plans -> %d \n",theHitVector_.size(),theNplans_,minChambersInTime_);
   // DEBUG_PRINT("3");
-  if (theHitVector_.size()<30) return;
+  if (theHitVector_.size()<20) return;
   if (theNplans_<minChambersInTime_) return;  
 
   uint32_t tag=this->CerenkovTagger(3,seed);
@@ -793,7 +793,7 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 #ifndef KEEPTRACK 
   //INFO_PRINT(" Mean event parameter %f %f %f => %f \n",ish.lambda[0],ish.lambda[1],ish.lambda[2],sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])); 
   //  getchar();
-  if (false && sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1)
+  if (true && sqrt((ish.lambda[0]+ish.lambda[1])/ish.lambda[2])<0.1)
     {
       
       
@@ -1525,7 +1525,6 @@ void ShowerAnalyzer::processEvent()
   //theSkip_=380;
   if (evt_->getEventNumber()<=theSkip_) return;
   printf("Processing %d - %d \n",evt_->getRunNumber(),evt_->getEventNumber());
-
   if (nAnalyzed_==0)
     {
       std::stringstream s;
@@ -9539,7 +9538,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	  TrackInfo& tk = theComputerTrack_->getTracks()[i];
 
 	  if (tk.size()<minChambersInTime_) continue;
-	  if (fabs(tk.ax())<1.E-2) continue;
+	  if (fabs(tk.ax())<1.E-6) continue;
 	  if (fabs(tk.ax())<0.5 && fabs(tk.ay())<0.5) theNbTracks_++;
 	  //this->draw(tk);
 	  //char c;c=getchar();putchar(c); if (c=='.') exit(0);

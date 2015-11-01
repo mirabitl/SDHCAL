@@ -37,6 +37,10 @@ public:
 	double Y();
 	double dX();
 	double dY();
+	inline double Z(){return hits_[0]->Z();}
+	inline uint32_t chamber(){return hits_[0]->chamber();} 
+	inline uint32_t plan(){return hits_[0]->plan();} 
+	inline uint32_t size(){return hits_.size();}
 private:
 	void calcPos();
 	std::vector<RecoHit*> hits_;
