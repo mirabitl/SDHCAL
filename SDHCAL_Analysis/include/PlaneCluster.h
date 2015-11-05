@@ -26,7 +26,7 @@ public:
 	PlaneCluster(RecoHit* h);
 	~PlaneCluster();
 	double dist(RecoHit* h1,RecoHit* h2);
-	bool Append(RecoHit* h);
+	bool Append(RecoHit* h,double cut=2.0);
 	std::vector<RecoHit*> *getHits();
 	bool isAdjacent(PlaneCluster &c);
 	void setValidity(bool t){valid_=t;}

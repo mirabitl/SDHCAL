@@ -31,6 +31,7 @@
 #include "Array3D.h"
 #include "RecoHit.h"
 #include "RECOCluster.h"
+#include "PlaneCluster.h"
 #include "RecoPoint.h"
 #include "RecoCandTk.h"
 #include "HC.h"
@@ -116,8 +117,8 @@ public:
 	uint32_t fillVector(uint32_t seed);
 	uint32_t CerenkovTagger(uint32_t difid,uint32_t seed);
 	uint32_t PMAnalysis(uint32_t difid);
-
-
+	void clearClusters();
+	void fillPlaneClusters(std::vector<RecoHit*> vrh);
 private:
 
 
@@ -157,6 +158,7 @@ private:
 	int clockSynchCut_;
 	int minChambersInTime_;
 	int maxHitCount_;
+	int minHitCount_;
 	int tkFirstChamber_;
 	int tkLastChamber_;
 	float chamberEdge_;
@@ -240,5 +242,18 @@ private:
 	float coreRatio_;
 	bool isNewSpill_,isPion_,isElectron_,isMuon_,isShower_,isProton_;
 	uint32_t theCerenkovTag_;
+
+
+	// Clusters
+	std::vector<PlaneCluster*> allClusters_,realClusters_,interactionClusters_;
+
+	std::bitset<128> nPlansReal_,nPlansInteraction_;
+	uint32_t firstInteractionPlane_,lastInteractionPlane_;
+	float _x[65532];
+	float _y[65532];
+	float _z[65532];
+	uint32_t _layer[65532];
+	uint32_t npBuf_;
+
 };
 #endif

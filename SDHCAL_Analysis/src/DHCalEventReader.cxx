@@ -18,7 +18,23 @@ using namespace lcio ;
 #include <sys/param.h>  
 #include <fcntl.h>
 #define CHECK_BIT(var,pos) ((var)& (1<<(pos)))
+
+#include <iostream>
+#include <csignal>
+
 DHCalEventReader* DHCalEventReader::_me = 0 ;
+
+
+void signalHandler( int signum )
+{
+  std::cout << __FILE__<<" Interrupt signal (" << signum << ") received.\n";
+
+    // cleanup and close up stuff here  
+    // terminate program  
+
+   exit(signum);  
+
+}
 
 
 DHCalEventReader* DHCalEventReader::instance() {
@@ -67,6 +83,8 @@ DHCalEventReader::DHCalEventReader() :dropFirstRU_(true),theXdaqShift_(92),curre
   //framePtr0_= new  DCFrame[256*48*64];
   printf("%d %d %x \n",nGood_,nBad_,nBadTwo_);
   expectedDtc_=0;
+  signal(SIGINT, signalHandler);
+
   _me=this;
 }
 
