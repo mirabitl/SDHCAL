@@ -45,9 +45,13 @@ fl=open("%s_%d_%d_%d_%d_%d.txt" % (fname,lti.tm_year,lti.tm_mon,lti.tm_mday,lti.
 
 T0=0
 
-for v in range(100,1001,100):
+for v in range(200,1001,100):
     ser.write(':sour:volt %f\r\n' % v)
     time.sleep(1)
+    V_MEAN=0
+    I_MEAN=0
+    R_MEAN=0
+    RHO_MEAN=0
     for i in range(0,120):
         ser.write(':read?\r\n')
         vread=ser.readline().split(',')
@@ -60,12 +64,23 @@ for v in range(100,1001,100):
         RHO=RM*surf/thick
         print "%d,%g,%g,%g,%g,%f\n" % (i,VM,IM,RM,RHO,T-T0)
         fl.write("%d,%g,%g,%g,%g,%f\n" % (i,VM,IM,RM,RHO,T-T0))
+        V_MEAN=V_MEAN+VM/120.
+        I_MEAN=I_MEAN+IM/120.
+        R_MEAN=R_MEAN+RM/120.
+        RHO_MEAN=RHO_MEAN+RHO/120.        
         time.sleep(1)
+    print "%d,%g,%g,%g,%g,%f\n" % (120,V_MEAN,I_MEAN,R_MEAN,RHO_MEAN,0)
+    fl.write("%d,%g,%g,%g,%g,%f\n" % (120,V_MEAN,I_MEAN,R_MEAN,RHO_MEAN,0))
 
 
-for v in range(1000,1,-100): 
+for v in range(900,1,-100): 
     ser.write(':sour:volt %f\r\n' % v)
     time.sleep(1)
+
+    V_MEAN=0
+    I_MEAN=0
+    R_MEAN=0
+    RHO_MEAN=0
     for i in range(0,120):
         ser.write(':read?\r\n')
         vread=ser.readline().split(',')
@@ -78,8 +93,13 @@ for v in range(1000,1,-100):
         RHO=RM*surf/thick
         print "%d,%g,%g,%g,%g,%f\n" % (i,VM,IM,RM,RHO,T-T0)
         fl.write("%d,%g,%g,%g,%g,%f\n" % (i,VM,IM,RM,RHO,T-T0))
+        V_MEAN=V_MEAN+VM/120.
+        I_MEAN=I_MEAN+IM/120.
+        R_MEAN=R_MEAN+RM/120.
+        RHO_MEAN=RHO_MEAN+RHO/120.        
         time.sleep(1)
-
+    print "%d,%g,%g,%g,%g,%f\n" % (120,V_MEAN,I_MEAN,R_MEAN,RHO_MEAN,0)
+    fl.write("%d,%g,%g,%g,%g,%f\n" % (120,V_MEAN,I_MEAN,R_MEAN,RHO_MEAN,0))
 
 ser.write(':sour:volt 0.0\r\n')
 ser.write(':outp off\r\n')
