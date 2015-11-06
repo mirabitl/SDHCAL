@@ -2,7 +2,7 @@
 import time
 import serial
 import os,sys
-if len(sys.argv) > 3:
+if len(sys.argv) > 2:
     fname=sys.argv[1]
     thick=float(sys.argv[2] )
 else:
@@ -40,11 +40,12 @@ print ser.readline()
 ser.write(':route:term rear\r\n')
 ser.write(':outp on\r\n')
 
-fl=open("%s.txt" % fname,"w")
-#for v in range(50,1001,50):
-T0=0
-for v in range(1000,49,-50): 
+lti=time.localtime()
+fl=open("%s_%d_%d_%d_%d_%d.txt" % (fname,lti.tm_year,lti.tm_mon,lti.tm_mday,lti.tm_hour,lti.tm_min),"w")
 
+T0=0
+
+for v in range(100,1001,100):
     ser.write(':sour:volt %f\r\n' % v)
     time.sleep(1)
     for i in range(0,120):
@@ -53,7 +54,7 @@ for v in range(1000,49,-50):
         VM=float(vread[0])
         IM=float(vread[1])
         T=float(vread[3])
-        if (T0 eq 0):
+        if (T0 == 0):
             T0=T-1;
         RM=VM/IM
         RHO=RM*surf/thick
@@ -61,6 +62,27 @@ for v in range(1000,49,-50):
         fl.write("%d,%g,%g,%g,%g,%f\n" % (i,VM,IM,RM,RHO,T-T0))
         time.sleep(1)
 
+
+for v in range(1000,1,-100): 
+    ser.write(':sour:volt %f\r\n' % v)
+    time.sleep(1)
+    for i in range(0,120):
+        ser.write(':read?\r\n')
+        vread=ser.readline().split(',')
+        VM=float(vread[0])
+        IM=float(vread[1])
+        T=float(vread[3])
+        if (T0 == 0):
+            T0=T-1;
+        RM=VM/IM
+        RHO=RM*surf/thick
+        print "%d,%g,%g,%g,%g,%f\n" % (i,VM,IM,RM,RHO,T-T0)
+        fl.write("%d,%g,%g,%g,%g,%f\n" % (i,VM,IM,RM,RHO,T-T0))
+        time.sleep(1)
+
+
+ser.write(':sour:volt 0.0\r\n')
+ser.write(':outp off\r\n')
 ser.close()
 fl.close()
 
