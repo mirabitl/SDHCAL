@@ -119,6 +119,7 @@ public:
 	uint32_t PMAnalysis(uint32_t difid);
 	void clearClusters();
 	void fillPlaneClusters(std::vector<RecoHit*> vrh);
+	void tagMips();
 private:
 
 
@@ -247,7 +248,7 @@ private:
 	// Clusters
 	std::vector<PlaneCluster*> allClusters_,realClusters_,interactionClusters_;
 
-	std::bitset<128> nPlansReal_,nPlansInteraction_;
+	std::bitset<128> nPlansReal_,nPlansInteraction_,nPlansAll_;
 	uint32_t firstInteractionPlane_,lastInteractionPlane_;
 	float _x[65532];
 	float _y[65532];

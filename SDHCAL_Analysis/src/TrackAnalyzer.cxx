@@ -814,6 +814,7 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   //  DEBUG_ DEBUG_PRINT("1");
   int nhits=0;
   theNplans_=0;
+  
   std::bitset<60> chhit(0);
   std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> >::iterator iseed=reader_->getPhysicsEventMap().find(seed);
    if (iseed==reader_->getPhysicsEventMap().end()) 
@@ -821,11 +822,13 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
       INFO_PRINT("Impossible \n");
       return ;
    }
-
+  
    theCerenkovTag_=this->CerenkovTagger(3,seed);
    uint32_t tag=theCerenkovTag_;
    //printf("%d %d \n",seed,theCerenkovTag_);
+  
    theNplans_=this->fillVector(seed);
+  
    if (theNplans_<minChambersInTime_) return;
 
   //printf("TAG=======================> %d \n",tag);
@@ -875,7 +878,7 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
     hctag3->Fill(theHitVector_.size());
 
   //this->drawHits(theHitVector_);
-
+  
   if (theTkHitVector_.size()>8000) return;
   if (theNplans_<minChambersInTime_) return;
   if (theTkHitVector_.size()<theNplans_) return;
@@ -883,16 +886,18 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   //INFO_PRINT(" %d Hit vector %d  tk %d pl %d \n",seed,theHitVector_.size(),theTkHitVector_.size(),theNplans_);
   //Shower::computePrincipalComponents(theTkHitVector_,(double*) &isha);
 
-  
+    
   
   //Shower::PrintComponents(isha);
   Shower::TPrincipalComponents(theTkHitVector_,(double*) &isha);
+  
   // Shower::PrintComponents(isha);
   hr012->Fill(sqrt((isha.lambda[0]+isha.lambda[1])/isha.lambda[2]));
   //for (std::vector<RecoHit*>::iterator it=theHitVector_.begin();it!=theHitVector_.end();it++) delete((*it));
 
   if (sqrt((isha.lambda[0]+isha.lambda[1])/isha.lambda[2])>0.1)
     {
+  
       if (interactionClusters_.size()>=1)
 	{
 
@@ -905,6 +910,7 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 	TH2* hnhitvsnip=rootHandler_->GetTH2("/Topology/HitVsInteractionPlan");
 	TH2* hnhitvsnrp=rootHandler_->GetTH2("/Topology/HitVsRealPlan");
 	TH2* hnipvsnrp=rootHandler_->GetTH2("/Topology/InteractionPlanVsRealPlan");
+	TH1* hmtl= rootHandler_->GetTH1("/Topology/MipsTrackLength");
 	if (hnrc==NULL)
 	  {
 	    hnrc =rootHandler_->BookTH1( "/Topology/NumberOfRealCluster",400,0.,400.);
@@ -916,20 +922,26 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 	    hnipvsnrp =rootHandler_->BookTH2( "/Topology/InteractionPlanVsRealPlan",64,0.,64.,64,0.,64);
 	    hnrp =rootHandler_->BookTH1( "/Topology/NumberOfRealPlane",64,0.,64.);
 	    hnip =rootHandler_->BookTH1( "/Topology/NumberOfInteractionPlane",64,0.,64.);
+	    hmtl =rootHandler_->BookTH1( "/Topology/MipsTrackLength",200,0.,200.);
 	    
 
 	    
 	  }
+	hmtl->Fill(theComputerTrack_->Length());
 	hnrc->Fill(realClusters_.size()*1.);
 	hnic->Fill(interactionClusters_.size()*1.);
 	hnrp->Fill(nPlansReal_.count()*1.);
 	hnip->Fill(nPlansInteraction_.count()*1.);
-	hnicratio->Fill(interactionClusters_.size()*1./realClusters_.size());
+	if (nPlansInteraction_.count()>4 && (firstInteractionPlane_>4 || nPlansAll_.count()>30)
+	    && theHitVector_.size()*1./nPlansAll_.count()>2.2 )
+	  hnicratio->Fill(nPlansInteraction_.count()*1./nPlansAll_.count());
 	hnhitvsnic->Fill(interactionClusters_.size()*1.,theHitVector_.size()*1.);
 	hnhitvsnip->Fill(nPlansInteraction_.count()*1.,theHitVector_.size()*1.);
 	hnhitvsnrp->Fill(nPlansReal_.count()*1.,theHitVector_.size()*1.);
 	hnipvsnrp->Fill(nPlansReal_.count()*1.,nPlansInteraction_.count()*1.);
-	if (nPlansInteraction_.count()>4)
+	if (nPlansInteraction_.count()>4 && (firstInteractionPlane_>4 || nPlansAll_.count()>30)
+	    && theHitVector_.size()*1./nPlansAll_.count()>2.2 && theComputerTrack_->Length()>5 &&
+	    (theAbsoluteTime_-theBCIDSpill_<1E7))
 	  hnoctag->Fill(theHitVector_.size());	  
 	}
       //this->drawHits(theTkHitVector_,&isha);
@@ -940,8 +952,9 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   //INFO_PRINT(" Mean event parameter %f %f %f => %f \n",isha.lambda[0],isha.lambda[1],isha.lambda[2],sqrt((isha.lambda[0]+isha.lambda[1])/isha.lambda[2]));
   //this->drawHits(theHitVector_,&isha);
   //char c;c=getchar();putchar(c); if (c=='.') exit(0);
-  printf("%d track found \n",this->buildPrincipal(theTkHitVector_,"/TrackPrincipal"));
   
+  printf("%d track found \n",this->buildPrincipal(theTkHitVector_,"/TrackPrincipal"));
+    
   //this->buildTracks(theTkHitVector_,"/TrackNoCut");
   return;
   if (theComputerTrack_->getTracks().size()>0) {
@@ -1988,6 +2001,7 @@ void TrackAnalyzer::clearClusters()
   allClusters_.clear();
   nPlansReal_.reset();
   nPlansInteraction_.reset();
+  nPlansAll_.reset();
     
 }
 void TrackAnalyzer::fillPlaneClusters(std::vector<RecoHit*> vrh)
@@ -2068,6 +2082,7 @@ void TrackAnalyzer::fillPlaneClusters(std::vector<RecoHit*> vrh)
     {
       uint32_t ch=(*ic)->plan();
       nPlansInteraction_.set(ch,true);
+      nPlansAll_.set(ch,true);
       if (lastInteractionPlane_<ch) lastInteractionPlane_=ch;
       if (firstInteractionPlane_>ch) firstInteractionPlane_=ch;
     }
@@ -2082,6 +2097,7 @@ void TrackAnalyzer::fillPlaneClusters(std::vector<RecoHit*> vrh)
       ChamberPos& cp=reader_->getPosition((*ic)->chamber());
 	  // DEBUG_PRINT(" %d (%f,%f,%f) (%f,%f,%f) (%d,%d) \n",
 	  //	 cp.getId(),cp.getX0(),cp.getY0(),cp.getZ0(),cp.getX1(),cp.getY1(),cp.getZ1(),cp.getXsize(),cp.getYsize());
+      if ((*ic)->plan()==0) continue;
       double x,y,z;
       cp.calculateGlobal((*ic)->X(),(*ic)->Y(),x,y,z);
 
@@ -2090,7 +2106,8 @@ void TrackAnalyzer::fillPlaneClusters(std::vector<RecoHit*> vrh)
       _z[npBuf_]=z;
       _layer[npBuf_]=(*ic)->plan();
       nPlansReal_.set((*ic)->plan(),true);
-      //INFO_PRINT("\t %d :  %d %f %f %f \n",npBuf_,_layer[npBuf_],_x[npBuf_],_y[npBuf_],_z[npBuf_]);
+      nPlansAll_.set((*ic)->plan(),true);
+      DEBUG_PRINT("\t %d :  %d %f %f %f \n",npBuf_,_layer[npBuf_],_x[npBuf_],_y[npBuf_],_z[npBuf_]);
       npBuf_++;
       if (npBuf_>=4096) break;
     }
@@ -2689,6 +2706,48 @@ uint32_t TrackAnalyzer::fillVector(uint32_t seed)
     }
   this->fillPlaneClusters(theHitVector_);
   INFO_PRINT("Hits %d tk %d ===> %d clusters %d Real %d Interaction \n",theHitVector_.size(),theTkHitVector_.size(),allClusters_.size(),realClusters_.size(),interactionClusters_.size());
-
+  
+  this->tagMips();
+  
   return nplans;
+}
+void TrackAnalyzer::tagMips()
+{
+  
+  INFO_PRINT("Clusters=> %d ",npBuf_);
+  theComputerTrack_->associate(npBuf_,_x,_y,_z,_layer);
+  
+  uint32_t nmip=0;
+  for (unsigned int i=0;i<theComputerTrack_->getCandidates().size();i++)
+    {
+      RecoCandTk& tk = theComputerTrack_->getCandidates()[i];
+#ifdef CORRECT_GEOM
+      tk.ax_/=1.04125;
+      tk.bx_/=1.04125;
+      tk.ay_/=1.04125;
+      tk.by_/=1.04125;
+#endif
+      for (std::vector<PlaneCluster*>::iterator ic=realClusters_.begin();ic!=realClusters_.end();ic++)
+	    {
+	      float dx=tk.getXext((*ic)->Z())-(*ic)->X();
+	      float dy=tk.getYext((*ic)->Z())-(*ic)->Y();
+	      if (sqrt(dx*dx+dy*dy)<2.)
+		{
+		  // DEBUG_PRINT("Point (%f,%f,%f) dist %f %f -> %f  \n",(*ic)->X(),(*ic)->Y(),(*ic)->Z(),dx,dy,sqrt(dx*dx+dy*dy));
+		for (std::vector<RecoHit*>::iterator ih=(*ic)->getHits()->begin();ih!=(*ic)->getHits()->end();ih++)
+		  {
+		    if ((*ih)->getFlag(RecoHit::MIP)==0)
+		      {
+			// DEBUG_PRINT("Point (%f,%f,%f) dist %f %f -> %f  \n",(*ic)->X(),(*ic)->Y(),(*ic)->Z(),dx,dy,sqrt(dx*dx+dy*dy));
+			(*ih)->setFlag(RecoHit::MIP,true);
+			hitVolume_[(*ih)->chamber()-1][(*ih)->I()-1][(*ih)->J()-1].setFlag(RecoHit::MIP,true);
+			nmip++;
+		      }
+		  }
+		}
+	    }
+	}
+  
+   DEBUG_PRINT("==> MIPS hit %d -> %.2f Length %f \n",nmip,nmip*100./theHitVector_.size(),theComputerTrack_->Length()); 
+
 }

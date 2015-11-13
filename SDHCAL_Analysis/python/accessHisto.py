@@ -593,3 +593,56 @@ def gainDIFAsics(hpath,idd,cut):
          flist.write("oa.RescaleGain(192,%d,%d,%d)\n" % (g1,idd,i+1))
      flist.close()
      return hm
+def fitCB(hr,mhr=-1E9,shr=-1E9,c=None):
+    x=RooRealVar("x", "Number of Hit", hr.GetXaxis().GetXmin(),hr.GetXaxis().GetXmax())
+    l = RooArgList(x)
+    data=RooDataHist("data", "Number of Hit data", l, hr)
+    frame=x.frame()
+    data.plotOn(frame)
+    if c!=None:
+      c.cd(3)
+    else:
+       c=TCanvas("Fit results")
+       c.cd()
+    data.plotOn(frame).Draw()
+    if mhr==-1E9:
+      mhr=hr.GetMean()
+    if shr==-1E9:
+      shr=hr.GetRMS();
+    mean=RooRealVar("mean", "mean",mhr,mhr-2*shr,mhr+2*shr)
+    sigma=RooRealVar("sigma", "sigma",shr,shr*0.5,2*shr)
+    alpha=RooRealVar("alpha", "alpha", 2., 0.,300)
+    nth=RooRealVar("nth", "nth", 2., 0.,300)
+    rcb=RooCBShape("rcb","rcb",x,mean,sigma,alpha,nth)
+    rcb.fitTo(data)
+    rcb.paramOn(frame)
+    rcb.plotOn(frame)
+    frame.Draw()
+    
+    return [frame.chiSquare(),mean.getVal(),sigma.getVal(),alpha.getVal(),nth.getVal()]
+#    if (fo!=None):
+#        fo.write("%.1f| %.1f| %.1f | %.1f| %.1f|" % (frame.chiSquare(),mean.getVal(),sigma.getVal(),alpha.getVal(),nth.getVal()))
+    if (fo!=None):
+        fo.write("%.3f| %.3f|%.3f| %.3f|" % (mean.getVal(),mean.getError(),sigma.getVal(),sigma.getError()))
+    c.SaveAs(hr.GetTitle()+"_ROOFIT.png");time.sleep(1)
+
+def FWHM(h1):
+  
+  while (h1.GetBinContent(h1.FindFirstBinAbove(h1.GetMaximum()/2))<50):
+    h1.Rebin(2)
+    print h1.GetMaximum()
+  print h1.GetMaximum()
+  bin1=h1.FindFirstBinAbove(h1.GetMaximum()/2);
+  bin2=h1.FindLastBinAbove(h1.GetMaximum()/2);
+  fwhm=h1.GetBinCenter(bin2)-h1.GetBinCenter(bin1);
+  sigma=fwhm/2.35
+  mode=h1.GetBinCenter(h1.GetMaximumBin())
+  g1 = TF1("m1","gaus",mode-3*sigma,mode+3*sigma)
+  g1.SetParameter(1,mode)
+  g1.SetParameter(2,sigma)
+  h1.Fit("m1","","",mode-1.5*sigma,mode+2*sigma)
+  print mode-sigma,mode+2*sigma
+  l=[bin1,bin2,fwhm,sigma,mode,g1.GetChisquare(),g1.GetParameter(0),g1.GetParameter(1),g1.GetParameter(2)]
+ 
+  l=l+fitCB(h1,mode,sigma)
+  return l
