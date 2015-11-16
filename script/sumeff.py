@@ -24,7 +24,7 @@ f=TFile(fname)
 fl=open("summaryeff%d.txt" % run,"w")
 l={}
 ch, efl,ef0,ef1,ef2,mul = array( 'd' ), array( 'd' ), array( 'd' ), array( 'd' ), array( 'd' ), array( 'd' )
-for i in range(1,9):
+for i in range(1,49):
  l[i]=ah.GetEff('/TrackPrincipal',i)
  #l[i]=ah.GetEff('/TrackNoCut',i)
 
