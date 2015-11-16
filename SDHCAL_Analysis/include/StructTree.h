@@ -117,18 +117,19 @@ typedef struct {
 typedef struct { 
   uint32_t    idx;
   uint64_t    bcid;
-  double     energy;
+  double      energy;
   uint32_t    run; 
   uint32_t    event; 
   uint32_t    gtc;
   uint32_t    dtc;
   uint32_t    time;
+  uint32_t    tospill;
   uint32_t    npoint;
   uint32_t    allpoints;
   uint16_t    ntrack;
   uint16_t    allshowers;
   uint16_t    showers;
-  uint8_t    type;
+  uint8_t     type;
   uint16_t m0,e0,c0,i0;
   uint16_t m1,e1,c1,i1;
   uint16_t m2,e2,c2,i2;
