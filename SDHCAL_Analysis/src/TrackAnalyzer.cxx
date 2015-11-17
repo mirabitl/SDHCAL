@@ -953,7 +953,7 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   //this->drawHits(theHitVector_,&isha);
   //char c;c=getchar();putchar(c); if (c=='.') exit(0);
   
-  printf("%d track found \n",this->buildPrincipal(theTkHitVector_,"/TrackPrincipal"));
+  this->buildPrincipal(theTkHitVector_,"/TrackPrincipal");
     
   //this->buildTracks(theTkHitVector_,"/TrackNoCut");
   return;
@@ -2705,7 +2705,7 @@ uint32_t TrackAnalyzer::fillVector(uint32_t seed)
       if (found) nplans++;
     }
   this->fillPlaneClusters(theHitVector_);
-  INFO_PRINT("Hits %d tk %d ===> %d clusters %d Real %d Interaction \n",theHitVector_.size(),theTkHitVector_.size(),allClusters_.size(),realClusters_.size(),interactionClusters_.size());
+  DEBUG_PRINT("Hits %d tk %d ===> %d clusters %d Real %d Interaction \n",theHitVector_.size(),theTkHitVector_.size(),allClusters_.size(),realClusters_.size(),interactionClusters_.size());
   
   this->tagMips();
   

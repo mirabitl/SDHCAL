@@ -22,6 +22,7 @@ using namespace lcio ;
 #include <iostream>
 #include <csignal>
 
+
 DHCalEventReader* DHCalEventReader::_me = 0 ;
 
 
@@ -2573,4 +2574,152 @@ void DHCalEventReader::ParseElement(xmlNode * a_node)
 
     ParseElement(cur_node->children);
   }
+}
+
+void DHCalEventReader::readGeometry(std::string account,std::string testname)
+{
+
+  my_=new MyInterface(account);
+  my_->connect();
+  std::stringstream s;
+  s.str(std::string());
+  s<<"SELECT IDX FROM VERSIONS WHERE TESTNAME=\""<<testname<<"\";";
+  my_->executeSelect(s.str());
+  MYSQL_ROW row=NULL;
+  versionid_=0;
+  while ((row=my_->getNextRow())!=0) 
+    { 
+      versionid_=atoi(row[0]);
+    }
+
+  s.str(std::string());
+  s<<"SELECT NUM,X0,Y0,Z0 FROM PLANS WHERE VERSIONID="<<versionid_<<";";
+  my_->executeSelect(s.str());
+  row=NULL;
+  planshiftmap_.clear();
+  while ((row=my_->getNextRow())!=0) 
+    { 
+
+      PlanShift chg(atoi(row[0]),atof(row[1]),atof(row[2]),atof(row[3]));
+      std::pair<uint32_t,PlanShift> p(atoi(row[0]),chg);
+      planshiftmap_.insert(p);
+    }
+
+  s.str(std::string());
+  s<<"select NUM,X0,Y0,Z0,X1,Y1,Z1,TYPE,(SELECT NUM FROM PLANS WHERE PLANS.IDX=CHAMBERS.PLANID) FROM CHAMBERS WHERE VERSIONID="<<versionid_<<";";
+  my_->executeSelect(s.str());
+  row=NULL;
+  poschambermap_.clear();
+  geochambermap_.clear();
+  while ((row=my_->getNextRow())!=0) 
+    { 
+      ChamberPos chp(atoi(row[0]),atof(row[1]),atof(row[2]),atof(row[3]),atof(row[4]),atof(row[5]),atof(row[6]),atoi(row[8]),atoi(row[7]));
+
+      std::pair<uint32_t,ChamberPos> p(atoi(row[0]),chp);
+      poschambermap_.insert(p);
+
+      ChamberGeom chg(atoi(row[0]),0,0,0,0,atoi(row[8]));
+      std::pair<uint32_t,ChamberGeom> pg(atoi(row[0]),chg);
+      geochambermap_.insert(pg);
+    }
+
+  s.str(std::string());
+  s<<" select NUM,(SELECT NUM FROM CHAMBERS WHERE CHAMBERS.IDX=DIFS.CHAMBERID),DI,DJ,POLI,POLJ FROM DIFS WHERE VERSIONID="<<versionid_<<";";
+  my_->executeSelect(s.str());
+  row=NULL;
+  geodifmap_.clear();
+  while ((row=my_->getNextRow())!=0) 
+    { 
+      DifGeom dg(atoi(row[0]),atoi(row[1]),atof(row[2]),atof(row[3]),atof(row[4]),atof(row[5]));
+      std::pair<uint32_t,DifGeom> p(atoi(row[0]),dg);
+      geodifmap_.insert(p);
+      this->difInChamber(atoi(row[0]),atoi(row[1]));
+    }
+
+  my_->disconnect();
+  
+
+  this->dumpGeometry();
+  //getchar();
+
+  
+}
+void DHCalEventReader::dumpGeometry()
+{
+  for (std::map<uint32_t,DifGeom>::iterator it=geodifmap_.begin();it!=geodifmap_.end();it++)
+    printf("DIF %d =>%d %d %f %f %f %f \n",it->first, it->second.getId(),it->second.getChamberId(),it->second.getX(),it->second.getY(),it->second.getPolarityX(),it->second.getPolarityY());
+
+  for (std::map<uint32_t,ChamberGeom>::iterator it=geochambermap_.begin();it!=geochambermap_.end();it++)
+    printf("Chambre %d =>%d %d %f %f %f %f \n",it->first, it->second.getId(),it->second.getPlan(),it->second.getX(),it->second.getY(),it->second.getZ(),it->second.getAngle());
+
+  for (std::map<uint32_t,ChamberPos>::iterator it=poschambermap_.begin();it!=poschambermap_.end();it++)
+    printf("Position %d =>%d %d %f %f %f %f %f %f \n",it->first, it->second.getId(),it->second.getPlan(),it->second.getX0(),it->second.getY0(),it->second.getZ0(),it->second.getX1(),it->second.getY1(),it->second.getZ1());
+
+  for (std::map<uint32_t,PlanShift>::iterator it=planshiftmap_.begin();it!=planshiftmap_.end();it++)
+    printf("Position %d =>%d %f %f %f  \n",it->first, it->second.getId(),it->second.getX0(),it->second.getY0(),it->second.getZ0());
+
+
+
+}
+
+void DHCalEventReader::queryFiles(uint32_t run,bool compress)
+{
+  my_->connect();
+  std::stringstream s;
+  s.str(std::string());
+  uint32_t icompress=(compress)?1:0;
+  s<<"select LOCATION from FILES WHERE RUN=(SELECT RUN FROM RUNS WHERE RUN="<<run<<" AND VERSIONID="<<versionid_<<" )  AND COMPRESS="<<icompress<<";";
+  std::cout<<s.str()<<std::endl;
+  my_->executeSelect(s.str());
+  MYSQL_ROW row=NULL;
+  vFiles_.clear();
+  while ((row=my_->getNextRow())!=0) 
+    { 
+      vFiles_.push_back(row[0]);
+    }
+  
+  s.str(std::string());
+  s<<"SELECT ENERGY FROM RUNS WHERE RUN="<<run<<" AND VERSIONID="<<versionid_<<";";
+  my_->executeSelect(s.str());
+  row=NULL;
+  BeamEnergy_=0;
+  while ((row=my_->getNextRow())!=0) 
+    { 
+      BeamEnergy_=atof(row[0]);
+    }
+
+  my_->disconnect();
+}
+
+void DHCalEventReader::queryEnergyFiles(float energy,bool compress)
+{
+  my_->connect();
+  std::stringstream s;
+  s.str(std::string());
+  BeamEnergy_=energy;
+  uint32_t icompress=(compress)?1:0;
+  s<<"select LOCATION from FILES WHERE RUN  in (SELECT RUN FROM RUNS WHERE ENERGY="<<energy<<" AND VERSIONID="<<versionid_<<" ) AND COMPRESS="<<icompress<<";";
+  my_->executeSelect(s.str());
+  MYSQL_ROW row=NULL;
+  vFiles_.clear();
+  while ((row=my_->getNextRow())!=0) 
+    { 
+      std::cout<<row[0]<<std::endl;
+      vFiles_.push_back(row[0]);
+    }
+  
+
+  my_->disconnect();
+}
+
+void DHCalEventReader::processQueriedFiles(uint32_t nev)
+{
+  for (std::vector<std::string>::iterator it=vFiles_.begin();it!=vFiles_.end();it++)
+    {
+      std::cout<<"Process sing file "<<(*it)<<std::endl;
+      ::sleep(1);
+      this->open((*it));
+      this->readStream(nev);
+      this->close();
+    }
 }

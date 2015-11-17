@@ -47,6 +47,7 @@
 
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 
+#include "MyInterface.h"
 using namespace std ;
 /** 
 \mainpage
@@ -449,6 +450,13 @@ int readOneEvent(int run,int event);
   void startReadFile(std::string name);
   void serviceReadMemory();
   void serviceReadFile();
+
+
+  void readGeometry(std::string account,std::string testname);
+  void dumpGeometry();
+  void queryEnergyFiles(float energy,bool compress=true);
+  void queryFiles(uint32_t run,bool compress=true);
+  void processQueriedFiles(uint32_t nev);
  private:
   LCReader* lcReader_; /// LCIO Reader
   //  LCSplitWriter* lcWriter_; /// LCIO Writer
@@ -506,6 +514,10 @@ int readOneEvent(int run,int event);
   std::string monitoringDirectory_;
   uint32_t monitoringNDIF_,monitoringRun_;
   boost::thread    monitoringThread_;
+  MyInterface* my_;
+  uint32_t versionid_;
+  float BeamEnergy_;
+  std::vector<std::string> vFiles_;
 };
 
 #endif
