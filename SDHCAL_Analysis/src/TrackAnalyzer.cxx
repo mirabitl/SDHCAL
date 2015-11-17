@@ -2714,7 +2714,7 @@ uint32_t TrackAnalyzer::fillVector(uint32_t seed)
 void TrackAnalyzer::tagMips()
 {
   
-  INFO_PRINT("Clusters=> %d ",npBuf_);
+  DEBUG_PRINT("Clusters=> %d ",npBuf_);
   theComputerTrack_->associate(npBuf_,_x,_y,_z,_layer);
   
   uint32_t nmip=0;
