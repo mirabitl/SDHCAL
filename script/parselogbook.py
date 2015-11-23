@@ -13,7 +13,13 @@ for user in tree.xpath("/ELOG_LIST/ENTRY"):
     conf=daq
     if (daq[0:6]=="SDHCAL"):
         d=Daq_getDaq(daq)
-        conf=d.getConfigName()
+        xx=d.getXML()
+        i0=xx.find("OracleSetupName")
+        i1=xx[i0:len(xx)].find(">")
+        i2=xx[i0:len(xx)].find("<")
+        conf=xx[i0+i1+1:i0+i2]
+
+        #conf=d.getConfigName()
     heure=user.xpath("DATE")[0].text.split(",")[1].split("+0")[0]
     heure=time.strftime('%Y-%m-%d %H:%M:%S',time.strptime(heure," %d %b %Y %H:%M:%S "))
     Energie=0
