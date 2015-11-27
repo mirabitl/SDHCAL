@@ -22,7 +22,7 @@ class TrackInfo : public Droite3D
   inline double x(uint8_t i){return x_[i];}
   inline double y(uint8_t i){return y_[i];}
   inline double z(uint8_t i){return z_[i];}
-  
+  inline std::bitset<128> planes(){return planes_;}
   inline uint32_t layer(uint8_t i){return layer_[i];}
   inline bool plane(uint8_t i){return planes_[i];}
   inline double xext(double z){return ax_*z+bx_;}

@@ -248,13 +248,14 @@ private:
 	// Clusters
 	std::vector<PlaneCluster*> allClusters_,realClusters_,interactionClusters_;
 
-	std::bitset<128> nPlansReal_,nPlansInteraction_,nPlansAll_;
+	std::bitset<64> nPlansReal_,nPlansInteraction_,nPlansAll_;
 	uint32_t firstInteractionPlane_,lastInteractionPlane_;
 	float _x[65532];
 	float _y[65532];
 	float _z[65532];
 	uint32_t _layer[65532];
 	uint32_t npBuf_;
+	uint32_t _runNumber;
 
 };
 #endif

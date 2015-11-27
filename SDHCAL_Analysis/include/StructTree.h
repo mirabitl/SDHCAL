@@ -117,22 +117,30 @@ typedef struct {
 typedef struct { 
   uint32_t    idx;
   uint64_t    bcid;
-  double      energy;
+  uint64_t    bsplan;
+  uint64_t    bsiplan;
+  uint64_t    bsrplan;
+  uint32_t    iclu,rclu,iplan,rplan,aplan;
+  double      energy,x0,y0;
   uint32_t    run; 
   uint32_t    event; 
   uint32_t    gtc;
   uint32_t    dtc;
   uint32_t    time;
-  uint32_t    tospill;
+  double    tospill;
   uint32_t    npoint;
   uint32_t    allpoints;
   uint16_t    ntrack;
   uint16_t    allshowers;
   uint16_t    showers;
   uint8_t     type;
+  uint8_t     fpi,lpi;
   uint16_t m0,e0,c0,i0;
   uint16_t m1,e1,c1,i1;
   uint16_t m2,e2,c2,i2;
+  uint16_t sm0,se0,sc0,si0;
+  uint16_t sm1,se1,sc1,si1;
+  uint16_t sm2,se2,sc2,si2;
   double tracklength;
 } event_t;
 

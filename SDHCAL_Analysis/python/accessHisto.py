@@ -3,6 +3,7 @@ import os
 import sqlite3 as sqlite
 import time
 from ROOT import gStyle
+import math
 def sumamryBad():
   f=open("summarybad.txt","w")
   for i in range(1,255):
@@ -635,7 +636,7 @@ def FWHM(h1):
   bin1=h1.FindFirstBinAbove(h1.GetMaximum()/2);
   bin2=h1.FindLastBinAbove(h1.GetMaximum()/2);
   fwhm=h1.GetBinCenter(bin2)-h1.GetBinCenter(bin1);
-  sigma=fwhm/2.35
+  sigma=fwhm/math.sqrt(math.log(256))
   mode=h1.GetBinCenter(h1.GetMaximumBin())
   g1 = TF1("m1","gaus",mode-3*sigma,mode+3*sigma)
   g1.SetParameter(1,mode)

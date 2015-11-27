@@ -788,7 +788,7 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 {
 
  
-
+  
   ShowerParams ish;
   ShowerParams isha;
 
@@ -799,8 +799,8 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   theAbsoluteTime_=theBCID_-currentTime_;
   if (theBCIDSpill_==0) theBCIDSpill_=theAbsoluteTime_;
   if (theAbsoluteTime_-theBCIDSpill_>15/2E-7) theBCIDSpill_=theAbsoluteTime_;
- 
-    DEBUG_PRINT("GTC %d DTC %d BCID %llu Current Time %llu Time SPill %f Distance %f \n",theGTC_,theDTC_,theBCID_,currentTime_,theBCIDSpill_*2E-7,(theAbsoluteTime_-theBCIDSpill_)*2E-7);
+
+  //INFO_PRINT("GTC %d DTC %d BCID %llu Current Time %llu Time SPill %f Distance %f \n",theGTC_,theDTC_,theBCID_,currentTime_,theBCIDSpill_*2E-7,(theAbsoluteTime_-theBCIDSpill_)*2E-7);
     theEvent_.idx++;
     theEvent_.bcid=theBCID_;
     theEvent_.dtc=theDTC_;
@@ -808,7 +808,8 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
     theEvent_.run=evt_->getRunNumber();
     theEvent_.event=evt_->getEventNumber();
     theEvent_.time=currentTime_;
-
+    theEvent_.energy=reader_->getBeamEnergy();
+    theEvent_.tospill=(theAbsoluteTime_-theBCIDSpill_)*2E-7;
   // DEBUG_PRINT("Building voulume for %d \n",seed);
   //uint32_t nhits=buildVolume(rhcol,seed);
   //  DEBUG_ DEBUG_PRINT("1");
@@ -826,11 +827,11 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
    theCerenkovTag_=this->CerenkovTagger(3,seed);
    uint32_t tag=theCerenkovTag_;
    //printf("%d %d \n",seed,theCerenkovTag_);
-  
-   theNplans_=this->fillVector(seed);
-  
-   if (theNplans_<minChambersInTime_) return;
 
+   theNplans_=this->fillVector(seed);
+
+   if (theNplans_<minChambersInTime_) return;
+   
   //printf("TAG=======================> %d \n",tag);
   TH1* hnoctag= rootHandler_->GetTH1("NoCTag");
   TH1* hctag1= rootHandler_->GetTH1("CTag1");
@@ -882,11 +883,10 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   if (theTkHitVector_.size()>8000) return;
   if (theNplans_<minChambersInTime_) return;
   if (theTkHitVector_.size()<theNplans_) return;
-    
+  
   //INFO_PRINT(" %d Hit vector %d  tk %d pl %d \n",seed,theHitVector_.size(),theTkHitVector_.size(),theNplans_);
   //Shower::computePrincipalComponents(theTkHitVector_,(double*) &isha);
-
-    
+  
   
   //Shower::PrintComponents(isha);
   Shower::TPrincipalComponents(theTkHitVector_,(double*) &isha);
@@ -897,7 +897,7 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 
   if (sqrt((isha.lambda[0]+isha.lambda[1])/isha.lambda[2])>0.1)
     {
-  
+      
       if (interactionClusters_.size()>=1)
 	{
 
@@ -939,9 +939,102 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 	hnhitvsnip->Fill(nPlansInteraction_.count()*1.,theHitVector_.size()*1.);
 	hnhitvsnrp->Fill(nPlansReal_.count()*1.,theHitVector_.size()*1.);
 	hnipvsnrp->Fill(nPlansReal_.count()*1.,nPlansInteraction_.count()*1.);
+
+	theEvent_.tracklength=theComputerTrack_->Length();
+	theEvent_.rclu=realClusters_.size();
+	theEvent_.iclu=interactionClusters_.size();
+	theEvent_.rplan=nPlansReal_.count();
+	theEvent_.iplan=nPlansInteraction_.count();
+	theEvent_.aplan=nPlansAll_.count();
+	theEvent_.bsplan=nPlansAll_.to_ulong();
+	theEvent_.bsrplan=nPlansReal_.to_ulong();
+	theEvent_.bsiplan=nPlansInteraction_.to_ulong();
+	theEvent_.fpi= firstInteractionPlane_;
+	theEvent_.lpi=lastInteractionPlane_;
+
+
+	double* x=isha.xm;
+	double* v=isha.l2;
+  // Z X
+	double z0=x[2];
+	double x0=x[0];
+	double y0=x[1];
+
+	double x1=x[0]+v[0];
+	double y1=x[1]+v[1];
+	double z1=x[2]+v[2];
+	double ax,ay,bx,by;
+	ax=(x1-x0)/(z1-z0);
+	bx=x1-ax*z1;
+	ay=(y1-y0)/(z1-z0);
+	by=y1-ay*z1;
+	theEvent_.x0=bx;
+	theEvent_.y0=by;
+	
+
+
+	uint32_t counts[3][5];
+	uint32_t scounts[3][5];
+	uint32_t ir;
+	memset(counts,0,15*sizeof(uint32_t));
+	memset(scounts,0,15*sizeof(uint32_t));
+	for (std::vector<RecoHit*>::iterator ih=theHitVector_.begin();ih!=theHitVector_.end();ih++)
+	  {
+	    if ((*ih)->getFlag(RecoHit::THR0)) ir=0;
+	    if ((*ih)->getFlag(RecoHit::THR1)) ir=1;
+	    if ((*ih)->getFlag(RecoHit::THR2)) ir=2;
+	    counts[ir][0]++;
+	    if ((*ih)->plan()>=firstInteractionPlane_) 	    scounts[ir][0]++;
+	    if ((*ih)->getFlag(RecoHit::MIP)!=0) 
+	      {
+	      counts[ir][1]++;
+	      if ((*ih)->plan()>=firstInteractionPlane_) scounts[ir][1]++;
+	      }
+	    else 
+	      {
+		if ((*ih)->getFlag(RecoHit::CORE)!=0) counts[ir][2]++;
+		if ((*ih)->getFlag(RecoHit::EDGE)!=0) counts[ir][3]++;
+		if ((*ih)->getFlag(RecoHit::ISOLATED)!=0) counts[ir][4]++;
+		if ((*ih)->plan()>=firstInteractionPlane_)
+		  {
+		    if ((*ih)->getFlag(RecoHit::CORE)!=0) scounts[ir][2]++;
+		    if ((*ih)->getFlag(RecoHit::EDGE)!=0) scounts[ir][3]++;
+		    if ((*ih)->getFlag(RecoHit::ISOLATED)!=0) scounts[ir][4]++;
+
+		  }
+	      }
+	  }
+	theEvent_.m0=counts[0][1];
+	theEvent_.c0=counts[0][2];
+	theEvent_.e0=counts[0][3];
+	theEvent_.i0=counts[0][4];
+	theEvent_.m1=counts[1][1];
+	theEvent_.c1=counts[1][2];
+	theEvent_.e1=counts[1][3];
+	theEvent_.i1=counts[1][4];
+	theEvent_.m2=counts[2][1];
+	theEvent_.c2=counts[2][2];
+	theEvent_.e2=counts[2][3];
+	theEvent_.i2=counts[2][4];
+	theEvent_.sm0=scounts[0][1];
+	theEvent_.sc0=scounts[0][2];
+	theEvent_.se0=scounts[0][3];
+	theEvent_.si0=scounts[0][4];
+	theEvent_.sm1=scounts[1][1];
+	theEvent_.sc1=scounts[1][2];
+	theEvent_.se1=scounts[1][3];
+	theEvent_.si1=scounts[1][4];
+	theEvent_.sm2=scounts[2][1];
+	theEvent_.sc2=scounts[2][2];
+	theEvent_.se2=scounts[2][3];
+	theEvent_.si2=scounts[2][4];
+	theEvent_.npoint=counts[0][0]+counts[1][0]+counts[2][0];
+
+	tEvents_->Fill();
+	
 	if (nPlansInteraction_.count()>4 && (firstInteractionPlane_>4 || nPlansAll_.count()>30)
 	    && theHitVector_.size()*1./nPlansAll_.count()>2.2 && theComputerTrack_->Length()>5 &&
-	    (theAbsoluteTime_-theBCIDSpill_<1E7))
+	    (theAbsoluteTime_-theBCIDSpill_<3E7))
 	  hnoctag->Fill(theHitVector_.size());	  
 	}
       //this->drawHits(theTkHitVector_,&isha);
@@ -954,7 +1047,7 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   //char c;c=getchar();putchar(c); if (c=='.') exit(0);
   
   this->buildPrincipal(theTkHitVector_,"/TrackPrincipal");
-    
+  
   //this->buildTracks(theTkHitVector_,"/TrackNoCut");
   return;
   if (theComputerTrack_->getTracks().size()>0) {
@@ -1000,22 +1093,32 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 void TrackAnalyzer::processEvent()
 {
 
-
+  
   checkTime();
   if (reader_->getEvent()==0) return;
-  
+    
   evt_=reader_->getEvent();
   //theSkip_=380;
+  
   if (evt_->getEventNumber()<=theSkip_) return;
+  
   printf("Processing %d - %d \n",evt_->getRunNumber(),evt_->getEventNumber());
+  if (evt_->getRunNumber()!=_runNumber)
+    {
+      _runNumber=evt_->getRunNumber();
+      reader_->logbookBeamEnergy(_runNumber);
+
+    }
 
   if (nAnalyzed_==0)
     {
       std::stringstream s;
-      s<<"./Shower"<<evt_->getRunNumber()<<".root";
+      s<<"./Shower"<<evt_->getRunNumber()<<"_"<<reader_->getBeamEnergy()<<".root";
+      std::cout<<" Tree file "<<s.str()<<std::endl;
       this->createTrees(s.str());
     }
   nAnalyzed_++;
+  
   IMPL::LCCollectionVec* rhcol=NULL;
   bool rhcoltransient=false;
   try {
@@ -1037,6 +1140,7 @@ void TrackAnalyzer::processEvent()
     }
   if (rebuild_)
     {
+      
       reader_->parseRawEvent();
       DEBUG_PRINT("End of parseraw \n");
       //reader_->flagSynchronizedFrame();
@@ -1060,6 +1164,7 @@ void TrackAnalyzer::processEvent()
       //INFO_PRINT("Calling CreaetRaw %d\n",minChambersInTime_);
       //reader_->findDIFSeeds(minChambersInTime_);
       //rhcol=reader_->createRawCalorimeterHits(reader_->getDIFSeeds());
+      
       rhcol=reader_->createRawCalorimeterHits(seed);
       evt_->addCollection(rhcol,"DHCALRawHits");
       rhcoltransient=false; 
@@ -1068,8 +1173,10 @@ void TrackAnalyzer::processEvent()
   else
     rhcol=(IMPL::LCCollectionVec*) evt_->getCollection(collectionName_);
 
+  
   //INFO_PRINT("End of CreaetRaw %d \n",rhcol->getNumberOfElements());  
   if (rhcol->getNumberOfElements()>4E6) return;
+  
   theMonitoring_->FillTimeAsic(rhcol);
 
   //  LCTOOLS::printParameters(rhcol->parameters());
@@ -1078,35 +1185,38 @@ void TrackAnalyzer::processEvent()
   if (rhcol->getNumberOfElements()==0) return;
   //DEBUG_PRINT("Calling decodeTrigger\n");
   // TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+  
   if (!decodeTrigger(rhcol,spillSize_) ) { if (rhcoltransient) delete rhcol;return;}
   
   //if (isNewSpill_) return;
+  
   if (evt_->getEventNumber()%100 ==0)
     rootHandler_->writeSQL();
   //    rootHandler_->writeXML(theMonitoringPath_);
+  
   PMAnalysis(3);
-
+  
   reader_->findTimeSeeds(minChambersInTime_);
-
+  
   std::vector<uint32_t> vseeds=reader_->getTimeSeeds();
 
   
    INFO_PRINT("================>  %d  Number of seeds %d \n",evt_->getEventNumber(),(int) vseeds.size());
 
   if (vseeds.size()==0)  { if (rhcoltransient) delete rhcol;return;}
- 
+   
   theNbShowers_=0;
   theNbTracks_=0;
   bool hasPion=false;
   for (uint32_t is=0;is<vseeds.size();is++)
     {
-
+      //printf("%d %d %x \n",is,vseeds[is],rhcol);
       this->processSeed(rhcol,vseeds[is]);
 
 
       
     }
-
+  
   if ((theBCID_-theLastBCID_)*2E-7>5)
     {
       theBCIDSpill_=theBCID_;
@@ -1463,18 +1573,34 @@ void TrackAnalyzer::createTrees(std::string s)
   tEvents_->Branch("idx",&theEvent_.idx,"idx/I");
 
   tEvents_->Branch("energy",&theEvent_.energy,"energy/D");
+  tEvents_->Branch("x0",&theEvent_.x0,"x0/D");
+  tEvents_->Branch("y0",&theEvent_.y0,"y0/D");
   tEvents_->Branch("run",&theEvent_.run,"run/i");
   tEvents_->Branch("event",&theEvent_.event,"event/i ");
   tEvents_->Branch("gtc",&theEvent_.gtc,"gtc/i");
   tEvents_->Branch("dtc",&theEvent_.dtc,"dtc/i");
   tEvents_->Branch("time",&theEvent_.time,"time/i ");
+  tEvents_->Branch("tospill",&theEvent_.tospill,"tospill/D");
+  tEvents_->Branch("tracklength",&theEvent_.tracklength,"tracklength/D");
+  tEvents_->Branch("iclu",&theEvent_.iclu,"iclu/i");
+  tEvents_->Branch("rclu",&theEvent_.rclu,"rclu/i");
+  tEvents_->Branch("aplan",&theEvent_.aplan,"aplan/i");
+  tEvents_->Branch("iplan",&theEvent_.iplan,"iplan/i");
+  tEvents_->Branch("rplan",&theEvent_.rplan,"rplan/i");
+  tEvents_->Branch("bsplan",&theEvent_.bsplan,"bsplan/l");
+  tEvents_->Branch("bsiplan",&theEvent_.bsiplan,"bsiplan/l");
+  tEvents_->Branch("bsrplan",&theEvent_.bsiplan,"bsrplan/l");
+
+
   tEvents_->Branch("npoint",&theEvent_.npoint,"npoint/i ");
   tEvents_->Branch("allpoints",&theEvent_.allpoints,"allpoints/i");
   tEvents_->Branch("ntrack",&theEvent_.ntrack,"ntrack/s");
   tEvents_->Branch("allshowers",&theEvent_.allshowers,"allshowers/s");
   tEvents_->Branch("showers",&theEvent_.showers,"showers/s");
   tEvents_->Branch("type",&theEvent_.type,"type/b");
-  tEvents_->Branch("tracklength",&theEvent_.tracklength,"tracklength/D");
+
+  tEvents_->Branch("fpi",&theEvent_.fpi,"fpi/b");
+  tEvents_->Branch("lpi",&theEvent_.lpi,"lpi/b");
   tEvents_->Branch("m0",&theEvent_.m0,"m0/s");
   tEvents_->Branch("m1",&theEvent_.m1,"m1/s");
   tEvents_->Branch("m2",&theEvent_.m2,"m2/s");
@@ -1487,8 +1613,20 @@ void TrackAnalyzer::createTrees(std::string s)
   tEvents_->Branch("i0",&theEvent_.i0,"i0/s");
   tEvents_->Branch("i1",&theEvent_.i1,"i1/s");
   tEvents_->Branch("i2",&theEvent_.i2,"i2/s");
+  tEvents_->Branch("sm0",&theEvent_.sm0,"sm0/s");
+  tEvents_->Branch("sm1",&theEvent_.sm1,"sm1/s");
+  tEvents_->Branch("sm2",&theEvent_.sm2,"sm2/s");
+  tEvents_->Branch("se0",&theEvent_.se0,"se0/s");
+  tEvents_->Branch("se1",&theEvent_.se1,"se1/s");
+  tEvents_->Branch("se2",&theEvent_.se2,"se2/s");
+  tEvents_->Branch("sc0",&theEvent_.sc0,"sc0/s");
+  tEvents_->Branch("sc1",&theEvent_.sc1,"sc1/s");
+  tEvents_->Branch("sc2",&theEvent_.sc2,"sc2/s");
+  tEvents_->Branch("si0",&theEvent_.si0,"si0/s");
+  tEvents_->Branch("si1",&theEvent_.si1,"si1/s");
+  tEvents_->Branch("si2",&theEvent_.si2,"si2/s");
 
-
+#ifdef USE_SHOWERS_TREE
   tShowers_ = new TTree("showers","Showers");
 
   tShowers_->Branch("bcid",&theShower_.bcid,"bcid/l");
@@ -1562,7 +1700,9 @@ void TrackAnalyzer::createTrees(std::string s)
   tShowers_->Branch("i1",&theShower_.i1,"i1/s");
   tShowers_->Branch("i2",&theShower_.i2,"i2/s");
 
+#endif
 
+#ifdef USE_TRACKS_TREE
 
 
 
@@ -1583,7 +1723,7 @@ void TrackAnalyzer::createTrees(std::string s)
   tTracks_->Branch("xhit",&theTrack_.xhit,"xhit[61]/D");
   tTracks_->Branch("yhit",&theTrack_.yhit,"yhit[61]/D");
 
-
+#endif
 
   std::cout << " create Trees"<<std::endl;
 
@@ -1597,11 +1737,11 @@ void TrackAnalyzer::closeTrees()
     {
   treeFile_->cd();
   tEvents_->BuildIndex("idx");
-  tShowers_->BuildIndex("idx","eventid");
+  //tShowers_->BuildIndex("idx","eventid");
   //tTracks_->BuildIndex("idx","eventid");
   tEvents_->Write();
-  tShowers_->Write();
-  tTracks_->Write();
+  //tShowers_->Write();
+  //tTracks_->Write();
   treeFile_->ls();
   treeFile_->Close();
     }
@@ -2125,6 +2265,8 @@ double ymax[100];
 
 uint32_t TrackAnalyzer::buildPrincipal(std::vector<RecoHit*> &vrh,std::string vdir)
 {
+
+
 #ifdef standalone_way  
   std::vector<RECOCluster*> realc;
   realc.clear();
@@ -2180,6 +2322,7 @@ uint32_t TrackAnalyzer::buildPrincipal(std::vector<RecoHit*> &vrh,std::string vd
   Shower::TPrincipalComponents(nstub,h_x,h_y,h_z,h_layer,(double*) &isha);
 #else
   ShowerParams isha;
+  //INFO_PRINT("Avant Principal %d\n",npBuf_);
   Shower::TPrincipalComponents(npBuf_,_x,_y,_z,_layer,(double*) &isha);
 
 #endif
@@ -2228,7 +2371,7 @@ uint32_t TrackAnalyzer::buildPrincipal(std::vector<RecoHit*> &vrh,std::string vd
    return 0;
     }
   tk0.regression();
-  //  INFO_PRINT("Avant Second fit ");
+  //INFO_PRINT("Avant Second fit ");
   TrackInfo tk;tk.clear();
   tk.set_ax(tk0.ax());
   tk.set_bx(tk0.bx());
@@ -2252,7 +2395,7 @@ uint32_t TrackAnalyzer::buildPrincipal(std::vector<RecoHit*> &vrh,std::string vd
       
     }
   
-  //INFO_PRINT("Apres second fit \n");
+  //  INFO_PRINT("Apres second fit \n");
   if (tk.size()<tkMinPoint_)
     {
    return 0;
@@ -2265,7 +2408,7 @@ uint32_t TrackAnalyzer::buildPrincipal(std::vector<RecoHit*> &vrh,std::string vd
   //char c;c=getchar();putchar(c); if (c=='.') exit(0);
   uint32_t fch=int(ceil(tk.zmin()*10))/28+1;
   uint32_t lch=int(ceil(tk.zmax()*10))/28+1;
-
+  
   std::stringstream st;
   st<<vdir<<"/";
   TH1* hnp= rootHandler_->GetTH1(st.str()+"Npoints");
@@ -2287,22 +2430,23 @@ uint32_t TrackAnalyzer::buildPrincipal(std::vector<RecoHit*> &vrh,std::string vd
   // Calcul de l'efficacite
 
   // Track info
-
+  
   hnp->Fill(tk.size()*1.);
   hax->Fill(tk.ax());
   hay->Fill(tk.ay());
   fch=tkFirstChamber_;lch=tkLastChamber_;
   for (int ip=fch;ip<=lch;ip++)
     if (tk.plane(ip)) hnpl->Fill(ip*1.);
-  //	  std::cout<<tk.planes_<<std::endl;
+  //  std::cout<<tk.planes()<<std::endl;
   //getchar();
     
   for (uint32_t ip=fch;ip<=lch;ip++)
     {
-	      
+      //INFO_PRINT("Plan %d studied \n",ip);
       TrackInfo tex;
 	      
       tk.exclude_layer(ip,tex);
+      
       uint32_t npext=tex.size();
       
       if (npext<tkExtMinPoint_) continue; // Au moins 4 plans dans l'estrapolation touches 
@@ -2314,7 +2458,7 @@ uint32_t TrackAnalyzer::buildPrincipal(std::vector<RecoHit*> &vrh,std::string vd
       if (ip<(lch-1) && !tex.plane(ip+2)) continue;
       
 	//if (npext<minChambersInTime_) continue;
-
+      
       std::stringstream s;
       s<<st.str()<<"Plan"<<ip<<"/";
 	      
@@ -2330,14 +2474,20 @@ uint32_t TrackAnalyzer::buildPrincipal(std::vector<RecoHit*> &vrh,std::string vd
       float dz0=0.,distz=60.; // 2.8
       float xext=tex.xext(dz0+(ip-1)*distz);
       float yext =tex.xext(dz0+(ip-1)*distz);
+      
       std::map<uint32_t,ChamberPos>& pos= reader_->getPositionMap();
+      
+
       for (std::map<uint32_t,ChamberPos>::iterator ich=pos.begin();ich!=pos.end();ich++)
 	{
+
+	  
 	  if ((*ich).second.getPlan()!=ip) continue;
 	  xext=tex.xext((*ich).second.getZ0());
 	  yext =tex.yext((*ich).second.getZ0());
 	  break;
 	}
+      //INFO_PRINT("%f %f \n",xext,yext);
       //if (yext< 5 || yext>30 || xext<2 || xext>29) continue;
       if (hext==NULL)
 	{
@@ -2375,6 +2525,7 @@ uint32_t TrackAnalyzer::buildPrincipal(std::vector<RecoHit*> &vrh,std::string vd
 	}
       if (xext<xmin[ip]+chamberEdge_ || xext>xmax[ip]-chamberEdge_) continue;
       if (yext<ymin[ip]+chamberEdge_ || yext>ymax[ip]-chamberEdge_) continue;
+      
       hext->Fill(xext,yext);
       //bool 
       float dist=1E9;
@@ -2566,6 +2717,7 @@ uint32_t TrackAnalyzer::fillVolume(uint32_t seed)
 		
       //planes.set(chid-1,true);
       std::map<unsigned int,ChamberGeom>::iterator icg = reader_->getChamberMap().find( chid);
+      if (icg==reader_->getChamberMap().end()) continue;
       ChamberGeom& chgeom = icg->second;
       //printf("Hit beeing filled %d %d %d\n",chid-1,I-1,J-1);
       chgeom.setZ(reader_->getPosition(chid).getZ0());
@@ -2676,8 +2828,9 @@ uint32_t TrackAnalyzer::fillVector(uint32_t seed)
   
   uint32_t nplans=0;
  
-  
+  //INFO_PRINT("%s-%d %d %f  \n",__PRETTY_FUNCTION__,__LINE__,reader_->getPositionMap().begin()->second.getPlan(),reader_->getPositionMap().begin()->second.getZ0());    
   uint32_t nhit=this->fillVolume(seed);
+  //INFO_PRINT("%s-%d %d %f  \n",__PRETTY_FUNCTION__,__LINE__,reader_->getPositionMap().begin()->second.getPlan(),reader_->getPositionMap().begin()->second.getZ0());    
   if (nhit<minHitCount_) return 0;
   if (nhit>maxHitCount_) return 0;
   this->TagIsolated(1,48);
@@ -2704,11 +2857,12 @@ uint32_t TrackAnalyzer::fillVector(uint32_t seed)
 	}
       if (found) nplans++;
     }
+
   this->fillPlaneClusters(theHitVector_);
   DEBUG_PRINT("Hits %d tk %d ===> %d clusters %d Real %d Interaction \n",theHitVector_.size(),theTkHitVector_.size(),allClusters_.size(),realClusters_.size(),interactionClusters_.size());
   
   this->tagMips();
-  
+
   return nplans;
 }
 void TrackAnalyzer::tagMips()

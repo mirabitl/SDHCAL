@@ -8,12 +8,13 @@ import time
 #c.Update()
 
 if len(sys.argv) > 2:
-    run=int(sys.argv[1] )
-    mod_name=sys.argv[2]
-    iseq=int(sys.argv[3] )
+    energy=float(sys.argv[1] )
+    testname=sys.argv[2]
+    cut=sys.argv[3]
 else:
-    print "Please give a run Number and config file"
+    print "Please give an energy and a test Name "
 
+mod_name='config_oct2015'
 
 
 try:
@@ -26,16 +27,16 @@ rootHandler=dr.DCHistogramHandler()
 
 
 
-config.marlin='m3_aout2012.xml'
+config.marlin='m3_analysis.xml'
 dher.ParseSteering(config.marlin)
-dher.readGeometry("acqilc/RPC_2008@lyosdhcal10:GEOMETRY","SPS_08_2012");
+dher.readGeometry("acqilc/RPC_2008@lyosdhcal10:GEOMETRY",testname);
 
 
 ar=dr.RawAnalyzer();
 
 a=dr.TrackAnalyzer( dher,rootHandler);
 a.presetParameters()
-a.createTrees(config.treeName % (run,0))
+a.createTrees(config.treeName % (energy,0))
 a.setrebuild(config.rebuild)
 a.setuseSynchronised(config.useSynch);
 a.setminChambersInTime(config.minChambersInTime);
@@ -50,12 +51,14 @@ dher.registerAnalysis(a);
 
 dher.setXdaqShift(24); 
 dher.setDropFirstRU(false);
-dher.setXdaqShift(92); 
-dher.setDropFirstRU(True);
-dher.queryEnergyFiles(40.0,True)
+#dher.setXdaqShift(92); 
+#dher.setDropFirstRU(True);
+#dher.queryEnergyFiles(energy,True)
+dher.queryCutFiles(cut)
 time.sleep(5)
 
 dher.processQueriedFiles(config.nevent)
+#dher.processQueriedFiles(3000)
 
-rootHandler.writeHistograms(config.rootFilePath % (run,0))
+rootHandler.writeHistograms(config.rootFilePath % (energy,0))
 a.closeTrees();

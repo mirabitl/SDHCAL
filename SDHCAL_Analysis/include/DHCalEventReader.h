@@ -436,6 +436,7 @@ int readOneEvent(int run,int event);
   uint32_t getNumberOfEvents(){return lcReader_->getNumberOfEvents();}
   void openFiles(){this->open(filenames_);}
   void findEvent(int run,int event);
+float getBeamEnergy() {return BeamEnergy_;}
 #ifdef USE_JSON
   DHCalJsonParser* getDHCalJsonParser(){return &theJsonParser_;}
   void parseJsonConfig(std::string cfg){theJsonParser_.parse(cfg);}
@@ -454,9 +455,11 @@ int readOneEvent(int run,int event);
 
   void readGeometry(std::string account,std::string testname);
   void dumpGeometry();
+void queryCutFiles(std::string cut);
   void queryEnergyFiles(float energy,bool compress=true);
   void queryFiles(uint32_t run,bool compress=true);
   void processQueriedFiles(uint32_t nev);
+  void logbookBeamEnergy(uint32_t run);
  private:
   LCReader* lcReader_; /// LCIO Reader
   //  LCSplitWriter* lcWriter_; /// LCIO Writer

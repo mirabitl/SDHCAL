@@ -2584,6 +2584,7 @@ void DHCalEventReader::readGeometry(std::string account,std::string testname)
   std::stringstream s;
   s.str(std::string());
   s<<"SELECT IDX FROM VERSIONS WHERE TESTNAME=\""<<testname<<"\";";
+  std::cout<<s.str()<<std::endl;
   my_->executeSelect(s.str());
   MYSQL_ROW row=NULL;
   versionid_=0;
@@ -2594,44 +2595,48 @@ void DHCalEventReader::readGeometry(std::string account,std::string testname)
 
   s.str(std::string());
   s<<"SELECT NUM,X0,Y0,Z0 FROM PLANS WHERE VERSIONID="<<versionid_<<";";
+  std::cout<<s.str()<<std::endl;
   my_->executeSelect(s.str());
   row=NULL;
   planshiftmap_.clear();
   while ((row=my_->getNextRow())!=0) 
     { 
 
-      PlanShift chg(atoi(row[0]),atof(row[1]),atof(row[2]),atof(row[3]));
-      std::pair<uint32_t,PlanShift> p(atoi(row[0]),chg);
+      PlanShift* chg=new PlanShift(atoi(row[0]),atof(row[1]),atof(row[2]),atof(row[3]));
+      std::pair<uint32_t,PlanShift> p(atoi(row[0]),(*chg));
       planshiftmap_.insert(p);
     }
 
   s.str(std::string());
-  s<<"select NUM,X0,Y0,Z0,X1,Y1,Z1,TYPE,(SELECT NUM FROM PLANS WHERE PLANS.IDX=CHAMBERS.PLANID) FROM CHAMBERS WHERE VERSIONID="<<versionid_<<";";
+  s<<"select NUM,X0,Y0,Z0,X1,Y1,Z1,TYPE,(SELECT NUM FROM PLANS WHERE PLANS.IDX=CHAMBERS.PLANID) FROM CHAMBERS WHERE (SELECT NUM FROM PLANS WHERE PLANS.IDX=CHAMBERS.PLANID) IS NOT NULL AND VERSIONID="<<versionid_<<";";
+  std::cout<<s.str()<<std::endl;
   my_->executeSelect(s.str());
+
   row=NULL;
   poschambermap_.clear();
   geochambermap_.clear();
   while ((row=my_->getNextRow())!=0) 
     { 
-      ChamberPos chp(atoi(row[0]),atof(row[1]),atof(row[2]),atof(row[3]),atof(row[4]),atof(row[5]),atof(row[6]),atoi(row[8]),atoi(row[7]));
+      ChamberPos* chp= new ChamberPos(atoi(row[0]),atof(row[1]),atof(row[2]),atof(row[3]),atof(row[4]),atof(row[5]),atof(row[6]),atoi(row[8]),atoi(row[7]));
 
-      std::pair<uint32_t,ChamberPos> p(atoi(row[0]),chp);
+      std::pair<uint32_t,ChamberPos> p(atoi(row[0]),(*chp));
       poschambermap_.insert(p);
 
-      ChamberGeom chg(atoi(row[0]),0,0,0,0,atoi(row[8]));
-      std::pair<uint32_t,ChamberGeom> pg(atoi(row[0]),chg);
+      ChamberGeom* chg= new ChamberGeom(atoi(row[0]),0,0,atof(row[6]),0,atoi(row[8]));
+      std::pair<uint32_t,ChamberGeom> pg(atoi(row[0]),(*chg));
       geochambermap_.insert(pg);
     }
 
   s.str(std::string());
-  s<<" select NUM,(SELECT NUM FROM CHAMBERS WHERE CHAMBERS.IDX=DIFS.CHAMBERID),DI,DJ,POLI,POLJ FROM DIFS WHERE VERSIONID="<<versionid_<<";";
+  s<<" select NUM,(SELECT NUM FROM CHAMBERS WHERE CHAMBERS.IDX=DIFS.CHAMBERID),DI,DJ,POLI,POLJ FROM DIFS WHERE (SELECT NUM FROM CHAMBERS WHERE CHAMBERS.IDX=DIFS.CHAMBERID) IS NOT NULL AND VERSIONID="<<versionid_<<";";
+  std::cout<<s.str()<<std::endl;
   my_->executeSelect(s.str());
   row=NULL;
   geodifmap_.clear();
   while ((row=my_->getNextRow())!=0) 
     { 
-      DifGeom dg(atoi(row[0]),atoi(row[1]),atof(row[2]),atof(row[3]),atof(row[4]),atof(row[5]));
-      std::pair<uint32_t,DifGeom> p(atoi(row[0]),dg);
+      DifGeom* dg = new DifGeom(atoi(row[0]),atoi(row[1]),atof(row[2]),atof(row[3]),atof(row[4]),atof(row[5]));
+      std::pair<uint32_t,DifGeom> p(atoi(row[0]),(*dg));
       geodifmap_.insert(p);
       this->difInChamber(atoi(row[0]),atoi(row[1]));
     }
@@ -2662,6 +2667,53 @@ void DHCalEventReader::dumpGeometry()
 
 }
 
+void DHCalEventReader::queryCutFiles(std::string cut)
+{
+  my_->connect();
+  std::stringstream s;
+  s.str(std::string());
+
+  s<<"select LOCATION from FILES WHERE "<<cut<<";";
+  std::cout<<s.str()<<std::endl;
+  my_->executeSelect(s.str());
+  MYSQL_ROW row=NULL;
+  vFiles_.clear();
+  while ((row=my_->getNextRow())!=0) 
+    { 
+      vFiles_.push_back(row[0]);
+    }
+  
+  s.str(std::string());
+  s<<"SELECT ENERGY FROM RUNS WHERE "<<cut<<";";
+  my_->executeSelect(s.str());
+  row=NULL;
+  BeamEnergy_=0;
+  while ((row=my_->getNextRow())!=0) 
+    { 
+      BeamEnergy_=atof(row[0]);
+    }
+
+  my_->disconnect();
+}
+
+void DHCalEventReader::logbookBeamEnergy(uint32_t run)
+{ 
+  my_->connect();
+  std::stringstream s;
+  s.str(std::string());
+  
+  s<<"SELECT ENERGY FROM LOGBOOK WHERE RUN="<<run<<";";
+  my_->executeSelect(s.str());
+  MYSQL_ROW row=NULL;
+  BeamEnergy_=0;
+  while ((row=my_->getNextRow())!=0) 
+    { 
+      BeamEnergy_=atof(row[0]);
+    }
+
+  my_->disconnect();
+  
+} 
 void DHCalEventReader::queryFiles(uint32_t run,bool compress)
 {
   my_->connect();
