@@ -627,7 +627,7 @@ def fitCB(hr,mhr=-1E9,shr=-1E9,c=None):
         fo.write("%.3f| %.3f|%.3f| %.3f|" % (mean.getVal(),mean.getError(),sigma.getVal(),sigma.getError()))
     c.SaveAs(hr.GetTitle()+"_ROOFIT.png");time.sleep(1)
 
-def FWHM(h1):
+def FWHM(h1,emean=1.):
   
   while (h1.GetBinContent(h1.FindFirstBinAbove(h1.GetMaximum()/2))<50):
     h1.Rebin(2)
@@ -645,5 +645,8 @@ def FWHM(h1):
   print mode-sigma,mode+2*sigma
   l=[bin1,bin2,fwhm,sigma,mode,g1.GetChisquare(),g1.GetParameter(0),g1.GetParameter(1),g1.GetParameter(2)]
  
-  l=l+fitCB(h1,mode,sigma)
-  return l
+  l1=fitCB(h1,mode,sigma)
+  l=l+l1
+  print l
+  return [emean,(mode-emean)*100/emean,sigma/mode*100,(g1.GetParameter(1)-emean)/emean*100,g1.GetParameter(2)/g1.GetParameter(1)*100,(l1[1]-emean)*100./emean,l1[2]/l1[1]*100.]
+
