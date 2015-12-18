@@ -632,7 +632,8 @@ def FWHM(h1,emean=1.):
   while (h1.GetBinContent(h1.FindFirstBinAbove(h1.GetMaximum()/2))<50):
     h1.Rebin(2)
     print h1.GetMaximum()
-  print h1.GetMaximum()
+  print "Maximum ",h1.GetMaximum()
+
   bin1=h1.FindFirstBinAbove(h1.GetMaximum()/2);
   bin2=h1.FindLastBinAbove(h1.GetMaximum()/2);
   fwhm=h1.GetBinCenter(bin2)-h1.GetBinCenter(bin1);
@@ -642,11 +643,13 @@ def FWHM(h1,emean=1.):
   g1.SetParameter(1,mode)
   g1.SetParameter(2,sigma)
   h1.Fit("m1","","",mode-1.5*sigma,mode+2*sigma)
-  print mode-sigma,mode+2*sigma
+  print "On trouve ",fwhm,sigma,mode,mode-sigma,mode+2*sigma
+  #time.sleep(5)
   l=[bin1,bin2,fwhm,sigma,mode,g1.GetChisquare(),g1.GetParameter(0),g1.GetParameter(1),g1.GetParameter(2)]
  
   l1=fitCB(h1,mode,sigma)
   l=l+l1
   print l
+
   return [emean,(mode-emean)*100/emean,sigma/mode*100,(g1.GetParameter(1)-emean)/emean*100,g1.GetParameter(2)/g1.GetParameter(1)*100,(l1[1]-emean)*100./emean,l1[2]/l1[1]*100.]
 
