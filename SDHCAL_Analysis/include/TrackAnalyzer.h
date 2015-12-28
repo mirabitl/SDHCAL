@@ -239,7 +239,7 @@ private:
 	uint32_t theNbShowers_,theNbTracks_;
 	ComputerTrack* theComputerTrack_;
 	unsigned long long theLastBCID_,theIdxSpill_;
-	float theTimeInSpill_[20],theCountSpill_[20],theLastRate_;
+	float theTimeInSpill_[20],theCountSpill_[20],theLastRate_,theSpillLength_;
 	float coreRatio_;
 	bool isNewSpill_,isPion_,isElectron_,isMuon_,isShower_,isProton_;
 	uint32_t theCerenkovTag_;

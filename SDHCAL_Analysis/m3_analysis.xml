@@ -69,7 +69,7 @@
     <parameter name="GeomFileName" value="/tmp/Frog.geom"/>
     <parameter name="VisFileName" value="/tmp/FrogDisplay_"/>
     <parameter name="FrogNeventFile" value="50"/>
-
+  <parameter name="SpillLength" value="8." /> 
     <parameter name="Verbosity" type="string">MESSAGE </parameter>
   </processor>
 </marlin>
