@@ -55,7 +55,7 @@
     <parameter name="TkExtMinPoint" value="5" />
     <parameter name="TimeDropLast" value="true" /> 
     <parameter name="ClockSynchCut" value="7" /> 
-    <parameter name="SpillSize" value="20" /> 
+    <parameter name="SpillSize" value="8." /> 
     <parameter name="SpyPeriod" value="5" /> 
     <parameter name="OffTimePrescale" value="1" /> 
     <parameter name="MinChambersInTime" value="5" /> 
@@ -69,7 +69,7 @@
     <parameter name="GeomFileName" value="/tmp/Frog.geom"/>
     <parameter name="VisFileName" value="/tmp/FrogDisplay_"/>
     <parameter name="FrogNeventFile" value="50"/>
-  <parameter name="SpillLength" value="8." /> 
+    <parameter name="SpillLength" value="8." /> 
     <parameter name="Verbosity" type="string">MESSAGE </parameter>
   </processor>
 </marlin>

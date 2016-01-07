@@ -203,7 +203,7 @@ TrackAnalyzer::TrackAnalyzer() :trackIndex_(0),nAnalyzed_(0),clockSynchCut_(8), 
 									     tkMinPoint_(3),tkExtMinPoint_(3),tkBigClusterSize_(32),tkChi2Cut_(0.01),tkDistCut_(5.),tkExtChi2Cut_(0.01),tkExtDistCut_(10.),tkAngularCut_(20.),zLastAmas_(134.),
 									     findTracks_(true),dropFirstSpillEvent_(false),useSynchronised_(true),chamberEdge_(5.),rebuild_(false),oldAlgo_(true),collectionName_("DHCALRawHits"),
 									     tkFirstChamber_(1),tkLastChamber_(61),useTk4_(false),offTimePrescale_(1),houghIndex_(0),theRhcolTime_(0.),theTimeSortTime_(0.),theTrackingTime_(0),
-									   theHistoTime_(0),theSeuil_(0),draw_(false),theSkip_(0),theMonitoring_(NULL),theMonitoringPeriod_(0),theMonitoringPath_("/dev/shm/Monitoring"),ntkbetween(0),theBCIDSpill_(0),theLastBCID_(0),theSpillLength_(8)
+									   theHistoTime_(0),theSeuil_(0),draw_(false),theSkip_(0),theMonitoring_(NULL),theMonitoringPeriod_(0),theMonitoringPath_("/dev/shm/Monitoring"),ntkbetween(0),theBCIDSpill_(0),theLastBCID_(0),theSpillLength_(8.)
 {
   reader_=DHCalEventReader::instance();
   rootHandler_ =DCHistogramHandler::instance();
@@ -270,7 +270,7 @@ void TrackAnalyzer::presetParameters()
   try
     {
       if ((it=m.find("ClockSynchCut"))!=m.end()) clockSynchCut_=it->second.getIntValue();
-      if ((it=m.find("SpillSize"))!=m.end()) spillSize_=it->second.getIntValue();
+      if ((it=m.find("SpillSize"))!=m.end()) spillSize_=it->second.getDoubleValue();
       if ((it=m.find("MaxHitCount"))!=m.end()) maxHitCount_=it->second.getIntValue();
       if ((it=m.find("MinHitCount"))!=m.end()) minHitCount_=it->second.getIntValue();
       if ((it=m.find("MinChambersInTime"))!=m.end()) minChambersInTime_=it->second.getIntValue();
@@ -299,7 +299,12 @@ void TrackAnalyzer::presetParameters()
       if ((it=m.find("zLastAmas"))!=m.end()) zLastAmas_=it->second.getDoubleValue();
       if ((it=m.find("MonitoringPath"))!=m.end()) theMonitoringPath_=it->second.getStringValue();
       if ((it=m.find("MonitoringPeriod"))!=m.end()) theMonitoringPeriod_=it->second.getIntValue();
-      if ((it=m.find("SpillLength"))!=m.end()) theSpillLength_=it->second.getDoubleValue(); 
+      if ((it=m.find("SpillLength"))!=m.end())
+	{
+	  theSpillLength_=it->second.getDoubleValue();
+	  //printf("I found %f spill length \n",theSpillLength_);
+	  // getchar();
+	}
       DEBUG_PRINT("Interactif %d \n",draw_);
 
       //getchar();
@@ -308,8 +313,9 @@ void TrackAnalyzer::presetParameters()
   catch (std::string s)
     {
       std::cout<<__PRETTY_FUNCTION__<<" error "<<s<<std::endl;
+      exit(-1);
     }
-	
+  //getchar();	
 }
 bool TrackAnalyzer::decodeTrigger(LCCollection* rhcol, double tcut)
 {
@@ -800,7 +806,7 @@ void TrackAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   if (theBCIDSpill_==0) theBCIDSpill_=theAbsoluteTime_;
   if (theAbsoluteTime_-theBCIDSpill_>theSpillLength_/2E-7) theBCIDSpill_=theAbsoluteTime_;
 
-  //INFO_PRINT("GTC %d DTC %d BCID %llu Current Time %llu Time SPill %f Distance %f \n",theGTC_,theDTC_,theBCID_,currentTime_,theBCIDSpill_*2E-7,(theAbsoluteTime_-theBCIDSpill_)*2E-7);
+  //INFO_PRINT("GTC %d DTC %d BCID %llu Current Time %llu Time SPill %f Distance %f SL %f \n",theGTC_,theDTC_,theBCID_,currentTime_,theBCIDSpill_*2E-7,(theAbsoluteTime_-theBCIDSpill_)*2E-7,theSpillLength_/2E-7);
     theEvent_.idx++;
     theEvent_.bcid=theBCID_;
     theEvent_.dtc=theDTC_;
