@@ -915,9 +915,45 @@ class OracleAccess:
         """
         for x in self.asicConf.getVector():
             print x.getInt('DIF_ID'),x.getInt('HEADER')
+	      
+	    
+    def setTricotCR(self,idif=0,iasic=0):
+         """
+         change thresholds RC of Amplifier for strip mode on DIF idif
+         and asic iasic.
+         If not specified all Asics of a given DIF is changed
+         if idif is not specified all Asics of all Difs are changed
+         """
+         for a in self.asics:
+             if (idif !=0 and a.getInt("DIF_ID") != idif ):
+                 continue;
+             if (iasic !=0 and a.getInt("HEADER") != iasic):
+                 continue;
+             try:
+                 a.setInt('SW50F0',1)
+                 a.setInt('SW100F0',0)
+                 a.setInt('SW100K0',0)
+                 a.setInt('SW50K0',0)
+                 a.setInt('SW50F1',1)
+                 a.setInt('SW100F1',0)
+                 a.setInt('SW100K1',0)
+                 a.setInt('SW50K1',0)
+                 a.setInt('SW50F2',1)
+                 a.setInt('SW100F2',0)
+                 a.setInt('SW100K2',0)
+                 a.setInt('SW50K2',0)
 
-   
-   
+                 #a.setInt('BB0',B0)
+                 #a.setInt('BB1',B1)
+                 #a.setInt('BB2',B2)
+                
+########## Cette ligne la dit a la methode  uploadChanges() que tu dois
+#          appeler de faire un "commit" des chgts
+
+                 a.setModified(1)
+             except Exception, e:
+                 print e.getMessage()	    
+
     def initMicroroc(self,dif,num):
         """
         Microroc  initialisation
@@ -1075,27 +1111,8 @@ class OracleAccess:
         d.setIntVector('PAGAIN',dv)
         return d
 	
-	# Modification Victor
-	
-    def TricotCR(self,dif,num) :
-       
-        print "Change Tricot C and R parameters " 
-	d=Asic('HR2',dif,num)
-	d.setInt('SW50F0',1)
-        d.setInt('SW100F0',0)
-        d.setInt('SW100K0',0)
-        d.setInt('SW50K0',0)
-        d.setInt('SW50F1',0)
-        d.setInt('SW100F1',1)
-        d.setInt('SW100K1',0)
-        d.setInt('SW50K1',0)
-        d.setInt('SW50F2',1)
-        d.setInt('SW100F2',0)
-        d.setInt('SW100K2',0)
-        d.setInt('SW50K2',0)
-	return d
-	
-	# Fin de TricotCR
+####
+  
 
     def end(self):
         """
