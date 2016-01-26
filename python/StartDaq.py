@@ -340,6 +340,8 @@ class StartDaq:
         self.daq_.pause()
     def SetThresholds(self,b0,b1,b2):
         self.daq_.setThresholds(b0,b1,b2)
+        self.daq_.configure()
+
     def Resume(self):
         self.daq_.resume()
     def Destroy(self):

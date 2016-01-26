@@ -22,6 +22,64 @@
 #include "DIFSnapShot.h"
 #include <time.h>
 
+class StripCluster {
+public:
+  StripCluster(){_strips.clear();_x=0;_asic=0;_used=false;}
+  StripCluster(uint8_t asic,uint8_t i){_strips.clear();_strips.push_back(i);_x=i;_asic=asic; slope();_used=false;}
+  bool append(uint8_t asic,uint8_t i)
+  {
+    if (asic!=_asic) return false;
+    bool ap=false;
+    for (uint8_t j=0;j<_strips.size();j++)
+      if (abs(i-_strips[j])<2.1){ap=true;break;}
+    if (!ap) return false;
+    _strips.push_back(i);
+    _x=0;for (uint8_t j=0;j<_strips.size();j++) _x+=_strips[j];_x/=_strips.size();
+    slope();
+    return ap;
+  }
+  void slope()
+  {
+    double s,c;
+    switch (_asic)
+    {
+    case 1:
+      {
+      _a=0;
+      _b=(_x-0.5)*30./64.;
+      break;
+      }
+    case 2:
+      {
+      c=cos(2*M_PI/3.);
+      s=sin(2*M_PI/3.);
+      _a=-s/c;
+      _b=(_x-0.5)*30./64./c+30.;
+      break;
+      }
+    case 3:
+      {
+      c=cos(M_PI/3.);
+      s=sin(M_PI/3.);
+      _a=-s/c;
+      _b=(65-_x+0.5)*30./64./c;
+      break;
+      }
+    }
+  }	  
+  std::vector<uint8_t>& strips(){return _strips;}
+  uint8_t asic(){return _asic;}
+  double x(){return _x;}
+  double a(){return _a;}
+  double b(){return _b;}
+  void setUsed(bool t=true){_used=t;}
+  bool isUsed(){return _used;}
+private:
+  std::vector<uint8_t> _strips;
+  uint8_t _asic;
+  double _x,_a,_b;
+  bool _used;
+};
 
 
 RawAnalyzer::RawAnalyzer() :nAnalyzed_(0),theMonitoringPeriod_(0),theMonitoringPath_("/dev/shm/Monitoring"),theSkip_(0),draw_(false)
@@ -50,6 +108,7 @@ void RawAnalyzer::endJob(){
     }
 	
 }
+static TCanvas* TCPlot=NULL;
 void RawAnalyzer::presetParameters()
 {
   std::map<std::string,MarlinParameter> m=reader_->getMarlinParameterMap();
@@ -107,10 +166,18 @@ void RawAnalyzer::processEvent()
   std::cout<<"Event  "<<dbase->getAbsoluteBCID()<<std::endl;
   
   
+  if (TCPlot==NULL)
+    {
+      TCPlot=new TCanvas("TCPlotR","tcplotr1",1300,900);
+      TCPlot->Modified();
+      TCPlot->Draw();
+      TCPlot->Divide(2,3);
+    }
   memset(theCount_,0,255*49*sizeof(uint32_t));
   struct timespec tp0,tp1;
   clock_gettime(CLOCK_REALTIME,&tp0);
   int64_t tlast=0;
+#define   ENBEAMTEST
 #ifdef ENBEAMTEST  
   // reader_->findTimeSeeds(5);
 #define MAPSEARCH
@@ -126,13 +193,23 @@ void RawAnalyzer::processEvent()
      // Loop on frames
       std::map<unsigned int,DifGeom>::iterator idg = reader_->getDifMap().find(d->getID());
       uint32_t chid = idg->second.getChamberId();
-      
+
+      printf("DIF %d BCID %d %d frames \n",d->getID(),d->getBCID(),d->getNumberOfFrames());
       for (uint32_t i=0;i<d->getNumberOfFrames();i++)
       {
+	if (d->getID()!=256)
+	  {
+	    //printf("%d ",d->getFrameTimeToTrigger(i));
+	    int32_t idt=d->getBCID()-d->getFrameBCID(i);
+	    if (idt<0)
+	      printf(" error frame %d  FBCID %d  ASIC %d DIF %d  BCID %d\n",i,d->getFrameBCID(i),d->getFrameAsicHeader(i),d->getID(),d->getBCID());
+	  }
+	
+
 	double t=d->getFrameTimeToTrigger(i)*2E-7;
 
 	if (t>3.8) {
-	  printf("Wrong Time %f %x \n",t,d->getFrameTimeToTrigger(i));
+	  printf("Wrong Time DT  %f  FTTT %x BCID %lx  Frame BCID %lx \n",t,d->getFrameTimeToTrigger(i),d->getBCID(),d->getFrameBCID(i));
 	  continue;
 	}
 	std::map<uint32_t,std::bitset<64> >::iterator ich=chti.find(d->getFrameTimeToTrigger(i));
@@ -147,6 +224,7 @@ void RawAnalyzer::processEvent()
 	    ich->second.set(chid);
 	  }
       }
+      printf("\n");
     }
   uint32_t nseeds=0;
   std::vector<uint32_t> seedm;
@@ -210,10 +288,50 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
 //return;
 //getchar();
 #endif
+ int ipl=0;
+ std::map<uint8_t,uint8_t> plid;
+ std::map<uint8_t,float> plz;
+ plid.insert(std::pair<uint8_t,uint8_t>(5,1));
+ plid.insert(std::pair<uint8_t,uint8_t>(94,2));
+ plid.insert(std::pair<uint8_t,uint8_t>(99,3));
+ plid.insert(std::pair<uint8_t,uint8_t>(128,4));
+ plz.insert(std::pair<uint8_t,uint8_t>(5,10.));
+ plz.insert(std::pair<uint8_t,uint8_t>(94,29.));
+ plz.insert(std::pair<uint8_t,uint8_t>(99,45.));
+ plz.insert(std::pair<uint8_t,uint8_t>(128,61.));
+ TH2* hplx=rootHandler_->GetTH2("/plx");
+ TH2* hply=rootHandler_->GetTH2("/ply");
+ if (hplx==NULL)
+   {
+     hplx=rootHandler_->BookTH2("/plx",70,0.,70.,100,-10.,40.);
+     hply=rootHandler_->BookTH2("/ply",70,0.,70.,100,-10.,40.);
+   }
+ else
+   {
+     hplx->Reset();
+     hply->Reset();
+   }
+
   for (std::vector<DIFPtr*>::iterator it = reader_->getDIFList().begin();it!=reader_->getDIFList().end();it++)
     {
       DIFPtr* d = (*it);
       if (d->getID()>255) continue;
+      std::stringstream s1;
+      s1<<"/Plot"<<d->getID();
+      TH2* hpl=rootHandler_->GetTH2(s1.str());
+      if (hpl==NULL)
+	{
+	  hpl=rootHandler_->BookTH2(s1.str(),80,-10.,30.,80,-10.,30.);
+	}
+      else
+      	hpl->Reset();
+   
+      std::vector<float> va_,vb_;
+      va_.clear();
+      vb_.clear();
+      std::vector<StripCluster*> _cl;
+
+      
      // Loop on frames
       uint32_t dmin=1000;
       uint32_t npd=0;
@@ -234,6 +352,7 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
 
 	if (t>3.8) {
 	  printf("Wrong Time %f %x %d %d %x %x \n",t,d->getFrameTimeToTrigger(i),d->getBCID(),d->getFrameBCID(i),d->getBCID(),d->getFrameBCID(i));
+	  ipl++;
 	  continue;
 	}
 	if (dbase->getDTC()==17 && d->getFrameTimeToTrigger(i)>80385 && d->getFrameTimeToTrigger(i)<80395 )
@@ -298,37 +417,137 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
 	}
 
       hfratime->Fill(dmin*1.);
-      if (dmin>10 && dmin<20)
+   
+
+      if (dmin>13.5 && dmin<19.5)
+	{
+	  printf("DIF %d :",d->getID());
 	for (uint32_t i=0;i<d->getNumberOfFrames();i++)
 	  {
 
 	    if (d->getFrameTimeToTrigger(i)==dmin) 
 	      {
 		npd=0;
+
 		for (uint32_t j=0;j<64;j++)
 		  {
 		    if (!(d->getFrameLevel(i,j,0) || d->getFrameLevel(i,j,1))) continue;
 		    int asic=d->getFrameAsicHeader(i),channel=j+1,x=0,y=0;
 
 		    DifGeom::PadConvert(asic,channel,x,y,2);
-		    //printf("%d %d => %d %d \n",asic,channel,x,y);
+
 		    hmit->Fill(x*1.,y*1.,1.);
 		    npd++;
 		  }
 		hnpd->Fill(npd*1.);
 
 	      }
-
+	    if (d->getFrameTimeToTrigger(i)>13.5 &&  d->getFrameTimeToTrigger(i)<19.5)
+	      
+	      for (uint32_t j=0;j<64;j++)
+		{
+		  if (!(d->getFrameLevel(i,j,0) || d->getFrameLevel(i,j,1))) continue;
+		  int asic=d->getFrameAsicHeader(i),channel=j+1;
+		  printf("(%d,%d,%d)-",d->getFrameTimeToTrigger(i),asic,channel);
+		  bool ap=false;
+		  for (std::vector<StripCluster*>::iterator it=_cl.begin();it!=_cl.end();it++)
+		    {ap=ap || (*it)->append(asic,channel); if (ap) break;}
+		  if (!ap)
+		    {
+		      StripCluster* sc=new StripCluster(asic,channel);
+		      _cl.push_back(sc);
+		    }
+	
+		}
 	  }
+	printf("Strips hit %d \n",_cl.size());
+	for (std::vector<StripCluster*>::iterator it=_cl.begin();it!=_cl.end();it++)
+	  printf("(%d-%f)-",(*it)->asic(),(*it)->x());
+	printf("\n");
+	//hpl->Reset();
+	uint32_t np=0;
+	for (int i=0;i<_cl.size();i++)
+	  for(int j=i+1;j<_cl.size();j++)
+	    {
+	      if(_cl[i]->asic()==_cl[j]->asic()) continue;
+	      for(int k=j+1;k<_cl.size();k++)
+		{
+		  if(_cl[i]->asic()==_cl[k]->asic()) continue;
+		  if(_cl[j]->asic()==_cl[k]->asic()) continue;
+		  np++;
+		}
+	    }
+	
+	for (int i=0;i<_cl.size();i++)
+	  for(int j=i+1;j<_cl.size();j++)
+	    {
+	      if(_cl[i]->asic()==_cl[j]->asic()) continue;
+	      for(int k=j+1;k<_cl.size();k++)
+		{
+		  if(_cl[i]->asic()==_cl[k]->asic()) continue;
+		  if(_cl[j]->asic()==_cl[k]->asic()) continue;
+	      
+	      
+		  float x1=(_cl[j]->b()-_cl[i]->b())/(_cl[i]->a()-_cl[j]->a());
+		  float y1=_cl[i]->a()*x1+_cl[i]->b();
+		  float x2=(_cl[k]->b()-_cl[i]->b())/(_cl[i]->a()-_cl[k]->a());
+		  float y2=_cl[i]->a()*x2+_cl[i]->b();
+		  float x3=(_cl[k]->b()-_cl[j]->b())/(_cl[j]->a()-_cl[k]->a());
+		  float y3=_cl[j]->a()*x3+_cl[j]->b();
+		  float x=(x1+x2+x3)/3.;
+		  float y=(y1+y2+y3)/3.;
+		  if (sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))>2) continue;
+		  if (sqrt((x1-x3)*(x1-x3)+(y1-y3)*(y1-y3))>2) continue;
+		  if (sqrt((x3-x2)*(x3-x2)+(y3-y2)*(y3-y2))>2) continue;
+		  _cl[i]->setUsed();
+		  _cl[j]->setUsed();
+		  _cl[k]->setUsed();
+		  printf("(%f,%f)-",x,y);
+		  hpl->Fill(x,y);
+		  hplx->Fill(plz[d->getID()],x);
+		  hply->Fill(plz[d->getID()],y);
+		}
+	    }
+	for (int i=0;i<_cl.size();i++)
+	  {
+	    if (_cl[i]->isUsed()) continue;
+	  for(int j=i+1;j<_cl.size();j++)
+	    {
+	      if (_cl[j]->isUsed()) continue;
+	      if(_cl[i]->asic()==_cl[j]->asic()) continue;
+	      float x=(_cl[j]->b()-_cl[i]->b())/(_cl[i]->a()-_cl[j]->a());
+	      float y=_cl[i]->a()*x+_cl[i]->b();
+	      _cl[i]->setUsed();
+	      _cl[j]->setUsed();
+	      printf("(%f,%f)-",x,y);
+	      hpl->Fill(x,y);
+	      hplx->Fill(plz[d->getID()],x);
+	      hply->Fill(plz[d->getID()],y);
+	    }
+	    
+	  }
+	printf("\n");
 
-
-      
-
+	}
+      TCPlot->cd(plid[d->getID()]);hpl->Draw("COLZ");ipl++;      
+      TCPlot->Modified();
+      TCPlot->Draw();
+      TCPlot->Update();
+      for (std::vector<StripCluster*>::iterator it=_cl.begin();it!=_cl.end();it++)
+	delete (*it);
     }
+ 
+  TCPlot->cd(5);hplx->Draw("COLZ");
+  TCPlot->cd(6);hply->Draw("COLZ");      
+      TCPlot->Modified();
+      TCPlot->Draw();
+      TCPlot->Update();
 
   hacqtime->Fill(theEventTotalTime_);
   theTotalTime_+=theEventTotalTime_;
   printf("Processing %d - %d GTC %d Total time %f Acquition time %f\n",evt_->getRunNumber(),evt_->getEventNumber(),dbase->getGTC(),(dbase->getAbsoluteBCID()-theStartBCID_)*2E-7,theTotalTime_);
+  getchar();
+
   if (evt_->getEventNumber()%100 ==0)
     rootHandler_->writeSQL();
 

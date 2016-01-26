@@ -111,7 +111,7 @@ public:
   inline unsigned char* getFramePtr(uint32_t i){return theFrames_[i];}
   inline uint32_t getFrameAsicHeader(uint32_t i){return DIFUnpacker::getFrameAsicHeader(theFrames_[i]);}
   inline uint32_t getFrameBCID(uint32_t i){return DIFUnpacker::getFrameBCID(theFrames_[i]);}
-  inline uint32_t getFrameTimeToTrigger(uint32_t i){return getBCID()-getFrameBCID(i);}
+  inline uint32_t getFrameTimeToTrigger(uint32_t i){return (getBCID()>getFrameBCID(i))?getBCID()-getFrameBCID(i):(getBCID()+0xFFFFFF)-getFrameBCID(i);}
   inline bool getFrameLevel(uint32_t i,uint32_t ipad,uint32_t ilevel){return DIFUnpacker::getFrameLevel(theFrames_[i],ipad,ilevel);}
   inline uint32_t getFrameData(uint32_t i,uint32_t iword){return DIFUnpacker::getFrameData(theFrames_[i],iword);}
   void dumpDIFInfo()
