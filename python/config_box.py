@@ -1,9 +1,9 @@
-host=['lyoilcrpi02']
+host=['lyoilcrpi18']
 
-ccc='lyoilcrpi02'
+ccc='lyoilcrpi18'
 
-db='lyoac30'
-writer='lyoac30'
+db='lyoac29'
+writer='lyoac29'
 #zuphost='lyoilcrpi24'
 #zupdevice='/dev/ttyUSB0'
 #zupport=1
@@ -19,5 +19,5 @@ register=0x815A1B00
 
 state="GIFSPS_57"
 #directory="/data/NAS"
-directory="/home/acqilc/SDHCAL/Results/GIF2015"
-monitor='lyoac30'
+directory="/home/acqilc/SDHCAL/Results/tests"
+monitor='lyoac29'

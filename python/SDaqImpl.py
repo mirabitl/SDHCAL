@@ -135,7 +135,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         if self.daq_!=None:
             self.daq_.SetThresholds(self.SBTHR0L.value(),self.SBTHR1L.value(),self.SBTHR2L.value())
             self.thresholdUsed_=True
-            self.daq_.Configure()
+            #self.daq_.Configure()
     def Pause(self):
         if self.daq_!=None:
             self.daq_.Pause()
