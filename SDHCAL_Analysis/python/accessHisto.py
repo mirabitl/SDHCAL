@@ -267,7 +267,8 @@ def GetEff(dirp,plan):
     for j in range(2,heff.GetYaxis().GetNbins()-1):
       st = st + '%f ' % heff.GetBinContent(i+1,j+1)
       ntk=ntk+hext.GetBinContent(i+1,j+1)
-      if (hext.GetBinContent(i+1,j+1)>15):
+      # Cut a 15 change en 5
+      if (hext.GetBinContent(i+1,j+1)>25):
         heffsum.Fill(heff.GetBinContent(i+1,j+1))
   for i in range(2,hmulc.GetXaxis().GetNbins()-1):
     for j in range(2,hmulc.GetYaxis().GetNbins()-1):

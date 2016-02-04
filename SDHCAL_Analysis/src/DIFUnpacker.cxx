@@ -188,7 +188,7 @@ uint32_t DIFUnpacker::getFramePtr(std::vector<unsigned char*> &vFrame,std::vecto
 
   do
     {
-      // printf("fshift %d and %d \n",fshift,max_size);
+      //printf("fshift %d and %x \n",fshift,cb[fshift]);
       if (cb[fshift]==DU_END_OF_DIF) return fshift;
       if (cb[fshift]==DU_START_OF_FRAME) fshift++;
       if (cb[fshift]==DU_END_OF_FRAME) {fshift++;continue;}
@@ -198,7 +198,12 @@ uint32_t DIFUnpacker::getFramePtr(std::vector<unsigned char*> &vFrame,std::vecto
       if (header<1 || header>48)
 	{
 	  std::stringstream s("");
-	  s<<header<<" Header problem "<<fshift<<std::endl;
+
+      for (uint32_t i=0;i<40;i++)
+	printf("%02x",cb[i]);
+      printf("\n");
+	  
+      s<<header<<" Header problem "<<header<<" @ "<<fshift<<std::endl;
 	  throw  s.str();
 	  return fshift;
 

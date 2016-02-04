@@ -52,10 +52,11 @@ class TrackInfo : public Droite3D
     memset(x_,0,TK_MAX_POINT*sizeof(double));
     memset(y_,0,TK_MAX_POINT*sizeof(double));
     memset(z_,0,TK_MAX_POINT*sizeof(double));
+    for (int i=0;i<TK_MAX_POINT;i++) cla_[i]=-1.;
     planes_.reset();
     
   }
-  inline void add_point(double x,double y,double z,uint32_t l){x_[np_]=x;y_[np_]=y;z_[np_]=z;layer_[np_]=l;np_++;}
+  void add_point(double x,double y,double z,uint32_t l);
 
   void regression();
   void exclude_layer(uint32_t layer,TrackInfo& ti);
@@ -69,6 +70,7 @@ class TrackInfo : public Droite3D
   double x_[TK_MAX_POINT];
   double y_[TK_MAX_POINT];
   double z_[TK_MAX_POINT];
+  double cla_[TK_MAX_POINT];
   std::bitset<128> planes_;
 };
 #endif
