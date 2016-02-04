@@ -22,71 +22,13 @@
 #include "DIFSnapShot.h"
 #include <time.h>
 
-class StripCluster {
-public:
-  StripCluster(){_strips.clear();_x=0;_asic=0;_used=false;}
-  StripCluster(uint8_t asic,uint8_t i){_strips.clear();_strips.push_back(i);_x=i;_asic=asic; slope();_used=false;}
-  bool append(uint8_t asic,uint8_t i)
-  {
-    if (asic!=_asic) return false;
-    bool ap=false;
-    for (uint8_t j=0;j<_strips.size();j++)
-      if (abs(i-_strips[j])<2.1){ap=true;break;}
-    if (!ap) return false;
-    _strips.push_back(i);
-    _x=0;for (uint8_t j=0;j<_strips.size();j++) _x+=_strips[j];_x/=_strips.size();
-    slope();
-    return ap;
-  }
-  void slope()
-  {
-    double s,c;
-    switch (_asic)
-    {
-    case 1:
-      {
-      _a=0;
-      _b=(_x-0.5)*30./64.;
-      break;
-      }
-    case 2:
-      {
-      c=cos(2*M_PI/3.);
-      s=sin(2*M_PI/3.);
-      _a=-s/c;
-      _b=(_x-0.5)*30./64./c+30.;
-      break;
-      }
-    case 3:
-      {
-      c=cos(M_PI/3.);
-      s=sin(M_PI/3.);
-      _a=-s/c;
-      _b=(65-_x+0.5)*30./64./c;
-      break;
-      }
-    }
-  }	  
-  std::vector<uint8_t>& strips(){return _strips;}
-  uint8_t asic(){return _asic;}
-  double x(){return _x;}
-  double a(){return _a;}
-  double b(){return _b;}
-  void setUsed(bool t=true){_used=t;}
-  bool isUsed(){return _used;}
-private:
-  std::vector<uint8_t> _strips;
-  uint8_t _asic;
-  double _x,_a,_b;
-  bool _used;
-};
-
 
 RawAnalyzer::RawAnalyzer() :nAnalyzed_(0),theMonitoringPeriod_(0),theMonitoringPath_("/dev/shm/Monitoring"),theSkip_(0),draw_(false)
 {
   reader_=DHCalEventReader::instance();
   rootHandler_ =DCHistogramHandler::instance();
   this->initialise();
+  _neff=0;_neff2=0;_neff3=0;_nall=0;
 }
 
 
@@ -288,17 +230,32 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
 //return;
 //getchar();
 #endif
+#ifdef OLDTRICOT
  int ipl=0;
  std::map<uint8_t,uint8_t> plid;
+ std::map<uint8_t,float> pldx;
+ std::map<uint8_t,float> pldy;
  std::map<uint8_t,float> plz;
  plid.insert(std::pair<uint8_t,uint8_t>(5,1));
  plid.insert(std::pair<uint8_t,uint8_t>(94,2));
  plid.insert(std::pair<uint8_t,uint8_t>(99,3));
  plid.insert(std::pair<uint8_t,uint8_t>(128,4));
+  plid.insert(std::pair<uint8_t,uint8_t>(1,5));
  plz.insert(std::pair<uint8_t,uint8_t>(5,10.));
  plz.insert(std::pair<uint8_t,uint8_t>(94,29.));
  plz.insert(std::pair<uint8_t,uint8_t>(99,45.));
  plz.insert(std::pair<uint8_t,uint8_t>(128,61.));
+ plz.insert(std::pair<uint8_t,uint8_t>(1,77.));
+ pldx.insert(std::pair<uint8_t,uint8_t>(5,8.));
+ pldx.insert(std::pair<uint8_t,uint8_t>(94,0.));
+ pldx.insert(std::pair<uint8_t,uint8_t>(99,2.));
+ pldx.insert(std::pair<uint8_t,uint8_t>(128,0.));
+ pldx.insert(std::pair<uint8_t,uint8_t>(1,0.));
+ pldy.insert(std::pair<uint8_t,uint8_t>(5,0.));
+ pldy.insert(std::pair<uint8_t,uint8_t>(94,0.));
+ pldy.insert(std::pair<uint8_t,uint8_t>(99,3.));
+ pldy.insert(std::pair<uint8_t,uint8_t>(128,8.));
+ pldy.insert(std::pair<uint8_t,uint8_t>(1,0.));
  TH2* hplx=rootHandler_->GetTH2("/plx");
  TH2* hply=rootHandler_->GetTH2("/ply");
  if (hplx==NULL)
@@ -312,6 +269,8 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
      hply->Reset();
    }
 
+ std::bitset<64> plhit(0);
+
   for (std::vector<DIFPtr*>::iterator it = reader_->getDIFList().begin();it!=reader_->getDIFList().end();it++)
     {
       DIFPtr* d = (*it);
@@ -321,7 +280,7 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
       TH2* hpl=rootHandler_->GetTH2(s1.str());
       if (hpl==NULL)
 	{
-	  hpl=rootHandler_->BookTH2(s1.str(),80,-10.,30.,80,-10.,30.);
+	  hpl=rootHandler_->BookTH2(s1.str(),40,-10.,30.,40,-10.,30.);
 	}
       else
       	hpl->Reset();
@@ -419,7 +378,7 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
       hfratime->Fill(dmin*1.);
    
 
-      if (dmin>13.5 && dmin<19.5)
+      if (dmin>13.5 && dmin<20.5)
 	{
 	  printf("DIF %d :",d->getID());
 	for (uint32_t i=0;i<d->getNumberOfFrames();i++)
@@ -442,7 +401,7 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
 		hnpd->Fill(npd*1.);
 
 	      }
-	    if (d->getFrameTimeToTrigger(i)>13.5 &&  d->getFrameTimeToTrigger(i)<19.5)
+	    if (d->getFrameTimeToTrigger(i)>13.5 &&  d->getFrameTimeToTrigger(i)<20.5)
 	      
 	      for (uint32_t j=0;j<64;j++)
 		{
@@ -460,6 +419,7 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
 	
 		}
 	  }
+	
 	printf("Strips hit %d \n",_cl.size());
 	for (std::vector<StripCluster*>::iterator it=_cl.begin();it!=_cl.end();it++)
 	  printf("(%d-%f)-",(*it)->asic(),(*it)->x());
@@ -502,10 +462,14 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
 		  _cl[i]->setUsed();
 		  _cl[j]->setUsed();
 		  _cl[k]->setUsed();
+		  x+=pldx[d->getID()];
+		  y+=pldy[d->getID()];
 		  printf("(%f,%f)-",x,y);
 		  hpl->Fill(x,y);
 		  hplx->Fill(plz[d->getID()],x);
 		  hply->Fill(plz[d->getID()],y);
+		  plhit.set(plid[d->getID()]);
+		  
 		}
 	    }
 	for (int i=0;i<_cl.size();i++)
@@ -519,7 +483,11 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
 	      float y=_cl[i]->a()*x+_cl[i]->b();
 	      _cl[i]->setUsed();
 	      _cl[j]->setUsed();
+	      x+=pldx[d->getID()];
+	      y+=pldy[d->getID()];
+
 	      printf("(%f,%f)-",x,y);
+	      plhit.set(plid[d->getID()]);
 	      hpl->Fill(x,y);
 	      hplx->Fill(plz[d->getID()],x);
 	      hply->Fill(plz[d->getID()],y);
@@ -529,24 +497,40 @@ printf("Time %d Number of seed %d, DT %f , frequency %f, all seeds %d int Freq %
 	printf("\n");
 
 	}
+#define DRAWPLOT  
+#ifdef DRAWPLOT
       TCPlot->cd(plid[d->getID()]);hpl->Draw("COLZ");ipl++;      
       TCPlot->Modified();
       TCPlot->Draw();
       TCPlot->Update();
+#endif
       for (std::vector<StripCluster*>::iterator it=_cl.begin();it!=_cl.end();it++)
 	delete (*it);
     }
- 
-  TCPlot->cd(5);hplx->Draw("COLZ");
+
+#ifdef DRAWPLOT
+  //  TCPlot->cd(5);hplx->Draw("COLZ");
   TCPlot->cd(6);hply->Draw("COLZ");      
       TCPlot->Modified();
       TCPlot->Draw();
       TCPlot->Update();
+      getchar();
+#endif
 
-  hacqtime->Fill(theEventTotalTime_);
+
+  if (plhit[1] || plhit[2] || plhit[3] ||plhit[4]) _nall++;
+  if (plhit[1] && plhit[4])
+    {
+      _neff++;
+      if (plhit[2]) _neff2++;
+      if (plhit[3]) _neff3++;
+    }
+#endif
+    hacqtime->Fill(theEventTotalTime_);
   theTotalTime_+=theEventTotalTime_;
-  printf("Processing %d - %d GTC %d Total time %f Acquition time %f\n",evt_->getRunNumber(),evt_->getEventNumber(),dbase->getGTC(),(dbase->getAbsoluteBCID()-theStartBCID_)*2E-7,theTotalTime_);
-  getchar();
+
+  printf("Processing %d - %d GTC %d Total time %f Acquition time %f all %d [1-5] %d  [1-2-5]  %d [1-3-5] %d \n",evt_->getRunNumber(),evt_->getEventNumber(),dbase->getGTC(),(dbase->getAbsoluteBCID()-theStartBCID_)*2E-7,theTotalTime_,_nall,_neff,_neff2,_neff3);
+
 
   if (evt_->getEventNumber()%100 ==0)
     rootHandler_->writeSQL();
