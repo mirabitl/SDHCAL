@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import sys, time
 import pydim
 import biblioSNMP as HT
