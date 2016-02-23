@@ -19,11 +19,6 @@ def readhv_callback(tag):
     ichan=chan%8
     
     return (chan,HT.getOutputVoltage(imod,ichan),HT.getOutputCurrentLimit(imod,ichan)*1E6,HT.getOutputMeasurementSenseVoltage(imod, ichan),HT.getOutputMeasurementCurrent(imod,ichan)*1E6)
-def callback2(tag):
-    # Calculate the value
-    # ...
-    # Remember, the callback function must return a tuple
-    return ( "hello world", )
 def setvoltage(*args):
     print'Server: I am an unbound dummy function. I\'ve received', args
     l=args
@@ -34,6 +29,16 @@ def setvoltage(*args):
     imod=chan/8
     ichan=chan%8
     HT.setOutputVoltage(imod,ichan,V)
+def setcurrent(*args):
+    print'Server: I am an unbound dummy function. I\'ve received', args
+    l=args
+    print l[0],l[1]
+    chan=int(l[0][0])
+    I=float(l[0][1])
+    print chan,I
+    imod=chan/8
+    ichan=chan%8
+    HT.setOutputCurrentLimit(imod,ichan,I)
 def switch(*args):
     print'Server: I am an unbound dummy function. I\'ve received', args
     l=args
@@ -69,8 +74,9 @@ for x,y in svc.iteritems():
 
 #
 CMND3FORMAT="I:1;F"
-pydim.dis_add_cmnd('SetVoltage', CMND3FORMAT, setvoltage, 101)
-pydim.dis_add_cmnd('Switch',"I:2", switch, 102)
+pydim.dis_add_cmnd('/WIENER/SetVoltage', CMND3FORMAT, setvoltage, 101)
+pydim.dis_add_cmnd('/WIENER/SetCurrent', CMND3FORMAT, setcurrent, 102)
+pydim.dis_add_cmnd('/WIENER/Switch',"I:2", switch, 103)
 
 # Start the DIM server
 pydim.dis_start_serving('lyoilchv01-control')
