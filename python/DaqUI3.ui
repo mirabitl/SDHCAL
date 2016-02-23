@@ -53,7 +53,7 @@
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Name of the configuration file&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
-              <string>config_m3</string>
+              <string>config_m3_lyon</string>
              </property>
             </widget>
            </item>
