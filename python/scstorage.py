@@ -13,11 +13,12 @@ class wienerChannel:
     def dump(self):
         print "%3d %7.1f %7.1f %7.1f %7.1f" %(self.channel,self.vset,self.iset,self.vout,self.iout)
 class chamberRef:
-    def __init__(self,ch,vref,pref,tref):
+    def __init__(self,ch,vref,iref,p0,t0):
         self.channel=ch
         self.vref=vref
-        self.pref=pref
-        self.tref=tref
+        self.iref=iref
+        self.p0=p0
+        self.t0=t0
 class ScStorage:
     WIENERFORMAT="I:1;F:4;"
     BMP183TFORMAT="F"
@@ -53,7 +54,14 @@ class ScStorage:
         dic_info_service(self.bmppname, ScStorage.BMP183PFORMAT,self.BMPPHandler)
         for x in self.wienernames:
             dic_info_service(x,ScStorage.WIENERFORMAT,self.wienerHandler)
-                    
+
+    def setPeriod(self,t):
+        tuple_args=(t,)
+        dic_cmnd_service("/WIENER/SetPeriod",tuple_args,"I:1")
+    def ReadChannel(self,t):
+        tuple_args=(t,)
+        dic_cmnd_service("/WIENER/ReadChannel",tuple_args,"I:1")
+
     def setVoltage(self,chan,vset):
         tuple_args=(chan,vset)
         dic_cmnd_service("/WIENER/SetVoltage",tuple_args,"I:1;F:1")
@@ -67,6 +75,8 @@ class ScStorage:
         tuple_args=(chan,0)
         dic_cmnd_service("/WIENER/Switch",tuple_args,"I:2")
     def dump(self):
-        print self.pread,self.tread
+        print "Pression %.2f  Temperature %.2f C (%.2f) \n" % (self.pread,self.tread-273.15,self.tread)
+
+        print "%3s %7s %7s %7s %7s \n" %("CH","VSET","ISET","VOUT","IOUT")
         for  i in range(0,48):
             self.hvchannel[i].dump()
