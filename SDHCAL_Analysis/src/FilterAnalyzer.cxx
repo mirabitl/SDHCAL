@@ -6,7 +6,7 @@ void FilterAnalyzer::initHistograms()
 {
 
 }
-FilterAnalyzer::FilterAnalyzer(DHCalEventReader* r,DCHistogramHandler* h)  :useSynchronized_(false),minChambersInTime_(3),lastEvent_(0)
+FilterAnalyzer::FilterAnalyzer(DHCalEventReader* r,DCHistogramHandler* h)  :useSynchronized_(false),minChambersInTime_(3),lastEvent_(0),firstProcessed_(0),lastProcessed_(60000)
 {
   reader_=r;
   handler_ =h;
@@ -25,6 +25,8 @@ void FilterAnalyzer::processEvent()
 {
   
   if (reader_->getEvent()==0) return;
+  if (reader_->getEvent()->getEventNumber()<firstProcessed_) return;
+  if (reader_->getEvent()->getEventNumber()>lastProcessed_) return;
   if (reader_->getRunHeader()!=0 && !headerWritten_) 
     {
       reader_->writeRunHeader();
@@ -96,7 +98,7 @@ void FilterAnalyzer::processEvent()
       evtOutput_->addCollection(HitVec,"DHCALRawHits");
       //LCTOOLS::printRawCalorimeterHits(HitVec);
       if (writing_)
-#define NOSORT
+#undef NOSORT
 #ifdef NOSORT
 	reader_->write(evtOutput_);
 #else

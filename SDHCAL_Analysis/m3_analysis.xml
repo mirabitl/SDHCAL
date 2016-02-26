@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!-- ?xml-stylesheet type="text/xsl" href="http://ilcsoft.desy.de/marlin/marlin.xsl"? -->
+<!-- ?xml-stylesheet type="text/xsl" href="marlin.xsl"? -->
+
+<!-- Loading shared library : /home/cms/mirabito/MARLIN_DHCALOnline/lib/libDHCALOnline.so -->
+<!--##########################################
+#                                        #
+#     Example steering file for marlin   #
+#                                        #
+##########################################-->
+
+
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+  <execute>
+    <processor name="ChamberAnalysis"/>
+  </execute>
+  <global>
+    <parameter name="LCIOInputFiles"> 
+    </parameter>
+    <!-- limit the number of processed records (run+evt): -->  
+    <parameter name="MaxRecordNumber" value="8000" />  
+    <parameter name="SkipNEvents" value="10" />  
+    <parameter name="SupressCheck" value="false" />  
+    <!--parameter name="GearXMLFile"> gear_ldc.xml </parameter-->  
+    <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> DEBUG  </parameter> 
+  </global>
+  <processor name="ChamberAnalysis" type="ChamberAnalysis">
+    <!--Marlin_DHCALOnline does whatever it does ...-->
+    <!--The name of the output root file name without the .root suffix-->
+    <parameter name="OutputFileName" type="string">/tmp/NewScan</parameter>
+    <parameter name="TreeFileName" type="string">/tmp/ch13101.root</parameter>
+    <parameter name="SkipEvents" value="0" />  
+    <parameter name="dbPath" type="string">/data/</parameter>
+    <parameter name="dbName" type="string">DBMCUBE.sqlite</parameter>
+    <parameter name="MergeRuns" value="true" />
+    <parameter name="MaxHitCount" value="900000" />  
+    <parameter name="MinHitCount" value="30" />  
+    <parameter name="DoTimeHistos" value="true" /> 
+    <parameter name="DropFirstSpillEvent" value="false" /> 
+    <parameter name="Interactif" value="false" /> 
+    <parameter name="Alignement" value="false" /> 
+    <parameter name="NbAlignement" value="0" />
+    <parameter name="TkFirstChamber" value="1" />  
+    <parameter name="TkLastChamber" value="48" />  
+    <parameter name="alignPlan1" value="3" />  
+    <parameter name="alignPlan2" value="5" />  
+    <parameter name="TkDistCut" value="8." /> 
+    <parameter name="TkAngularCut" value="5.2" /> 
+    <parameter name="ChamberEdge" value="5.0" /> 
+    <parameter name="Seuil" value="0" /> 
+    <parameter name="TkChi2Cut" value="0.001" /> 
+    <parameter name="TkExtDistCut" value="4." /> 
+    <parameter name="TkExtChi2Cut" value="0.000001" /> 
+    <parameter name="TkMinPoint" value="5" />  
+    <parameter name="TkExtMinPoint" value="5" />
+    <parameter name="TimeDropLast" value="true" /> 
+    <parameter name="ClockSynchCut" value="7" /> 
+    <parameter name="SpillSize" value="8." /> 
+    <parameter name="SpyPeriod" value="5" /> 
+    <parameter name="OffTimePrescale" value="1" /> 
+    <parameter name="MinChambersInTime" value="5" /> 
+    <parameter name="UseTree" value="false" />
+    <parameter name="UseSynchronised" value="false" />
+
+    <parameter name="UseFROG" value="false" />
+    <parameter name="UseTk4" value="false" />
+    <parameter name="OldAlgo" value="false" />
+    <parameter name="BuildFrogGeom" value="true" />
+    <parameter name="GeomFileName" value="/tmp/Frog.geom"/>
+    <parameter name="VisFileName" value="/tmp/FrogDisplay_"/>
+    <parameter name="FrogNeventFile" value="50"/>
+    <parameter name="SpillLength" value="8." /> 
+    <parameter name="Verbosity" type="string">MESSAGE </parameter>
+  </processor>
+</marlin>

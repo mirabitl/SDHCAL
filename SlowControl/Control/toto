@@ -1,0 +1,11 @@
+scons: Reading SConscript files ...
+16
+UBUNTU unknown
+['-c++', '-classic', '-Iinclude', '-I/usr/include/boost141/', '-I/opt/dhcal/dim/dim', '-I/usr/include/python2.7', '-I/home/acqilc/SDHCAL/SDHCAL_common/include/', '-I/home/acqilc/SDHCAL/SlowControl/DB/include/']
+['include/DimSlowControl.h']
+scons: done reading SConscript files.
+scons: Building targets ...
+g++ -o src/DimSlowControl.os -c -fPIC -pthread -O2 -DUNIX -DREENTRANT -Dlinux "-DLITTLE_ENDIAN__ " -Dx86 -DXERCES=2 -DDAQ_VERSION_2 -DUSE_DIM -Iinclude -I/usr/include/boost141 -I/opt/dhcal/dim/dim -I/usr/include/python2.7 -I/home/acqilc/SDHCAL/SDHCAL_common/include -I/home/acqilc/SDHCAL/SlowControl/DB/include src/DimSlowControl.cc
+g++ -o lib/libMainSlowControl.so -fPIC -dynamiclib -shared src/DimSlowControl.os -L/usr/lib/x86_64-linux-gnu -L/usr/lib64 -L/usr/local/lib -L/opt/dhcal/dim/linux -L/home/acqilc/SDHCAL/opt/dhcal/lib -L/usr/lib -lmysqlclient -lpthread -lz -lm -ldl -lpthread -lm -lstdc++ -lboost_system -lboost_thread -ldim -lnetlink -lcslm -lSDHCALcommon -lSlowDB
+Install file: "lib/libMainSlowControl.so" as "/home/acqilc/SDHCAL/opt/dhcal/lib/libMainSlowControl.so"
+scons: done building targets.

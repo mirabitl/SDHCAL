@@ -24,6 +24,8 @@ class FilterAnalyzer : public DHCALAnalyzer
   virtual void endRun(){;}
   inline void setminChambersInTime(int t){minChambersInTime_=t;}
   inline void setuseSynchronized(bool t){useSynchronized_=t;}
+  inline void setFirstProcessed(uint32_t t){firstProcessed_=t;}
+  inline void setLastProcessed(uint32_t t){lastProcessed_=t;}
   void setRebuild(bool t){rebuild_=t;}
  private:
   DHCalEventReader* reader_;
@@ -33,6 +35,6 @@ class FilterAnalyzer : public DHCALAnalyzer
   bool rebuild_;
   int minChambersInTime_;
   bool useSynchronized_;
-  uint32_t lastEvent_;
+  uint32_t firstProcessed_,lastProcessed_,lastEvent_;
 };
 #endif

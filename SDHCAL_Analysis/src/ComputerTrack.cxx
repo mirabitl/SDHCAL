@@ -102,7 +102,7 @@ void ComputerTrack::muonFinder(uint32_t nstub,float* x,float* y,float* z,uint32_
 		      if (layer[k]==ip1) continue;
 		      if (layer[k]==ip2) continue;
 		      
-		      if (abs(t.closestApproach(x[k],y[k],z[k]))<2.)
+		      if (abs(t.closestApproach(x[k],y[k],z[k]))<3.) //was 2
 			{
 			  // 3 hits on tag
 			  used[i]=true;

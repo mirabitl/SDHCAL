@@ -700,10 +700,10 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
       INFO_PRINT("Impossible \n");
       return ;
    }
-   if (iseed->second.size()<30) return;
+   if (iseed->second.size()<20) return;
   uint32_t nhits=buildVolume(seed);
   if (nhits==0) return;
-  if (nhits<30) return;
+  if (nhits<20) return;
   //return;
   //DEBUG_PRINT("Edge detection for %d \n",seed);
   buildEdges();
@@ -731,7 +731,7 @@ void ShowerAnalyzer::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
     }
   //INFO_PRINT("On a trouve                                    %d hits                    %d plans -> %d \n",theHitVector_.size(),theNplans_,minChambersInTime_);
   // DEBUG_PRINT("3");
-  if (theHitVector_.size()<30) return;
+  if (theHitVector_.size()<20) return;
   if (theNplans_<minChambersInTime_) return;  
 
   uint32_t tag=this->CerenkovTagger(3,seed);
@@ -1525,7 +1525,6 @@ void ShowerAnalyzer::processEvent()
   //theSkip_=380;
   if (evt_->getEventNumber()<=theSkip_) return;
   printf("Processing %d - %d \n",evt_->getRunNumber(),evt_->getEventNumber());
-
   if (nAnalyzed_==0)
     {
       std::stringstream s;
@@ -8903,13 +8902,13 @@ void ShowerAnalyzer::drawph(houghParam* p)
 void ShowerAnalyzer::buildEdges()
 {
 #ifdef DRAW_HISTOS  
-  TH1* hweight= rootHandler_->GetTH1("showerweight");
-  TH1* hweight2= rootHandler_->GetTH1("showerweight2");
+  TH1* hweight= rootHandler_->GetTH1("/HitStudy/showerweight");
+  TH1* hweight2= rootHandler_->GetTH1("/HitStudy/showerweight2");
   if (hweight==NULL)
     {
       //hweight=(TH1F*) rootHandler_->BookTH1("showerweight",100,0.,2.);
-      hweight= rootHandler_->BookTH1("showerweight",110,-0.1,0.99);
-      hweight2= rootHandler_->BookTH1("showerweight2",600,0.,30.);
+      hweight= rootHandler_->BookTH1("/HitStudy/showerweight",110,-0.1,0.99);
+      hweight2= rootHandler_->BookTH1("/HitStudy/showerweight2",600,0.,30.);
     }
   //hweight->Reset(); // commented by LM21_01_2015
 #endif
@@ -8951,7 +8950,8 @@ void ShowerAnalyzer::buildEdges()
 			    RecoHit* h1=&hitVolume_[k+z][i+x][j+y];
 			    float x0=h0->X(),y0=h0->Y(),z0=h0->Z(),x1=h1->X(),y1=h1->Y(),z1=h1->Z();
 			    float dist=sqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0)+(z1-z0)*(z1-z0));
-			    if (dist<6.) vnear_.push_back(h1); // was 6
+			    dist=abs(x1-x0)+abs(y1-y0)+abs(z1-z0)/2.;
+			    if (dist<4.) vnear_.push_back(h1); // was 6
 
 			    nv++;
 			  }
@@ -8969,7 +8969,7 @@ void ShowerAnalyzer::buildEdges()
 		  if (c->l2==0)
 		    {hitVolume_[k][i][j].setFlag(RecoHit::ISOLATED,true);niso++;}
 		  else 
-		    if (w<0.3) // 0.3 before  
+		    if (w<0.2) // 0.3 before  
 		      {hitVolume_[k][i][j].setFlag(RecoHit::EDGE,true);nedge++;}
 		    else
 		      {hitVolume_[k][i][j].setFlag(RecoHit::CORE,true);ncore++;}
@@ -9538,7 +9538,7 @@ uint32_t ShowerAnalyzer::buildTracks(std::vector<RecoHit*> &vrh)
 	  TrackInfo& tk = theComputerTrack_->getTracks()[i];
 
 	  if (tk.size()<minChambersInTime_) continue;
-	  if (fabs(tk.ax())<1.E-2) continue;
+	  if (fabs(tk.ax())<1.E-6) continue;
 	  if (fabs(tk.ax())<0.5 && fabs(tk.ay())<0.5) theNbTracks_++;
 	  //this->draw(tk);
 	  //char c;c=getchar();putchar(c); if (c=='.') exit(0);

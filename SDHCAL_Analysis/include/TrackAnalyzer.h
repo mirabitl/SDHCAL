@@ -31,6 +31,7 @@
 #include "Array3D.h"
 #include "RecoHit.h"
 #include "RECOCluster.h"
+#include "PlaneCluster.h"
 #include "RecoPoint.h"
 #include "RecoCandTk.h"
 #include "HC.h"
@@ -65,7 +66,7 @@ public:
 	virtual void endRun(){;}
 
 	bool decodeTrigger(LCCollection* rhcol, double tcut);
-	void drawHits(std::vector<RecoHit*> vrh);
+	void drawHits(std::vector<RecoHit*> vrh,ShowerParams* ish=NULL);
 	void draw(TrackInfo& t);
   
 
@@ -83,6 +84,7 @@ public:
 	void FillTimeAsic(IMPL::LCCollectionVec* rhcol);
 	void DIFStudy(IMPL::RawCalorimeterHitImpl* hit);
 	uint32_t buildTracks(std::vector<RecoHit*> &vreco,std::string vdir="/Track");
+	uint32_t buildPrincipal(std::vector<RecoHit*> &vreco,std::string vdir="/Track");
 	void drawDisplay();
 	double checkTime();
 	inline void setuseSynchronised(bool t){useSynchronised_=t; }
@@ -110,11 +112,14 @@ public:
 
 	void findTimeSeeds( IMPL::LCCollectionVec* rhcol, int32_t nhit_min,std::vector<uint32_t>& candidate);
 	void processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed);
-
+	uint32_t fillVolume(uint32_t seed);
+	void TagIsolated(uint32_t fp,uint32_t lp);
+	uint32_t fillVector(uint32_t seed);
 	uint32_t CerenkovTagger(uint32_t difid,uint32_t seed);
 	uint32_t PMAnalysis(uint32_t difid);
-
-
+	void clearClusters();
+	void fillPlaneClusters(std::vector<RecoHit*> vrh);
+	void tagMips();
 private:
 
 
@@ -154,6 +159,7 @@ private:
 	int clockSynchCut_;
 	int minChambersInTime_;
 	int maxHitCount_;
+	int minHitCount_;
 	int tkFirstChamber_;
 	int tkLastChamber_;
 	float chamberEdge_;
@@ -214,6 +220,7 @@ private:
 	unsigned char theImageEdgeBuffer_[60*96*96];
 	float image3Buf_[60*96*96];
 	std::vector<RecoHit*> theHitVector_;
+	std::vector<RecoHit*> theTkHitVector_;
 	  
 
 	std::vector<Amas> theAmas_;
@@ -232,9 +239,23 @@ private:
 	uint32_t theNbShowers_,theNbTracks_;
 	ComputerTrack* theComputerTrack_;
 	unsigned long long theLastBCID_,theIdxSpill_;
-	float theTimeInSpill_[20],theCountSpill_[20],theLastRate_;
+	float theTimeInSpill_[20],theCountSpill_[20],theLastRate_,theSpillLength_;
 	float coreRatio_;
 	bool isNewSpill_,isPion_,isElectron_,isMuon_,isShower_,isProton_;
 	uint32_t theCerenkovTag_;
+
+
+	// Clusters
+	std::vector<PlaneCluster*> allClusters_,realClusters_,interactionClusters_;
+
+	std::bitset<64> nPlansReal_,nPlansInteraction_,nPlansAll_;
+	uint32_t firstInteractionPlane_,lastInteractionPlane_;
+	float _x[65532];
+	float _y[65532];
+	float _z[65532];
+	uint32_t _layer[65532];
+	uint32_t npBuf_;
+	uint32_t _runNumber;
+
 };
 #endif

@@ -19,6 +19,7 @@
 #include "ShowerAnalyzer.h"
 #include "TrackAnalyzer.h"
 #include "RawAnalyzer.h"
+#include "TricotAnalyzer.h"
 
 #include "FilterAnalyzer.h"
 #include "IO/LCRunListener.h"
@@ -40,6 +41,7 @@
 %include "ShowerAnalyzer.h"
 %include "TrackAnalyzer.h"
 %include "RawAnalyzer.h"
+%include "TricotAnalyzer.h"
 %include "FilterAnalyzer.h"
 %include "IO/LCRunListener.h"
 %include "IO/LCEventListener.h"

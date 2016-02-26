@@ -10,7 +10,7 @@ import biblioSNMP as HT
 if (HT.getSysMainSwitch() == "on"):
 	print "Vérification de l'alimentation... OK !"
 	
-	HT.setOutputVoltage(HT.MODULE_0, HT.VOIE_0, 2000)
+	HT.setOutputVoltage(HT.MODULE_0, HT.VOIE_0, 200)
 	print HT.getOutputVoltage(HT.MODULE_0, HT.VOIE_0)
 	
 	HT.setOutputSwitch(HT.MODULE_0, HT.VOIE_0, HT.ON)
@@ -41,7 +41,8 @@ if (HT.getSysMainSwitch() == "on"):
 		HT.setOutputVoltage(HT.MODULE_0, i, 0)
 		
 	for i in range(0, 8):
-		print HT.getOutputVoltage(HT.MODULE_0, i)
+		L= HT.getOutputVoltage(HT.MODULE_0, i)
+		print "On mesure \n",L
 		
 	HT.setOutputVoltage(HT.MODULE_0, HT.VOIE_0, 0)
 	HT.setOutputSwitch(HT.MODULE_0, HT.VOIE_0, HT.OFF)

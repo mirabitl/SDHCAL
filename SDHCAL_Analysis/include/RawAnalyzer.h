@@ -74,7 +74,7 @@ private:
 	std::string theMonitoringPath_;
 	
 	unsigned long long theStartBCID_;
-	
+	uint32_t _neff,_neff2,_neff3,_nall;
 
 };
 #endif

@@ -26,6 +26,9 @@ void DHCalJsonParser::parse(std::string config)
 	       <<std::endl;
       return ;
     }
+
+
+  
 }
 
 std::vector<std::string> DHCalJsonParser::getPlugginsNames()

@@ -40,77 +40,79 @@ class stparser:
         fout=open("%s.sql" % basename,"w")
         fout.write("USE %s;\n" % basename)
 
-        srack="INSERT INTO HVRACK "
+        if (self.data.get("HVRACKS")):
+            srack="INSERT INTO HVRACK "
       
-        for x in self.data['HVRACKS']:
-            vnam=[]
-            vals=[]
-            for y,z in x.iteritems():
-                vnam.append(y)
-                vals.append('\"%s\"' % z)
-            snam="("
-            sval=" VALUES("
-            for i in range(0,len(vnam)-1):
-                snam=snam+vnam[i]+","
-                sval=sval+str(vals[i])+","
-            i=len(vnam)-1
-            snam=snam+vnam[i]+")"
-            sval=sval+str(vals[i])+");"
-            fout.write(srack+snam+sval+"\n");
+            for x in self.data['HVRACKS']:
+                vnam=[]
+                vals=[]
+                for y,z in x.iteritems():
+                    vnam.append(y)
+                    vals.append('\"%s\"' % z)
+                snam="("
+                sval=" VALUES("
+                for i in range(0,len(vnam)-1):
+                    snam=snam+vnam[i]+","
+                    sval=sval+str(vals[i])+","
+                i=len(vnam)-1
+                snam=snam+vnam[i]+")"
+                sval=sval+str(vals[i])+");"
+                fout.write(srack+snam+sval+"\n");
 
 
-        srack="INSERT INTO DIF "
-        for x in self.data['DIFS']:
-            vnam=[]
-            vals=[]
+        if (self.data.get("DIFS")):                
+            srack="INSERT INTO DIF "
+            for x in self.data['DIFS']:
+                vnam=[]
+                vals=[]
 
-            for y,z in x.iteritems():
-                vnam.append(y)
-                vals.append('\"%s\"' % z)
-            snam="("
-            sval=" VALUES("
-            for i in range(0,len(vnam)-1):
-                snam=snam+vnam[i]+","
-                sval=sval+str(vals[i])+","
-            i=len(vnam)-1
-            snam=snam+vnam[i]+")"
-            sval=sval+str(vals[i])+");"
-            fout.write(srack+snam+sval+"\n");
+                for y,z in x.iteritems():
+                    vnam.append(y)
+                    vals.append('\"%s\"' % z)
+                snam="("
+                sval=" VALUES("
+                for i in range(0,len(vnam)-1):
+                    snam=snam+vnam[i]+","
+                    sval=sval+str(vals[i])+","
+                i=len(vnam)-1
+                snam=snam+vnam[i]+")"
+                sval=sval+str(vals[i])+");"
+                fout.write(srack+snam+sval+"\n");
+        if (self.data.get("ASUS")):                
+            srack="INSERT INTO ASU "
+            for x in self.data['ASUS']:
+                vnam=[]
+                vals=[]
 
-        srack="INSERT INTO ASU "
-        for x in self.data['ASUS']:
-            vnam=[]
-            vals=[]
-
-            for y,z in x.iteritems():
-                vnam.append(y)
-                vals.append('\"%s\"' % z)
-            snam="("
-            sval=" VALUES("
-            for i in range(0,len(vnam)-1):
-                snam=snam+vnam[i]+","
-                sval=sval+str(vals[i])+","
-            i=len(vnam)-1
-            snam=snam+vnam[i]+")"
-            sval=sval+str(vals[i])+");"
-            fout.write(srack+snam+sval+"\n");
-
-        srack="INSERT INTO CHAMBER "
-        for x in self.data['CHAMBERS']:
-            vnam=[]
-            vals=[]
-            for y,z in x.iteritems():
-                vnam.append(y)
-                vals.append('\"%s\"' % z)
-            snam="("
-            sval=" VALUES("
-            for i in range(0,len(vnam)-1):
-                snam=snam+vnam[i]+","
-                sval=sval+str(vals[i])+","
-            i=len(vnam)-1
-            snam=snam+vnam[i]+")"
-            sval=sval+str(vals[i])+");"
-            fout.write(srack+snam+sval+"\n");
+                for y,z in x.iteritems():
+                    vnam.append(y)
+                    vals.append('\"%s\"' % z)
+                snam="("
+                sval=" VALUES("
+                for i in range(0,len(vnam)-1):
+                    snam=snam+vnam[i]+","
+                    sval=sval+str(vals[i])+","
+                i=len(vnam)-1
+                snam=snam+vnam[i]+")"
+                sval=sval+str(vals[i])+");"
+                fout.write(srack+snam+sval+"\n");
+        if (self.data.get("CHAMBERS")):                
+            srack="INSERT INTO CHAMBER "
+            for x in self.data['CHAMBERS']:
+                vnam=[]
+                vals=[]
+                for y,z in x.iteritems():
+                    vnam.append(y)
+                    vals.append('\"%s\"' % z)
+                snam="("
+                sval=" VALUES("
+                for i in range(0,len(vnam)-1):
+                    snam=snam+vnam[i]+","
+                    sval=sval+str(vals[i])+","
+                i=len(vnam)-1
+                snam=snam+vnam[i]+")"
+                sval=sval+str(vals[i])+");"
+                fout.write(srack+snam+sval+"\n");
 
         fout.write("INSERT INTO SETUP (NAME,START) VALUES(\"%s\",NOW());\n" % self.data["SETUP"]["NAME"])
         srack="INSERT INTO DETECTOR "

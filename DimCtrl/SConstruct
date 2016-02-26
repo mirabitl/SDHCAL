@@ -97,7 +97,7 @@ ROOT_LIBS.append('XMLIO')
 ROOT_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getoutput("$ROOTSYS/bin/root-config --libs ").split(" "))]
 
 #LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
-LIBRARIES=ROOT_LIBS+['pthread',  'm', 'stdc++',boostsystem,boostthread,'SDHCALcommon','SDHCALReadout','SDHCALEventReader','lcio','sio','dim','netlink','cslm']
+LIBRARIES=ROOT_LIBS+['pthread',  'm', 'stdc++',boostsystem,boostthread,'SDHCALcommon','SDHCALReadout','SDHCALEventReader','lcio','sio','dim','netlink','cslm','jsoncpp']
 
 
 
@@ -148,6 +148,7 @@ EXE_LIBPATH=LIBRARY_PATHS
 EXE_LIBPATH.append("#lib")
 EXE_LIBS=LIBRARIES
 EXE_LIBS.append("SDHCALDimCtrl")
+djc=env.Program("bin/dimjc",source="src/djc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 ddc=env.Program("bin/dimdaq",source="src/daq.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 dsp=env.Program("bin/dimwriter",source="src/dimwriter.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 testdsp=env.Program("bin/testdaq",source="src/testdaq.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
@@ -162,7 +163,7 @@ for x in Glob("#include/*.h"):
   myinc.append("include/"+x.name)
 print myinc
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SDHCALDimCtrl)
-env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[ddc,dsp])
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[ddc,dsp,djc])
 ###env.Install("/opt/dhcal/lib",SDHCALDimCtrl)
 ###env.Install("/opt/dhcal/include/readout",myinc)
 

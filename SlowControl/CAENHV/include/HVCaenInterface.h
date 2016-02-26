@@ -20,9 +20,11 @@ class HVCaenInterface: public HVInterface
   virtual float GetCurrentRead(uint32_t channel);
   virtual float GetVoltageRead(uint32_t channel);
   virtual uint32_t GetStatus(uint32_t channel);
+  bool isConnected(){ return connected_;}
  private:
-  std::string theHost_,theUser_,thePassword_;
+  std::string theHost_,theUser_,thePassword_,theIp_;
   int32_t theID_;
   int32_t theHandle_;
+  bool connected_;
 };
 #endif

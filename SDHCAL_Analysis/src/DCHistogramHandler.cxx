@@ -319,7 +319,7 @@ void DCHistogramHandler::writeSQL()
   TSQLFile* f = new TSQLFile(dbname, "recreate", username, userpass);
   // Write with standard I/O functions
   */
-  TFile* f = new TFile("/dev/shm/LMonitoring.root","RECREATE","RAW DATA");
+  TFile* f = new TFile("/home/mirabito/LMonitoring.root","RECREATE","RAW DATA");
   f->cd();
 
  

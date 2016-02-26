@@ -50,7 +50,7 @@ dher.setXdaqShift(24);
 dher.setDropFirstRU(false);
 fileList=[]
 
-for i in range(0,iseq+1):
+for i in range(iseq,iseq+1):
     fileList.append(config.filePath % (run,0,i))
 #fileList=[ config.filePath % (run,0) ,
 #           config.filePath % (run,1) ,

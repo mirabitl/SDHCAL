@@ -4,6 +4,7 @@ import LSDHCALDimCtrl
 import subprocess
 import biblioSNMP as HT
 import mc
+import Ldimjc
 
 from threading import Thread
 
@@ -32,31 +33,145 @@ class threadedSendCommand(Thread):
 
 
 class StartDaq:
+    def parseTriggerRegister(self):
+       """
+11:32:34) tkdaqboss: All=0x81180000
+(11:32:51) tkdaqboss: BT =+0x40
+(11:33:09) tkdaqboss: PP=0x9000000
+(11:33:24) tkdaqboss: TEMPERATURE=+0x20000
+(11:34:06) tkdaqboss: NOPP=+0x1b00
+(11:37:52) tkdaqboss: ANALOG=0x801B00
+(11:49:00) tkdaqboss: DIGITAL+=0x400000
+       """
+       self.r_ilc_= (self.register_ & 0x40 == 0x0)
+       self.r_powerpulsing_= (self.register_ & 0x9000000 == 0x9000000)
+       self.r_temperature_= (self.register_ & 0x20000 == 0x20000)
+       self.r_analog_= (self.register_ & 0x801B00 == 0x801B00) and not self.r_powerpulsing_
+       self.r_digital_ = (self.register_ & 0x400000 == 0x400000)
+       print " Trigger register = 0X%x" % self.register_
+       print "ILC  ",self.r_ilc_
+       print "PP   ",self.r_powerpulsing_
+       print "TEMP ",self.r_temperature_
+       print "ANA  ",self.r_analog_
+       print "DIG ",self.r_digital_
+
+    def setTriggerRegister(self):
+       self.register_=0x81180000
+       if (not self.r_ilc_):
+          self.register_=self.register_ | 0x40
+       if (self.r_powerpulsing_): 
+          self.register_=self.register_ | 0x9000000
+       else:
+          self.register_=self.register_ | 0x1B00
+       if (self.r_temperature_):
+          self.register_=self.register_ | 0x20000
+       if (self.r_analog_):
+          self.register_=self.register_ | 0x801B00
+       if (self.r_digital_):
+          self.register_=self.register_ | 0x400000
+       print " Trigger register = 0X%x" % self.register_
+       print "ILC  ",self.r_ilc_
+       print "PP   ",self.r_powerpulsing_
+       print "TEMP ",self.r_temperature_
+       print "ANA  ",self.r_analog_
+       print "DIG ",self.r_digital_
+       
+
     def __init__(self,mod_name):
         exec("import %s  as config" % mod_name)
-        self.host_=config.host
-        self.ccc_=config.ccc
-        self.db_=config.db
-        self.writer_=config.writer
+        try:
+           self.host_=config.host
+        except:
+           self.host_=None
+        try:
+           self.ccc_=config.ccc
+        except:
+           self.ccc_=None
+        try:
+           self.db_=config.db
+        except:
+           self.db_=None
+        try:
+           self.writer_=config.writer
+        except:
+           self.writer_=None
         self.dim_='/opt/dhcal/dim/'
         self.bin_='/opt/dhcal/bin/'
         self.lib_='/opt/dhcal/lib/'
         self.daq_=LSDHCALDimCtrl.DimDaqControl(mod_name)
         self.state_=config.state
         self.register_=config.register
+        self.r_ilc_=False
+        self.r_powerpulsing_=False
+        self.r_temperature_=False
+        self.r_analog_=False
+        self.r_digital_=False
+        try:
+           self.jsonFile_ =config.jsonfile
+        except:
+           self.jsonFile_ =None
+        print "JSON FILE",self.jsonFile_
+        self.parseTriggerRegister()
         self.directory_=config.directory
         try:
            self.zuphost_=config.zuphost
+        except:
+           self.zuphost_=None
+        try:
            self.zupdevice_=config.zupdevice
            self.zupport_=config.zupport
         except:
-           self.zuphost_=None
            self.zupdevice_=None
            self.zupport_=None
         try:
            self.monitor_=config.monitor
         except:
            self.monitor_=None
+        # Parse JSOn file if any
+        self.jobControl_=None
+        if (self.jsonFile_ != None):
+           print "Creating control"
+           self.jobControl_=Ldimjc.DimJobInterface()
+           self.jobControl_.loadJSON(self.jsonFile_)
+
+    def JobStartAll(self):
+       if (self.jobControl_!=None):
+          print "On demarre"
+          self.jobControl_.startJobs("ALL")
+    def JobKillAll(self):
+       if (self.jobControl_!=None):
+          self.jobControl_.clearAllJobs()
+    def JobUpdateStatus(self):
+       if (self.jobControl_!=None):
+          self.jobControl_.status()
+          time.sleep(2)
+          self.jobControl_.List()
+          print self.jobControl_.processStatusList()
+          return self.jobControl_.processStatusList()
+       else:
+          return None
+    def JobStartHost(self,host):
+       if (self.jobControl_!=None):
+          print "On demarre",host
+          self.jobControl_.startJobs(host)
+    def JobKillHost(self,host):
+       if (self.jobControl_!=None):
+          print "On stop",host
+          self.jobControl_.clearHostJobs(host)
+    def JobStart(self,host,name):
+       if (self.jobControl_!=None):
+          print "On demarre",host,name
+          self.jobControl_.startJob(host,name)
+    def JobKill(self,host,pid):
+       if (self.jobControl_!=None):
+          print "On stop",host,pid
+          self.jobControl_.killJob(host,pid)
+    def JobRestart(self,host,name,pid):
+       if (self.jobControl_!=None):
+          print "On demarre",host,name
+          self.jobControl_.restartJob(host,name,pid)
+
+
     def addHost(self,h):
         self.host_.append(h)
     def addHostRange(self,name,first,last):
@@ -91,6 +206,10 @@ class StartDaq:
          if self.monitor_!=None:
             cmd='ssh acqilc@'+self.monitor_+' "sudo /etc/init.d/spinemonitord status"'
             print cmd;os.system(cmd)
+    def spine_status(self):
+         if self.monitor_!=None:
+            cmd='ssh acqilc@'+self.monitor_+' "sudo /etc/init.d/spinemonitord status"'
+            print cmd;os.system(cmd)
 
     def host_stop(self):
          for h in self.host_:
@@ -114,6 +233,12 @@ class StartDaq:
             print cmd;os.system(cmd)
 
 
+    def spine_stop(self):
+         if self.monitor_!=None:
+            cmd='ssh acqilc@'+self.monitor_+' "sudo /etc/init.d/spinemonitord stop"'
+            print cmd;os.system(cmd)
+
+
     def host_start(self):
          for h in self.host_:
             cmd='ssh pi@'+h+' "sudo /etc/init.d/dimdifd start"'
@@ -131,6 +256,12 @@ class StartDaq:
          if self.zuphost_!=None:
             cmd='ssh pi@'+self.zuphost_+' "sudo /etc/init.d/dimzupd start"'
             print cmd;os.system(cmd)
+         if self.monitor_!=None:
+            cmd='ssh acqilc@'+self.monitor_+' "sudo /etc/init.d/spinemonitord start"'
+            print cmd;os.system(cmd)
+
+
+    def spine_start(self):
          if self.monitor_!=None:
             cmd='ssh acqilc@'+self.monitor_+' "sudo /etc/init.d/spinemonitord start"'
             print cmd;os.system(cmd)
@@ -170,7 +301,7 @@ class StartDaq:
     def InitialiseWriter(self):
         self.daq_.initialiseWriter(self.directory_)
     def InitialiseZup(self):
-       if self.zuphost_!=None:
+       if self.zupport_!=None:
           self.daq_.initialiseZup(self.zupdevice_,self.zupport_)
 
 
@@ -209,6 +340,8 @@ class StartDaq:
         self.daq_.pause()
     def SetThresholds(self,b0,b1,b2):
         self.daq_.setThresholds(b0,b1,b2)
+        self.daq_.configure()
+
     def Resume(self):
         self.daq_.resume()
     def Destroy(self):

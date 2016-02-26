@@ -187,7 +187,7 @@ class dbparser:
             fout.write("class %sMyProxy \n { \n   private: \n" % x)
             ## Members
             fout.write("\t %sDescription* theDescription_;\n" % x)
-            fout.write("\t std::map<uint32_t,%sDescription> theMap_;\n" % x)
+            fout.write("\t std::map<uint32_t,%sDescription*> theMap_;\n" % x)
             fout.write("\t uint32_t theIdx_;\n")
             fout.write("\t std::string theAccount_;\n")
             fout.write("\t MyInterface* my_;\n")
@@ -195,10 +195,11 @@ class dbparser:
             fout.write("\t %sMyProxy(std::string acc);\n" %x)
             fout.write("\t %sMyProxy(MyInterface* m); \n" %x)
             fout.write("\t void select(std::string cut=\"\");")
-            fout.write("\t std::map<uint32_t,%sDescription>& getMap();\n" %x)
-            fout.write("\t %sDescription& getDescription(uint32_t idx);\n" %x)
+            fout.write("\t std::map<uint32_t,%sDescription*>& getMap();\n" %x)
+            fout.write("\t %sDescription* getDescription(uint32_t idx);\n" %x)
             fout.write("\t %sDescription* getCurrent(){return theDescription_;}\n" %x)
             fout.write("\t void insert(); \n")
+            fout.write("\t void clear(); \n")
             fout.write("};\n")
             fout.write("#endif\n")
             fout.close()
@@ -228,6 +229,7 @@ class dbparser:
                     ls.append(m)
                     lst.append(b)
             se="void %sMyProxy::select(std::string cut){\n" % x
+            se=se+"this->clear();\n"
             se=se+"my_->connect();\n"
             select="\"SELECT "
             lenst=len(ls)
@@ -243,22 +245,22 @@ class dbparser:
             sf="theMap_.clear();\n"
             sf="MYSQL_ROW row=NULL;\n"
             sf=sf+"while ((row=my_->getNextRow())!=0) \n { \n"
-            sf=sf+"%sDescription d; uint32_t idx;\n" % x
+            sf=sf+"%sDescription* d=new %sDescription() ; uint32_t idx;\n" % (x,x)
             for i in range(0,lenst):
                 if (lst[i]=="PRIMARY"):
-                    sf=sf+"d.set%s(atoi(row[%d]));\n" % (ls[i],i)
+                    sf=sf+"d->set%s(atoi(row[%d]));\n" % (ls[i],i)
                     sf=sf+"idx=atoi(row[%d]);\n" % i
                 if (lst[i]=="INTEGER"):
-                    sf=sf+"d.set%s(atoi(row[%d]));\n" % (ls[i],i)
+                    sf=sf+"d->set%s(atoi(row[%d]));\n" % (ls[i],i)
                 if (lst[i]=="BOOL"):
-                    sf=sf+"d.set%s(atoi(row[%d]));\n" % (ls[i],i)
+                    sf=sf+"d->set%s(atoi(row[%d]));\n" % (ls[i],i)
                 if (lst[i]=="REAL"):
-                    sf=sf+"d.set%s(atof(row[%d]));\n" % (ls[i],i)
+                    sf=sf+"d->set%s(atof(row[%d]));\n" % (ls[i],i)
                 if (lst[i]=="TIMESTAMP"):
-                    sf=sf+"d.set%s(row[%d]);\n" % (ls[i],i)
+                    sf=sf+"d->set%s(row[%d]);\n" % (ls[i],i)
                 if (lst[i][0:4]=="CHAR"):
-                     sf=sf+"d.set%s(row[%d]);\n" % (ls[i],i)
-            sf=sf+"std::pair<uint32_t,%sDescription> p(idx,d);\n" %x
+                     sf=sf+"d->set%s(row[%d]);\n" % (ls[i],i)
+            sf=sf+"std::pair<uint32_t,%sDescription*> p(idx,d);\n" %x
             sf=sf+"theMap_.insert(p);\n" 
             sf=sf+"}\n"
             se=se+sf
@@ -266,9 +268,12 @@ class dbparser:
             se=se+"}\n"
             fout.write(se)
             ## Map access
-            se="std::map<uint32_t,%sDescription>& %sMyProxy::getMap(){ return theMap_;}\n" % (x,x)
+            se="void %sMyProxy::clear(){ \n" % x
+            se=se+"for (std::map<uint32_t,%sDescription*>::iterator it=theMap_.begin();it!=theMap_.end();it++) delete it->second; theMap_.clear();} \n" % x
             fout.write(se)
-            se="%sDescription& %sMyProxy::getDescription(uint32_t idx){ return theMap_[idx];}\n" % (x,x)
+            se="std::map<uint32_t,%sDescription*>& %sMyProxy::getMap(){ return theMap_;}\n" % (x,x)
+            fout.write(se)
+            se="%sDescription* %sMyProxy::getDescription(uint32_t idx){ return theMap_[idx];}\n" % (x,x)
             fout.write(se)
             ## Update
             se="void %sMyProxy::insert(){ \n" %x

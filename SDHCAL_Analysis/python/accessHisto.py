@@ -3,6 +3,7 @@ import os
 import sqlite3 as sqlite
 import time
 from ROOT import gStyle
+import math
 def sumamryBad():
   f=open("summarybad.txt","w")
   for i in range(1,255):
@@ -225,9 +226,9 @@ def DrawSummary(run,i):
   c.SaveAs("Summary_%d_Plan%d.bmp" % (run,i))
   c.SaveAs("Summary_%d_Plan%d.pdf" % (run,i)) 
   time.sleep(3)
-def GetEff(plan):
+def GetEff(dirp,plan):
   l=[]
-  dirname='/Plan%d' % plan
+  dirname=dirp+'/Plan%d' % plan
   extname= dirname+'/ext'
   nearname= dirname+'/found'
   nearname1= dirname+'/found1'
@@ -241,17 +242,18 @@ def GetEff(plan):
   hext.Draw("COLZ")
   
   hnear.Draw("COLZ")
+  hnearm=hnear.Clone("hnearm")
   rs=4
   if (hext.GetEntries()<1E6):
     hext.Rebin2D(rs,rs)
     hnear.Rebin2D(rs,rs)
-    hmul.Rebin2D(rs,rs)
+    #hmul.Rebin2D(rs,rs)
   heff = hnear.Clone("heff")
   heff.SetDirectory(0)
   heff.Divide(hnear,hext,100.,1.)
   hmulc = hmul.Clone("hmulc")
   hmulc.SetDirectory(0)
-  hmulc.Divide(hmul,hnear,1.,1.)
+  hmulc.Divide(hmul,hnearm,1.,1.)
   hmulc.Draw("COLZ")
  
   l.append(hnear)
@@ -265,9 +267,13 @@ def GetEff(plan):
     for j in range(2,heff.GetYaxis().GetNbins()-1):
       st = st + '%f ' % heff.GetBinContent(i+1,j+1)
       ntk=ntk+hext.GetBinContent(i+1,j+1)
-      if (hext.GetBinContent(i+1,j+1)>15):
+      # Cut a 15 change en 5
+      if (hext.GetBinContent(i+1,j+1)>25):
         heffsum.Fill(heff.GetBinContent(i+1,j+1))
-      hmulsum.Fill(hmulc.GetBinContent(i+1,j+1))
+  for i in range(2,hmulc.GetXaxis().GetNbins()-1):
+    for j in range(2,hmulc.GetYaxis().GetNbins()-1):
+      if (hnearm.GetBinContent(i+1,j+1)):
+        hmulsum.Fill(hmulc.GetBinContent(i+1,j+1))
   #print '%s' % st
   l.append(heffsum)
   l.append(hmulc)
@@ -280,10 +286,20 @@ def GetEff(plan):
   l.append(hnear.GetEntries())
   l.append(hnear1.GetEntries())
   l.append(hnear2.GetEntries())
-  
+  l.append(hmulsum.GetMean())
   return l
- 
 
+def drawEff(c,l):
+ 
+  
+  c.cd(1);l[0].Draw("COLZ")
+  c.cd(2);l[1].Draw("COLZ")
+  c.cd(3);l[2].Draw("COLZ")
+  c.cd(4);l[4].Draw("COLZ")
+  c.cd(5);l[3].Draw("")
+  c.cd(6);l[5].Draw("")
+  c.Update();
+  
 def getDifList(chamber):
   difl={}
   path="/Chamber%d" % chamber
@@ -579,3 +595,62 @@ def gainDIFAsics(hpath,idd,cut):
          flist.write("oa.RescaleGain(192,%d,%d,%d)\n" % (g1,idd,i+1))
      flist.close()
      return hm
+def fitCB(hr,mhr=-1E9,shr=-1E9,c=None):
+    x=RooRealVar("x", "Number of Hit", hr.GetXaxis().GetXmin(),hr.GetXaxis().GetXmax())
+    l = RooArgList(x)
+    data=RooDataHist("data", "Number of Hit data", l, hr)
+    frame=x.frame()
+    data.plotOn(frame)
+    if c!=None:
+      c.cd(3)
+    else:
+       c=TCanvas("Fit results")
+       c.cd()
+    data.plotOn(frame).Draw()
+    if mhr==-1E9:
+      mhr=hr.GetMean()
+    if shr==-1E9:
+      shr=hr.GetRMS();
+    mean=RooRealVar("mean", "mean",mhr,mhr-2*shr,mhr+2*shr)
+    sigma=RooRealVar("sigma", "sigma",shr,shr*0.5,2*shr)
+    alpha=RooRealVar("alpha", "alpha", 2., 0.,300)
+    nth=RooRealVar("nth", "nth", 2., 0.,300)
+    rcb=RooCBShape("rcb","rcb",x,mean,sigma,alpha,nth)
+    rcb.fitTo(data)
+    rcb.paramOn(frame)
+    rcb.plotOn(frame)
+    frame.Draw()
+    
+    return [frame.chiSquare(),mean.getVal(),sigma.getVal(),alpha.getVal(),nth.getVal()]
+#    if (fo!=None):
+#        fo.write("%.1f| %.1f| %.1f | %.1f| %.1f|" % (frame.chiSquare(),mean.getVal(),sigma.getVal(),alpha.getVal(),nth.getVal()))
+    if (fo!=None):
+        fo.write("%.3f| %.3f|%.3f| %.3f|" % (mean.getVal(),mean.getError(),sigma.getVal(),sigma.getError()))
+    c.SaveAs(hr.GetTitle()+"_ROOFIT.png");time.sleep(1)
+
+def FWHM(h1,emean=1.):
+  
+  while (h1.GetBinContent(h1.FindFirstBinAbove(h1.GetMaximum()/2))<50):
+    h1.Rebin(2)
+    print h1.GetMaximum()
+  print "Maximum ",h1.GetMaximum()
+
+  bin1=h1.FindFirstBinAbove(h1.GetMaximum()/2);
+  bin2=h1.FindLastBinAbove(h1.GetMaximum()/2);
+  fwhm=h1.GetBinCenter(bin2)-h1.GetBinCenter(bin1);
+  sigma=fwhm/math.sqrt(math.log(256))
+  mode=h1.GetBinCenter(h1.GetMaximumBin())
+  g1 = TF1("m1","gaus",mode-3*sigma,mode+3*sigma)
+  g1.SetParameter(1,mode)
+  g1.SetParameter(2,sigma)
+  h1.Fit("m1","","",mode-1.5*sigma,mode+2*sigma)
+  print "On trouve ",fwhm,sigma,mode,mode-sigma,mode+2*sigma
+  #time.sleep(5)
+  l=[bin1,bin2,fwhm,sigma,mode,g1.GetChisquare(),g1.GetParameter(0),g1.GetParameter(1),g1.GetParameter(2)]
+ 
+  l1=fitCB(h1,mode,sigma)
+  l=l+l1
+  print l
+
+  return [emean,(mode-emean)*100/emean,sigma/mode*100,(g1.GetParameter(1)-emean)/emean*100,g1.GetParameter(2)/g1.GetParameter(1)*100,(l1[1]-emean)*100./emean,l1[2]/l1[1]*100.]
+

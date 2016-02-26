@@ -91,6 +91,9 @@ void TrackInfo::regression()
       chi2x_+=(x_[i]-ax_*z_[i]-bx_)*(x_[i]-ax_*z_[i]-bx_);
       chi2y_+=(y_[i]-ay_*z_[i]-by_)*(y_[i]-ay_*z_[i]-by_);
     }
+  // calculate closest approach for all points
+  for  (uint32_t i=0;i<np_;i++)
+    cla_[i]=closestApproach(x_[i],y_[i],z_[i]);
   return;
 
 
@@ -104,4 +107,28 @@ void TrackInfo::exclude_layer(uint32_t layer,TrackInfo& ti)
       ti.add_point(x_[i],y_[i],z_[i],layer_[i]);
     }
   ti.regression();
+}
+void  TrackInfo::add_point(double x,double y,double z,uint32_t l)
+{
+  if (np_<2)
+    {
+      x_[np_]=x;y_[np_]=y;z_[np_]=z;layer_[np_]=l;np_++;
+      return;
+    }
+  if (cla_[0]<0)
+    this->regression();
+  double d=closestApproach(x,y,z);
+
+  for  (uint32_t i=0;i<np_;i++)
+    {
+      if (layer_[i]==l && d>=cla_[i]) return;
+      if (layer_[i]==l && d<cla_[i])
+	{
+	  x_[i]=x;
+	  y_[i]=y;
+	  z_[i]=z;
+	  return;
+	}
+    }
+  x_[np_]=x;y_[np_]=y;z_[np_]=z;layer_[np_]=l;np_++;
 }

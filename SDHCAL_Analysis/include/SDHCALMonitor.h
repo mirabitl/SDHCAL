@@ -36,7 +36,7 @@ public:
 	SDHCALMonitor(DHCalEventReader* r,DCHistogramHandler* h);
 	void clear();
 	void FillTimeAsic(IMPL::LCCollectionVec* rhcol);
-	void DIFStudy( IMPL::LCCollectionVec* rhcol);	
+	void DIFStudy( IMPL::LCCollectionVec* rhcol,bool external=false);	
 	void trackHistos(std::vector<RecoCandTk> &tracks,std::vector<RecoPoint> &points,std::string tkdir="/OtherTracking");
 
 	void setFirstChamber(uint32_t i);

@@ -13,6 +13,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         super(ImageViewer, self).__init__(parent)
         self.setupUi(self)
         self.daq_=None
+        self.thresholdUsed_=False
         self.isLVOn_=False
         self.canvas =None
         self.connectActions()
@@ -21,11 +22,28 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         name=str(self.LEconfig.text().toAscii())
         print name
         self.daq_=StartDaq.StartDaq(name)
+        self.LEDBState.setText(self.daq_.state_)
+        self.CBILC.setChecked(self.daq_.r_ilc_)
+        self.CBPowerPulsing.setChecked(self.daq_.r_powerpulsing_)
+        self.CBAnalog.setChecked(self.daq_.r_analog_)
+        self.CBDigital.setChecked(self.daq_.r_digital_)
+        self.CBTemperature.setChecked(self.daq_.r_temperature_)
         self.PBCreateDaq.setEnabled(False)
         self.PBDiscover.setEnabled(True)
         self.PBDiscoverDNS.setEnabled(True)
         self.PBDownloadDB.setEnabled(True)
         self.PBInitialiseWriter.setEnabled(True)
+    def SetDBState(self):
+        print "On y est"
+        name=str(self.LEDBState.text().toAscii())
+        print name
+        self.daq_.state_=name
+        self.daq_.r_ilc_= self.CBILC.isChecked()
+        self.daq_.r_powerpulsing_= self.CBPowerPulsing.isChecked()
+        self.daq_.r_analog_= self.CBAnalog.isChecked()
+        self.daq_.r_digital_= self.CBDigital.isChecked()
+        self.daq_.r_temperature_= self.CBTemperature.isChecked()
+        self.daq_.setTriggerRegister()
     def Discover(self):
         self.daq_.Discover()
         self.PBInitialise.setEnabled(True)
@@ -116,7 +134,8 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
     def SetThresholds(self):
         if self.daq_!=None:
             self.daq_.SetThresholds(self.SBTHR0L.value(),self.SBTHR1L.value(),self.SBTHR2L.value())
-            self.daq_.Configure()
+            self.thresholdUsed_=True
+            #self.daq_.Configure()
     def Pause(self):
         if self.daq_!=None:
             self.daq_.Pause()
@@ -127,7 +146,13 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
     def Start(self):
         if self.daq_!=None:
             self.daq_.Start()
-            postelog.post(self.daq_.daq_.getCurrentRun(),self.daq_.daq_.getCurrentState())
+            msg=self.daq_.daq_.getCurrentState()
+            if self.thresholdUsed_:
+                msg=self.daq_.daq_.getCurrentState()+" Seuil %d-%d-%d " % (self.SBTHR0L.value(),self.SBTHR1L.value(),self.SBTHR2L.value())
+                self.thresholdUsed_=False
+                
+            postelog.post(self.daq_.daq_.getCurrentRun(),msg)
+            #self.daq_.daq_.getCurrentState())
             self.LCDRun.display(self.daq_.daq_.getCurrentRun())
             self.PBConfigure.setEnabled(False)
             self.PBStart.setEnabled(False)
@@ -318,6 +343,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         #QtCore.QObject.connect( self.PBCreateDaq, QtCore.SIGNAL('clicked()'), self.CreateDaq)
         #self.PBCreateDaq.setEnabled(False)
         self.PBCreateDaq.clicked.connect(self.CreateDaq)
+        self.PBSetDBState.clicked.connect(self.SetDBState)
         self.PBRestartHost.clicked.connect(self.RestartHost)
         self.PBStartHost.clicked.connect(self.StartHost)
         self.PBStopHost.clicked.connect(self.StopHost)  
@@ -339,8 +365,8 @@ class ImageViewer(QtGui.QMainWindow, DaqUI.Ui_MainWindow):
         self.PBConfigure.clicked.connect(self.Configure)
         self.PBStart.clicked.connect(self.Start)
         self.PBStop.clicked.connect(self.Stop)
-        self.PBPause.clicked.connect(self.Pause)
-        self.PBResume.clicked.connect(self.Resume)
+        #self.PBPause.clicked.connect(self.Pause)
+        #self.PBResume.clicked.connect(self.Resume)
         self.PBSetThresholds.clicked.connect(self.SetThresholds)        
         self.PBDestroy.clicked.connect(self.Destroy)
         self.PBUpdate.clicked.connect(self.Update)

@@ -52,7 +52,7 @@ void ShmProxy::Initialise(bool purge)
   theBufferMap_.clear();
   printf("avant purgeshm clear \n");
   if (purge)
-    this->purgeShm();
+    ShmProxy::purgeShm();
   printf("avant mkdir  clear \n");
   //int32_t ier=system("mkdir -p /dev/shm/closed");
   int status = mkdir("/dev/shm/closed", S_IRWXU | S_IRWXG | S_IRWXO );
@@ -102,7 +102,7 @@ void ShmProxy::Start(uint32_t run,std::string dir,uint32_t nd)
   theBufferMap_.clear();
   printf("avant purgeshm clear \n");
   
-  this->purgeShm();
+  ShmProxy::purgeShm();
 
   if (nd!=0) theNumberOfDIF_=nd;
   printf("Starting run %d on directory %s setup %s for %d DIF %x %x\n",run,theDirectoryName_.c_str(),theSetupName_.c_str(),theNumberOfDIF_,&theNumberOfDIF_,this); 
@@ -243,11 +243,14 @@ bool ShmProxy::performWrite()
 }
 
 
-void ShmProxy::purgeShm()
+void ShmProxy::purgeShm(std::string memory_dir)
 {
   int count,i;  
-  struct direct **files;     
-  count = scandir("/dev/shm/closed/", &files, file_select_1, alphasort);  
+  struct direct **files;
+ std::stringstream s("");
+ s<<memory_dir<<"/closed/";
+  
+ count = scandir(s.str().c_str(), &files, file_select_1, alphasort);  
 	
   /* If no files found, make a non-selectable menu item */  
   for (i=1; i<count+1; ++i)
@@ -258,18 +261,18 @@ void ShmProxy::purgeShm()
       //printf("dif %d DTC %d GTC %d \n",dif,dtc,gtc);
 		
       char fname[256];
-      sprintf(fname,"/dev/shm/Event_%lld_%d_%d_%d",abcid,dtc,gtc,dif);
+      sprintf(fname,"%s/Event_%lld_%d_%d_%d",s.str().c_str(),abcid,dtc,gtc,dif);
       unlink(fname);
-      sprintf(fname,"/dev/shm/closed/%lld_%d_%d_%d",abcid,dtc,gtc,dif);
+      sprintf(fname,"%s/closed/%lld_%d_%d_%d",s.str().c_str(),abcid,dtc,gtc,dif);
       unlink(fname);
     }
 	
 }
-void ShmProxy::transferToFile(unsigned char* cbuf,uint32_t size_buf,uint64_t bcid,uint32_t detector_event,uint32_t global_event,uint32_t detid)
+void ShmProxy::transferToFile(unsigned char* cbuf,uint32_t size_buf,uint64_t bcid,uint32_t detector_event,uint32_t global_event,uint32_t detid,std::string memory_dir)
 {
 
   std::stringstream s("");
-  s<<"/dev/shm/Event_"
+  s<<memory_dir<<"/Event_"
    << bcid<<"_"
    << detector_event<<"_"
    <<global_event<<"_"
@@ -289,7 +292,7 @@ void ShmProxy::transferToFile(unsigned char* cbuf,uint32_t size_buf,uint64_t bci
     }
   ::close(fd);
   std::stringstream st("");
-  st<<"/dev/shm/closed/"
+  st<<memory_dir<<"/closed/"
     << bcid<<"_"
     << detector_event<<"_"
     <<global_event<<"_"
