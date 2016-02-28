@@ -16,7 +16,7 @@ using namespace std;
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
-
+#include "DaqLogger.h"
 typedef struct 
 {
   uint32_t vendorid;
