@@ -88,7 +88,7 @@ CPPFLAGS=["-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "
 
 #LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
 if (platform == "UBUNTU"):
-  LIBRARIES=['pthread',  'm', 'stdc++','ftdi','ftdipp','netlink','boost_system','boost_thread','cslm']
+  LIBRARIES=['pthread',  'm', 'stdc++','ftdi','ftdipp','netlink','boost_system','boost_thread','log4cxx','cslm']
 else:
   LIBRARIES=['pthread',  'm', 'stdc++','ftdi','ftdipp','netlink',boostsystem,boostthread,'cslm']
 

@@ -61,13 +61,17 @@ start:
 	if (ftdi_init(&theFtdi) < 0)
 	{
 		fprintf(stderr, "ftdi_init failed\n");
-		_exit(1);
+		LOG4CXX_FATAL(_logFTDI,"ftdi_init failed "<<deviceIdentifier);
+		return;
+		//_exit(1);
 	}
 
 	if ((ret = ftdi_usb_open_desc(&theFtdi, 0x0403,theProduct_,NULL,deviceIdentifier)) < 0)
 	{
 		fprintf(stderr, "unable to open ftdi device: %d (%s)\n", ret, ftdi_get_error_string(&theFtdi));
-		_exit(1);
+		LOG4CXX_FATAL(_logFTDI,"unable to open device "<<deviceIdentifier);
+		return;
+		//_exit(1);
 	}
 
 
@@ -145,6 +149,7 @@ void FtdiUsbDriver::checkReadWrite(uint32_t start,uint32_t count)   throw (Local
 	    {
 	      printf(" Error Reading  \n");
 	      std::string errorMessage( "Cannot Read test register from FT245" );
+	      LOG4CXX_FATAL(_logFTDI,"Cannot Read test register from FT245"<<theName);
 	      throw (LocalHardwareException( "FT245" ,errorMessage, __FILE__, __LINE__, __FUNCTION__ ) );   
 	    }
 	}
@@ -159,7 +164,7 @@ FtdiUsbDriver::~FtdiUsbDriver()     throw (LocalHardwareException)
 	if ((ret = ftdi_usb_close(&theFtdi)) < 0)
 	{
 		fprintf(stderr, "unable to close ftdi device: %d (%s)\n", ret, ftdi_get_error_string(&theFtdi));
-		
+		LOG4CXX_ERROR(_logFTDI,"unable to close ftdi device: "<<theName);
 		ftdi_deinit(&theFtdi);
 
 		std::stringstream errorMessage;
