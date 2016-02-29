@@ -107,7 +107,7 @@ ROOT_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getout
 
 
 
-LIBRARIES=ROOT_LIBS+["pthread","jsoncpp",boostsystem,boostthread]
+LIBRARIES=ROOT_LIBS+["pthread","jsoncpp","log4cxx",boostsystem,boostthread]
 LIBRARY_PATHS=ROOT_LIBPATH
 if ( platform=="SLC5" and osv=="x86_64"):
     LIBRARY_PATHS=ROOT_LIBPATH+["/usr/lib64/boost141","/usr/lib64","/usr/local/lib"]
