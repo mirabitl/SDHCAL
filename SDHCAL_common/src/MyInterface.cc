@@ -35,6 +35,7 @@ void MyInterface::connect()
 
   if (!mysql_real_connect(&theMysql_,theHost_.c_str(),theName_.c_str(),thePwd_.c_str(),theDatabase_.c_str(),0,NULL,0))
     {
+      LOG4CXX_FATAL(_logMy,"Failed to connect to database:"<<mysql_error(&theMysql_));
       fprintf(stderr, "Failed to connect to database: Error: %s\n",
 	      mysql_error(&theMysql_));
       return;
@@ -59,6 +60,7 @@ int32_t MyInterface::executeQuery(std::string stmt)
 	retval=mysql_query (&theMysql_,stmt.c_str());
 	if (retval!=0)
 	  {
+	    LOG4CXX_FATAL(_logMy,"Error during query: Command "<<stmt<<" Error: "<<mysql_error(&theMysql_));
 	    fprintf(stderr, "Error during query: Command %s Error: %s\n",
 		    stmt.c_str(),mysql_error(&theMysql_));
 	    char c;c=getchar();putchar(c); if (c=='.') exit(0);;
@@ -79,6 +81,8 @@ int32_t MyInterface::executeSelect(std::string stmt)
   if (theMysqlRes_!=NULL)
     mysql_free_result(theMysqlRes_);
   if (retval=mysql_query(&theMysql_,stmt.c_str())) {
+    LOG4CXX_FATAL(_logMy,"Error during select: Command "<<stmt<<" Error: "<<mysql_error(&theMysql_));
+
         fprintf(stderr, "%s\n", mysql_error(&theMysql_));
         exit(1);
     }

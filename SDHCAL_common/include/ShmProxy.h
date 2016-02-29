@@ -22,6 +22,7 @@
 #ifdef USE_DIM
 #include "dis.hxx"
 #endif
+#include "CommonLogger.h"
 
 class ShmProxy
  #ifdef USE_DIM

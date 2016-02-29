@@ -57,5 +57,11 @@
   <category name="DbOracle" >
         <priority value ="info" />
   </category>
+  <category name="CommonShm" >
+        <priority value ="info" />
+  </category>
+  <category name="CommonMysql" >
+        <priority value ="info" />
+  </category>
 
  </log4j:configuration>
