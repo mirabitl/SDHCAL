@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
-
+#include "DbLogger.h"
 #include "UsbDIFSettings.h"
 typedef unsigned char SingleHardrocV2ConfigurationFrame[HARDROCV2_SLC_FRAME_SIZE];
 
