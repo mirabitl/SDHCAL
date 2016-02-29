@@ -17,7 +17,7 @@ surf=4.33736
     
 # configure the serial connections (the parameters differs on the device you are connecting to)
 
-ser = serial.Serial("/dev/ttyUSB1")  # open first serial port
+ser = serial.Serial("/dev/ttyUSB0")  # open first serial port
 print ser.portstr       # check which port was really used
 ser.baudrate = 9600
 

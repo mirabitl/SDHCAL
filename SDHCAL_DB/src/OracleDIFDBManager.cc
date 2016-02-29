@@ -5,13 +5,25 @@ OracleDIFDBManager::OracleDIFDBManager(std::string sdifs,std::string setup,std::
 void OracleDIFDBManager::initialize()
 {
   std::cout<<"On initialise Oracle "<<std::endl;
- DBInit::init();
-
+  try {
+    DBInit::init();
+  }
+  catch(...)
+    {
+      LOG4CXX_FATAL(_logOracle,"Cannot initialise Oracle");
+      return;
+    }
  if (theXMLFile_.compare("NONE")==0)
    {
-     theOracleSetup_=Setup::getSetup(theOracleSetupName_); 
-     std::cout<<"On initialise Oracle "<<(long)theOracleSetup_<< std::endl;
-     LOG4CXX_INFO(_logOracle,"On initialize Oracle "<<theOracleSetupName_);
+     try {
+       theOracleSetup_=Setup::getSetup(theOracleSetupName_); 
+       std::cout<<"On initialise Oracle "<<(long)theOracleSetup_<< std::endl;
+       LOG4CXX_INFO(_logOracle,"On initialize Oracle "<<theOracleSetupName_);
+     }
+     catch(...)
+       {
+	 LOG4CXX_FATAL(_logOracle,"Setup initialisation failed");
+       }
    }
  else
    {

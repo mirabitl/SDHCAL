@@ -84,7 +84,7 @@ CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN
 
 
 #LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
-LIBRARIES=[ 'dl','uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c',  'pthread', 'stdc++',boostsystem,boostthread,'SDHCALcommon','SDHCALDB','dim','netlink','cslm']
+LIBRARIES=[ 'dl','uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c',  'pthread', 'stdc++','log4cxx',boostsystem,boostthread,'SDHCALcommon','SDHCALDB','dim','netlink','cslm']
 
 
 

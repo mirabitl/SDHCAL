@@ -65,6 +65,7 @@ void DimDbServer::doDownload(std::string state)
     }
   theDBManager_= new OracleDIFDBManager("74",state_);
   theDBManager_->initialize();
+  LOG4CXX_WARN(_logDb," Donwloading "<<state_);
   theDBManager_->download();
   std::map<uint32_t,unsigned char*> dbm=theDBManager_->getAsicKeyMap();
 
@@ -129,6 +130,7 @@ void DimDbServer::getRunFromDb()
 	runFromDb_=theRunInfo_->getRunNumber();
       } catch (ILCException::Exception e)
 	{
+	  LOG4CXX_ERROR(_logDb,"Cannot get run number "<<e.getMessage());
 	  theRunInfo_=NULL;
 	  std::cout<<e.getMessage()<<std::endl;
 	}
@@ -148,6 +150,7 @@ void DimDbServer::commandHandler()
 {
   DimCommand *currCmd = getCommand();
   printf(" J'ai recu %s COMMAND  \n",currCmd->getName());
+  LOG4CXX_INFO(_logDb,"CMD : "<<currCmd->getName());
   if (currCmd==downloadCommand_)
     {
       std::string device((const char*) currCmd->getString());

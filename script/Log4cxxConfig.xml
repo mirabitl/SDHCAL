@@ -51,5 +51,11 @@
   <category name="ShmProxy" >
         <priority value ="info" />
   </category>
+  <category name="DbManager" >
+        <priority value ="info" />
+  </category>
+  <category name="DbOracle" >
+        <priority value ="info" />
+  </category>
 
  </log4j:configuration>

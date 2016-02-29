@@ -313,7 +313,7 @@ void TrackAnalyzer::presetParameters()
   catch (std::string s)
     {
       std::cout<<__PRETTY_FUNCTION__<<" error "<<s<<std::endl;
-      exit(-1);
+      //exit(-1);
     }
   //getchar();	
 }

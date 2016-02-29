@@ -82,7 +82,7 @@ def switch(*args):
     print 'Switch completed '
 # The function dis_add_service is used to register the service in DIM
 
-for  imod in range(0,6):
+for  imod in range(0,7):
     for ichan in range(0,8):
         # 
         svname="/WIENER/MODULE%d-CHANNEL%d/%d" % (imod,ichan,imod*8+ichan)
