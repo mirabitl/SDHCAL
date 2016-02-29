@@ -97,7 +97,7 @@ ROOT_LIBS.append('XMLIO')
 ROOT_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getoutput("$ROOTSYS/bin/root-config --libs ").split(" "))]
 
 #LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
-LIBRARIES=ROOT_LIBS+['pthread',  'm', 'stdc++',boostsystem,boostthread,'SDHCALcommon','SDHCALReadout','SDHCALEventReader','lcio','sio','dim','netlink','cslm','jsoncpp']
+LIBRARIES=ROOT_LIBS+['pthread',  'm', 'stdc++',boostsystem,boostthread,'SDHCALcommon','SDHCALReadout','SDHCALEventReader','lcio','sio','dim','netlink','cslm','jsoncpp','log4cxx']
 
 
 

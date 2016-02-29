@@ -42,5 +42,14 @@
   <category name="DaqCCC" >
         <priority value ="info" />
   </category>
+  <category name="CtrlDaq" >
+        <priority value ="info" />
+  </category>
+  <category name="CtrlWriter" >
+        <priority value ="info" />
+  </category>
+  <category name="ShmProxy" >
+        <priority value ="info" />
+  </category>
 
  </log4j:configuration>

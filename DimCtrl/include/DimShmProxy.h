@@ -21,7 +21,7 @@ using namespace std;
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 
 #include <string>
-
+#include "CtrlLogger.h"
 class DimDaqControl;
 
 class DimShmProxy: public DimServer,public DimClient

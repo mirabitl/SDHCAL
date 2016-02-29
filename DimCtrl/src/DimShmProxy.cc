@@ -116,11 +116,13 @@ void  DimShmProxy::registerDifs()
 void DimShmProxy::infoHandler()
 {
    DimInfo *curr = getInfo(); // get current DimInfo address 
+   LOG4CXX_DEBUG(_logWriter," DimInfo "<<curr->getName()<<" Size " <<curr->getSize());
    if (curr->getSize()==1) return;
    if (curr==runInfo_)
      {
        theRun_=curr->getInt();
        std::cout<<"The current Run is "<<theRun_<<std::endl;
+       LOG4CXX_INFO(_logWriter,"The current Run is "<<theRun_);
        return;
      }
    if (curr==dbstateInfo_)
@@ -128,6 +130,7 @@ void DimShmProxy::infoHandler()
 
        dbState_.assign(curr->getString());
        std::cout<<"The current DbState is "<<dbState_<<std::endl;
+       LOG4CXX_INFO(_logWriter,"The current DbState is "<<dbState_);
        return;
      }
    for (int i=0;i<255;i++)
@@ -192,6 +195,7 @@ void DimShmProxy::commandHandler()
 {
   DimCommand *currCmd = getCommand();
   printf(" J'ai recu %s COMMAND  \n",currCmd->getName());
+  LOG4CXX_INFO(_logWriter,"CMD : "<<currCmd->getName());
   if (currCmd==initialiseCommand_)
     {
       if (theProxy_ == NULL)

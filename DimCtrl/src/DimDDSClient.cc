@@ -183,6 +183,7 @@ void DimDDSClient::infoHandler()
 {
   DimInfo *curr = (DimInfo*) getInfo(); // get current DimStampedInfo address
   //std::cout<<"GOT info "<<curr->getName()<<std::endl;
+  LOG4CXX_DEBUG(_logCtrl," DimInfo "<<curr->getName()<<" Size " <<curr->getSize());
   if (curr==theDDSStatus_)
     {
       theStatus_=curr->getInt();
