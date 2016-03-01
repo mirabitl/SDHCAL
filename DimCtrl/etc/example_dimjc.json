@@ -1,0 +1,245 @@
+{
+
+    "HOSTS" :
+    {
+
+	"lyosdhcal9":[
+	    {
+	    "NAME":"WRITER",
+		"ARGS" : ["-d /data/NAS/oyonax"],
+	    "ENV" : [
+		"DIM_DNS_NODE=lyosdhcal9",
+		"LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/root/lib:/opt/dhcal/dim/linux:/opt/dhcal/lcio/v02-00/lib/:$LD_LIBRARY_PATH"
+	    ],
+	    "PROGRAM" : "/opt/dhcal/bin/dimwriter"
+	    },
+	    {
+	    "NAME":"WIENER",
+		"ARGS" : [],
+	    "ENV" : [
+		"DIM_DNS_NODE=lyosdhcal9",
+		"LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/root/lib:/opt/dhcal/dim/linux:/opt/dhcal/lcio/v02-00/lib/:$LD_LIBRARY_PATH"
+	    ],
+	    "PROGRAM" : "/opt/dhcal/bin/wiener-dim.py"
+	    },
+	    {
+	    "NAME":"DBSERVER",
+	    "ARGS" : [],
+	    "ENV" : [
+		"DIM_DNS_NODE=lyosdhcal9",
+		"LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH",
+		"CONFDB=ILC/fFQeV52rQy@(DESCRIPTION_LIST=(LOAD_BALANCE=off)(FAILOVER=on)(DESCRIPTION=(CONNECT_TIMEOUT=5)(TRANSPORT_CONNECT_TIMEOUT=3)(RETRY_COUNT=3)(ADDRESS_LIST=(LOAD_BALANCE=on)(ADDRESS=(PROTOCOL=TCP)(HOST=ccscanovo.in2p3.fr)(PORT=1521)))(CONNECT_DATA=(SERVICE_NAME=calice.in2p3.fr)))(DESCRIPTION=(CONNECT_TIMEOUT=5)(TRANSPORT_CONNECT_TIMEOUT=3)(RETRY_COUNT=3)(ADDRESS_LIST=(LOAD_BALANCE=on)(ADDRESS=(PROTOCOL=TCP)(HOST=ccscanodgvo.in2p3.fr)(PORT=1521)))(CONNECT_DATA=(SERVICE_NAME=calice.in2p3.fr))))"
+	    ],
+	    "PROGRAM" : "/opt/dhcal/bin/dimdb"
+	    }
+		      ],
+// Test avec 2 programmes
+	"lyoilcrpi17":[
+	    // CCC
+	    {
+		"NAME":"CCCSERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/dimccc"
+	    },
+	    // ZUP
+	    {
+		"NAME":"ZUPSERVER",
+		"ARGS" : ["-d /dev/ttyUSB0","-a 1" ],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/dimzup"
+	    }
+	],
+	"lyoilcrpi03":[
+	    // DIF
+	    {
+		"NAME":"DIFSERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/dimdif"
+	    }	       
+	],
+	"lyoilcrpi04":[
+	    // DIF
+	    {
+		"NAME":"DIFSERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/dimdif"
+	    }	       
+	],
+	"lyoilcrpi05":[
+	    // DIF
+	    {
+		"NAME":"DIFSERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/dimdif"
+	    }	       
+	],
+	"lyoilcrpi06":[
+	    // DIF
+	    {
+		"NAME":"DIFSERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/dimdif"
+	    }	       
+	],
+	"lyoilcrpi07":[
+	    // DIF
+	    {
+		"NAME":"DIFSERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/dimdif"
+	    }	       
+	],
+
+	"lyoilcrpi08":[
+	    // DIF
+	    {
+		"NAME":"DIFSERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/dimdif"
+	    }	       
+	],
+	"lyoilcrpi09":[
+	    // DIF
+	    {
+		"NAME":"DIFSERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/dimdif"
+	    }	       
+	],
+	"lyoilcrpi10":[
+	    // DIF
+	    {
+		"NAME":"DIFSERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/dimdif"
+	    }	       
+	],
+	"lyoilcrpi11":[
+	    // DIF
+	    {
+		"NAME":"DIFSERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/dimdif"
+	    }	       
+	],
+	"lyoilcrpi12":[
+	    // DIF
+	    {
+		"NAME":"DIFSERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/dimdif"
+	    }	       
+	],
+	"lyoilcrpi14":[
+	    // DIF
+	    {
+		"NAME":"DIFSERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/dimdif"
+	    }	       
+	],
+	"lyoilcrpi15":[
+	    // DIF
+	    {
+		"NAME":"DIFSERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/dimdif"
+	    }	       
+	],
+	"lyoilcrpi19":[
+	    // DIF
+	    {
+		"NAME":"DIFSERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/dimdif"
+	    }	       
+	],
+	"lyoilcrpi24":[
+	    // DIF
+	    {
+		"NAME":"BMP183SERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/dimbmp183"
+	    }	       
+	]
+    }
+}
