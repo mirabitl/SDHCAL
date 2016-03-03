@@ -35,6 +35,11 @@ DimDIFServer::DimDIFServer()
   devicesService_= new DimService(s0.str().c_str(),"I:255",devicesStatus_,255*sizeof(int32_t));
   processStatus_=DimDIFServer::ALIVED;
   aliveService_->updateService();
+
+  s0.str(std::string());
+  s0<<"/DDS/"<<hname<<"/REGISTER";
+  registerService_ = new DimService(s0.str().c_str(),register_);
+  register_=0;
   allocateCommands();
   s0.str(std::string());
   gethostname(hname,80);
@@ -84,6 +89,12 @@ void DimDIFServer::allocateCommands()
   s0.str(std::string());
   s0<<"/DDS/"<<hname<<"/LOOPCONFIGURE";
   loopConfigureCommand_=new DimCommand(s0.str().c_str(),"I:2",this);
+  s0.str(std::string());
+  s0<<"/DDS/"<<hname<<"/REGISTERREAD";
+  registerreadCommand_=new DimCommand(s0.str().c_str(),"I:2",this);
+  s0.str(std::string());
+  s0<<"/DDS/"<<hname<<"/REGISTERWRITE";
+  registerwriteCommand_=new DimCommand(s0.str().c_str(),"I:3",this);
 }
 
 void DimDIFServer::clearServices()
@@ -275,8 +286,10 @@ void DimDIFServer::preConfigure(uint32_t difid,uint32_t ctrlreg) throw (LocalHar
     }
   else
     {
+      itd->second->setPowerManagment(0x8c52, 0x3e6,0xd640,0x4e,0x4e);// Start decale de 36000 clock (8b68 a la place de 43 ECAL needs)
       itd->second->setControlRegister(ctrlreg);
       itd->second->configureRegisters();
+
 		
     }
 }
@@ -758,6 +771,56 @@ void DimDIFServer::commandHandler()
       processStatus_=DimDIFServer::STOPPED;
       aliveService_->updateService();
     
+    }
+  if (currCmd==registerwriteCommand_)
+    {
+      uint32_t* dd=(uint32_t*) currCmd->getData();
+      uint32_t difid=dd[0];
+      uint32_t adr=dd[1];
+      uint32_t reg=dd[2];
+      for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
+	{
+	  if (itd->first!=difid) continue;
+	  try 
+	    {
+	      itd->second->UsbRegisterWrite(adr,reg);
+	    }
+	  catch (LocalHardwareException e)
+	    {
+	
+	      LOG4CXX_ERROR(_logDDIF,"Cannot write register "<<itd->first<<" ["<<std::hex<<adr<<"]<-"<<reg<<std::dec);
+	    }
+	
+
+	}
+
+    }
+
+  if (currCmd==registerreadCommand_)
+    {
+      
+      uint32_t* dd=(uint32_t*) currCmd->getData();
+      uint32_t difid=dd[0];
+      uint32_t adr=dd[1];
+      uint32_t reg;
+      for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
+	{
+	  if (itd->first!=difid) continue;
+	  LOG4CXX_INFO(_logDDIF,"Reading "<<itd->first<<" ["<<std::hex<<adr<<"]<-");
+	  try 
+	    {
+	      itd->second->UsbRegisterRead(adr,&reg);
+	    }
+	  catch (LocalHardwareException e)
+	    {
+	
+	      LOG4CXX_ERROR(_logDDIF,"Cannot read register "<<itd->first<<" ["<<std::hex<<adr<<"]<-"<<reg<<std::dec);
+	    }
+	  LOG4CXX_INFO(_logDDIF,"Got "<<itd->first<<" ["<<std::hex<<adr<<"]<-"<<reg<<std::dec);
+
+	}
+      register_=reg;
+      registerService_->updateService();
     }
 
   if (currCmd==configurechipsCommand_)
