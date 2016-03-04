@@ -52,7 +52,7 @@ public:
   inline DIFStatus* status() const {return _status;}
   inline DIFReadout* rd() const {return _rd;}
   inline DIFDbInfo* dbdif() const {return _dbdif;}
-  void setState(std::string s){_state=s;}
+  void setState(std::string s){_state.assign(s);}
   inline std::string state() const {return _state;}
   inline uint32_t* data()  {return _data;}
   // Publish DIM services

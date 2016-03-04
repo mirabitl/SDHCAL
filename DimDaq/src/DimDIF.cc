@@ -19,10 +19,16 @@ DimDIF::~DimDIF()
       delete _dsStatus;
       delete _dsData;
       delete _dsState;
+      _dsStatus=NULL;
+      _dsData=NULL;
+      _dsState=NULL;
 
     }
   if (_rd!=NULL)
-    delete _rd;
+    {
+      delete _rd;
+      _rd=NULL;
+    }
 }
 void DimDIF::writeRegister(uint32_t adr,uint32_t reg)
 {
@@ -337,11 +343,23 @@ void DimDIF::registration()
   std::stringstream s0;
   char hname[80];
   gethostname(hname,80);
+  if (_dsStatus!=NULL)
+    {
+      delete _dsStatus;
+      delete _dsData;
+      delete _dsState;
+      _dsStatus=NULL;
+      _dsData=NULL;
+      _dsState=NULL;
+      
+    }
+
 
   // Services
   s0.str(std::string());
   s0<<"/DDS/DIF"<<_status->id<<"/INFO";
   _dsStatus = new DimService(s0.str().c_str(),"I:4;L:2;C:80",_status,sizeof(DIFStatus));
+  s0.str(std::string());
   s0<<"/DDS/DIF"<<_status->id<<"/DATA";
   _dsData = new DimService(s0.str().c_str(),"I",_data,sizeof(uint32_t)*32768);
   s0.str(std::string());
