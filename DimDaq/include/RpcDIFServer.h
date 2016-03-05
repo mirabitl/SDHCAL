@@ -104,14 +104,14 @@ public:
   void setGain(uint32_t gain);
   */
   // DimRpc interface
-  std::map<uint32_t,FtdiDeviceInfo>& getFtdiMap(){ return theFtdiDeviceInfoMap_;}
+  std::map<uint32_t,FtdiDeviceInfo*>& getFtdiMap(){ return theFtdiDeviceInfoMap_;}
   std::map<uint32_t,DimDIF*>& getDIFMap(){ return theDIFMap_;}
       
-  FtdiDeviceInfo* getFtdiDeviceInfo(uint32_t i) { if ( theFtdiDeviceInfoMap_.find(i)!=theFtdiDeviceInfoMap_.end()) return &theFtdiDeviceInfoMap_[i]; else return NULL;}
+  FtdiDeviceInfo* getFtdiDeviceInfo(uint32_t i) { if ( theFtdiDeviceInfoMap_.find(i)!=theFtdiDeviceInfoMap_.end()) return theFtdiDeviceInfoMap_[i]; else return NULL;}
 
   void joinThreads(){g_d.join_all();}
 private:
-  std::map<uint32_t,FtdiDeviceInfo> theFtdiDeviceInfoMap_;	
+  std::map<uint32_t,FtdiDeviceInfo*> theFtdiDeviceInfoMap_;	
   std::map<uint32_t,DimDIF*> theDIFMap_;
 
   RpcDIFScan *scanCommand_;

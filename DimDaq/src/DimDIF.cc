@@ -295,6 +295,7 @@ void DimDIF::initialise()
 {
   uint32_t difid=_ftd.id;
   //  create services
+  
   this->registration();
 
   try
@@ -345,6 +346,7 @@ void DimDIF::registration()
   gethostname(hname,80);
   if (_dsStatus!=NULL)
     {
+      LOG4CXX_INFO(_logDDIF," Deleting dim services ");
       delete _dsStatus;
       delete _dsData;
       delete _dsState;
@@ -353,7 +355,7 @@ void DimDIF::registration()
       _dsState=NULL;
       
     }
-
+  LOG4CXX_INFO(_logDDIF," creating dim services ");
 
   // Services
   s0.str(std::string());

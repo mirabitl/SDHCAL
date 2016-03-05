@@ -20,9 +20,12 @@ RpcDIFRegisterDB::RpcDIFRegisterDB(RpcDIFServer* r,std::string name) : DimRpc(na
 
 void RpcDIFRegisterDB::rpcHandler()
 {
-   LOG4CXX_INFO(_logDDIF," CMD: REGISTERDB called");
+  LOG4CXX_INFO(_logDDIF," CMD: REGISTERDB called"<<getData()<<" "<<getSize());
+  char name[80];
+  memset(name,0,80);
+  memcpy(name,getData(),getSize());
    int32_t rc=0;
-   std::string dbsta((char*) getData());
+   std::string dbsta;dbsta.assign(name);
    _server->registerDB(dbsta);
    setData(rc);
 }
@@ -34,18 +37,21 @@ void RpcDIFScan::rpcHandler()
 {
    LOG4CXX_INFO(_logDDIF," CMD: SCANDEVICE called");
    _server->prepareDevices();
-   std::map<uint32_t,FtdiDeviceInfo>& fm=_server->getFtdiMap();
+   std::map<uint32_t,FtdiDeviceInfo*>& fm=_server->getFtdiMap();
    std::map<uint32_t,DimDIF*> dm=_server->getDIFMap();
+   LOG4CXX_INFO(_logDDIF," CMD: SCANDEVICE clear Maps");
    for ( std::map<uint32_t,DimDIF*>::iterator it=dm.begin();it!=dm.end();it++)
      { if (it->second!=NULL) delete it->second;}
    dm.clear();
    _ndif=0;
-   for ( std::map<uint32_t,FtdiDeviceInfo>::iterator it=fm.begin();it!=fm.end();it++)
+   for ( std::map<uint32_t,FtdiDeviceInfo*>::iterator it=fm.begin();it!=fm.end();it++)
      {
        _buf[_ndif]=it->first;
        _ndif++;
-       DimDIF* d= new DimDIF(&(it->second));
+
+       DimDIF* d= new DimDIF(it->second);
        _server->getDIFMap().insert(std::make_pair(it->first,d));
+       LOG4CXX_INFO(_logDDIF," CMD: SCANDEVICE created DimDIF @ "<<std::hex<<d<<std::dec);
      }
    setData(_buf,_ndif);
 }
@@ -76,7 +82,10 @@ void RpcDIFInitialise::rpcHandler()
     {
 
       for ( std::map<uint32_t,DimDIF*>::iterator it=dm.begin();it!=dm.end();it++)
-	it->second->initialise();
+	{
+	  LOG4CXX_INFO(_logDDIF," calling initialise DimDIF @ "<<std::hex<<it->second<<std::dec);
+	  it->second->initialise();
+	}
       setData(rc);
       return;
     }
@@ -290,7 +299,12 @@ void RpcDIFServer::allocateCommands()
 
 void RpcDIFServer::prepareDevices()
 {
+  for ( std::map<uint32_t,FtdiDeviceInfo*>::iterator it=theFtdiDeviceInfoMap_.begin();it!=theFtdiDeviceInfoMap_.end();it++)
+    if (it->second!=NULL) delete it->second;
   theFtdiDeviceInfoMap_.clear();
+  for ( std::map<uint32_t,DimDIF*>::iterator it=theDIFMap_.begin();it!=theDIFMap_.end();it++)
+    if (it->second!=NULL) delete it->second;
+  theDIFMap_.clear();
   system("/opt/dhcal/bin/ListDevices.py");
   std::string line;
   std::ifstream myfile ("/var/log/pi/ftdi_devices");
@@ -303,18 +317,18 @@ void RpcDIFServer::prepareDevices()
       while ( myfile.good() )
 	{
 	  getline (myfile,line);
-	  FtdiDeviceInfo difi;
-	  memset(&difi,0,sizeof(FtdiDeviceInfo));
-	  sscanf(line.c_str(),"%x %x %s",&difi.vendorid,&difi.productid,difi.name);
-	  if (strncmp(difi.name,"FT101",5)==0)
+	  FtdiDeviceInfo* difi=new FtdiDeviceInfo();
+	  memset(difi,0,sizeof(FtdiDeviceInfo));
+	  sscanf(line.c_str(),"%x %x %s",&difi->vendorid,&difi->productid,difi->name);
+	  if (strncmp(difi->name,"FT101",5)==0)
 	    {
-	      sscanf(difi.name,"FT101%d",&difi.id); 
-	      difi.type=0;
-	      std::pair<uint32_t,FtdiDeviceInfo> p(difi.id,difi);
+	      sscanf(difi->name,"FT101%d",&difi->id); 
+	      difi->type=0;
+	      std::pair<uint32_t,FtdiDeviceInfo*> p(difi->id,difi);
 	      theFtdiDeviceInfoMap_.insert(p);
 	    }
-	  if (strncmp(difi.name,"DCCCCC",6)==0)
-	    {sscanf(difi.name,"DCCCCC%d",&difi.id);difi.type=0x10;}
+	  if (strncmp(difi->name,"DCCCCC",6)==0)
+	    {sscanf(difi->name,"DCCCCC%d",&difi->id);difi->type=0x10;}
 
 
 	}
@@ -326,8 +340,8 @@ void RpcDIFServer::prepareDevices()
       LOG4CXX_FATAL(_logDDIF," Unable to open /var/log/pi/ftdi_devices");
     }
 
-  for (std::map<uint32_t,FtdiDeviceInfo>::iterator it=theFtdiDeviceInfoMap_.begin();it!=theFtdiDeviceInfoMap_.end();it++)
-    printf("Device found and register: %d with info %d %d %s type %d \n", it->first,it->second.vendorid,it->second.productid,it->second.name,it->second.type);
+  for (std::map<uint32_t,FtdiDeviceInfo*>::iterator it=theFtdiDeviceInfoMap_.begin();it!=theFtdiDeviceInfoMap_.end();it++)
+    printf("Device found and register: %d with info %d %d %s type %d \n", it->first,it->second->vendorid,it->second->productid,it->second->name,it->second->type);
 }
 
 
