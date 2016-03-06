@@ -96,7 +96,7 @@ void RpcCccStop::rpcHandler()
       setData(rc);
       return;
     }
-  _server->getManager()->configure();
+  _server->getManager()->stop();
   _server->publishState("STOPPED");
 
    setData(rc);
