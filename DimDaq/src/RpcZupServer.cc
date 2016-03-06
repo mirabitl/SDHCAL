@@ -110,8 +110,12 @@ void RpcZupServer::Switch(uint32_t mode)
       return;
     }
   if (mode==0)
-    {_zup->OFF();this->publishState("OFF");}
+    {
+      LOG4CXX_INFO(_logDDIF,"Switching OFF "<<mode);
+      _zup->OFF();this->publishState("OFF");}
   else
-    {_zup->ON();this->publishState("ON");}
+    {
+      LOG4CXX_INFO(_logDDIF,"Switching ON "<<mode);
+      _zup->ON();this->publishState("ON");}
   this->Read();
 }
