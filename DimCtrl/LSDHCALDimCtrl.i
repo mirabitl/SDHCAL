@@ -8,8 +8,6 @@
  %{
 using std::string;
 #include "DimDaqControl.h"
-#include "DimJobInterface.h"
  %}
 
 %include "DimDaqControl.h"
-%include "DimJobInterface.h"
