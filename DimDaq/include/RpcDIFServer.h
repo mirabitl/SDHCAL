@@ -110,6 +110,11 @@ public:
   FtdiDeviceInfo* getFtdiDeviceInfo(uint32_t i) { if ( theFtdiDeviceInfoMap_.find(i)!=theFtdiDeviceInfoMap_.end()) return theFtdiDeviceInfoMap_[i]; else return NULL;}
 
   void joinThreads(){g_d.join_all();}
+  void setState(std::string s){_state.assign(s);}
+  inline std::string state() const {return _state;}
+  // Publish DIM services
+  inline void publishState(std::string s){setState(s);_dsState->updateService((char*) _state.c_str());}
+
 private:
   std::map<uint32_t,FtdiDeviceInfo*> theFtdiDeviceInfoMap_;	
   std::map<uint32_t,DimDIF*> theDIFMap_;
@@ -126,8 +131,8 @@ private:
   DimInfo* theDBDimInfo_[255];
 
   // Dim Part
-  int32_t processStatus_;
-  DimService* aliveService_; //State of the process 
+  std::string _state;
+  DimService* _dsState; //State of the process 
   /*
   uint32_t theCalibrationGain_;
   uint32_t theCalibrationThresholds_[3];

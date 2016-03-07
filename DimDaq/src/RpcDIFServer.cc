@@ -228,17 +228,15 @@ void RpcDIFDestroy::rpcHandler()
 
 
 
-RpcDIFServer::RpcDIFServer()  
+RpcDIFServer::RpcDIFServer()  : _state("CREATED")
 {
   
   std::stringstream s0;
   char hname[80];
   gethostname(hname,80);
-  s0<<"/DDS/"<<hname<<"/STATUS";
-  aliveService_ = new DimService(s0.str().c_str(),processStatus_);
-  processStatus_=0xBABADEAD;
-  aliveService_->updateService();
-
+  s0<<"/DDS/"<<hname<<"/STATE";
+  _dsState = new DimService(s0.str().c_str(),(char*) _state.c_str());
+  this->publishState("CREATED");
   allocateCommands();
   s0.str(std::string());
   gethostname(hname,80);
