@@ -91,6 +91,7 @@ void RpcShmDestroy::rpcHandler()
   LOG4CXX_INFO(_logWriter," CMD: DESTROY called "<<getInt());
   int32_t rc=0;
   _server->destroy();
+  LOG4CXX_FATAL(_logWriter," CMD: DESTROY is not working please recreate the process if needed (2bdbg) ");
   setData(rc);
 }
 
@@ -321,9 +322,11 @@ void RpcShmServer::initialise()
 
 void RpcShmServer::destroy()
 {
-  if (theProxy_ == NULL)
+  return; //A DEBUGGER
+  if (theProxy_ != NULL)
     {
       delete theProxy_;
+      theProxy_=NULL;
       clearInfo();
     }
 }
