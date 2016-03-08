@@ -30,14 +30,14 @@ namespace RpcDIFClient
   public:
     scan(std::string name,int timeout=-1) : DimRpcInfo((char*) name.c_str(),_buf,255)
     {
-      std::cout<<" Creating DIMrpcinfo "<<name<<std::endl;
+      //std::cout<<" Creating DIMrpcinfo "<<name<<std::endl;
       memset(_buf,0,255*sizeof(int32_t));
       _sem.lock();
     }
     inline void doIt() { int d=0;setData(d);_sem.lock();}
     void rpcInfoHandler()
     {
-      std::cout<<"Receiver size "<<getSize()<<std::endl;
+      //std::cout<<"Receiver size "<<getSize()<<std::endl;
       memcpy(_buf,getData(),getSize());
       _ndif=getSize()/sizeof(int32_t);
       for (int i=0;i<_ndif;i++)
