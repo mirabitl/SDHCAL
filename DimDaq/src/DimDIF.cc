@@ -181,6 +181,18 @@ void DimDIF::destroy()
 	}
       this->publishState("CREATED");
     }
+  if (_dsStatus!=NULL)
+    {
+      LOG4CXX_INFO(_logDDIF," Deleting dim services ");
+      delete _dsStatus;
+      delete _dsData;
+      delete _dsState;
+      _dsStatus=NULL;
+      _dsData=NULL;
+      _dsState=NULL;
+      
+    }
+
 }
 void DimDIF::difConfigure(uint32_t ctrlreg)
 {
