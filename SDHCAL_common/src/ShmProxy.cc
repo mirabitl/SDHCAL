@@ -136,7 +136,7 @@ void ShmProxy::Stop()
   theRunIsStopped_=true;
   LOG4CXX_INFO(_logShm,"Stopping loops");
   sleep((unsigned int) 1);
-  theThread_.join();
+  //theThread_.join();
   //   if (theSave_)
   if (theSave_) theWritter_->closeFile();
 
@@ -393,12 +393,12 @@ bool ShmProxy::performReadFiles()
   for (i=1; i<count+1; ++i)  
     {
       //printf("%s  \n",files[i-1]->d_name);  
-      uint32_t dif,dtc,gtc;
+      int32_t dif,dtc,gtc;
       unsigned long long abcid;
 			
       sscanf(files[i-1]->d_name,"%lld_%d_%d_%d",&abcid,&dtc,&gtc,&dif);
       //printf("dif %d DTC %d GTC %d \n",dif,dtc,gtc);
-			
+      if (gtc<=0 || dtc<=0 || (gtc!=dtc)) continue;
       char fname[256];
       sprintf(fname,"/dev/shm/Event_%lld_%d_%d_%d",abcid,dtc,gtc,dif);
       int fd=::open(fname,O_RDONLY);
