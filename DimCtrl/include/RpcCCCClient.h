@@ -185,7 +185,7 @@ namespace RpcCCCClient
       _rdcState = new DimService(s0.str().c_str(),(char*) _state.c_str());
       _rdcState->updateService();
       s0.str(std::string());
-      s0<<"rpiCCCClient-"<<hname;
+      s0<<"rpiClient-"<<hname;
       
       DimServer::start(s0.str().c_str()); 
     }
