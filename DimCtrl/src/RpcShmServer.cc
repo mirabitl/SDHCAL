@@ -258,6 +258,11 @@ void RpcShmServer::infoHandler()
 	    memcpy(_buffer,curr->getData(),curr->getSize());
        // copy to Shm
 	    uint8_t* cdata=(uint8_t*)  curr->getData();
+	    // Check validity
+	    if (ShmProxy::getBufferDTC(cdata)<=0) return;
+	    if (ShmProxy::getBufferGTC(cdata)<=0) return;
+	    if (ShmProxy::getBufferDIF(cdata)<=0) return;
+	    if (ShmProxy::getBufferDTC(cdata) != ShmProxy::getBufferGTC(cdata)  ) return;
 	    ShmProxy::transferToFile(cdata,
 				     curr->getSize(),
 				     ShmProxy::getBufferABCID(cdata),
