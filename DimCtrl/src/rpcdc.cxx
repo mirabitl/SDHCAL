@@ -2,6 +2,7 @@
 #include "RpcCCCClient.h"
 #include "RpcDbClient.h"
 #include "RpcZupClient.h"
+#include "RpcShmClient.h"
 #include <unistd.h>
 #include <stdint.h>
 #include <log4cxx/logger.h>
@@ -13,6 +14,22 @@ using namespace log4cxx::helpers;
 std::string theDBPrefix_,theCCCPrefix_,theWriterPrefix_,theProxyPrefix_,theZupPrefix_;
 std::vector<std::string> theDIFPrefix_;
 std::vector<RpcDIFClient::rpiClient*> theDIFs_;
+
+void processStatus(const std::string &jsonString,Json::Value &m_processInfo)
+{
+        Json::Reader reader;
+        bool parsingSuccessful = reader.parse(jsonString, m_processInfo);
+
+        if (parsingSuccessful)
+        {
+                Json::StyledWriter styledWriter;
+                std::cout << styledWriter.write(m_processInfo) << std::endl;
+        }
+
+}
+
+
+
 void scandns()
 {
   // Look for DB server
@@ -106,13 +123,24 @@ int main()
   DOMConfigurator::configure("/etc/Log4cxxConfig.xml");
   //_logger->setLevel(log4cxx::Level::getInfo());
   LOG4CXX_INFO (_logWriter, "this is a info message, after parsing configuration file");
+  theDIFPrefix_.clear();
   scandns();
   std::cout<<theDBPrefix_<<" "<<theCCCPrefix_<<" "<<theWriterPrefix_<<" "<<theProxyPrefix_<<" "<<theZupPrefix_<<std::endl;
+  getchar();
+
+  RpcShmClient::rpiClient* sh= new RpcShmClient::rpiClient(theWriterPrefix_);
+
+  //sh->destroy();
+  getchar();
+  sh->initialise();
+  getchar();
+  sh->directory("/tmp");
   getchar();
   
   RpcZupClient::rpiClient* z=new RpcZupClient::rpiClient(theZupPrefix_);
 
   z->open(1,"/dev/ttyUSB0");
+  /*
   getchar();
   z->lvswitch(0);
   sleep((unsigned int) 2);
@@ -124,12 +152,9 @@ int main()
   sleep((unsigned int) 20);
   std::cout<<" LV is ON"<<std::endl;
   getchar();
-  
+  */
   RpcDbClient::rpiClient* db=new RpcDbClient::rpiClient(theDBPrefix_);
   db->download("dome_tricot_46");
-  getchar();
-  uint32_t run=db->newrun();
-  std::cout<<" New run " <<run<<std::endl;
   getchar();
   
   RpcCCCClient::rpiClient* c=new RpcCCCClient::rpiClient(theCCCPrefix_);
@@ -144,15 +169,17 @@ int main()
       theDIFs_.push_back(s);
     }
   
-  
-  getchar();
-  while (true)
-    {
       for (std::vector<RpcDIFClient::rpiClient*>::iterator it=theDIFs_.begin();it!=theDIFs_.end();it++)
     {
       (*it)->scan();
       std::cout<<(*it)->status()<<std::endl;
     }
+  
+  getchar();
+  int n=0;
+  while (n<3)
+    {
+      n++;
       //getchar();
       for (std::vector<RpcDIFClient::rpiClient*>::iterator it=theDIFs_.begin();it!=theDIFs_.end();it++)
     {
@@ -181,21 +208,29 @@ int main()
       (*it)->configure(0x815A1B00);
       std::cout<<(*it)->status()<<std::endl;
     }
+      uint32_t run=db->newrun();
+      std::cout<<" New run " <<run<<std::endl;
+
 
       //s->configure(0x815A1B00);
       //std::cout<<s->status()<<std::endl;
       //getchar();
       sleep((unsigned int) 1);
+      uint32_t ndif=0;
       for (std::vector<RpcDIFClient::rpiClient*>::iterator it=theDIFs_.begin();it!=theDIFs_.end();it++)
     {
       (*it)->start();
       std::cout<<(*it)->status()<<std::endl;
+      Json::Value _jsroot;
+      processStatus((*it)->status(),_jsroot);
+      std::cout<<" Number of DIF "<<_jsroot["difs"].size()<<std::endl;
+      ndif+=_jsroot["difs"].size();
     }
 
-      //s->start();
+      sh->start(ndif);
       sleep((unsigned int) 1);
       c->start();
-      for (int i=0;i<10;i++)
+      for (int i=0;i<20;i++)
 	{
 	  //std::cout<<s->status()<<std::endl;
 	  for (std::vector<RpcDIFClient::rpiClient*>::iterator it=theDIFs_.begin();it!=theDIFs_.end();it++)
@@ -215,7 +250,7 @@ int main()
     }
 
 
-      //s->stop();
+      sh->stop();
       //std::cout<<s->status()<<std::endl;
       sleep((unsigned int) 1);
       //getchar();

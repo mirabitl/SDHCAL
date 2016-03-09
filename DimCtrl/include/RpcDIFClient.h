@@ -138,7 +138,7 @@ namespace RpcDIFClient
       s0.str(std::string());s0<<_prefix<<"/REGISTERDB";_registerDB=new RpcDIFClient::registerDB(s0.str());
 
       _vdif.clear();
-      cout<<"Building rpiClient"<<endl;
+      cout<<"Building DIF rpiClient"<<_prefix<<endl;
       s0.str(std::string());
       char hname[80];
       gethostname(hname,80);
@@ -161,9 +161,10 @@ namespace RpcDIFClient
       for (int i=0;i<_scan->ndif();i++)
 	_vdif.push_back(_scan->difid()[i]);
       this->publishState("SCANNED");
+      _jsroot.clear();
       this->clearInfos();
       this->registerInfos();
-
+      
     }
 
     void initialise()
@@ -257,6 +258,7 @@ namespace RpcDIFClient
       _jsroot["difs"]=array;
       //Json::FastWriter fastWriter;
       //std::cout<<fastWriter.write(_jsroot);
+      //getchar();
     }
     void infoHandler()
     {
