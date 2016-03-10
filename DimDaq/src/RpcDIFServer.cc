@@ -53,7 +53,7 @@ void RpcDIFScan::rpcHandler()
        _server->getDIFMap().insert(std::make_pair(it->first,d));
        LOG4CXX_INFO(_logDDIF," CMD: SCANDEVICE created DimDIF @ "<<std::hex<<d<<std::dec);
      }
-   setData(_buf,_ndif);
+   setData(_buf,_ndif*sizeof(int32_t));
 }
 
 RpcDIFInitialise::RpcDIFInitialise(RpcDIFServer* r,std::string name) : DimRpc(name.c_str(),"I:1","I:1"),_server(r) {}

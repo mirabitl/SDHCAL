@@ -152,6 +152,8 @@ EXE_LIBS.append("SDHCALDimCtrl")
 ddc=env.Program("bin/dimdaq",source="src/daq.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 dsp=env.Program("bin/dimwriter",source="src/dimwriter.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 rsp=env.Program("bin/dimrpc_writer",source="src/rpcshm.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+rdc=env.Program("bin/dimrpc_difclient",source="src/rpcdc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+rdaq=env.Program("bin/dimrpc_daq",source="src/rpcdaq.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 testdsp=env.Program("bin/testdaq",source="src/testdaq.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 #dcs=env.Program("bin/dimccc",source="src/dcc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 #dzups=env.Program("bin/dimzup",source="src/dzup.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
@@ -164,7 +166,7 @@ for x in Glob("#include/*.h"):
   myinc.append("include/"+x.name)
 print myinc
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SDHCALDimCtrl)
-env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[ddc,dsp,rsp])
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[ddc,dsp,rsp,rdc,rdaq])
 ###env.Install("/opt/dhcal/lib",SDHCALDimCtrl)
 ###env.Install("/opt/dhcal/include/readout",myinc)
 

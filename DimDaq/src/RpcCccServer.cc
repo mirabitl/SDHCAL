@@ -13,7 +13,7 @@ void RpcCccOpen::rpcHandler()
   memcpy(name,cbuf,getSize());
   std::string s;s.assign(name);
   _server->Open(s);
-  _server->publishState("INITIALISED");
+  _server->publishState("OPENED");
   int32_t rc=0;
    setData(rc);
 }
