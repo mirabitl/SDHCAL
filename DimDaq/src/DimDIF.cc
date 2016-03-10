@@ -97,7 +97,7 @@ void DimDIF::readout()
 
 
   unsigned char cbuf[MAX_EVENT_SIZE];
-
+  _readoutCompleted=false;
   while (_readoutStarted)
     {
       if (!_running) {usleep((uint32_t) 100000);continue;}
@@ -136,6 +136,7 @@ void DimDIF::readout()
 	}
 		
     }
+  _readoutCompleted=true;
   LOG4CXX_INFO(_logDDIF,"Thread of dif "<<_status->id<<" is stopped"<<_readoutStarted);
   _status->status=0XFFFF;
 }
@@ -164,7 +165,8 @@ void DimDIF::stop()
 void DimDIF::destroy()
 {
   _readoutStarted=false;
-  usleep((uint32_t) 200000);
+  while (!_readoutCompleted)
+    usleep((uint32_t) 200000);
   if (_rd!=NULL)
     {
       try
