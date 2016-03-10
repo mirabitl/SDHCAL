@@ -157,6 +157,7 @@ bool ShmProxy::performWrite()
   theSync_.lock();
   if (theSave_)
     {
+      LOG4CXX_INFO(_logShm,"Size of Map#"<<theBufferMap_.size())
       for (std::map<uint64_t,std::vector<unsigned char*> >::iterator it=theBufferMap_.begin();it!=theBufferMap_.end();it++)
 	{
 	  
@@ -172,7 +173,7 @@ bool ShmProxy::performWrite()
 	  */
 	  lastGTCWrite_=it->first;
 	  printf("%x writing %d \n",this,theEventNumber_);
-	  LOG4CXX_INFO(_logShm,"Writing event #"<<theEventNumber_);
+	  LOG4CXX_INFO(_logShm,"Writing event #"<<theEventNumber_<<" GTC "<<gtc);
 	  theWritter_->writeEvent(theEventNumber_,it->second);
 
 	  if (theEventNumber_%100 == 0)
