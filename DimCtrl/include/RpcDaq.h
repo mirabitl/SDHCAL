@@ -43,7 +43,7 @@ public:
   void start(uint32_t tempo=1);
   void stop(uint32_t tempo=1);
   void destroy();
-  
+  std::string msg(){return _msg;}
   std::string status();
   void setState(std::string s);
   std::string state();
@@ -51,7 +51,7 @@ public:
   void publishState(std::string s);
   
 private:
-  std::string _state;
+  std::string _state,_msg;
   DimService* _shmState;
 
 

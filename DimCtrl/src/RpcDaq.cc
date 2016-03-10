@@ -48,8 +48,17 @@ void RpcDaq::processStatus(const std::string &jsonString,Json::Value &m_processI
 
 void RpcDaq::scandns()
 {
-    this->doScandns();
-    this->allocateClients();
+  if (_state.compare("CREATED")==0)
+    {
+      this->doScandns();
+      this->allocateClients();
+      this->publishState("DISCOVERED");
+      _msg="=>OK";
+    }
+  else
+    _msg="=>Wrong initial State";
+  // else
+  //  this->publishState("DISCOVER_FAILED");
 }
 
 
@@ -242,25 +251,58 @@ void RpcDaq::setParameters(std::string jsonString)
   }
 
 
+
 void RpcDaq::prepareServices()
   {
+    if (_state.compare("DISCOVERED")==0 || _state.compare("DESTROYED")==0 )
+      {
+	this->downloadDB(_dbstate);
+	this->initialiseWriter(_writerdir);
+	this->initialiseZup(_zupport,_zupdevice);
+	this->openCCC(_dccname);
+	this->publishState("PREPARED");
+	_msg="=>OK";
+      }
+    else
+      _msg="=>Wrong initial State";
 
-    this->downloadDB(_dbstate);
-    this->initialiseWriter(_writerdir);
-    this->initialiseZup(_zupport,_zupdevice);
-    this->openCCC(_dccname);
+    // else
+    //  this->publishState("PREPARE_FAILED");
+      
   }
 void RpcDaq::initialise()
   {
-    this->scanFtdi();
-    this->initialiseDIF();
+    if (_state.compare("PREPARED")==0 || _state.compare("DESTROYED")==0 )
+      {
+	this->scanFtdi();
+	this->initialiseDIF();
+	this->publishState("INITIALISED");
+      	_msg="=>OK";
+      }
+    else
+      _msg="=>Wrong initial State";
+
+    //else
+    //  this->publishState("INITIALISE_FAILED");
   }
 
 void RpcDaq::configure()
   {
-    this->configureCCC();
-    this->registerDB(_dbstate);
-    this->configureDIF(_ctrlreg);
+    if (_state.compare("INITIALISED")==0 || _state.compare("STOPPED")==0 )
+      {
+
+	this->configureCCC();
+	this->registerDB(_dbstate);
+	this->configureDIF(_ctrlreg);
+	this->publishState("CONFIGURED");
+      	_msg="=>OK";
+      }
+    else
+      _msg="=>Wrong initial State";
+
+    //    else
+    //  this->publishState("CONFIGURE_FAILED");
+
   }
 void RpcDaq::initialiseDIF()
   {
@@ -289,17 +331,21 @@ void RpcDaq::configureDIF(uint32_t reg)
   }
 void RpcDaq::start(uint32_t tempo)
   {
-    uint32_t _run=_dbClient->newrun();
-    std::cout<<" New run " <<_run<<std::endl;
+    if (_state.compare("CONFIGURED")==0 || _state.compare("STOPPED")==0 )
+      {
+
+
+	uint32_t _run=_dbClient->newrun();
+	std::cout<<" New run " <<_run<<std::endl;
 
 
 	//s->configure(0x815A1B00);
 	//std::cout<<s->status()<<std::endl;
 	//getchar();
-    sleep((unsigned int) tempo);
-    uint32_t ndif=0;
-    for (std::vector<RpcDIFClient::rpiClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
-      {
+	sleep((unsigned int) tempo);
+	uint32_t ndif=0;
+	for (std::vector<RpcDIFClient::rpiClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+	  {
 	    (*it)->start();
 	    std::cout<<(*it)->status()<<std::endl;
 	    Json::Value _jsroot;
@@ -308,34 +354,63 @@ void RpcDaq::start(uint32_t tempo)
 	    ndif+=_jsroot["difs"].size();
 	  }
 
-    _shClient->start(ndif);
-    sleep((unsigned int) tempo);
-    _cccClient->start();
+	_shClient->start(ndif);
+	sleep((unsigned int) tempo);
+	_cccClient->start();
+	this->publishState("STARTED");
+      	_msg="=>OK";
+      }
+    else
+      _msg="=>Wrong initial State";
+
+    //    else
+    //  this->publishState("START_FAILED");
 
   }
 
 void RpcDaq::stop(uint32_t tempo)
   {
-    _cccClient->stop();
-    //getchar();
-    sleep((unsigned int) tempo);
-    for (std::vector<RpcDIFClient::rpiClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+    if (_state.compare("STARTED")==0 )
       {
-	(*it)->stop();
-	std::cout<<(*it)->status()<<std::endl;
+
+	_cccClient->stop();
+	//getchar();
+	sleep((unsigned int) tempo);
+	for (std::vector<RpcDIFClient::rpiClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+	  {
+	    (*it)->stop();
+	    std::cout<<(*it)->status()<<std::endl;
+	  }
+
+
+	_shClient->stop();
+	this->publishState("STOPPED");
+      	_msg="=>OK";
       }
+    else
+      _msg="=>Wrong initial State";
 
-
-    _shClient->stop();
+    // else
+    //  this->publishState("STOP_FAILED");
 
   }
 void RpcDaq::destroy()
   {
-    for (std::vector<RpcDIFClient::rpiClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+    if (_state.compare("STARTED")!=0 )
       {
-	(*it)->destroy();
-	std::cout<<(*it)->status()<<std::endl;
+	for (std::vector<RpcDIFClient::rpiClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+	  {
+	    (*it)->destroy();
+	    std::cout<<(*it)->status()<<std::endl;
+	  }
+ 	this->publishState("DESTROYED");
+      	_msg="=>OK";
       }
+    else
+      _msg="=>Wrong initial State";
+
+    //  else
+    //   this->publishState("DESTROY_FAILED");
 
   }
   

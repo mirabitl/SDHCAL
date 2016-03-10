@@ -9,7 +9,7 @@ from spyne.server.wsgi import WsgiApplication
 from spyne.model.complex import ComplexModelMeta
 import LSDHCALDimCtrl as dc
 import os,sys,json
-from ROOT import *
+import socket
 import time
 _wdd=None
 
@@ -18,13 +18,13 @@ class wddService(ServiceBase):
     def createDaq():    
         global _wdd
         _wdd=dc.RpcDaq()
-        yield 'Daq is created'
+        yield 'Daq is created' 
 
     @srpc( _returns=Iterable(String))
     def Discover():
         global _wdd
         _wdd.scandns();
-        yield 'DIM DNS is browsed'
+        yield 'DIM DNS is browsed %s (%s)' % (_wdd.msg(),_wdd.state())
 
     @srpc( String,_returns=Iterable(String))
     def setParameters(name):
@@ -32,51 +32,64 @@ class wddService(ServiceBase):
         print "On a recu ",name
         print "et on appelle",_wdd
         _wdd.setParameters(name)
-        yield 'parameters set'
+        yield 'parameters set %s (%s)' % (_wdd.msg(),_wdd.state())
+
+    @srpc( String,_returns=Iterable(String))
+    def forceState(name):
+        global _wdd
+        print "On a recu ",name
+        print "et on appelle",_wdd
+        _wdd.publishState(name)
+        yield 'State is set to %s ' % name  
 
     @srpc( _returns=Iterable(String))
     def prepareServices():
         global _wdd
         _wdd.prepareServices();
-        yield 'Services ready'
+        yield 'Services ready %s (%s)' % (_wdd.msg(),_wdd.state())
 
     @srpc( _returns=Iterable(String))
     def status():
        global _wdd
        yield _wdd.status()
 
+    @srpc( _returns=Iterable(String))
+    def state():
+       global _wdd
+       yield _wdd.state()
+
 
     @srpc( _returns=Iterable(String))
     def initialise():
        global _wdd
        _wdd.initialise()
-       yield 'SDHCAL is Initialised'
+       yield 'SDHCAL is Initialised %s (%s)' % (_wdd.msg(),_wdd.state())
 
     @srpc( _returns=Iterable(String))
     def configure():
        global _wdd
        _wdd.configure()
-       yield 'SDHCAL is configured'
+       yield 'SDHCAL is configured %s (%s)' % (_wdd.msg(),_wdd.state())
 
     @srpc( _returns=Iterable(String))
     def start():
        global _wdd
        _wdd.start()
-       yield 'Run is Started'
+       yield 'Run is Started %s (%s)' % (_wdd.msg(),_wdd.state())
 
 
     @srpc( _returns=Iterable(String))
     def stop():
        global _wdd
        _wdd.stop()
-       yield 'Run is stopped'
+       yield 'Run is stopped %s (%s)' % (_wdd.msg(),_wdd.state())
 
 
     @srpc( _returns=Iterable(String))
     def destroy():
        global _wdd
        _wdd.destroy()
-       yield 'Daq is Destroyed'
+       yield 'Daq is Destroyed %s (%s)' % (_wdd.msg(),_wdd.state())
 
     @srpc( _returns=Iterable(String))
     def LVOFF():
@@ -124,7 +137,7 @@ if __name__=='__main__':
 
     # More daemon boilerplate
     
-    server = make_server('lyopc252', 8100, wsgi_application)
+    server = make_server(socket.gethostname(), 8100, wsgi_application)
 
     logging.info("listening to http://lyosdhcal12:8100")
     logging.info("wsdl is at: http://lyosdhcal12:8100/?wsdl")

@@ -198,11 +198,12 @@ namespace RpcDIFClient
      void destroy()
     {
       _destroy->doIt(0);
-      this->checkRpiState("CREATED","DESTROY_FAILED");
+      //this->checkRpiState("","DESTROY_FAILED");
+      this->publishState("CREATED");
     }
     void checkRpiState(std::string stest,std::string sfail)
     {
-      usleep((unsigned int) 51100); // Wait DIM to process
+      usleep((unsigned int) 100100); // Wait DIM to process
       if (!this->checkDifState(stest))
 	this->publishState(sfail);
       else
