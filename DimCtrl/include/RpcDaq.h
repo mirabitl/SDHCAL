@@ -28,6 +28,7 @@ public:
   void downloadDB(std::string s);
   void openCCC(std::string device);
   void configureCCC();
+  void scanFtdi1(RpcDIFClient::rpiClient* d);
   void scanFtdi();
 
   void setParameters(std::string jsonString);
@@ -38,10 +39,14 @@ public:
 
   void configure();
   void initialiseDIF();
+  void initialise1DIF(RpcDIFClient::rpiClient* d);
+  void registerDB1(RpcDIFClient::rpiClient* d,std::string s);
   void registerDB(std::string s);
+  void configure1DIF(RpcDIFClient::rpiClient* d,uint32_t reg);
   void configureDIF(uint32_t reg=0x815A1B00);
   void start(uint32_t tempo=1);
   void stop(uint32_t tempo=1);
+  void destroy1(RpcDIFClient::rpiClient* d);
   void destroy();
   std::string msg(){return _msg;}
   std::string status();

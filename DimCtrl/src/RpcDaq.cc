@@ -219,13 +219,19 @@ void RpcDaq::configureCCC()
     _cccClient->configure();
 
   }
+
+void RpcDaq::scanFtdi1(RpcDIFClient::rpiClient* d) {d->scan();std::cout<<d->status()<<std::endl;}
 void RpcDaq::scanFtdi()
-  {
+  { boost::thread_group g;
   for (std::vector<RpcDIFClient::rpiClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
       {
-	(*it)->scan();
-	std::cout<<(*it)->status()<<std::endl;
+	//	(*it)->scan();
+	//	std::cout<<(*it)->status()<<std::endl;
+	//     }
+  	
+	g.create_thread(boost::bind(&RpcDaq::scanFtdi1, this,(*it)));
       }
+    g.join_all();
   }
 
 void RpcDaq::setParameters(std::string jsonString)
@@ -270,6 +276,7 @@ void RpcDaq::prepareServices()
     //  this->publishState("PREPARE_FAILED");
       
   }
+
 void RpcDaq::initialise()
   {
     if (_state.compare("PREPARED")==0 || _state.compare("DESTROYED")==0 )
@@ -304,30 +311,51 @@ void RpcDaq::configure()
     //  this->publishState("CONFIGURE_FAILED");
 
   }
+
+void RpcDaq::initialise1DIF(RpcDIFClient::rpiClient* d) {d->initialise();std::cout<<d->status()<<std::endl;}
 void RpcDaq::initialiseDIF()
   {
+     boost::thread_group g;
     for (std::vector<RpcDIFClient::rpiClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
       {
-	(*it)->initialise();
-	std::cout<<(*it)->status()<<std::endl;
+	//(*it)->initialise();
+	//std::cout<<(*it)->status()<<std::endl;
+	
+	g.create_thread(boost::bind(&RpcDaq::initialise1DIF, this,(*it)));
       }
-  }
+    g.join_all();
 
+
+      
+  }
+void RpcDaq::registerDB1(RpcDIFClient::rpiClient* d,std::string s) {d->registerDB(s);std::cout<<d->status()<<std::endl;}
 void RpcDaq::registerDB(std::string s)
-  {
+  { boost::thread_group g;
     for (std::vector<RpcDIFClient::rpiClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
       {
-	(*it)->registerDB(s);
-	std::cout<<(*it)->status()<<std::endl;
+      // 	(*it)->registerDB(s);
+      // 	std::cout<<(*it)->status()<<std::endl;
+      // }
+    	
+	g.create_thread(boost::bind(&RpcDaq::registerDB1, this,(*it),s));
       }
+    g.join_all();
+
   }
+void RpcDaq::configure1DIF(RpcDIFClient::rpiClient* d,uint32_t reg) {d->configure(reg);std::cout<<d->status()<<std::endl;}
+
 void RpcDaq::configureDIF(uint32_t reg)
   {
+     boost::thread_group g;
     for (std::vector<RpcDIFClient::rpiClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
       {
-	(*it)->configure(reg);
-	std::cout<<(*it)->status()<<std::endl;
+	//(*it)->configure(reg);
+	//	std::cout<<(*it)->status()<<std::endl;
+	// }
+    	g.create_thread(boost::bind(&RpcDaq::configure1DIF, this,(*it),reg));
       }
+    g.join_all();
+
   }
 void RpcDaq::start(uint32_t tempo)
   {
@@ -394,15 +422,19 @@ void RpcDaq::stop(uint32_t tempo)
     //  this->publishState("STOP_FAILED");
 
   }
+void RpcDaq::destroy1(RpcDIFClient::rpiClient* d) {d->destroy();std::cout<<d->status()<<std::endl;}
 void RpcDaq::destroy()
-  {
+  {boost::thread_group g;
     if (_state.compare("STARTED")!=0 )
       {
 	for (std::vector<RpcDIFClient::rpiClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
 	  {
-	    (*it)->destroy();
-	    std::cout<<(*it)->status()<<std::endl;
-	  }
+	  //   (*it)->destroy();
+	  //   std::cout<<(*it)->status()<<std::endl;
+	  // }void RpcDaq::initialise1DIF(RpcDIFClient::rpiClient* d) {d->initialise();std::cout<<d->status()<<std::endl;}
+	    g.create_thread(boost::bind(&RpcDaq::destroy1,this,(*it)));
+      }
+    g.join_all();
  	this->publishState("DESTROYED");
       	_msg="=>OK";
       }
