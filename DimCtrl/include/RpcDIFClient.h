@@ -302,6 +302,7 @@ namespace RpcDIFClient
       Json::FastWriter fastWriter;
       return fastWriter.write(_jsroot);
     }
+    inline std::string prefix(){return _prefix;}
   private:
     std::string _prefix;
     std::string _state;

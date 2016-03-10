@@ -8,6 +8,8 @@
  %{
 using std::string;
 #include "DimDaqControl.h"
+#include "RpcDaq.h"
  %}
 
 %include "DimDaqControl.h"
+%include "RpcDaq.h"
