@@ -9,6 +9,7 @@ DimDIF::DimDIF(FtdiDeviceInfo* ftd) : _rd(NULL),_state("CREATED"),_dsStatus(NULL
   memset(_status,0,sizeof(DIFStatus));
   _status->id=_ftd.id;
   _dbdif = new DIFDbInfo();
+  _readoutStarted=false;
 }
 DimDIF::~DimDIF()
 {
@@ -62,6 +63,7 @@ void DimDIF::readRegister(uint32_t adr,uint32_t &reg)
 }
 void DimDIF::start()
 {
+
   if (_rd==NULL)
     {
       LOG4CXX_ERROR(_logDDIF, "DIF   id ("<<_status->id << ") is not initialised");
