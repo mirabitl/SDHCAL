@@ -44,7 +44,8 @@ public:
   void registerDB(std::string s);
   void configure1DIF(RpcDIFClient::rpiClient* d,uint32_t reg);
   void configureDIF(uint32_t reg=0x815A1B00);
-  void start(uint32_t tempo=1);
+  void start1(RpcDIFClient::rpiClient* d);
+  void start(uint32_t tempo=5);
   void stop(uint32_t tempo=1);
   void destroy1(RpcDIFClient::rpiClient* d);
   void destroy();

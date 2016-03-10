@@ -217,7 +217,13 @@ void RpcDaq::openCCC(std::string device)
 void RpcDaq::configureCCC()
   {
     _cccClient->configure();
-
+    _cccClient->stop();
+    sleep((unsigned int) 1);
+    _cccClient->cccreset();
+    sleep((unsigned int) 1);
+    _cccClient->difreset();
+    sleep((unsigned int) 1);
+    _cccClient->cccreset();
   }
 
 void RpcDaq::scanFtdi1(RpcDIFClient::rpiClient* d) {d->scan();std::cout<<d->status()<<std::endl;}
@@ -281,6 +287,7 @@ void RpcDaq::initialise()
   {
     if (_state.compare("PREPARED")==0 || _state.compare("DESTROYED")==0 )
       {
+	this->configureCCC();
 	this->scanFtdi();
 	this->initialiseDIF();
 	this->publishState("INITIALISED");
@@ -298,7 +305,12 @@ void RpcDaq::configure()
     if (_state.compare("INITIALISED")==0 || _state.compare("STOPPED")==0 )
       {
 
-	this->configureCCC();
+	_cccClient->cccreset();
+	sleep((unsigned int) 1);
+	_cccClient->difreset();
+	sleep((unsigned int) 1);
+	_cccClient->cccreset();
+	sleep((unsigned int) 1);
 	this->registerDB(_dbstate);
 	this->configureDIF(_ctrlreg);
 	this->publishState("CONFIGURED");
@@ -341,6 +353,8 @@ void RpcDaq::registerDB(std::string s)
       }
     g.join_all();
 
+    sleep((unsigned int) 3);
+
   }
 void RpcDaq::configure1DIF(RpcDIFClient::rpiClient* d,uint32_t reg) {d->configure(reg);std::cout<<d->status()<<std::endl;}
 
@@ -357,8 +371,9 @@ void RpcDaq::configureDIF(uint32_t reg)
     g.join_all();
 
   }
+void RpcDaq::start1(RpcDIFClient::rpiClient* d) {d->start();}
 void RpcDaq::start(uint32_t tempo)
-  {
+  { boost::thread_group g;
     if (_state.compare("CONFIGURED")==0 || _state.compare("STOPPED")==0 )
       {
 
@@ -370,20 +385,30 @@ void RpcDaq::start(uint32_t tempo)
 	//s->configure(0x815A1B00);
 	//std::cout<<s->status()<<std::endl;
 	//getchar();
-	sleep((unsigned int) tempo);
+	//sleep((unsigned int) tempo);
 	uint32_t ndif=0;
 	for (std::vector<RpcDIFClient::rpiClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
 	  {
-	    (*it)->start();
-	    std::cout<<(*it)->status()<<std::endl;
+	    	// }
+	    g.create_thread(boost::bind(&RpcDaq::start1, this,(*it)));
+	  }
+	g.join_all();
+	    //(*it)->start();
+
+	for (std::vector<RpcDIFClient::rpiClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+	  {
+	    //std::cout<<(*it)->status()<<std::endl;
 	    Json::Value _jsroot;
 	    processStatus((*it)->status(),_jsroot);
 	    std::cout<<" Number of DIF "<<_jsroot["difs"].size()<<std::endl;
+	    //sleep((unsigned int) tempo);
 	    ndif+=_jsroot["difs"].size();
 	  }
 
 	_shClient->start(ndif);
+	//std::cout<<"waiting "<<std::endl;
 	sleep((unsigned int) tempo);
+	
 	_cccClient->start();
 	this->publishState("STARTED");
       	_msg="=>OK";
