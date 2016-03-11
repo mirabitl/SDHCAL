@@ -220,10 +220,8 @@ void RpcDaq::configureCCC()
     _cccClient->stop();
     sleep((unsigned int) 1);
     _cccClient->cccreset();
-    sleep((unsigned int) 1);
     _cccClient->difreset();
     sleep((unsigned int) 1);
-    _cccClient->cccreset();
   }
 
 void RpcDaq::scanFtdi1(RpcDIFClient::rpiClient* d) {d->scan();std::cout<<d->status()<<std::endl;}
@@ -306,11 +304,7 @@ void RpcDaq::configure()
       {
 
 	_cccClient->cccreset();
-	sleep((unsigned int) 1);
 	_cccClient->difreset();
-	sleep((unsigned int) 1);
-	_cccClient->cccreset();
-	sleep((unsigned int) 1);
 	this->registerDB(_dbstate);
 	this->configureDIF(_ctrlreg);
 	this->publishState("CONFIGURED");

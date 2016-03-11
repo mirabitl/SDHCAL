@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import socket
 import httplib, urllib
@@ -5,34 +6,38 @@ import json
 from copy import deepcopy
 
 import time
-
-from threading import Thread
-class threadedSendCommand(Thread):
-   """
-   Class to paralellize command configuration
-   """
-   def __init__ (self,dif,command):
-      """
-      Thread inialisation
-      """
-      Thread.__init__(self)
-      self.dif = dif
-      self.status = -1
-      self.command=command
-   def run(self):
-      """
-      Thread running
-      """
-      self.dif.configured=False
-      self.dif.failed=False
-      try:
-         self.dif.sendCommand(self.command)
-         self.dif.configured=True
-      except:
-         self.dif.failed=True
+import argparse
 
 
-def sendcommand(host,port,command,direc=None):
+parser = argparse.ArgumentParser()
+parser.add_argument('-a', action='store', dest='cmd',default='status',help='action to be done')
+parser.add_argument('-c', action='store', dest='config',default=None,help='python config file')
+parser.add_argument('--dbstate', action='store', default=None,dest='dbstate',help='set the dbstate')
+parser.add_argument('--ctrlreg', action='store', default=None,dest='ctrlreg',help='set the dbstate')
+parser.add_argument('--version', action='version', version='%(prog)s 1.0')
+
+results = parser.parse_args()
+try:
+    exec("import %s  as conf" % results.config)
+except ImportError:
+    raise Exception("cannot import")
+
+
+ 
+p_par={}
+if (conf.state!=None):
+   p_par['dbstate']=conf.state
+p_par['zupdevice']=conf.zupdevice
+p_par['zupport']=conf.zupport
+p_par['writerdir']=conf.directory
+p_par['ctrlreg']=conf.register
+p_par['dccname']=conf.dccname
+p_par['daqhost']=conf.daqhost
+p_par['daqport']=conf.daqport
+
+
+l_par=json.dumps(p_par,sort_keys=True)
+def sendcommand(command,host=p_par["daqhost"],port=p_par['daqport'],direc=None):
    lq={}
    if (direc!=None):
       lq['name']=direc
@@ -51,6 +56,7 @@ def sendcommand(host,port,command,direc=None):
        conn.request("GET",saction)
        r1 = conn.getresponse()
        if (command!="status"):
+          print r1.read()
           return r1.read()
        else:
           s=r1.read()
@@ -58,10 +64,15 @@ def sendcommand(host,port,command,direc=None):
           ssj=json.loads(sj["statusResponse"]["statusResult"][0])
           for x in ssj:
              for d in x["difs"]:
-                print '%4d %5x %6d %12d %s %s ' % (d["id"],d["slc"],d["gtc"],d["bcid"],d["state"],x["name"])
+                print '#%4d %5x %6d %12d %12d %s %s ' % (d["id"],d["slc"],d["gtc"],d["bcid"],d["bytes"],d["state"],x["name"])
 
        
        print r1.status, r1.reason
+
+if (results.cmd == "setParameters"):
+   sendcommand(results.cmd,direc=l_par)
+else:
+   sendcommand(results.cmd)
 """
 def startMonitoring(host,port,direc,nd,nr):
    lq={}
