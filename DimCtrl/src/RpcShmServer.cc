@@ -119,6 +119,37 @@ void RpcShmSetup::rpcHandler()
   setData(rc);
 }
 
+RpcShmStatus::RpcShmStatus(RpcShmServer* r,std::string name) : DimRpc(name.c_str(),"I:1","I:2"),_server(r) {}
+
+void RpcShmStatus::rpcHandler()
+{
+  LOG4CXX_INFO(_logWriter," CMD: SETUP called "<<getString());
+  int32_t rc=0;
+  _server->destroy();
+  std::string s;
+  s.assign(getString());
+  ShmProxy* sp=_server->getProxy();
+  int irc[2];
+  if (sp != NULL)
+    {
+      
+      
+      irc[0]=_server->run();
+      irc[1]=_server->event();
+      setData(irc,2*sizeof(int));
+      return;
+    }
+  else
+    {
+      LOG4CXX_ERROR(_logWriter," NO Proxy found ");
+      
+      irc[0]=-1;setData(irc,2*sizeof(int));
+      return;
+    }
+
+
+}
+
 RpcShmDirectory::RpcShmDirectory(RpcShmServer* r,std::string name) : DimRpc(name.c_str(),"C","I:1"),_server(r) {}
 
 void RpcShmDirectory::rpcHandler()
@@ -310,6 +341,9 @@ void RpcShmServer::allocateCommands()
   s0<<"/DSP/"<<hname<<"/DIRECTORY";
   _directoryCommand=new RpcShmDirectory(this,s0.str());
   
+  s0.str(std::string());
+  s0<<"/DSP/"<<hname<<"/STATUS";
+  _statusCommand=new RpcShmStatus(this,s0.str());
 }
 
 void RpcShmServer::initialise()

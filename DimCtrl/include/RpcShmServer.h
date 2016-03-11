@@ -79,6 +79,16 @@ class RpcShmDestroy : public DimRpc
 };
 
 
+class RpcShmStatus : public DimRpc
+{
+ public:
+  RpcShmStatus(RpcShmServer* serv,std::string name);
+  void rpcHandler(); 
+ private:
+  RpcShmServer* _server;
+};
+
+
 class RpcShmServer: public DimServer,public DimClient
 {
 public:
@@ -103,6 +113,8 @@ public:
   // Publish DIM services
   inline void publishState(std::string s){setState(s);_shmState->updateService((char*) _state.c_str());}
   inline void publishRun(uint32_t r){_run=r;_runService->updateService();}
+  inline uint32_t run(){return _run;}
+  inline uint32_t event(){return _event;}
 private:
   ShmProxy* theProxy_;
   boost::thread    theThread_;
@@ -117,7 +129,7 @@ private:
   RpcShmStart* _startCommand;
   RpcShmStop* _stopCommand;
   RpcShmDestroy* _destroyCommand;
-
+  RpcShmStatus* _statusCommand;
 
 
   uint32_t _buffer[32*1024];

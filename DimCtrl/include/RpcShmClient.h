@@ -61,6 +61,22 @@ namespace RpcShmClient
     boost::interprocess::interprocess_mutex _sem;
     int32_t _rc;
   };
+  class status : public DimRpcInfo
+  {
+  public:
+    status(std::string name,int timeout=-1) : DimRpcInfo((char*) name.c_str(),-1){_sem.lock();}
+
+    inline void doIt(int32_t i){int d=i;setData(d);_sem.lock();}
+    void rpcInfoHandler(){
+      memcpy(_rc,getData(),getSize());
+     _sem.unlock();}
+    inline int32_t run(){return _rc[0];}
+    inline int32_t event(){return _rc[1];}
+  private:
+    boost::interprocess::interprocess_mutex _sem;
+    int32_t _rc[2];
+
+  };
 
 
   class start : public DimRpcInfo
