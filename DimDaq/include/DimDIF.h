@@ -75,6 +75,6 @@ private:
   DimService* _dsState;
   DimService* _dsData;
 
-  bool _running,_readoutStarted;
+  bool _running,_readoutStarted,_readoutCompleted;
 };
 #endif

@@ -108,7 +108,7 @@ class wddService(ServiceBase):
 if __name__=='__main__':
     # Python daemon boilerplate
     from wsgiref.simple_server import make_server
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     # Instantiate the application by giving it:
     #   * The list of services it should wrap,

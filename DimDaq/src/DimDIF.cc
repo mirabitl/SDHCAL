@@ -9,6 +9,7 @@ DimDIF::DimDIF(FtdiDeviceInfo* ftd) : _rd(NULL),_state("CREATED"),_dsStatus(NULL
   memset(_status,0,sizeof(DIFStatus));
   _status->id=_ftd.id;
   _dbdif = new DIFDbInfo();
+  _readoutStarted=false;
 }
 DimDIF::~DimDIF()
 {
@@ -62,6 +63,7 @@ void DimDIF::readRegister(uint32_t adr,uint32_t &reg)
 }
 void DimDIF::start()
 {
+
   if (_rd==NULL)
     {
       LOG4CXX_ERROR(_logDDIF, "DIF   id ("<<_status->id << ") is not initialised");
@@ -97,7 +99,7 @@ void DimDIF::readout()
 
 
   unsigned char cbuf[MAX_EVENT_SIZE];
-
+  _readoutCompleted=false;
   while (_readoutStarted)
     {
       if (!_running) {usleep((uint32_t) 100000);continue;}
@@ -136,6 +138,7 @@ void DimDIF::readout()
 	}
 		
     }
+  _readoutCompleted=true;
   LOG4CXX_INFO(_logDDIF,"Thread of dif "<<_status->id<<" is stopped"<<_readoutStarted);
   _status->status=0XFFFF;
 }
@@ -164,7 +167,8 @@ void DimDIF::stop()
 void DimDIF::destroy()
 {
   _readoutStarted=false;
-  usleep((uint32_t) 200000);
+  while (!_readoutCompleted)
+    usleep((uint32_t) 200000);
   if (_rd!=NULL)
     {
       try
