@@ -34,6 +34,7 @@ p_par['ctrlreg']=conf.register
 p_par['dccname']=conf.dccname
 p_par['daqhost']=conf.daqhost
 p_par['daqport']=conf.daqport
+p_par['json']=conf.jsonfile
 
 
 l_par=json.dumps(p_par,sort_keys=True)
@@ -45,6 +46,7 @@ def sendcommand(command,host=p_par["daqhost"],port=p_par['daqport'],direc=None):
       myurl = host+ ":%d" % (port)
       conn = httplib.HTTPConnection(myurl)
       saction = '/%s?%s' % (command,lqs)
+      #print saction
       conn.request("GET",saction)
       r1 = conn.getresponse()
       return r1.read()
@@ -70,9 +72,14 @@ def sendcommand(command,host=p_par["daqhost"],port=p_par['daqport'],direc=None):
        print r1.status, r1.reason
 
 if (results.cmd == "setParameters"):
-   sendcommand(results.cmd,direc=l_par)
+    print "Setting ",l_par
+    print sendcommand(results.cmd,direc=l_par)
+    exit(0)
+if (results.cmd == "createJobControl"):
+    print sendcommand(results.cmd,direc=p_par["json"])
+    exit(0)
 else:
-   sendcommand(results.cmd)
+    sendcommand(results.cmd)
 """
 def startMonitoring(host,port,direc,nd,nr):
    lq={}
