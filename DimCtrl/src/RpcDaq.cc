@@ -464,7 +464,15 @@ void RpcDaq::destroy()
     //   this->publishState("DESTROY_FAILED");
 
   }
-  
+
+std::string RpcDaq::shmStatus()
+{
+  std::stringstream s0;
+  _shClient->status();
+  s0<<" ShmWriter=>Run "<<_shClient->run()<<" Event "<<_shClient->event();
+  return s0.str();
+}
+
 std::string RpcDaq::status()
   {
     Json::FastWriter fastWriter;

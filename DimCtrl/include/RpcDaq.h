@@ -51,6 +51,7 @@ public:
   void destroy();
   std::string msg(){return _msg;}
   std::string status();
+  std::string shmStatus();
   void setState(std::string s);
   std::string state();
   // Publish DIM services

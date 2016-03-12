@@ -52,6 +52,11 @@ class wddService(ServiceBase):
     def status():
        global _wdd
        yield _wdd.status()
+       
+    @srpc( _returns=Iterable(String))
+    def shmStatus():
+       global _wdd
+       yield _wdd.shmStatus()
 
     @srpc( _returns=Iterable(String))
     def state():

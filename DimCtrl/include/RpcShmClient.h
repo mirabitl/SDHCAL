@@ -125,6 +125,7 @@ namespace RpcShmClient
       s0.str(std::string());s0<<_prefix<<"/DESTROY";_destroy=new RpcShmClient::destroy(s0.str());
       s0.str(std::string());s0<<_prefix<<"/SETUP";_setup=new RpcShmClient::setup(s0.str());
       s0.str(std::string());s0<<_prefix<<"/DIRECTORY";_directory=new RpcShmClient::directory(s0.str());
+      s0.str(std::string());s0<<_prefix<<"/STATUS";_status=new RpcShmClient::status(s0.str());
 
 
       cout<<"Building rpiClient"<<endl;
@@ -171,8 +172,13 @@ namespace RpcShmClient
     {
       _directory->doIt(s);
     }
+    void status()
+    {
+      _status->doIt(0);
+    }
 
-    
+    inline uint32_t run(){return _status->run();}
+    inline uint32_t event(){return _status->event();}
     inline void setState(std::string s){_state.assign(s);}
     inline std::string state() const {return _state;}
     // Publish DIM services
@@ -189,6 +195,7 @@ namespace RpcShmClient
     RpcShmClient::stop* _stop;
     RpcShmClient::initialise* _initialise;
     RpcShmClient::setup* _setup;
+    RpcShmClient::status* _status;
     RpcShmClient::directory* _directory;
   };
    
