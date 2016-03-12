@@ -8,10 +8,12 @@ from spyne.protocol.http import HttpRpc
 from spyne.server.wsgi import WsgiApplication
 from spyne.model.complex import ComplexModelMeta
 import LSDHCALDimCtrl as dc
+import Ldimjc
 import os,sys,json
 import socket
 import time
 _wdd=None
+_wjobc=None
 
 class wddService(ServiceBase):
     @srpc(_returns=Iterable(String))
@@ -20,20 +22,69 @@ class wddService(ServiceBase):
         _wdd=dc.RpcDaq()
         yield 'Daq is created' 
 
+    @srpc( String, _returns=Iterable(String))
+    def setParameters(name):
+        global _wdd
+        print "On a recu ",name
+        if (name!=None):
+            _wdd.setParameters(name)
+            sm=_wdd.msg()
+            ss=_wdd.state()
+            yield 'parameters set %s (%s)' % (sm,ss)
+        else:
+            yield 'Cannot Set'
+
+
+        
     @srpc( _returns=Iterable(String))
     def Discover():
         global _wdd
         _wdd.scandns();
         yield 'DIM DNS is browsed %s (%s)' % (_wdd.msg(),_wdd.state())
 
-    @srpc( String,_returns=Iterable(String))
-    def setParameters(name):
-        global _wdd
-        print "On a recu ",name
-        print "et on appelle",_wdd
-        _wdd.setParameters(name)
-        yield 'parameters set %s (%s)' % (_wdd.msg(),_wdd.state())
+    @srpc(String, _returns=String)
+    def createJobControl(name):
+        global _wjobc
+        #print "On a recu ",name
+        _wjobc=Ldimjc.DimJobInterface()
+        _wjobc.loadJSON(name)
+        yield 'JOB Control interface  created '
+        #print _wjobc
+        #yield 'JOB Control interface  created '
 
+    @srpc( _returns=String)
+    def jobStatus():
+       global _wjobc
+       if (_wjobc!=None):
+           _wjobc.status()
+           time.sleep(2)
+           _wjobc.list()
+           s=_wjobc.processStatusList()
+           yield s
+       else:
+           yield "No job control found" 
+
+    @srpc( _returns=String)
+    def jobKillAll():
+       global _wjobc
+       if (_wjobc!=None):
+           _wjobc.clearAllJobs()
+           yield "All jobs killed"
+       else:
+           yield "No job control found"
+
+    @srpc( _returns=String)
+    def jobStartAll():
+       global _wjobc
+       if (_wjobc!=None):
+           print _wjobc
+           _wjobc.startJobs("ALL")
+           time.sleep(2)
+           yield "All jobs started"
+       else:
+           yield "No job control found"
+
+        
     @srpc( String,_returns=Iterable(String))
     def forceState(name):
         global _wdd
