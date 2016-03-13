@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 import os
+import socks
 import socket
-import httplib, urllib
+socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", 1080)
+socket.socket = socks.socksocket
+import httplib, urllib,urllib2
 import json
 from copy import deepcopy
 
@@ -38,6 +41,44 @@ p_par['json']=conf.jsonfile
 
 
 l_par=json.dumps(p_par,sort_keys=True)
+
+
+def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],direc=None):
+   lq={}
+   if (direc!=None):
+      myurl = "http://"+host+ ":%d" % (port)
+      #conn = httplib.HTTPConnection(myurl)
+      saction = '/%s' % command
+      myurl=myurl+saction
+      print myurl
+      lq['name']=direc
+      lqs=urllib.urlencode(lq)
+      req=urllib2.Request(myurl,lqs)
+      r1=urllib2.urlopen(req)
+      return r1.read()
+   else:
+       myurl = "http://"+host+ ":%d" % (port)
+       #conn = httplib.HTTPConnection(myurl)
+       saction = '/%s' % command
+       myurl=myurl+saction
+       print myurl
+       req=urllib2.Request(myurl)
+       r1=urllib2.urlopen(req)
+       if (command!="status"):
+          print r1.read()
+          return r1.read()
+       else:
+          s=r1.read()
+          sj=json.loads(s)
+          ssj=json.loads(sj["statusResponse"]["statusResult"][0])
+          for x in ssj:
+             for d in x["difs"]:
+                print '#%4d %5x %6d %12d %12d %s %s ' % (d["id"],d["slc"],d["gtc"],d["bcid"],d["bytes"],d["state"],x["name"])
+
+       
+       #print r1.status, r1.reason
+
+
 def sendcommand(command,host=p_par["daqhost"],port=p_par['daqport'],direc=None):
    lq={}
    if (direc!=None):
@@ -69,7 +110,7 @@ def sendcommand(command,host=p_par["daqhost"],port=p_par['daqport'],direc=None):
                 print '#%4d %5x %6d %12d %12d %s %s ' % (d["id"],d["slc"],d["gtc"],d["bcid"],d["bytes"],d["state"],x["name"])
 
        
-       print r1.status, r1.reason
+          #print r1.status, r1.reason
 
 if (results.cmd == "setParameters"):
     print "Setting ",l_par
@@ -79,7 +120,7 @@ if (results.cmd == "createJobControl"):
     print sendcommand(results.cmd,direc=p_par["json"])
     exit(0)
 else:
-    sendcommand(results.cmd)
+    sendcommand2(results.cmd)
 """
 def startMonitoring(host,port,direc,nd,nr):
    lq={}
