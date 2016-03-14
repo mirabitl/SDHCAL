@@ -18,13 +18,13 @@ parser.add_argument('-c', action='store', dest='config',default=None,help='pytho
 parser.add_argument('--dbstate', action='store', default=None,dest='dbstate',help='set the dbstate')
 parser.add_argument('--ctrlreg', action='store', default=None,dest='ctrlreg',help='set the dbstate')
 parser.add_argument('--version', action='version', version='%(prog)s 1.0')
+parser.add_argument('--state', action='store', type=str,default=None,dest='fstate',help='set the rpcdaq state')
 
 results = parser.parse_args()
 try:
     exec("import %s  as conf" % results.config)
 except ImportError:
     raise Exception("cannot import")
-
 
  
 p_par={}
@@ -46,16 +46,17 @@ l_par=json.dumps(p_par,sort_keys=True)
 def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],direc=None):
    lq={}
    if (direc!=None):
-      myurl = "http://"+host+ ":%d" % (port)
-      #conn = httplib.HTTPConnection(myurl)
-      saction = '/%s' % command
-      myurl=myurl+saction
-      print myurl
-      lq['name']=direc
-      lqs=urllib.urlencode(lq)
-      req=urllib2.Request(myurl,lqs)
-      r1=urllib2.urlopen(req)
-      return r1.read()
+       myurl = "http://"+host+ ":%d" % (port)
+       #conn = httplib.HTTPConnection(myurl)
+       lq['name']=direc
+       lqs=urllib.urlencode(lq)
+       saction = '/%s?%s' % (command,lqs)
+       myurl=myurl+saction
+       print myurl
+       req=urllib2.Request(myurl)
+       r1=urllib2.urlopen(req)
+
+       return r1.read()
    else:
        myurl = "http://"+host+ ":%d" % (port)
        #conn = httplib.HTTPConnection(myurl)
@@ -111,13 +112,18 @@ def sendcommand(command,host=p_par["daqhost"],port=p_par['daqport'],direc=None):
 
        
           #print r1.status, r1.reason
-
+if (results.cmd == "forceState" and results.fstate==None):
+    print "please specify forceState with --fstate=new_state"
+    exit(0)
+if (results.cmd == "forceState"):
+    sendcommand2(results.cmd,direc=results.fstate);
+    exit(0)
 if (results.cmd == "setParameters"):
     print "Setting ",l_par
-    print sendcommand(results.cmd,direc=l_par)
+    print sendcommand2(results.cmd,direc=l_par)
     exit(0)
 if (results.cmd == "createJobControl"):
-    print sendcommand(results.cmd,direc=p_par["json"])
+    print sendcommand2(results.cmd,direc=p_par["json"])
     exit(0)
 else:
     sendcommand2(results.cmd)
