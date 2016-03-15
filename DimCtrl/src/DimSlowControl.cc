@@ -15,11 +15,20 @@
 #include <cstring>
 
 #include <string.h>
+#include <log4cxx/logger.h>
+#include <log4cxx/xml/domconfigurator.h>
+using namespace log4cxx;
+using namespace log4cxx::xml;
+using namespace log4cxx::helpers;
 
 
 
 DimSlowControl::DimSlowControl() : _storeRunning(false),_checkRunning(false),_my(NULL)
 {
+  printf("parsing the config file \n");
+DOMConfigurator::configure("/etc/Log4cxxConfig.xml");
+//_logger->setLevel(log4cxx::Level::getInfo());
+LOG4CXX_INFO (_logCtrl, "this is a info message, after parsing configuration file")
   _chambers.clear();
   DimBrowser* dbr=new DimBrowser(); 
   char *service, *format; 
@@ -117,7 +126,7 @@ void DimSlowControl::setVoltage(uint32_t ch,float v)
   int32_t ibuf[2];
   float* fbuf=(float*) ibuf;
   ibuf[0]=ch;fbuf[1]=v;
-  DimClient::sendCommand("/WIENER/SetPeriod",ibuf,sizeof(int32_t)+sizeof(float));
+  DimClient::sendCommand("/WIENER/SetVoltage",ibuf,sizeof(int32_t)+sizeof(float));
  
 }
 void DimSlowControl::setCurrentLimit(uint32_t ch,float v)
@@ -126,7 +135,7 @@ void DimSlowControl::setCurrentLimit(uint32_t ch,float v)
   s0.str(std::string());
   int32_t ibuf[2];
   float* fbuf=(float*) ibuf;
-  ibuf[0]=ch;fbuf[1]=v;
+  ibuf[0]=ch;fbuf[1]=v*1E-6;
   DimClient::sendCommand("/WIENER/SetCurrent",ibuf,sizeof(int32_t)+sizeof(float));
  
 }
@@ -157,7 +166,7 @@ void DimSlowControl::initialiseDB(std::string s)
 
   _my= new MyInterface(s);
   _my->connect();
-  _my->executeQuery("select HVCHAN,VREF,P0,T0 FROM CHAMBERREF WHERE FIN>NOW() AND DEBUT<NOW()");
+  _my->executeSelect("select HVCHAN,VREF,IREF,P0,T0 FROM CHAMBERREF WHERE FIN>NOW() AND DEBUT<NOW()");
   MYSQL_ROW row=NULL;
   while ((row=_my->getNextRow())!=0)
     {
@@ -168,6 +177,7 @@ void DimSlowControl::initialiseDB(std::string s)
       c.p0=atof(row[3]);
       c.t0=atof(row[4]);
       _chambers.push_back(c);
+      //std::cout<<c.channel<<" "<<c.vref<<std::endl;
     }
   _my->disconnect();
 
@@ -190,7 +200,7 @@ bool  DimSlowControl::getPTMean()
       return false;
     }
   _my->connect();
-  _my->executeQuery("select P,TK FROM BMPMON WHERE TIS BETWEEN NOW() - INTERVAL 10 MINUTE AND NOW()");
+  _my->executeSelect("select P,TK FROM BMPMON WHERE TIS BETWEEN NOW() - INTERVAL 10 MINUTE AND NOW()");
   _PMean=0;_TMean=0;
   int32_t nmeas=0;
   MYSQL_ROW row=NULL;
@@ -203,7 +213,7 @@ bool  DimSlowControl::getPTMean()
   _my->disconnect();
   if (nmeas<5)
     {
-      LOG4CXX_WARN(_logCtrl,"Not enough PT measure");
+      LOG4CXX_WARN(_logCtrl,"Not enough PT measure "<<nmeas);
       return false;
       
     }
@@ -269,17 +279,28 @@ void DimSlowControl::doStore()
 	  sleep((unsigned int) 10);
 	  continue;
 	}
+      _bsem.lock();
       _my->connect();
       for (int i=0;i<56;i++)
 	{
 	  std::stringstream s0;
 	  s0.str(std::string());
 	  s0<<"insert into WIENERMON(HVCHAN,VSET,ISET,VOUT,IOUT) VALUES("<<_hvchannels[i].channel<<","<<_hvchannels[i].vset<<","<<_hvchannels[i].iset<<","<<_hvchannels[i].vout<<","<<_hvchannels[i].iout<<")";
+	  LOG4CXX_DEBUG(_logCtrl,"execute "<<s0.str());
 	  _my->executeQuery(s0.str());
 
 	}
+      std::stringstream s0;
+      s0.str(std::string());
+      s0<<"insert into BMPMON(P,TK) VALUES("<<_PRead<<","<<_TRead+273.15<<")";
+      LOG4CXX_DEBUG(_logCtrl,"execute "<<s0.str());
+      _my->executeQuery(s0.str());
+
       _my->disconnect();
-      sleep((unsigned int) _storeTempo);
+      _bsem.unlock();
+      for (int i=0;i<_storeTempo;i++)
+	if (_storeRunning)
+	  sleep((unsigned int) 1);
     }
   LOG4CXX_INFO(_logCtrl,"Storage thread stopped");
 }
@@ -308,19 +329,20 @@ void DimSlowControl::doCheck()
 	  sleep((unsigned int) 10);
 	  continue;
 	}
+      _bsem.lock();
       _my->connect();
       for (std::vector<chamberRef>::iterator it=_chambers.begin();it!=_chambers.end();it++)
 	{
 	  std::stringstream s0;
 	  s0.str(std::string());
 	  s0<<"select VSET,VOUT FROM WIENERMON WHERE  HVCHAN="<<it->channel<<" ORDER BY IDX DESC LIMIT 1";
-	  _my->executeQuery(s0.str());
+	  _my->executeSelect(s0.str());
 	  MYSQL_ROW row=NULL;
 	  float vset=0,vout=0;
 	  while ((row=_my->getNextRow())!=0)
 	    {
 	      vset=atof(row[0]);
-	      vout=atof(row[1]);
+	      vout=abs(atof(row[1]));
 	    }
  
 	  float vexpected=it->vref*it->t0/it->p0*_PMean/_TMean;
@@ -333,7 +355,7 @@ void DimSlowControl::doCheck()
 	      this->readChannel(it->channel);
 	      std::cout<<hvinfoChannel(it->channel);
 	    }
-	  if (deltav>=200 && vout>=5000)
+	  if (deltav>=200 && vout>=500)
 	    LOG4CXX_WARN(_logCtrl,"checkChannel "<<it->channel<<" : Vout"<<vout<<" Veffective "<<veffective<<" Vref "<<it->vref<<" , the expected value "<<vexpected<<" cannot be set automatically  Delta= "<<deltav);
 	  
 	  if (deltav>=200 && vout<500)
@@ -341,8 +363,15 @@ void DimSlowControl::doCheck()
 
 
 	}
+      //std::cout<<"disconnecting"<<std::endl;
       _my->disconnect();
-      sleep((unsigned int) _checkTempo);
+      _bsem.unlock();
+      //std::cout<<"sleeping"<<std::endl;
+      for (int i=0;i<_checkTempo;i++)
+	if (_checkRunning)
+	  sleep((unsigned int) 1);
+
+      //sleep((unsigned int) _checkTempo);
     }
   LOG4CXX_INFO(_logCtrl,"Check thread stopped");
 }

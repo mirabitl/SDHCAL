@@ -13,7 +13,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-a', action='store', dest='cmd',default='status',help='action to be done')
 parser.add_argument('-c', action='store', dest='config',default=None,help='python config file')
-parser.add_argument('--socks', action='store', dest='sockport',default=None,help='use SOCKS port ')
+parser.add_argument('--socks', action='store', type=int,dest='sockport',default=None,help='use SOCKS port ')
 parser.add_argument('--dbstate', action='store', default=None,dest='dbstate',help='set the dbstate')
 parser.add_argument('--ctrlreg', action='store', type=int, default=None,dest='ctrlreg',help='set the dbstatectrreg in hexa')
 parser.add_argument('--version', action='version', version='%(prog)s 1.0')
@@ -29,7 +29,7 @@ if (results.config==None):
 if (results.sockport !=None):
     socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", results.sockport)
     socket.socket = socks.socksocket
-    print "on utilise sock"
+    print "on utilise sock",results.sockport
 
 
 # import the configuration
