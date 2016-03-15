@@ -26,13 +26,16 @@ public:
   void LVON();
   void LVOFF();
   void downloadDB(std::string s);
+  void downloadDB();
   void openCCC(std::string device);
   void configureCCC();
   void scanFtdi1(RpcDIFClient::rpiClient* d);
   void scanFtdi();
 
   void setParameters(std::string jsonString);
-
+  void setDBState(std::string dbstate);
+  void setControlRegister(uint32_t reg);
+  
 
   void prepareServices();
   void initialise();

@@ -33,7 +33,34 @@ class wddService(ServiceBase):
             yield 'parameters set %s (%s)' % (sm,ss)
         else:
             yield 'Cannot Set'
-
+    @srpc( String, _returns=Iterable(String))
+    def setDBState(name):
+        global _wdd
+        print "On a recu ",name
+        if (name!=None):
+            _wdd.setDBState(name)
+            sm=_wdd.msg()
+            ss=_wdd.state()
+            yield 'DBState set %s (%s)' % (sm,ss)
+        else:
+            yield 'Cannot Set DB'
+    @srpc( UnsignedInteger, _returns=Iterable(String))
+    def setControlRegister(value):
+        global _wdd
+        print "On a recu ",value
+        if (value!=None):
+            _wdd.setControlRegister(value)
+            sm=_wdd.msg()
+            ss=_wdd.state()
+            yield 'ControlReg set %s (%s)' % (sm,ss)
+        else:
+            yield 'Cannot Set Control register'
+    
+    @srpc( _returns=Iterable(String))
+    def downloadDB():
+        global _wdd
+        _wdd.downloadDB();
+        yield 'DB download %s (%s)' % (_wdd.msg(),_wdd.state())
 
         
     @srpc( _returns=Iterable(String))

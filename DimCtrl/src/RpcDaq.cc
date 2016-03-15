@@ -206,6 +206,11 @@ void RpcDaq::downloadDB(std::string s)
     _dbClient->download(s);
   }
 
+void RpcDaq::downloadDB()
+{
+  std::cout<<"Downloading "<<_dbstate<<std::endl;
+  this->downloadDB(_dbstate);
+}
 void RpcDaq::openCCC(std::string device)
   {
     _cccClient->open(device);
@@ -260,6 +265,10 @@ void RpcDaq::setParameters(std::string jsonString)
     
   }
 
+void RpcDaq::setDBState(std::string dbs) {_dbstate=dbs;
+  std::cout<<" Change DB state to "<<_dbstate<<std::endl;}
+void RpcDaq::setControlRegister(uint32_t reg) {_ctrlreg=reg;
+  std::cout<<" Chamge Ctrlreg to "<<std::hex<<_ctrlreg<<std::dec<<std::endl;}
 
 
 void RpcDaq::prepareServices()
