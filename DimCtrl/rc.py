@@ -15,16 +15,13 @@ parser.add_argument('-a', action='store', dest='cmd',default='status',help='acti
 parser.add_argument('-c', action='store', dest='config',default=None,help='python config file')
 parser.add_argument('--socks', action='store', dest='sockport',default=None,help='use SOCKS port ')
 parser.add_argument('--dbstate', action='store', default=None,dest='dbstate',help='set the dbstate')
-parser.add_argument('--ctrlreg', action='store', default=None,dest='ctrlreg',help='set the dbstatectrreg in hexa')
+parser.add_argument('--ctrlreg', action='store', type=int, default=None,dest='ctrlreg',help='set the dbstatectrreg in hexa')
 parser.add_argument('--version', action='version', version='%(prog)s 1.0')
 parser.add_argument('--state', action='store', type=str,default=None,dest='fstate',help='set the rpcdaq state')
 
 results = parser.parse_args()
 
 # Analyse results
-if (results.cmd == "forceState" and results.fstate==None):
-    print "please specify forceState with --fstate=new_state"
-    exit(0)
 if (results.config==None):
     print "please specify a configuration with -c conf_name"
     exit(0)
@@ -54,30 +51,36 @@ p_par['daqhost']=conf.daqhost
 p_par['daqport']=conf.daqport
 p_par['json']=conf.jsonfile
 
-# specific updates
-if (results.cmd != "setParameters" and results.dbstate!=None):
-    print "please use --dbstate=new_state with setParameters command"
-    exit(0)
-if (results.dbstate!=None):
-    p_par['dbstate']=results.dbstate
-
-if (results.cmd != "setParameters" and results.ctrlreg!=None):
-    print "please use --ctrlreg=new-reg (hexa) with setParameters command"
-    exit(0)
-
-if (results.ctrlreg!=None):
-    p_par['ctrlreg']=int(results.ctrlreg,16)
-    
-
 l_par=json.dumps(p_par,sort_keys=True)
 
+v_name=None
+v_value=None
+# specific updates
+if (results.fstate !=None):
+    results.cmd="forceState"
+    v_name=results.fstate
+if (results.dbstate !=None):
+    results.cmd="setDBState"
+    v_name=results.dbstate
+if (results.ctrlreg !=None):
+    results.cmd="setControlRegister"
+    v_value=int(results.ctrlreg,16)
+if (results.cmd =="setParameters"):
+    v_name=l_par
+if (results.cmd =="createJobControl"):
+    v_name=conf.jsonfile
 
-def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],direc=None):
+
+
+def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],name=None,value=None):
    lq={}
-   if (direc!=None):
+   if (name!=None or value!=None):
        myurl = "http://"+host+ ":%d" % (port)
        #conn = httplib.HTTPConnection(myurl)
-       lq['name']=direc
+       if (name!=None):
+           lq['name']=name
+       if (value!=None):
+           lq['value']=value
        lqs=urllib.urlencode(lq)
        saction = '/%s?%s' % (command,lqs)
        myurl=myurl+saction
@@ -156,6 +159,8 @@ def sendcommand(command,host=p_par["daqhost"],port=p_par['daqport'],direc=None):
        
           #print r1.status, r1.reason
 
+sendcommand2(results.cmd,name=v_name,value=v_value)
+exit(0)
 if (results.cmd == "forceState"):
     sendcommand2(results.cmd,direc=results.fstate);
     exit(0)
