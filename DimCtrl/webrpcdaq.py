@@ -20,8 +20,11 @@ class wddService(ServiceBase):
     @srpc(_returns=Iterable(String))
     def createDaq():    
         global _wdd
-        _wdd=dc.RpcDaq()
-        yield 'Daq is created'
+        if (_wdd==None):
+            _wdd=dc.RpcDaq()
+            yield 'Daq is created'
+        else:
+            yield 'Daq is already created'
         
 
     @srpc( String, _returns=Iterable(String))
@@ -75,9 +78,12 @@ class wddService(ServiceBase):
     def createJobControl(name):
         global _wjobc
         #print "On a recu ",name
-        _wjobc=Ldimjc.DimJobInterface()
-        _wjobc.loadJSON(name)
-        yield 'JOB Control interface  created '
+        if (_wjobc==None):
+            _wjobc=Ldimjc.DimJobInterface()
+            _wjobc.loadJSON(name)
+            yield 'JOB Control interface  created '
+        else:
+            yield 'JOB Control interface  already created '
         #print _wjobc
         #yield 'JOB Control interface  created '
 
@@ -192,8 +198,11 @@ class wddService(ServiceBase):
     @srpc(_returns=Iterable(String))
     def createSlowControl():    
         global _wsl
-        _wsl=dc.DimSlowControl()
-        yield 'Slow Control is created'
+        if (_wsl==None):
+            _wsl=dc.DimSlowControl()
+            yield 'Slow Control is created'
+        else:
+            yield 'Slow Control is already created'
         
     @srpc(_returns=Iterable(String))
     def hvStatus():
