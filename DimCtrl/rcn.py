@@ -232,7 +232,7 @@ elif(results.slc_hvoff):
         print 'Please specify the channel --channel=#'
         exit(0)
 elif(results.slc_store):
-    r_cmd='startStore'
+    r_cmd='startStorage'
     if (results.period!=None):
         lcgi['period']=results.period
     else:
@@ -246,7 +246,7 @@ elif(results.slc_check):
         print 'Please specify the period --period=second(s)'
         exit(0)
 elif(results.slc_store_stop):
-    r_cmd='stopStore'
+    r_cmd='stopStorage'
 elif(results.slc_check_stop):
     r_cmd='stopCheck'
 
