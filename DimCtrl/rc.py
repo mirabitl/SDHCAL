@@ -15,9 +15,12 @@ parser.add_argument('-a', action='store', dest='cmd',default='status',help='acti
 parser.add_argument('-c', action='store', dest='config',default=None,help='python config file')
 parser.add_argument('--socks', action='store', type=int,dest='sockport',default=None,help='use SOCKS port ')
 parser.add_argument('--dbstate', action='store', default=None,dest='dbstate',help='set the dbstate')
-parser.add_argument('--ctrlreg', action='store', type=int, default=None,dest='ctrlreg',help='set the dbstatectrreg in hexa')
+parser.add_argument('--ctrlreg', action='store', default=None,dest='ctrlreg',help='set the dbstatectrreg in hexa')
 parser.add_argument('--version', action='version', version='%(prog)s 1.0')
 parser.add_argument('--state', action='store', type=str,default=None,dest='fstate',help='set the rpcdaq state')
+parser.add_argument('--channel', action='store',type=int, default=None,dest='channel',help='set the hvchannel')
+parser.add_argument('--voltage', action='store',type=float, default=None,dest='voltage',help='set the hv voltage')
+parser.add_argument('--current', action='store',type=float, default=None,dest='current',help='set the hv current')
 
 results = parser.parse_args()
 
@@ -38,6 +41,9 @@ try:
 except ImportError:
     raise Exception("cannot import")
 
+if (results.cmd==None):
+    raise Exception("Please specify a command")
+
 # fill parameters 
 p_par={}
 if (conf.state!=None):
@@ -53,42 +59,53 @@ p_par['json']=conf.jsonfile
 
 l_par=json.dumps(p_par,sort_keys=True)
 
+lcgi={}
 v_name=None
 v_value=None
 # specific updates
 if (results.fstate !=None):
     results.cmd="forceState"
     v_name=results.fstate
+    lcgi['name']=v_name
 if (results.dbstate !=None):
-    results.cmd="setDBState"
-    v_name=results.dbstate
+    lcgi['name']=v_name
 if (results.ctrlreg !=None):
-    results.cmd="setControlRegister"
-    v_value=int(results.ctrlreg,16)
+    lcgi['value']=v_value
 if (results.cmd =="setParameters"):
     v_name=l_par
+    lcgi['name']=v_name
 if (results.cmd =="createJobControl"):
     v_name=conf.jsonfile
+    lcgi['name']=v_name
+if (results.channel !=None):
+    lcgi['channel']=results.channel
+if (results.voltage !=None):
+    lcgi['V']=results.voltage
+if (results.current !=None):
+    lcgi['I']=results.current
 
+    
+print lcgi
+#exit(0)
 
+def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
+   
+   if (lq!=None):
+       if (len(lq)!=0):
+           myurl = "http://"+host+ ":%d" % (port)
+           #conn = httplib.HTTPConnection(myurl)
+           #if (name!=None):
+           #    lq['name']=name
+           #if (value!=None):
+           #    lq['value']=value
+           lqs=urllib.urlencode(lq)
+           saction = '/%s?%s' % (command,lqs)
+           myurl=myurl+saction
+           print myurl
+           req=urllib2.Request(myurl)
+           r1=urllib2.urlopen(req)
 
-def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],name=None,value=None):
-   lq={}
-   if (name!=None or value!=None):
-       myurl = "http://"+host+ ":%d" % (port)
-       #conn = httplib.HTTPConnection(myurl)
-       if (name!=None):
-           lq['name']=name
-       if (value!=None):
-           lq['value']=value
-       lqs=urllib.urlencode(lq)
-       saction = '/%s?%s' % (command,lqs)
-       myurl=myurl+saction
-       print myurl
-       req=urllib2.Request(myurl)
-       r1=urllib2.urlopen(req)
-
-       return r1.read()
+           return r1.read()
    else:
        myurl = "http://"+host+ ":%d" % (port)
        #conn = httplib.HTTPConnection(myurl)
@@ -117,6 +134,14 @@ def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],name=None,v
            for x in ssj:
                if (x['DAQ']=='Y'):
                    print "%6d %15s %25s %20s" % (x['PID'],x['NAME'],x['HOST'],x['STATUS'])
+       elif (command=="hvStatus"):
+           s=r1.read()
+           sj=json.loads(s)
+           ssj=json.loads(sj["hvStatusResponse"]["hvStatusResult"][0])
+           print "\033[1m %5s %10s %10s %10s %10s \033[0m" % ('Chan','VSET','ISET','VOUT','IOUT')
+           for x in ssj:
+               print "#%.4d %10.2f %10.2f %10.2f %10.2f" % (x['channel'],x['vset'],x['iset'],x['vout'],x['iout'])
+
        else:
           print r1.read()
           return r1.read()
@@ -158,8 +183,10 @@ def sendcommand(command,host=p_par["daqhost"],port=p_par['daqport'],direc=None):
 
        
           #print r1.status, r1.reason
-
-sendcommand2(results.cmd,name=v_name,value=v_value)
+if (len(lcgi)!=0):
+    sendcommand2(results.cmd,lq=lcgi)
+else:
+    sendcommand2(results.cmd)
 exit(0)
 if (results.cmd == "forceState"):
     sendcommand2(results.cmd,direc=results.fstate);
