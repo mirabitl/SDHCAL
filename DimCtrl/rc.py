@@ -30,8 +30,12 @@ results = parser.parse_args()
 
 # Analyse results
 if (results.config==None):
-    print "please specify a configuration with -c conf_name"
-    exit(0)
+    dc=os.getenv("DAQCONFIG","Not Found")
+    if (dc=="Not Found"):
+        print "please specify a configuration with -c conf_name"
+        exit(0)
+    else:
+        results.config=dc
 
 if (results.sockport !=None):
     socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", results.sockport)
