@@ -476,10 +476,15 @@ void RpcDaq::destroy()
 
 std::string RpcDaq::shmStatus()
 {
-  std::stringstream s0;
+  //  std::stringstream s0;
   _shClient->status();
-  s0<<" ShmWriter=>Run "<<_shClient->run()<<" Event "<<_shClient->event();
-  return s0.str();
+  //s0<<" ShmWriter=>Run "<<_shClient->run()<<" Event "<<_shClient->event();
+  //return s0.str();
+  Json::FastWriter fastWriter;
+  Json::Value fromScratch;
+  fromScratch["run"]=_shClient->run();
+  fromScratch["event"]=_shClient->event();
+  return fastWriter.write(fromScratch);
 }
 
 std::string RpcDaq::status()
