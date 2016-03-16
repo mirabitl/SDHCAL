@@ -10,6 +10,7 @@ DimDIF::DimDIF(FtdiDeviceInfo* ftd) : _rd(NULL),_state("CREATED"),_dsStatus(NULL
   _status->id=_ftd.id;
   _dbdif = new DIFDbInfo();
   _readoutStarted=false;
+  _readoutCompleted=true;
 }
 DimDIF::~DimDIF()
 {
