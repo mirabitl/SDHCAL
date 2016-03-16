@@ -35,6 +35,11 @@ DimDIFServer::DimDIFServer()
   devicesService_= new DimService(s0.str().c_str(),"I:255",devicesStatus_,255*sizeof(int32_t));
   processStatus_=DimDIFServer::ALIVED;
   aliveService_->updateService();
+
+  s0.str(std::string());
+  s0<<"/DDS/"<<hname<<"/REGISTER";
+  registerService_ = new DimService(s0.str().c_str(),register_);
+  register_=0;
   allocateCommands();
   s0.str(std::string());
   gethostname(hname,80);
@@ -84,6 +89,12 @@ void DimDIFServer::allocateCommands()
   s0.str(std::string());
   s0<<"/DDS/"<<hname<<"/LOOPCONFIGURE";
   loopConfigureCommand_=new DimCommand(s0.str().c_str(),"I:2",this);
+  s0.str(std::string());
+  s0<<"/DDS/"<<hname<<"/REGISTERREAD";
+  registerreadCommand_=new DimCommand(s0.str().c_str(),"I:2",this);
+  s0.str(std::string());
+  s0<<"/DDS/"<<hname<<"/REGISTERWRITE";
+  registerwriteCommand_=new DimCommand(s0.str().c_str(),"I:3",this);
 }
 
 void DimDIFServer::clearServices()
@@ -140,8 +151,10 @@ void DimDIFServer::UsbPrepare()
 	  it->reset();
 	}       
       else
+	{
+	  LOG4CXX_FATAL(_logDDIF,"Cannot Open FTDI device");
 	std::cout << " (Open FAILED)";
-      
+	}
       it->close();
       
       std::cout << std::endl;
@@ -165,8 +178,10 @@ void DimDIFServer::UsbPrepare()
 	  it->reset();
 	}       
       else
+	{
+	  LOG4CXX_FATAL(_logDDIF,"Cannot Open FTDI device");
 	std::cout << " (Open FAILED)";
-      
+	}
       it->close();
       
       std::cout << std::endl;
@@ -189,6 +204,7 @@ uint32_t DimDIFServer::configureChips(std::string path,uint32_t difid) throw (Lo
     {
       std::stringstream errorMessage;
       errorMessage << "DIF   id ("<< difid << ") is not initialised"<< std::ends;
+      LOG4CXX_FATAL(_logDDIF, "DIF   id ("<< difid << ") is not initialised");
       throw (LocalHardwareException( "Chip Configuration" ,errorMessage.str(), __FILE__, __LINE__, __FUNCTION__ ) );	  
     }
   else
@@ -244,6 +260,7 @@ uint32_t DimDIFServer::configureChips(uint32_t difid,SingleHardrocV2Configuratio
     {
       std::stringstream errorMessage;
       errorMessage << "DIF   id ("<< difid << ") is not initialised"<< std::ends;
+      LOG4CXX_FATAL(_logDDIF, "DIF   id ("<< difid << ") is not initialised");
       throw (LocalHardwareException( "Chip Configuration" ,errorMessage.str(), __FILE__, __LINE__, __FUNCTION__ ) );	  
     }
   else
@@ -264,12 +281,15 @@ void DimDIFServer::preConfigure(uint32_t difid,uint32_t ctrlreg) throw (LocalHar
     {
       std::stringstream errorMessage;
       errorMessage << "DIF   id ("<< difid << ") is not initialised"<< std::ends;
+      LOG4CXX_ERROR(_logDDIF, "DIF   id ("<< difid << ") is not initialised");
       throw (LocalHardwareException( "PreConfiguration" ,errorMessage.str(), __FILE__, __LINE__, __FUNCTION__ ) );	  
     }
   else
     {
+      itd->second->setPowerManagment(0x8c52, 0x3e6,0xd640,0x4e,0x4e);// Start decale de 36000 clock (8b68 a la place de 43 ECAL needs)
       itd->second->setControlRegister(ctrlreg);
       itd->second->configureRegisters();
+
 		
     }
 }
@@ -280,6 +300,7 @@ void DimDIFServer::initialise(uint32_t difid) throw (LocalHardwareException)
     {
       std::stringstream errorMessage;
       errorMessage << "DIF  already registered id ("<< difid << ")"<< std::ends;
+      LOG4CXX_ERROR(_logDDIF, "DIF   id ("<< difid << ") is already  initialised");
       throw (LocalHardwareException( "DIFRegistration" ,errorMessage.str(), __FILE__, __LINE__, __FUNCTION__ ) );	  
     }
   else
@@ -291,6 +312,7 @@ void DimDIFServer::initialise(uint32_t difid) throw (LocalHardwareException)
 	  getchar();
 	  std::stringstream errorMessage;
 	  errorMessage << "DIF not found in Device map ("<< difid << ")"<< std::ends;
+	  LOG4CXX_ERROR(_logDDIF,"DIF not found in Device map ("<< difid << ")");
 	  throw (LocalHardwareException( "DIFRegistration" ,errorMessage.str(), __FILE__, __LINE__, __FUNCTION__ ) );
 	}
       char cmd[16];
@@ -307,7 +329,7 @@ void DimDIFServer::initialise(uint32_t difid) throw (LocalHardwareException)
       catch (...)
 	{
 	  std::cout<<"cannot initialize "<<difid<<std::endl;
-				
+	  LOG4CXX_FATAL(_logDDIF,"cannot initialize "<<difid);
 	}
       try
 	{
@@ -318,6 +340,7 @@ void DimDIFServer::initialise(uint32_t difid) throw (LocalHardwareException)
 #ifdef DEBUG_READ
 	  std::cout<<e.message()<<std::endl;
 #endif
+	  LOG4CXX_FATAL(_logDDIF," "<<e.message());
 	  throw (e);
 	}
       try
@@ -329,6 +352,7 @@ void DimDIFServer::initialise(uint32_t difid) throw (LocalHardwareException)
 #ifdef DEBUG_READ
 	  std::cout<<e.message()<<std::endl;
 #endif
+	  LOG4CXX_FATAL(_logDDIF," "<<e.message());
 	  throw (e);
 	}
       /*
@@ -369,7 +393,11 @@ std::vector<uint32_t>& DimDIFServer::scanDevices()
 	}
       myfile.close();
     }
-  else std::cout << "Unable to open file"<<std::endl; 
+  else 
+    {
+      std::cout << "Unable to open file"<<std::endl; 
+      LOG4CXX_FATAL(_logDDIF," Unable to pen /tmp/ftdi_devices");
+    }
   std::sort(theListOfDIFFounds_.begin(),theListOfDIFFounds_.end());
   if (theListOfDIFFounds_.size()>0)
     {
@@ -418,7 +446,11 @@ void DimDIFServer::prepareDevices()
 	}
       myfile.close();
     }
-  else std::cout << "Unable to open file"<<std::endl; 
+  else 
+    {
+      std::cout << "Unable to open file"<<std::endl; 
+      LOG4CXX_FATAL(_logDDIF," Unable to open /var/log/pi/ftdi_devices");
+    }
 
   for (std::map<uint32_t,FtdiDeviceInfo>::iterator it=theFtdiDeviceInfoMap_.begin();it!=theFtdiDeviceInfoMap_.end();it++)
     printf("Device found and register: %d with info %d %d %s type %d \n", it->first,it->second.vendorid,it->second.productid,it->second.name,it->second.type);
@@ -428,7 +460,8 @@ void DimDIFServer::prepareDevices()
 void DimDIFServer::commandHandler()
 {
   DimCommand *currCmd = getCommand();
-  printf(" J'ai recu %s COMMAND  \n",currCmd->getName());
+  //printf(" J'ai recu %s COMMAND  \n",currCmd->getName());
+  LOG4CXX_INFO(_logDDIF," CMD: "<<currCmd->getName());
   if (currCmd==scanCommand_)
     {
       std::vector<uint32_t> v=scanDevices();
@@ -463,6 +496,7 @@ void DimDIFServer::commandHandler()
 	  rc=-1;
 	  difStatus_[difid].status=DimDIFServer::FAILED;
 	  difState_[difid]="INIT_FAILED";
+	  LOG4CXX_ERROR(_logDDIF,"Initialised failed on "<<difid);
 	}
       difStatus_[difid].status=DimDIFServer::INITIALISED;
       cout <<" host of dif " <<difStatus_[difid].host<<" "<<sizeof(DIFStatus)<<endl;
@@ -515,20 +549,38 @@ void DimDIFServer::commandHandler()
 	  for (int il=0;il<nloop;il++)
 	    {
 	      slc=this->configureChips(difid,theDIFDbInfo_[difid].slow,theDIFDbInfo_[difid].nbasic);
-
+	      bool bad=false;
 	      std::stringstream s0;
 	      s0.str(std::string());
 	      s0<<"CONFIGURED => ";
 	      if ((slc&0x0003)==0x01) s0<<"SLC CRC OK       - ";
-	      else if ((slc&0x0003)==0x02) s0<<"SLC CRC Failed   - ";
-	      else s0<<"SLC CRC forb  - ";
+	      else
+		{ 
+		if ((slc&0x0003)==0x02) 
+		  s0<<"SLC CRC Failed   - ";
+		else 
+		  s0<<"SLC CRC forb  - ";
+		bad=true;
+		}
 	      if ((slc&0x000C)==0x04) s0<<"All OK      - ";
-	      else if ((slc&0x000C)==0x08) s0<<"All Failed  - ";
-	      else  s0<<"All forb - ";
+	      else 
+		{
+		  if ((slc&0x000C)==0x08) 
+		    s0<<"All Failed  - ";
+		  else  
+		    s0<<"All forb - ";
+		  bad=true;
+		}
 	      if ((slc&0x0030)==0x10) s0<<"L1 OK     - ";
-	      else if ((slc&0x0030)==0x20) s0<<"L1 Failed - ";
-	      else s0<<"L1 forb   - ";
+	      else 
+		{
+		  if ((slc&0x0030)==0x20) s0<<"L1 Failed - ";
+		  else s0<<"L1 forb   - ";
+		  bad=true;
+		}
 	      std::cout<<s0.str()<<std::endl;
+	      if (bad)
+		LOG4CXX_ERROR(_logDDIF,"Configure failed on "<<difid<<s0.str()<<" SLC="<<slc);
 	    }
 	}
 	
@@ -556,6 +608,7 @@ void DimDIFServer::commandHandler()
 	    {
 	      rc=-1;
 	      std::cout<<itd->first<<" is not preconfigured "<<e.what()<<std::endl;
+	      LOG4CXX_ERROR(_logDDIF,"PreConfigure failed on "<<itd->first);
 	      difState_[itd->first]="PRECONFIGURE_FAILED";
 	    }
 
@@ -569,7 +622,7 @@ void DimDIFServer::commandHandler()
 	      uint32_t slc=0;
 
 	      slc=this->configureChips(difid,theDIFDbInfo_[difid].slow,theDIFDbInfo_[difid].nbasic);
-
+	      /*
 	      std::stringstream s0;
 	      s0.str(std::string());
 	      s0<<"CONFIGURED => ";
@@ -582,8 +635,39 @@ void DimDIFServer::commandHandler()
 	      if ((slc&0x0030)==0x10) s0<<"L1 OK     - ";
 	      else if ((slc&0x0030)==0x20) s0<<"L1 Failed - ";
 	      else s0<<"L1 forb   - ";
-
-
+	      */
+	      bool bad=false;
+	      std::stringstream s0;
+	      s0.str(std::string());
+	      s0<<"CONFIGURED => ";
+	      if ((slc&0x0003)==0x01) s0<<"SLC CRC OK       - ";
+	      else
+		{ 
+		if ((slc&0x0003)==0x02) 
+		  s0<<"SLC CRC Failed   - ";
+		else 
+		  s0<<"SLC CRC forb  - ";
+		bad=true;
+		}
+	      if ((slc&0x000C)==0x04) s0<<"All OK      - ";
+	      else 
+		{
+		  if ((slc&0x000C)==0x08) 
+		    s0<<"All Failed  - ";
+		  else  
+		    s0<<"All forb - ";
+		  bad=true;
+		}
+	      if ((slc&0x0030)==0x10) s0<<"L1 OK     - ";
+	      else 
+		{
+		  if ((slc&0x0030)==0x20) s0<<"L1 Failed - ";
+		  else s0<<"L1 forb   - ";
+		  bad=true;
+		}
+	      std::cout<<s0.str()<<std::endl;
+	      if (bad)
+		LOG4CXX_ERROR(_logDDIF,"Configure failed on "<<difid<<s0.str()<<" SLC="<<slc);
 
 
 
@@ -592,6 +676,10 @@ void DimDIFServer::commandHandler()
 
 	      difStatus_[difid].slc=slc;
 	      infoServicesMap_[difid]->updateService(&difStatus_[difid],sizeof(DIFStatus));
+	    }
+	  else
+	    {
+	      LOG4CXX_ERROR(_logDDIF,"No Configure done on "<<difid<<" Missing DB download info ");
 	    }
 	}
 
@@ -616,7 +704,7 @@ void DimDIFServer::commandHandler()
 		}
 	      catch (LocalHardwareException& e)
 		{
-
+		  LOG4CXX_ERROR(_logDDIF,"Destroy failed "<<itd->first);
 		  std::cout<<e.message()<<std::endl;
 
 
@@ -651,6 +739,7 @@ void DimDIFServer::commandHandler()
 	    {
 	      difState_[itd->first]="START_FAILED";
 	      std::cout<<itd->first<<" is not started "<<e.what()<<std::endl;
+	      LOG4CXX_ERROR(_logDDIF,"Start failed "<<itd->first);
 	    }
 	  stateServicesMap_[itd->first]->updateService((char*) difState_[itd->first].c_str());
 	}
@@ -672,6 +761,7 @@ void DimDIFServer::commandHandler()
 	    {
 	      difState_[itd->first]="STOP_FAILED";
 	      std::cout<<itd->first<<" is not started "<<e.what()<<std::endl;
+	      LOG4CXX_ERROR(_logDDIF,"Stop failed "<<itd->first);
 	    }
 
 	  stateServicesMap_[itd->first]->updateService((char*) difState_[itd->first].c_str());
@@ -681,6 +771,56 @@ void DimDIFServer::commandHandler()
       processStatus_=DimDIFServer::STOPPED;
       aliveService_->updateService();
     
+    }
+  if (currCmd==registerwriteCommand_)
+    {
+      uint32_t* dd=(uint32_t*) currCmd->getData();
+      uint32_t difid=dd[0];
+      uint32_t adr=dd[1];
+      uint32_t reg=dd[2];
+      for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
+	{
+	  if (itd->first!=difid) continue;
+	  try 
+	    {
+	      itd->second->UsbRegisterWrite(adr,reg);
+	    }
+	  catch (LocalHardwareException e)
+	    {
+	
+	      LOG4CXX_ERROR(_logDDIF,"Cannot write register "<<itd->first<<" ["<<std::hex<<adr<<"]<-"<<reg<<std::dec);
+	    }
+	
+
+	}
+
+    }
+
+  if (currCmd==registerreadCommand_)
+    {
+      
+      uint32_t* dd=(uint32_t*) currCmd->getData();
+      uint32_t difid=dd[0];
+      uint32_t adr=dd[1];
+      uint32_t reg;
+      for (std::map<uint32_t,DIFReadout*>::iterator itd=theDIFMap_.begin();itd!=theDIFMap_.end();itd++)
+	{
+	  if (itd->first!=difid) continue;
+	  LOG4CXX_INFO(_logDDIF,"Reading "<<itd->first<<" ["<<std::hex<<adr<<"]<-");
+	  try 
+	    {
+	      itd->second->UsbRegisterRead(adr,&reg);
+	    }
+	  catch (LocalHardwareException e)
+	    {
+	
+	      LOG4CXX_ERROR(_logDDIF,"Cannot read register "<<itd->first<<" ["<<std::hex<<adr<<"]<-"<<reg<<std::dec);
+	    }
+	  LOG4CXX_INFO(_logDDIF,"Got "<<itd->first<<" ["<<std::hex<<adr<<"]<-"<<reg<<std::dec);
+
+	}
+      register_=reg;
+      registerService_->updateService();
     }
 
   if (currCmd==configurechipsCommand_)
@@ -770,6 +910,7 @@ void DimDIFServer::readout(uint32_t difid)
 	}
       catch (LocalHardwareException e)
 	{
+	  LOG4CXX_ERROR(_logDDIF,"DIF "<<itd->first<<" is not started" );
 	  std::cout<<itd->first<<" is not started "<<e.what()<<std::endl;
 	}
 		
@@ -811,6 +952,7 @@ void DimDIFServer::readout(uint32_t difid)
 	    }
 	  catch (LocalHardwareException e)
 	    {
+	      LOG4CXX_ERROR(_logDDIF,"DIF "<<itd->first<<" is not started" );
 	      std::cout<<itd->first<<" is not started "<<e.what()<<std::endl;
 	    }
 	}	
@@ -847,6 +989,7 @@ void  DimDIFServer::infoHandler( )
       //memcpy(&theDIFDbInfo_[i],curr->getData(),sizeof(DIFDbInfo));
       memcpy(&theDIFDbInfo_[i],curr->getData(),curr->getSize());
       printf("Dim info read %d %d \n",theDIFDbInfo_[i].id,theDIFDbInfo_[i].nbasic);
+      LOG4CXX_INFO(_logDDIF,"DIF "<<theDIFDbInfo_[i].id<<" is read from DB with nasic="<<theDIFDbInfo_[i].nbasic);
     }
 }
 void DimDIFServer::setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,SingleHardrocV2ConfigurationFrame& ConfigHR2)

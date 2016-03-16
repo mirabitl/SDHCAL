@@ -75,7 +75,8 @@ void DimCCCServer::doInitialise(std::string device)
 void DimCCCServer::commandHandler()
 {
   DimCommand *currCmd = getCommand();
-  printf(" J'ai recu %s COMMAND  \n",currCmd->getName());
+  //printf(" J'ai recu %s COMMAND  \n",currCmd->getName());
+  LOG4CXX_INFO(_logDCCC,"CMD :"<<currCmd->getName());
   if (currCmd==initialiseCommand_)
     {
       std::string device((const char*) currCmd->getString());

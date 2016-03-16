@@ -1,7 +1,7 @@
 #marlin="./Slot1_39_MARLIN.xml"
 #marlin="./m3_avril2015.xml"
-#marlin="./m3_avril2015.xml"
-marlin="./chinese_aout2015.xml"
+marlin="./m3_avril2015.xml"
+#marlin="./chinese_aout2015.xml"
 rebuild=False
 useSynch=False
 #

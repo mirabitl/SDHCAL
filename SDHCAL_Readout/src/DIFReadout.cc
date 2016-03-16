@@ -1,5 +1,6 @@
 #include "DIFReadout.h"
 #include "FtdiUsbDriver.h"
+
 /* Main program de readout */
 DIFReadout::DIFReadout (std::string name,uint32_t productid) : FtdiDIFDriver ((char*) name.c_str(),productid),theName_(name),theAsicType_(2),theNumberOfAsics_(48),theControlRegister_(0x80181B00),	theCurrentSLCStatus_(0),
 					    thePwrToPwrARegister_(0x3E8),thePwrAToPwrDRegister_(0x3E6),thePwrDToDAQRegister_(0x4E),theDAQToPwrDRegister_(0x4E),thePwrDToPwrARegister_(0x4E)
@@ -37,6 +38,7 @@ void DIFReadout::setControlRegister(uint32_t ControlRegister)
 
 void DIFReadout::initialise(uint32_t difid,uint32_t asicType,uint32_t NumberOfAsics,uint32_t ctrlreg,uint32_t P2PAReg, uint32_t PA2PDReg,uint32_t PD2DAQReg, uint32_t DAQ2DReg,uint32_t D2AReg)
 {
+  LOG4CXX_INFO(_logDIF,"Initialise");
   theDIFId_=difid;
   theAsicType_=asicType;
   theNumberOfAsics_=NumberOfAsics;
@@ -53,10 +55,12 @@ void DIFReadout::initialise(uint32_t difid,uint32_t asicType,uint32_t NumberOfAs
 void DIFReadout::start()
 {
   // Nothing to do yet
+  LOG4CXX_INFO(_logDIF,"Start");
   HardrocFlushDigitalFIFO();	
 }
 void DIFReadout::stop()
 {
+  LOG4CXX_INFO(_logDIF,"Stop");
   HardrocFlushDigitalFIFO();
   HardrocStopDigitalAcquisitionCommand();
   HardrocFlushDigitalFIFO();
@@ -80,13 +84,17 @@ void DIFReadout::DoRefreshNbOfASICs()
       try { 
 	//printf ("MicroRoc assuming all asics present, tu be completed!!\n");
 	NbAsicsWrite(tnbasics,tnbasicsl1,tnbasicsl2,tnbasicsl3,tnbasicsl4);}
-      catch (LocalHardwareException& e)	{	std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<"==>"<< "DIFReadout : Unable to set the correct number of hardrocs"<<std::endl;	}
+      catch (LocalHardwareException& e)	{	std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<"==>"<< "DIFReadout : Unable to set the correct number of hardrocs"<<std::endl;	
+	LOG4CXX_ERROR(_logDIF,"Unable to set the correct number of hardrocs"<<theName_);
+      }
       return;}
   else
     {
       //printf ("HR2 theNumberOfAsics_= %d\n",theNumberOfAsics_);
       try {NbAsicsWrite(	tnbasics,tnbasics,0,0,0);}
-      catch (LocalHardwareException& e)	{	std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<"==>"<< "DIFReadout : Unable to set the correct number of hardrocs"<<std::endl;	}
+      catch (LocalHardwareException& e)	{	std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<"==>"<< "DIFReadout : Unable to set the correct number of hardrocs"<<std::endl;	
+	LOG4CXX_ERROR(_logDIF,"Unable to set the correct number of hardrocs"<<theName_);
+      }
       return;
     }
 
@@ -111,7 +119,9 @@ int32_t DIFReadout::DoReadSLCStatus()
 	//printf ("status = %x\n",CurrentSLCStatus);
 			
       }
-      catch (LocalHardwareException& e)	{	std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<"==>"<< "DIFReadout : Unable to send command to DIF : "+(std::string)e.what()<<std::endl;	}
+      catch (LocalHardwareException& e)	{	std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<"==>"<< "DIFReadout : Unable to send command to DIF : "+(std::string)e.what()<<std::endl;	
+	LOG4CXX_ERROR(_logDIF,"Unable to send command to DIF : "<<(std::string)e.what()<<theName_);
+      }
       tretry++;
       //      std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<"==>"<<toolbox::toString("****** 	CurrentSLCStatus = %ld",CurrentSLCStatus)<<std::endl;	
     }
@@ -196,14 +206,18 @@ void DIFReadout::configureRegisters()
       if (theAsicType_==2)   SetChipTypeRegister(0x100);	
       else if (theAsicType_==11)   SetChipTypeRegister(0x1000);	
     }
-  catch (LocalHardwareException& e) { std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<": Unable to set asic type in dif"<<std::endl;throw;}
+  catch (LocalHardwareException& e) { 
+    LOG4CXX_ERROR(_logDIF," Unable to set asic type in dif"<<theName_);
+std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<": Unable to set asic type in dif"<<std::endl;throw;}
 	
   try 
     {
       GetChipTypeRegister(&ttype);	
       //	    printf ("chiptype=%x\n",ttype);
     }
-  catch (LocalHardwareException& e) { std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<": Unable to get asic type in dif"<<std::endl;throw;}
+  catch (LocalHardwareException& e) { 
+    LOG4CXX_ERROR(_logDIF," Unable to get asic type in dif"<<theName_);
+std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<": Unable to get asic type in dif"<<std::endl;throw;}
 	
 	
 	
@@ -214,6 +228,7 @@ void DIFReadout::configureRegisters()
     }
   catch (LocalHardwareException& e)
     {
+      LOG4CXX_ERROR(_logDIF," Unable to send control reg value"<<theName_);
       std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<": Unable to send control reg value"<<std::endl;
       throw;
     }
@@ -227,6 +242,7 @@ void DIFReadout::configureRegisters()
     }
   catch (LocalHardwareException& e)
     {
+      LOG4CXX_ERROR(_logDIF,"Unable to send pwr to A reg value"<<theName_);
       std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<": Unable to send pwr to A reg value"<<std::endl;
       throw;
     }
@@ -238,6 +254,7 @@ void DIFReadout::configureRegisters()
     }
   catch (LocalHardwareException& e)
     {
+      LOG4CXX_ERROR(_logDIF,": Unable to send A to D reg value"<<theName_);
       std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<": Unable to send A to D reg value"<<std::endl;
       throw;
     }
@@ -248,6 +265,7 @@ void DIFReadout::configureRegisters()
     }
   catch (LocalHardwareException& e)
     {
+      LOG4CXX_ERROR(_logDIF,": Unable to send D to Daq reg value"<<theName_);
       std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<": Unable to send D to Daq reg value"<<std::endl;
       throw;
     }
@@ -258,6 +276,7 @@ void DIFReadout::configureRegisters()
     }
   catch (LocalHardwareException& e)
     {
+      LOG4CXX_ERROR(_logDIF,": Unable to send daq to D reg value"<<theName_);
       std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<": Unable to send daq to D reg value"<<std::endl;
       throw;
     }
@@ -268,6 +287,7 @@ void DIFReadout::configureRegisters()
     }
   catch (LocalHardwareException& e)
     {
+      LOG4CXX_ERROR(_logDIF,": Unable to send D to A reg value"<<theName_);
       std::cout<<__PRETTY_FUNCTION__<<" "<<theName_<<": Unable to send D to A reg value"<<std::endl;
       throw;
     }
@@ -279,7 +299,10 @@ void DIFReadout::DoSendDIFTemperatureCommand()
 {
   //std::cout<<"Usb do send dif temperature command"<<std::endl;
   try	{	HardrocCommandAskDifTemperature();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "DIFReadout : Unable to send dif temperature command"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  
+    LOG4CXX_ERROR(_logDIF,"Unable to send dif temperature command"<<theName_);
+
+}	
   return;
 }
 
@@ -287,7 +310,7 @@ void DIFReadout::DoSendASUTemperatureCommand()
 {
   //std::cout<<"Usb do send asu temperature command"<<std::endl;
   try	{	HardrocCommandAskAsuTemperature();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "DIFReadout : Unable to send asu temperature command"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logDIF," "<<"==>"<< "DIFReadout : Unable to send asu temperature command");	}	
   return;
 }
 
@@ -295,7 +318,7 @@ void DIFReadout::DoGetASUTemperatureCommand(uint32_t *ttemp1,uint32_t *ttemp2)
 {
   //	std::cout<<"Usb do get asu temperature command"<<std::endl;
   try	{	GetASUTemperature(ttemp1,ttemp2);	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "DIFReadout : Unable to send asu temperature command"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logDIF," "<<"==>"<< "DIFReadout : Unable to send asu temperature command");	}	
   //	printf ("DIFReadout ASUTemp = %d %d \n",*ttemp1,*ttemp2);
   theTemperatureBuffer_[1]=(*ttemp1)*1.0;
   theTemperatureBuffer_[2]=(*ttemp2)*1.0;
@@ -306,7 +329,7 @@ void DIFReadout::DoGetDIFTemperatureCommand(uint32_t *ttemp)
 {
   //	std::cout<<"Usb do get dif temperature command"<<std::endl;
   try	{	GetDIFTemperature(ttemp);	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "DIFReadout : Unable to send asu temperature command"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logDIF," "<<"==>"<< "DIFReadout : Unable to send asu temperature command");	}	
   //	printf ("DIFReadout DIFTemp = %d \n",*ttemp);
   theTemperatureBuffer_[0]=(*ttemp)*1.0;
   return;
@@ -317,7 +340,7 @@ void DIFReadout::DoSetTemperatureReadoutToAuto(uint32_t tvalue)
   uint32_t ttemp;
   //	std::cout<<"Usb do set dif temperature mode "<<tvalue<<std::endl;
   try	{	SetTemperatureReadoutToAuto(tvalue);	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "DIFReadout : Unable to send asu temperature mode"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logDIF," "<<"==>"<< "DIFReadout : Unable to send asu temperature mode");	}	
   return;
 }
 
@@ -326,7 +349,7 @@ void DIFReadout::DoGetTemperatureReadoutAutoStatus(uint32_t *tvalue)
   uint32_t ttemp;
   //	std::cout<<"Usb do get dif temperature mode "<<tvalue<<std::endl;
   try	{	GetTemperatureReadoutAutoStatus(tvalue);	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "DIFReadout : Unable to send asu temperature mode"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logDIF," "<<"==>"<< "DIFReadout : Unable to send asu temperature mode");	}	
   //	printf("DIFReadout Temperature status =/n",*tvalue);
   return;
 }
@@ -336,7 +359,7 @@ void DIFReadout::DoSetEventsBetweenTemperatureReadout(uint32_t tvalue)
   uint32_t ttemp;
   //	std::cout<<"Usb do set dif temperature mode "<<tvalue<<std::endl;
   try	{	SetEventsBetweenTemperatureReadout(tvalue);	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "DIFReadout : Unable to set temperature readoutfrequency"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logDIF," "<<"==>"<< "DIFReadout : Unable to set temperature readoutfrequency");	}	
   return;
 }
 
@@ -345,7 +368,7 @@ void DIFReadout::DoSetAnalogConfigureRegister(uint32_t tdata)
   uint32_t ttemp;
   //	std::cout<<"Usb do set dif temperature mode "<<tvalue<<std::endl;
   try	{	SetAnalogConfigureRegister(tdata);	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "DIFReadout : Unable to set analog  conf register"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logDIF," "<<"==>"<< "DIFReadout : Unable to set analog  conf register");	}	
   return;
 }
 
@@ -414,7 +437,7 @@ int32_t DIFReadout::configureChips(SingleHardrocV2ConfigurationFrame* slow) thro
 	}
       catch (LocalHardwareException& e)
 	{
-	  std::cout<<theName_<<":Unable to send SLC frame to DIF"<<std::endl;	
+	  LOG4CXX_ERROR(_logDIF," "<<":Unable to send SLC frame to DIF");	
 	  throw e;
 	}
 
@@ -430,7 +453,7 @@ int32_t DIFReadout::configureChips(SingleHardrocV2ConfigurationFrame* slow) thro
     }
   catch (LocalHardwareException& e) 
     {
-      std::cout<<theName_<<":Unable to send CRC"<<std::endl;	
+      LOG4CXX_ERROR(_logDIF," "<<":Unable to send CRC");	
       throw;
     }
 
@@ -473,7 +496,7 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
   // on calcule le CRC a la volee			
   try	{	 UsbReadByte(&tdata); }  // Global header
   catch (LocalHardwareException& e)	  {	 
-    // std::cout<<theName_<<"==>"<<"DIF : no data, exiting "<<e.what()<<std::endl; 
+    LOG4CXX_DEBUG(_logDIF," "<<"==>"<<"DIF : no data, exiting "<<e.what()); 
     return 0;}	
   uint32_t CurrentNbOfEventsPerTrigger=0;
 
@@ -481,7 +504,7 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
 
   if ((tdata != 0xB0) && (tdata != 0xBB))		// global header
     {	
-      std::cout<<theName_<<"==>"<<"DIF : Bad global header("<<std::hex<< (int) tdata<<std::dec<<" instead of 0xb0 or 0xbb), exiting"<<std::endl;	
+      LOG4CXX_ERROR(_logDIF," "<<"==>"<<"DIF : Bad global header("<<std::hex<< (int) tdata<<std::dec<<" instead of 0xb0 or 0xbb), exiting");	
       HardrocFlushDigitalFIFO();
       return 0;
     }	
@@ -503,7 +526,7 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
   try	{	    UsbReadnBytes(tdata32,theadersize); 	  }  
   catch (LocalHardwareException& e)
     {
-      std::cout<<theName_<<"==> no DIF Header"<<std::endl;	
+      LOG4CXX_ERROR(_logDIF," "<<"==> no DIF Header");	
       HardrocFlushDigitalFIFO();
       return 0;
     }
@@ -519,7 +542,7 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
   // printf ("DIF = %d\n",CurrentDifId);
   if (CurrentDifId!=theDIFId_)
     {
-      std::cout<<theName_<<"==>"<<"DIF "<<CurrentDifId<<" :  Invalid  DIF ID "<<theDIFId_<<std::endl;	
+      LOG4CXX_ERROR(_logDIF," "<<"==>"<<"DIF "<<CurrentDifId<<" :  Invalid  DIF ID "<<theDIFId_);	
       HardrocFlushDigitalFIFO();
       return 0;
     }
@@ -584,7 +607,7 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
 	}//frame hearder or Global trailer 
       catch (LocalHardwareException& e)
 	{
-	  std::cout<<theName_<<"==>"<<"DIF" << theDIFId_<<":  There should be a frame header/global trailer"<<std::endl;	
+	  LOG4CXX_ERROR(_logDIF," "<<"==>"<<"DIF" << theDIFId_<<":  There should be a frame header/global trailer");	
 	  HardrocFlushDigitalFIFO();
 	  return 0;
 	}	
@@ -610,7 +633,7 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
 	    } //for (uint32_t tl=0;tl<	CurrentNbLines;tl++)				
 	  try {	 UsbReadByte(&tdata);	}//0xD4 
 	  catch (LocalHardwareException& e){
-	    //std::cout<<theName_<<"==>"<<toolbox::toString("DIF %s :  There should be a 0xD4",theName_.c_str())<<std::endl;	
+	    LOG4CXX_ERROR(_logDIF,"DIF :  There should be a 0xD4"<<theName_);	
 	    std::cout<< __FILE__<<" "<< __LINE__<<" "<< __FUNCTION__ <<" "<<e.what()<<std::endl;
 	    HardrocFlushDigitalFIFO();return 0;}	
 	  //			printf ("%02x\n",tdata);
@@ -625,7 +648,7 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
 	      catch (LocalHardwareException& e){
 		std::cout<< __FILE__<<" "<< __LINE__<<" "<< __FUNCTION__ <<" "<<e.what()<<std::endl;
 
-		//std::cout<<theName_<<"==>"<<toolbox::toString("DIF %s :  There should be a valid frame trailer/hardroc header",theName_.c_str())<<std::endl; 
+		LOG4CXX_ERROR(_logDIF," There should be a valid frame trailer/hardroc header"<<theName_); 
 		HardrocFlushDigitalFIFO();return 0;}	
 	      if ((tdata != 0xA3)&&(tdata != 0xC3))		//not a frame trailer, so a hardroc header
 		{	
@@ -633,7 +656,7 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
 		    {
 		      std::cout<< __FILE__<<" "<< __LINE__<<" "<< __FUNCTION__ <<" unable to read more than 128 Memory indexes"<<std::endl;
 
-		      //std::cout<<theName_<<"==>"<<toolbox::toString("DIF %s :  unable to read more than 128 Memory indexes",theName_.c_str())<<std::endl;	
+		      LOG4CXX_ERROR(_logDIF," unable to read more than 128 Memory indexes"<<theName_);	
 		      HardrocFlushDigitalFIFO();
 		      return 0;
 		    }		
@@ -645,7 +668,7 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
 		  catch (LocalHardwareException& e){
 		    std::cout<< __FILE__<<" "<< __LINE__<<" "<< __FUNCTION__ <<" "<<e.what()<<std::endl;
 
-		    //std::cout<<theName_<<"==>"<<toolbox::toString("DIF %s :  There should be a hardroc frame",theName_.c_str())<<std::endl;		
+		    LOG4CXX_ERROR(_logDIF," There should be a hardroc frame"<<theName_);		
 		    HardrocFlushDigitalFIFO();return 0;}	
 		  // bcid (3 bytes)
 		  // data (16bytes)	
@@ -662,7 +685,7 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
 		    {
 		      std::cout<< __FILE__<<" "<< __LINE__<<" "<< __FUNCTION__ <<" tMemoryIndex > ASIC_MEM_DEPTH"<<std::endl;
 
-		      //std::cout<<theName_<<"==>"<<toolbox::toString("")<<std::endl;			      
+		      LOG4CXX_ERROR(_logDIF,"tMemoryIndex > ASIC_MEM_DEPTH"<<theName_);			      
 		      return 0;
 		    }
 		}
@@ -672,7 +695,7 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
 		    {
 		      std::cout<< __FILE__<<" "<< __LINE__<<" "<< __FUNCTION__ <<"Incomplete frame received (0xC3) "<<std::endl;
 
-		      //std::cout<<theName_<<"==>"<<toolbox::toString(" %s Incomplete frame received (0xC3)",theName_.c_str())<<std::endl;			      
+		      LOG4CXX_ERROR(_logDIF," Incomplete frame received (0xC3)"<<theName_);			      
 		      HardrocFlushDigitalFIFO();
 		      return 0;
 		    }	
@@ -687,7 +710,7 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
 			printf("%02x",CurrentDIFDigitalData[ic]);
 		      printf("\n");
 
-		      //std::cout<<theName_<<"==>"<<toolbox::toString("tHardrocIndex > MAX_NB_OF_ASICS")<<std::endl;	
+		      //LOG4CXX_ERROR(_logDIF," "<<"==>"<<toolbox::toString("tHardrocIndex > MAX_NB_OF_ASICS"));	
 						
 		      HardrocFlushDigitalFIFO();
 		      return 0;
@@ -703,7 +726,7 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
 	    {
 	      std::cout<< __FILE__<<" "<< __LINE__<<" "<< __FUNCTION__ <<" "<<e.what()<<std::endl;
 
-	      //std::cout<<theName_<<"==>"<<toolbox::toString("DIF %s :  There should be a valid CRC",theName_.c_str())<<std::endl;		     
+	      LOG4CXX_ERROR(_logDIF," There should be a valid CRC"<<theName_);		     
 	      HardrocFlushDigitalFIFO();
 	      return 0;
 	    }	
@@ -717,7 +740,7 @@ uint32_t DIFReadout::DoHardrocV2ReadoutDigitalData(unsigned char* CurrentDIFDigi
 	  else
 	    {			
 #ifdef DISPLAY_CRC
-	      //std::cout<<theName_<<"==>"<<toolbox::toString("- CRC mismatch ( received 0x%04x instead of 0x%04x)",ReceivedCRC,ComputedCRC)<<std::endl;	
+	      LOG4CXX_ERROR(_logDIF," CRC mismatch ( received"<<ReceivedCRC<<" instead "<<ComputedCRC<<" "<<theName_);	
 #endif
 	      tcontinue =0;
 	    }

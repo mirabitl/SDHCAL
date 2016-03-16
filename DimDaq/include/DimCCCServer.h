@@ -9,6 +9,7 @@
 #include "CCCManager.h"
 using namespace std;
 #include <sstream>
+#include "DaqLogger.h"
 class DimCCCServer: public DimServer
 {
 public:

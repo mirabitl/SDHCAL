@@ -51,6 +51,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
             self.PBKillHost.setEnabled(True)
             self.PBStartJob.setEnabled(True)
             self.PBKillJob.setEnabled(True)
+            self.PBRestartJob.setEnabled(True)
             self.PBDownloadDB.setEnabled(True)
             self.LEDBState.setEnabled(True)
             self.CBILC.setEnabled(True)
@@ -66,6 +67,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
             self.PBInitialiseZup.setEnabled(True)
             self.PBStartMonitorProcess.setEnabled(True)
             self.PBStopMonitorProcess.setEnabled(True)
+            self.LEMonitoringHost.setEnabled(True)
         else:
             self.PBCreateDaq.setEnabled(False)
             self.PBDiscoverDNS.setEnabled(False)
@@ -74,6 +76,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
             self.PBStartHost.setEnabled(False)
             self.PBKillHost.setEnabled(False)
             self.PBStartJob.setEnabled(False)
+            self.PBRestartJob.setEnabled(False)
             self.PBKillJob.setEnabled(False)
             self.PBDownloadDB.setEnabled(False)
             self.LEDBState.setEnabled(False)
@@ -90,6 +93,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
             self.PBInitialiseZup.setEnabled(False)
             self.PBStartMonitorProcess.setEnabled(False)
             self.PBStopMonitorProcess.setEnabled(False)
+            self.LEMonitoringHost.setEnabled(False)
 
 
     def SetDBState(self):
@@ -134,7 +138,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
             self.TWJOB.setItem(i, 3,it_status)
             it_idaq = QtGui.QTableWidgetItem(x['DAQ'])
             self.TWJOB.setItem(i, 4,it_idaq)
-            it_log = QtGui.QTableWidgetItem('/tmp/dimjCPID%d.log' % x['PID'])
+            it_log = QtGui.QTableWidgetItem('/tmp/dimjcPID%d.log' % x['PID'])
             self.TWJOB.setItem(i, 5,it_log)
             i=i+1
         for j in range(i,255):
@@ -281,7 +285,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
         if self.daq_!=None:
             self.daq_.SetThresholds(self.SBTHR0L.value(),self.SBTHR1L.value(),self.SBTHR2L.value())
             self.thresholdUsed_=True
-            self.daq_.Configure()
+            self.daq_.daq_.configure()
     def Pause(self):
         if self.daq_!=None:
             self.daq_.Pause()

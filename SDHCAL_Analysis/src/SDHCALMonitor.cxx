@@ -125,7 +125,7 @@ void SDHCALMonitor::FillTimeAsic(IMPL::LCCollectionVec* rhcol)
   htdiff->Fill((tmax-tmin)*1.);
 }
 
-void SDHCALMonitor::DIFStudy( IMPL::LCCollectionVec* rhcol)
+void SDHCALMonitor::DIFStudy( IMPL::LCCollectionVec* rhcol,bool external)
 {
   for (int i=0;i<rhcol->getNumberOfElements();i++)
     {
@@ -224,8 +224,8 @@ void SDHCALMonitor::DIFStudy( IMPL::LCCollectionVec* rhcol)
 
     }
 
-  printf("Fill Hit \n");
-
+  //printf("Fill Hit \n");
+  if (!external) return;
   std::vector<RecoHit*> theHitVector_;
   theHitVector_.clear();
 
@@ -279,7 +279,7 @@ void SDHCALMonitor::DIFStudy( IMPL::LCCollectionVec* rhcol)
     }
 
   // Now build clusters
-  printf("Build cluster \n");
+  //printf("Build cluster \n");
   std::vector<RECOCluster> vCluster;
   vCluster.clear();
   for (std::vector<RecoHit*>::iterator ih=theHitVector_.begin();ih!=theHitVector_.end();ih++)
@@ -356,7 +356,7 @@ void SDHCALMonitor::DIFStudy( IMPL::LCCollectionVec* rhcol)
 	  //DEBUG_PRINT(" New clusters found %d\n",vCluster.size());
 	}
     } while (merged);
-  printf("Fill Histo \n");
+  //printf("Fill Histo \n");
   TH1* hnc= (TH1F*) rootHandler_->GetTH1("/Cluster/Ncluster");
   if (hnc==0)
     hnc=rootHandler_->BookTH1("/Cluster/Ncluster",65,-0.9,64.1);

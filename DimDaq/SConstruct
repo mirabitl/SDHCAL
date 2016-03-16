@@ -101,7 +101,7 @@ CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN
 
 
 #LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
-LIBRARIES=['pthread',  'm', 'stdc++',boostsystem,boostthread,'SDHCALcommon','SDHCALReadout','dim','netlink','cslm']
+LIBRARIES=['pthread',  'm', 'stdc++',boostsystem,boostthread,'SDHCALcommon','SDHCALReadout','dim','netlink','cslm','log4cxx']
 
 
 
@@ -152,6 +152,10 @@ EXE_LIBPATH=LIBRARY_PATHS
 EXE_LIBPATH.append("#lib")
 EXE_LIBS=LIBRARIES
 EXE_LIBS.append("SDHCALDimDaq")
+rpcd=env.Program("bin/dimrpc_dif",source="src/rpcdif.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+rpcz=env.Program("bin/dimrpc_zup",source="src/rpczup.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+rpcc=env.Program("bin/dimrpc_ccc",source="src/rpcccc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+dds=env.Program("bin/dimdif",source="src/dss.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 dds=env.Program("bin/dimdif",source="src/dss.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 dcs=env.Program("bin/dimccc",source="src/dcc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 dzups=env.Program("bin/dimzup",source="src/dzup.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
@@ -164,7 +168,7 @@ for x in Glob("#include/*.h"):
   myinc.append("include/"+x.name)
 print myinc
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SDHCALDimDaq)
-env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[dds,dcs,dzups])
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[dds,dcs,dzups,rpcd,rpcz,rpcc])
 ###env.Install("/opt/dhcal/lib",SDHCALDimDaq)
 ###env.Install("/opt/dhcal/include/readout",myinc)
 

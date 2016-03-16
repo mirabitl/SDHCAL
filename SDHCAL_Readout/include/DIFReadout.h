@@ -2,6 +2,7 @@
 #define _DIFReadout_h
 #include "FtdiDIFDriver.h"
 #include "DIFReadoutConstant.h"
+#include "ReadoutLogger.h"
 
 class DIFReadout : public FtdiDIFDriver
 {

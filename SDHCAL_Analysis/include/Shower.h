@@ -51,8 +51,11 @@ public:
   std::map<uint32_t,std::vector<RecoHit> >& getPlans(){return thePlans_;}
   void PlayMatrix(uint32_t fp=1,uint32_t lp=60);
   void transverseProfile(uint32_t plan,uint32_t &nh,double &xb,double &yb, double &l0, double &l1,double* v0,double *v1,double &n9,double &n25);
+  static void TPrincipalComponents(std::vector<RecoHit*> &v, double result[21]);
+  static void PrintComponents(ShowerParams t);
   static void computePrincipalComponents(std::vector<RecoHit*> &v, double result[21]);
   static void culaPrincipalComponents(std::vector<RecoHit*> &v, double result[21]);
+  static void TPrincipalComponents(uint32_t nstub,float* x,float* y,float* z,uint32_t* layer, double result[21]);
 
   double getl1(){return l1_;}
   double getl2(){return l2_;}

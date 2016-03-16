@@ -15,7 +15,7 @@ using namespace std;
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
-
+#include "CtrlLogger.h"
 
 
 class DimDIFDataHandler: public DimClient

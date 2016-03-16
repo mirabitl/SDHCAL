@@ -72,7 +72,10 @@ std::string CCCManager::discover()
     }
     myfile.close();
   }
-  else std::cout << "Unable to open file"<<std::endl; 
+  else 
+    {std::cout << "Unable to open file"<<std::endl; 
+      LOG4CXX_FATAL(_logCCC,"Unable to eopn FTDI devices list file ");
+    }
   if (v.size()>0)
   {
 		for (uint8_t i=0;i<v.size()-1;i++)
@@ -94,14 +97,16 @@ void CCCManager::initialise()
   // Open
   if (theCCCType_.compare("DCC_CCC")==0)
     {
+      LOG4CXX_INFO(_logCCC,"Initialise");
       theCCC_= new CCCReadout (theCCCName_);
       printf ("theCCC=%p\n",theCCC_);
       theCCC_->open();
     }
   else
     {
-      printf ("No more RS232 CCC exist\n");
-      exit(0);
+      LOG4CXX_FATAL(_logCCC,"no more RS232 CCC "<<theCCCType_);
+      //printf ("No more RS232 CCC exist\n");
+      //exit(0);
     }
   theCCC_->DoSendDIFReset();
 
@@ -112,7 +117,7 @@ void CCCManager::initialise()
 void CCCManager::configure()
 {
  printf ("theCCC=%p\n",theCCC_);
-
+ LOG4CXX_INFO(_logCCC,"Configure");
   theCCC_->DoSendDIFReset();
   usleep((unsigned)1);
 
@@ -121,7 +126,7 @@ void CCCManager::configure()
 void CCCManager::start( )
 {
  printf ("theCCC=%p\n",theCCC_);
-
+ LOG4CXX_INFO(_logCCC,"Start");
   theCCC_->DoSendBCIDReset();
   theCCC_->DoSendStartAcquisitionAuto();
   usleep((unsigned)1);
@@ -129,6 +134,7 @@ void CCCManager::start( )
 
 void CCCManager::stop()
 {
+ LOG4CXX_INFO(_logCCC,"Stop");
  theCCC_->DoSendStopAcquisition();
 
 }

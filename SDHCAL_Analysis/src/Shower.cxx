@@ -6,6 +6,7 @@
 #include <Eigen/Dense>
 #include "TPolyLine3D.h"
 #include "TVirtualPad.h"
+#include "TCanvas.h"
 #include "TPrincipal.h"
 using namespace Eigen;
 
@@ -478,6 +479,180 @@ void Shower::culaPrincipalComponents(std::vector<RecoHit*> &v, double result[21]
 #endif
 }
 
+static TCanvas* TCPC=NULL;
+
+void Shower::TPrincipalComponents(std::vector<RecoHit*> &v, double result[21])
+{
+	double resultc[21];
+	uint32_t nh=0;
+	double xb=0,yb=0,zb=0;
+	double wt=0.;
+
+	double fp=DBL_MAX;
+	double lp=-DBL_MAX;
+	double fx=DBL_MAX;
+	double lx=-DBL_MAX;
+	double fy=DBL_MAX;
+	double ly=-DBL_MAX;
+	TPrincipal tp(3,"D");
+	double xp[3];
+	memset(result,0,21*sizeof(double));
+	//INFO_PRINT("%d vector size\n",v.size());
+	for (std::vector<RecoHit*>::iterator it=v.begin();it!=v.end();it++)
+	{
+		RecoHit* iht=(*it);
+		if (iht==NULL) continue;
+		//INFO_PRINT("%x %d %d \n",iht,iht->I(),iht->J());
+		//INFO_PRINT("%f %f \n",iht->x(),iht->y());
+		//INFO_PRINT("%f %f \n",iht->X(),iht->Y());
+		double w=1.;
+		int ithr= iht->getAmplitude()&0x3;
+		if (ithr==2) w=1;
+		if (ithr==1) w=1;
+		if (ithr==3) w=1.; // WAS 2
+		xb+=iht->X()*w;
+		yb+=iht->Y()*w;
+		zb+=iht->Z()*w;
+		wt+=w;
+		if (iht->Z()<fp) fp=iht->Z();
+		if (iht->Z()>lp) lp=iht->Z();
+		if (iht->I()<fx) fx=iht->I();
+		if (iht->I()>lx) lx=iht->I();
+		if (iht->J()<fy) fy=iht->J();
+		if (iht->J()>ly) ly=iht->J();
+		nh++;
+		xp[0]=iht->X();
+		xp[1]=iht->Y();
+		xp[2]=iht->Z();
+		//printf("XP  %f %f %f \n",xp[0],xp[1],xp[2]);
+		tp.AddRow(xp);
+	}
+
+	if (nh<3) return;
+	tp.MakePrincipals();
+	// store barycenter
+	const TVectorD* fvb=tp.GetMeanValues();
+	//INFO_PRINT("barycentre %f %f %f \n \t %f %f %f \n", xb/wt,yb/wt,zb/wt,(*fvb)[0],(*fvb)[1],(*fvb)[2]);
+	result[0]=(*fvb)[0];
+	result[1]=(*fvb)[1];
+	result[2]=(*fvb)[2];
+
+	const TVectorD* fva=tp.GetEigenValues();
+	result[3]=(*fva)[2];
+	result[4]=(*fva)[1];
+	result[5]=(*fva)[0];
+
+	//fva->Print();
+	//INFO_PRINT("eigen results %g %g %g \n",(*fva)[0],(*fva)[1],(*fva)[2]);
+
+	//tp.Print("MSEV");
+
+	// store principal axis
+	const TMatrixD* fvv=tp.GetEigenVectors();
+	//Matrix<double,3,3> vv=eigensolver.eigenvectors();
+	result[6]=(*fvv)(0,2);
+	result[7]=(*fvv)(1,2);
+	result[8]=(*fvv)(2,2);
+	//INFO_PRINT("eigen vector results %g %g %g \n",result[7],result[7],result[8]);
+	result[9]=(*fvv)(0,1);
+
+	result[10]=(*fvv)(1,1);
+	result[11]=(*fvv)(2,1);
+	//INFO_PRINT("eigen vector results %g %g %g \n",result[9],result[10],result[11]);
+	result[12]=(*fvv)(0,0);
+	result[13]=(*fvv)(1,0);
+	result[14]=(*fvv)(2,0);
+	//INFO_PRINT("eigen vector results %g %g %g \n",result[12],result[13],result[14]);
+	// Store First and last Z
+	result[15]=fp;
+	result[16]=lp;
+	result[17]=fx;
+	result[18]=lx;
+	result[19]=fy;
+	result[20]=ly;
+	//INFO_PRINT("=11\n");
+	//getchar();
+	/*
+	if (TCPC==NULL)
+	  {
+	  TCPC=new TCanvas("TCPC","tChits1",1300,600);
+	  TCPC->Modified();
+	  TCPC->Draw();
+
+	}
+	TCPC->cd(0);
+	tp.Test();
+	TCPC->Modified();
+	TCPC->Draw();
+	TCPC->Update();
+	*/
+}
+
+
+void Shower::TPrincipalComponents(uint32_t nstub,float* x,float* y,float* z,uint32_t* layer, double result[21])
+{
+	double resultc[21];
+	uint32_t nh=0;
+	double xb=0,yb=0,zb=0;
+	double wt=0.;
+
+	double fp=DBL_MAX;
+	double lp=-DBL_MAX;
+	double fx=DBL_MAX;
+	double lx=-DBL_MAX;
+	double fy=DBL_MAX;
+	double ly=-DBL_MAX;
+	TPrincipal tp(3,"D");
+	double xp[3];
+	memset(result,0,21*sizeof(double));
+	//INFO_PRINT("%d vector size\n",v.size());
+	for (int i=0;i<nstub;i++)
+	{
+	  if (z[i]<fp) fp=z[i];
+	  if (z[i]>lp) lp=z[i];
+	  if (x[i]<fx) fx=x[i];
+	  if (x[i]>lx) lx=x[i];
+	  if (y[i]<fy) fy=y[i];
+	  if (y[i]>ly) ly=y[i];
+	  nh++;
+	  xp[0]=x[i];
+	  xp[1]=y[i];
+	  xp[2]=z[i];
+	  
+	  tp.AddRow(xp);
+	}
+
+	if (nh<3) return;
+	tp.MakePrincipals();
+	// store barycenter
+	const TVectorD* fvb=tp.GetMeanValues();
+
+	result[0]=(*fvb)[0];
+	result[1]=(*fvb)[1];
+	result[2]=(*fvb)[2];
+
+	const TVectorD* fva=tp.GetEigenValues();
+	result[3]=(*fva)[2];
+	result[4]=(*fva)[1];
+	result[5]=(*fva)[0];
+
+	const TMatrixD* fvv=tp.GetEigenVectors();
+	result[6]=(*fvv)(0,2);
+	result[7]=(*fvv)(1,2);
+	result[8]=(*fvv)(2,2);
+	result[9]=(*fvv)(0,1);
+	result[10]=(*fvv)(1,1);
+	result[11]=(*fvv)(2,1);
+	result[12]=(*fvv)(0,0);
+	result[13]=(*fvv)(1,0);
+	result[14]=(*fvv)(2,0);
+	result[15]=fp;
+	result[16]=lp;
+	result[17]=fx;
+	result[18]=lx;
+	result[19]=fy;
+	result[20]=ly;
+}
 
 
 void Shower::computePrincipalComponents(std::vector<RecoHit*> &v, double result[21])
@@ -698,6 +873,7 @@ void Shower::computePrincipalComponents(std::vector<RecoHit*> &v, double result[
 	//INFO_PRINT("eigen results %g %g %g \n",(*fva)[0],(*fva)[1],(*fva)[2]);
 
 	//tp.Print("MSEV");
+	//getchar();
 	// store principal axis
 	Matrix<double,3,3> vv=eigensolver.eigenvectors();
 	result[6]=vv(0,0)*sqrt(result[3]);
@@ -740,7 +916,16 @@ void Shower::computePrincipalComponents(std::vector<RecoHit*> &v, double result[
 
 }
 
+void Shower::PrintComponents(ShowerParams t)
+{
+  printf("Components\n");
+  printf("\t Barycenter   : %g %g %g \n",t.xm[0],t.xm[1],t.xm[2]);
+  printf("\t Eigen Values : %g %g %g \n",t.lambda[0],t.lambda[1],t.lambda[2]);
+  printf("\t V0           : %g %g %g \n",t.l0[0],t.l0[1],t.l0[2]);
+  printf("\t V1           : %g %g %g \n",t.l1[0],t.l1[1],t.l1[2]);
+  printf("\t V2           : %g %g %g \n",t.l2[0],t.l2[1],t.l2[2]);
 
+}
 
 double Shower::closestDistance(Shower& sh)
 {

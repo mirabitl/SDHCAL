@@ -156,7 +156,7 @@ if __name__=='__main__':
     wsgi_application = WsgiApplication(application)
 
     # More daemon boilerplate
-    server = make_server('lyoac29', 8000, wsgi_application)
+    server = make_server('lyosdhcal9', 8000, wsgi_application)
 
     logging.info("listening to http://127.0.0.1:8000")
     logging.info("wsdl is at: http://localhost:8000/?wsdl")

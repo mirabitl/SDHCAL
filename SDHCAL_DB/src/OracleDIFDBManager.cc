@@ -5,12 +5,25 @@ OracleDIFDBManager::OracleDIFDBManager(std::string sdifs,std::string setup,std::
 void OracleDIFDBManager::initialize()
 {
   std::cout<<"On initialise Oracle "<<std::endl;
- DBInit::init();
-
+  try {
+    DBInit::init();
+  }
+  catch(...)
+    {
+      LOG4CXX_FATAL(_logOracle,"Cannot initialise Oracle");
+      return;
+    }
  if (theXMLFile_.compare("NONE")==0)
    {
-     theOracleSetup_=Setup::getSetup(theOracleSetupName_); 
-     std::cout<<"On initialise Oracle "<<(long)theOracleSetup_<< std::endl;
+     try {
+       theOracleSetup_=Setup::getSetup(theOracleSetupName_); 
+       std::cout<<"On initialise Oracle "<<(long)theOracleSetup_<< std::endl;
+       LOG4CXX_INFO(_logOracle,"On initialize Oracle "<<theOracleSetupName_);
+     }
+     catch(...)
+       {
+	 LOG4CXX_FATAL(_logOracle,"Setup initialisation failed");
+       }
    }
  else
    {
@@ -25,10 +38,12 @@ void OracleDIFDBManager::LoadDIFDefaultParameters(uint32_t difid, UsbDIFSettings
   std::cout<<"On initialise Oracle DIF "<<std::endl;
   std::vector<State*> sta=theOracleSetup_->getStates();
   std::cout<<"states "<<sta.size()<<std::endl;
+  LOG4CXX_INFO(_logOracle,"Oracle initialisation ");
   DifConfiguration* dd=sta[0]->getDifConfiguration();
   //  std::cout<<"diffs "<<(int) dd<<std::endl;
   std::vector<ConfigObject*> dim=theOracleSetup_->getStates()[0]->getDifConfiguration()->getVector();
   std::cout <<dim.size()<<std::endl;
+  LOG4CXX_INFO(_logOracle," Number of DIF found "<<dim.size());
   for (std::vector<ConfigObject*>::iterator itDIFp=dim.begin();itDIFp!=dim.end();itDIFp++)
     {
       Dif* itDIF= (Dif*) (*itDIFp);
@@ -99,6 +114,7 @@ uint32_t OracleDIFDBManager::LoadDIFHardrocV2Parameters(uint32_t difid_request,S
 	uint8_t thrl4=0;
 	
   std::cout<<"On initialise Oracle ASICs "<<std::endl;
+  LOG4CXX_INFO(_logOracle," Filling vector ");
   uint32_t difid=difid_request;
 #ifdef BUGINDB
   if (difid==72) difid=27;
@@ -435,6 +451,7 @@ uint32_t OracleDIFDBManager::LoadDIFHardrocV2Parameters(uint32_t difid_request,S
 		}//			if (	ASICHeaders[thr]==itHR2->getInt("ID"))
 	    } catch (Exception e)
 	    {
+	      LOG4CXX_ERROR(_logOracle," Error in ASIC access"<<e.getMessage());
 	      std::cout<<e.getMessage()<<std::endl;
 	    }
 	}		//			for (int thr=0;thr<NbOfASICs;thr++)
@@ -830,7 +847,9 @@ uint32_t OracleDIFDBManager::LoadDIFMicrorocParameters(uint32_t difid, SingleHar
 			else if (tamponl==4) tmrl4++;
 				}//if (	(iasic+1)==itMR->getInt("HEADER"))
     	}
-			catch (Exception e)  {  std::cout<<e.getMessage()<<std::endl;  }
+			catch (Exception e)  {
+			  LOG4CXX_ERROR(_logOracle," Error in ASIC access"<<e.getMessage());
+			  std::cout<<e.getMessage()<<std::endl;  }
 		} //for (int iasic=0;iasic<MAX_NB_OF_ASICS;iasic++)
 	} //  for (std::vector<ConfigObject*>::iterator itMRp=asic_vector_.begin();itMRp!=asic_vector_.end();itMRp++)
   return (tmrl1&0xFF)+((tmrl2&0xFF)<<8)+((tmrl3&0xFF)<<16)+((tmrl4&0xFF)<<24);
@@ -1495,6 +1514,7 @@ void OracleDIFDBManager::storeMicroRocConfiguration(Asic* itMR,unsigned char* Co
 uint32_t OracleDIFDBManager::LoadAsicParameters()
 {
   printf("Entering LoadAsicParameters \n");
+  LOG4CXX_INFO(_logOracle,"Filling ASIC map ");
   std::vector<ConfigObject*> asic_vector_=theOracleSetup_->getStates()[0]->getAsicConfiguration()->getVector();
   for (std::vector<ConfigObject*>::iterator itMRp=asic_vector_.begin();itMRp!=asic_vector_.end();itMRp++)
     {

@@ -2,7 +2,7 @@
 #define MYINTERFACE_H
 #include <string>
 #include <mysql/mysql.h>
-
+#include "CommonLogger.h"
 class MyInterface {
  public:
   MyInterface(std::string account);

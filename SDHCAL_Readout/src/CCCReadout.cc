@@ -38,6 +38,7 @@ int CCCReadout::open() throw( LocalHardwareException )
     catch (LocalHardwareException& e)
 		{
 			std::cout<<"fail in Opening "<<theName_<<std::endl;
+			LOG4CXX_FATAL(_logCCC,"fail openning "<<theName_);
 	  	throw ;
 		}
   }
@@ -54,6 +55,7 @@ int CCCReadout::close() throw( LocalHardwareException )
   }
   catch (LocalHardwareException& e) 
   {
+    LOG4CXX_FATAL(_logCCC,"fail closing "<<theName_);
     throw;
   }
   return 0;
@@ -61,13 +63,13 @@ int CCCReadout::close() throw( LocalHardwareException )
 void CCCReadout::DoSendPauseTrigger()
 {
   try	{	theDriver_->UsbCommandWrite(0x10);	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send Pause"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send Pause");	}	
 	return;
 }
 void CCCReadout::DoSendResumeTrigger()
 {
   try	{	theDriver_->UsbCommandWrite(0x11);	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send Resume"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send Resume");	}	
 	return;
 }
 
@@ -75,76 +77,76 @@ void CCCReadout::DoSendResumeTrigger()
 void CCCReadout::DoSendDIFReset()
 {
   try	{	theDriver_->CCCCommandDIFReset();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send dif reset"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send dif reset");	}	
 	return;
 }
 
 void CCCReadout::DoSendBCIDReset()
 {
   try	{	theDriver_->CCCCommandBCIDReset();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send bcid reset"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send bcid reset");	}	
 	return;
 }
 
 void CCCReadout::DoSendStartAcquisitionAuto()
 {
   try	{	theDriver_->CCCCommandStartAcquisitionAuto();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send start acquisition auto"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send start acquisition auto");	}	
 	return;
 }
 
 void CCCReadout::DoSendRamfullExt()
 {
   try	{	theDriver_->CCCCommandRamfullExt();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send ramfull ext"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send ramfull ext");	}	
 	return;
 }
 void CCCReadout::DoSendTrigExt()
 {
   try	{	theDriver_->CCCCommandTriggerExt();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send trig ext"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send trig ext");	}	
 	return;
 }
 void CCCReadout::DoSendStopAcquisition()
 {
   try	{	theDriver_->CCCCommandStopAcquisition();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send stop acquisition"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send stop acquisition");	}	
 	return;
 }
 void CCCReadout::DoSendDigitalReadout()
 {
   try	{	theDriver_->CCCCommandDigitalReadout();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send digital readout"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send digital readout");	}	
 	return;
 }
 void CCCReadout::DoSendTrigger()
 {
   try	{	theDriver_->CCCCommandTrigger();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send analog readout"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send analog readout");	}	
 	return;
 }
 void CCCReadout::DoSendClearMemory()
 {
   try	{	theDriver_->CCCCommandClearMemory();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send clear memory"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send clear memory");	}	
 	return;
 }
 void CCCReadout::DoSendStartSingleAcquisition()
 {
   try	{	theDriver_->CCCCommandStartSingleAcquisition();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send start single acquisition"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send start single acquisition");	}	
 	return;
 }
 void CCCReadout::DoSendPulseLemo()
 {
   try	{	theDriver_->CCCCommandPulseLemo();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send lemo pulse"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send lemo pulse");	}	
 	return;
 }
 void CCCReadout::DoSendRazChannel()
 {
   try	{	theDriver_->CCCCommandRazChannel();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send raz channel"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send raz channel");	}	
 	return;
 }
 void CCCReadout::DoSendCCCReset()
@@ -154,7 +156,7 @@ printf ("1*\n");
   
   printf ("%p\n", theDriver_);
   theDriver_->CCCCommandResetCCC();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send ccc reset"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send ccc reset");	}	
 printf ("2*\n");
 	return;
 }
@@ -162,20 +164,20 @@ printf ("2*\n");
 void CCCReadout::DoSendSpillOn()
 {
   try	{	theDriver_->CCCCommandSpillOn();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send ccc spill on"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send ccc spill on");	}	
 	return;
 }
 void CCCReadout::DoSendSpillOff()
 {
   try	{	theDriver_->CCCCommandSpillOn();	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send ccc spill on"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send ccc spill on");	}	
 	return;
 }
 
 void CCCReadout::DoWriteRegister(uint32_t addr,uint32_t data)
 {
   try	{	theDriver_->UsbRegisterWrite(addr,data);	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send ccc spill on"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send ccc spill on");	}	
 	return;
 
 }
@@ -183,7 +185,7 @@ uint32_t CCCReadout::DoReadRegister(uint32_t addr)
 {
   uint32_t data=0;
   try	{	theDriver_->UsbRegisterRead(addr,&data);	}
-  catch (LocalHardwareException& e)  {  std::cout<<theName_<<"==>"<< "CCCReadout : Unable to send ccc spill on"<<std::endl;	}	
+  catch (LocalHardwareException& e)  {  LOG4CXX_ERROR(_logCCC, "CCCReadout : Unable to send ccc spill on");	}	
   return data;
 
 }

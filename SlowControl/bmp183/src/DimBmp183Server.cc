@@ -1,9 +1,11 @@
 
 #include "DimBMP183Server.h"
 
+
 DimBMP183Server::DimBMP183Server() :thePeriod_(5),storeDb_(false),my_(NULL)
 {
-
+  //_logger->setLevel(log4cxx::Level::getInfo());
+  LOG4CXX_INFO(_logger,"CREATING Dim Server");
   theBMP183_= new BMP183(); 
 
   std::stringstream s0;
@@ -76,6 +78,7 @@ void DimBMP183Server::commandHandler()
 {
   DimCommand *currCmd = getCommand();
   printf(" J'ai recu %s COMMAND  \n",currCmd->getName());
+  LOG4CXX_INFO(_logger," command received : "<<currCmd->getName());
   if (currCmd==periodCommand_)
     {
       thePeriod_=currCmd->getInt();
@@ -98,5 +101,6 @@ void DimBMP183Server::getPression()
 {
   PressionReadValues_=theBMP183_->BMP183PressionRead();
   PressionReadService_->updateService();
+  LOG4CXX_INFO(_logger," Pression read : "<<PressionReadValues_);
 
 }

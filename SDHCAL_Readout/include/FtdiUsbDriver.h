@@ -15,7 +15,7 @@
 #include "LocalHardwareException.h"
 #include <ftdi.h>
 #include <string.h>
-
+#include "ReadoutLogger.h"
 
 
 class FtdiUsbDriver {

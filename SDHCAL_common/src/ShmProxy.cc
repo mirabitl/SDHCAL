@@ -45,14 +45,14 @@ void ShmProxy::setDirectoryName(std::string s){theDirectoryName_=s;}
 void ShmProxy::setSetupName(std::string s){theSetupName_=s;}
 void ShmProxy::Initialise(bool purge)
 {
-
+  LOG4CXX_INFO(_logShm,"Initialising "<<purge);
   theRunIsStopped_=true;
-  printf("avant buffermap clear \n");
+  //printf("avant buffermap clear \n");
 
   theBufferMap_.clear();
-  printf("avant purgeshm clear \n");
+  //printf("avant purgeshm clear \n");
   if (purge)
-    this->purgeShm();
+    ShmProxy::purgeShm();
   printf("avant mkdir  clear \n");
   //int32_t ier=system("mkdir -p /dev/shm/closed");
   int status = mkdir("/dev/shm/closed", S_IRWXU | S_IRWXG | S_IRWXO );
@@ -62,11 +62,12 @@ void ShmProxy::Configure()
 {
   theRunIsStopped_=true;
   printf("%s  Configure End \n",__PRETTY_FUNCTION__);
-
+  LOG4CXX_INFO(_logShm,"Configuring ");
 }
 void ShmProxy::svc()
 {
   std::cout<< "Je rentre"<<std::endl;
+  LOG4CXX_INFO(_logShm," Starting loop ");
   while (true)
     {
       if (theRunIsStopped_) {usleep(100000); continue;}
@@ -102,10 +103,11 @@ void ShmProxy::Start(uint32_t run,std::string dir,uint32_t nd)
   theBufferMap_.clear();
   printf("avant purgeshm clear \n");
   
-  this->purgeShm();
+  ShmProxy::purgeShm();
 
   if (nd!=0) theNumberOfDIF_=nd;
-  printf("Starting run %d on directory %s setup %s for %d DIF %x %x\n",run,theDirectoryName_.c_str(),theSetupName_.c_str(),theNumberOfDIF_,&theNumberOfDIF_,this); 
+  printf("Starting run %d on directory %s setup %s for %d DIF %x %x\n",run,theDirectoryName_.c_str(),theSetupName_.c_str(),theNumberOfDIF_,&theNumberOfDIF_,this);
+  LOG4CXX_INFO(_logShm,"Run "<<run<<" on "<<theDirectoryName_<<" Db:"<<theSetupName_<<" with "<<theNumberOfDIF_<<" DIFs");
   theBufferMap_.clear();
   printf("1 \n");
   theRunNumber_=run;
@@ -132,8 +134,9 @@ void ShmProxy::Start(uint32_t run,std::string dir,uint32_t nd)
 void ShmProxy::Stop()
 {
   theRunIsStopped_=true;
+  LOG4CXX_INFO(_logShm,"Stopping loops");
   sleep((unsigned int) 1);
-  theThread_.join();
+  //theThread_.join();
   //   if (theSave_)
   if (theSave_) theWritter_->closeFile();
 
@@ -142,7 +145,7 @@ void ShmProxy::Stop()
       ::close(fdOut_);
       fdOut_=-1;
     }
-
+  LOG4CXX_INFO(_logShm,"Loops are stopped");
 }
 
 
@@ -154,6 +157,7 @@ bool ShmProxy::performWrite()
   theSync_.lock();
   if (theSave_)
     {
+      LOG4CXX_INFO(_logShm,"Size of Map#"<<theBufferMap_.size())
       for (std::map<uint64_t,std::vector<unsigned char*> >::iterator it=theBufferMap_.begin();it!=theBufferMap_.end();it++)
 	{
 	  
@@ -169,6 +173,7 @@ bool ShmProxy::performWrite()
 	  */
 	  lastGTCWrite_=it->first;
 	  printf("%x writing %d \n",this,theEventNumber_);
+	  LOG4CXX_INFO(_logShm,"Writing event #"<<theEventNumber_<<" GTC "<<gtc);
 	  theWritter_->writeEvent(theEventNumber_,it->second);
 
 	  if (theEventNumber_%100 == 0)
@@ -243,11 +248,14 @@ bool ShmProxy::performWrite()
 }
 
 
-void ShmProxy::purgeShm()
+void ShmProxy::purgeShm(std::string memory_dir)
 {
   int count,i;  
-  struct direct **files;     
-  count = scandir("/dev/shm/closed/", &files, file_select_1, alphasort);  
+  struct direct **files;
+ std::stringstream s("");
+ s<<memory_dir<<"/closed/";
+  
+ count = scandir(s.str().c_str(), &files, file_select_1, alphasort);  
 	
   /* If no files found, make a non-selectable menu item */  
   for (i=1; i<count+1; ++i)
@@ -258,18 +266,18 @@ void ShmProxy::purgeShm()
       //printf("dif %d DTC %d GTC %d \n",dif,dtc,gtc);
 		
       char fname[256];
-      sprintf(fname,"/dev/shm/Event_%lld_%d_%d_%d",abcid,dtc,gtc,dif);
+      sprintf(fname,"%s/Event_%lld_%d_%d_%d",s.str().c_str(),abcid,dtc,gtc,dif);
       unlink(fname);
-      sprintf(fname,"/dev/shm/closed/%lld_%d_%d_%d",abcid,dtc,gtc,dif);
+      sprintf(fname,"%s/closed/%lld_%d_%d_%d",s.str().c_str(),abcid,dtc,gtc,dif);
       unlink(fname);
     }
 	
 }
-void ShmProxy::transferToFile(unsigned char* cbuf,uint32_t size_buf,uint64_t bcid,uint32_t detector_event,uint32_t global_event,uint32_t detid)
+void ShmProxy::transferToFile(unsigned char* cbuf,uint32_t size_buf,uint64_t bcid,uint32_t detector_event,uint32_t global_event,uint32_t detid,std::string memory_dir)
 {
 
   std::stringstream s("");
-  s<<"/dev/shm/Event_"
+  s<<memory_dir<<"/Event_"
    << bcid<<"_"
    << detector_event<<"_"
    <<global_event<<"_"
@@ -277,6 +285,7 @@ void ShmProxy::transferToFile(unsigned char* cbuf,uint32_t size_buf,uint64_t bci
   int fd= ::open(s.str().c_str(),O_CREAT| O_RDWR | O_NONBLOCK,S_IRWXU);
   if (fd<0)
     {
+      LOG4CXX_FATAL(_logShm," Cannot open shm file "<<s.str());
       perror("No way to store to file :");
       //std::cout<<" No way to store to file"<<std::endl;
       return;
@@ -284,12 +293,13 @@ void ShmProxy::transferToFile(unsigned char* cbuf,uint32_t size_buf,uint64_t bci
   int ier=write(fd,cbuf,size_buf);
   if (ier!=size_buf) 
     {
+      LOG4CXX_FATAL(_logShm," Cannot write shm file "<<s.str());
       std::cout<<"pb in write "<<ier<<std::endl;
       return;
     }
   ::close(fd);
   std::stringstream st("");
-  st<<"/dev/shm/closed/"
+  st<<memory_dir<<"/closed/"
     << bcid<<"_"
     << detector_event<<"_"
     <<global_event<<"_"
@@ -384,18 +394,19 @@ bool ShmProxy::performReadFiles()
   for (i=1; i<count+1; ++i)  
     {
       //printf("%s  \n",files[i-1]->d_name);  
-      uint32_t dif,dtc,gtc;
+      int32_t dif,dtc,gtc;
       unsigned long long abcid;
 			
       sscanf(files[i-1]->d_name,"%lld_%d_%d_%d",&abcid,&dtc,&gtc,&dif);
       //printf("dif %d DTC %d GTC %d \n",dif,dtc,gtc);
-			
+      if (gtc<=0 || dtc<=0 || (gtc!=dtc)) continue;
       char fname[256];
       sprintf(fname,"/dev/shm/Event_%lld_%d_%d_%d",abcid,dtc,gtc,dif);
       int fd=::open(fname,O_RDONLY);
       if (fd<0) 
 	{
 	  printf("%s  Cannot open file %s : return code %d \n",__PRETTY_FUNCTION__,fname,fd);
+	  LOG4CXX_FATAL(_logShm," Cannot open shm file "<<fname);
 	  theSync_.unlock();	
 	  return false;
 	}
@@ -479,6 +490,8 @@ void ShmProxy::save2DevShm(unsigned char* cbuf,uint32_t size_buf,uint32_t dif_sh
    int fd= ::open(s.str().c_str(),O_CREAT| O_RDWR | O_NONBLOCK,S_IRWXU);
    if (fd<0)
      {
+   
+       LOG4CXX_FATAL(_logShm," Cannot open shm file "<<s.str());
        perror("No way to store to file :");
        //std::cout<<" No way to store to file"<<std::endl;
        return;
@@ -486,6 +499,7 @@ void ShmProxy::save2DevShm(unsigned char* cbuf,uint32_t size_buf,uint32_t dif_sh
    int ier=write(fd,cbuf,size_buf);
    if (ier!=size_buf) 
      {
+       LOG4CXX_FATAL(_logShm," Cannot write shm file "<<s.str());
        std::cout<<"pb in write "<<ier<<std::endl;
        return;
      }
@@ -511,12 +525,14 @@ void ShmProxy::run2DevShm(uint32_t &run,std::string memory_dir)
    if (fd<0)
      {
        perror("No way to store to file :");
+       LOG4CXX_FATAL(_logShm," Cannot open shm file "<<s.str());
        //std::cout<<" No way to store to file"<<std::endl;
        return;
      }
    int ier=write(fd,&run,4);
    if (ier!=4) 
      {
+       LOG4CXX_FATAL(_logShm," Cannot write shm file "<<s.str());
        std::cout<<"pb in write "<<ier<<std::endl;
        return;
      }

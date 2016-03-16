@@ -36,6 +36,7 @@ void DimDIFDataHandler::infoHandler()
 {
    DimInfo *curr = (DimInfo*) getInfo(); // get current DimStampedInfo address
    // std::cout<<curr->getName()<<" DimDIFDataHandler received "<< curr->getSize()<<std::endl;
+   LOG4CXX_DEBUG(_logCtrl," DimInfo "<<curr->getName()<<" Size " <<curr->getSize());
    if (curr==theDIFInfo_)
      {
        // cout<<"copying to difStatus\n";

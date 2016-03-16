@@ -16,7 +16,7 @@ using namespace std;
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
-
+#include "DaqLogger.h"
 typedef struct 
 {
   uint32_t vendorid;
@@ -79,7 +79,10 @@ private:
   std::string difState_[255];
   DimService* aliveService_; //State of the process 
   DimService* devicesService_; // List of FTDI devices
-  
+  int32_t register_;
+  DimService* registerService_; //State of the last register read 
+  DimCommand *registerreadCommand_;
+  DimCommand *registerwriteCommand_;
   DimService* infoServicesMap_[255]; //FtdiDeviceInfo services map
   DimService* dataServicesMap_[255]; // data services map
   DimService* stateServicesMap_[255]; // data services map

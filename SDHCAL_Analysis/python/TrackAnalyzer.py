@@ -26,9 +26,9 @@ rootHandler=dr.DCHistogramHandler()
 
 
 
-
+#config.marlin='m3_aout2012.xml'
 dher.ParseSteering(config.marlin)
-
+#dher.readGeometry("acqilc/RPC_2008@lyosdhcal10:GEOMETRY","SPS_08_2012");
 
 
 ar=dr.RawAnalyzer();
@@ -51,19 +51,24 @@ dher.setXdaqShift(24);
 dher.setDropFirstRU(false);
 fileList=[]
 
-for i in range(0,iseq+1):
-    fileList.append(config.filePath % (run,0,i))
+for i in range(iseq,iseq+1):
+#   fileList.append(config.filePath % (run,0,i))
+    fileList.append(config.filePath % (run))
+#   fileList.append(config.filePath % (run,9,i))
 #fileList=[ config.filePath % (run,0) ,
 #           config.filePath % (run,1) ,
 #           config.filePath % (run,2) ,
 #           config.filePath % (run,3) 
 #           ]
 
+#fileList=['/data/NAS/BeamTest2012Compressed/DHCAL_716307_I9_0.slcio']
+#dher.setXdaqShift(92); 
+#dher.setDropFirstRU(True);
 print fileList
 time.sleep(5)
 
 dher.registerAnalysis(a);
-dher.registerAnalysis(ar);
+#dher.registerAnalysis(ar);
 for x in fileList:
     print "================================>",x
     print "================================>",x

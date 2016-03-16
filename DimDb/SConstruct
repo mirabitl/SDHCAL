@@ -84,7 +84,7 @@ CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN
 
 
 #LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
-LIBRARIES=[ 'dl','uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c',  'pthread', 'stdc++',boostsystem,boostthread,'SDHCALcommon','SDHCALDB','dim','netlink','cslm']
+LIBRARIES=[ 'dl','uuid', 'm', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c',  'pthread', 'stdc++','log4cxx',boostsystem,boostthread,'SDHCALcommon','SDHCALDB','dim','netlink','cslm']
 
 
 
@@ -135,6 +135,7 @@ EXE_LIBPATH.append("#lib")
 EXE_LIBS=LIBRARIES
 EXE_LIBS.append("SDHCALDimDb")
 ddbs=env.Program("bin/dimdb",source="src/ddb.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+ddbr=env.Program("bin/dimrpc_db",source="src/rpcdb.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
 #Python module
 #_SDHCALDimDb=env.PythonModule('_LSDHCALDimDb', ['LSDHCALDimDb.i'],LIBPATH="#lib",LIBS="SDHCALDimDb")
@@ -144,7 +145,7 @@ for x in Glob("#include/*.h"):
   myinc.append("include/"+x.name)
 print myinc
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SDHCALDimDb)
-env.Install(DHCAL_ROOT+"/opt/dhcal/bin",ddbs)
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[ddbs,ddbr])
 ###env.Install("/opt/dhcal/lib",SDHCALDimDb)
 ###env.Install("/opt/dhcal/include/readout",myinc)
 

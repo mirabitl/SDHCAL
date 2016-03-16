@@ -50,7 +50,7 @@ int32_t FtdiDIFDriver :: NbAsicsWrite(uint32_t tnumber,uint32_t l1,uint32_t l2,u
 	tnumber += (l1<<8) + (l2<<14) + (l3<<20)+ (l4<<26);
 	//	printf ("tnumber = %d\n",tnumber);
 	try	{		UsbRegisterWrite2(taddress,tnumber);			}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -2; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -2; }
 	return 0;
 }	
 
@@ -58,7 +58,7 @@ int32_t FtdiDIFDriver :: UsbSetDIFID(uint32_t tnumber)    throw (LocalHardwareEx
 {
 	uint32_t taddress=0x01;
 	try	{		UsbRegisterWrite(taddress,tnumber);			}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -2;}
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -2;}
 	return 0;
 }	
 
@@ -68,7 +68,7 @@ int32_t FtdiDIFDriver :: GetDIFID(uint32_t *tnumber)    throw (LocalHardwareExce
 	try	{		UsbRegisterRead(taddress,tnumber);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -80,7 +80,7 @@ int32_t FtdiDIFDriver :: HardrocSetGeneratorDivision(uint32_t tnumber)    throw 
 	try	{		UsbRegisterWrite(taddress,tnumber);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -93,7 +93,7 @@ int32_t FtdiDIFDriver :: NbAsicsRead(uint32_t *tnumber)    throw (LocalHardwareE
 	try{	UsbRegisterRead(taddress,tnumber);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -108,7 +108,7 @@ int32_t FtdiDIFDriver :: HardrocPwonDacDelayRead(uint32_t *tnumber)    throw (Lo
 	try{	UsbRegisterRead(taddress,tnumber);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -120,7 +120,7 @@ int32_t FtdiDIFDriver :: HardrocPwonDacDelayWrite(uint32_t tnumber)    throw (Lo
 	try	{		UsbRegisterWrite(taddress,tnumber);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -133,7 +133,7 @@ int32_t FtdiDIFDriver :: HardrocPwonAEndDelayRead(uint32_t *tnumber)    throw (L
 	try{	UsbRegisterRead(taddress,tnumber);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -145,7 +145,7 @@ int32_t FtdiDIFDriver :: HardrocPwonAEndDelayWrite(uint32_t tnumber)    throw (L
 	try	{		UsbRegisterWrite(taddress,tnumber);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -174,7 +174,7 @@ int32_t FtdiDIFDriver :: HardrocSLCCRCStatusRead(void)    throw (LocalHardwareEx
 	try	{		UsbRegisterRead(taddress,&tdata);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	if ((tdata&0x03)==0x01) // OK
@@ -191,7 +191,7 @@ int32_t FtdiDIFDriver :: HardrocSLCLoadStatusRead(void)    throw (LocalHardwareE
 	try	{		UsbRegisterRead(taddress,&tdata);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	if ((tdata&0x0C)==0x04) // OK
@@ -208,14 +208,14 @@ int32_t FtdiDIFDriver :: DIFMonitoringEnable(int32_t status)   throw (LocalHardw
 	try	{		UsbRegisterRead(taddress,&tstatus);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tstatus =(tstatus&0xFFFE) +(status&0x01);
 	try	{		UsbRegisterWrite(taddress,tstatus);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -229,14 +229,14 @@ int32_t FtdiDIFDriver :: DIFMonitoringSetDIFGain (int32_t gain)   throw (LocalHa
 	try	{		UsbRegisterRead(taddress,&tstatus);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tstatus =(tstatus&0xFFFD) +((gain&0x01)<<1);
 	try{	UsbRegisterWrite(taddress,tstatus);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -250,14 +250,14 @@ int32_t FtdiDIFDriver :: DIFMonitoringSetSlabGain(int32_t gain)   throw (LocalHa
 	try	{		UsbRegisterRead(taddress,&tstatus);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tstatus =(tstatus&0xFFFB) +((gain&0x01)<<2);
 	try	{		UsbRegisterWrite(taddress,tstatus);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -271,14 +271,14 @@ int32_t FtdiDIFDriver :: DIFMonitoringSetSequencer(int32_t status)   throw (Loca
 	try	{		UsbRegisterRead(taddress,&tstatus);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tstatus =(tstatus&0xFFF7) +((status&0x01)<<3);
 	try	{		UsbRegisterWrite(taddress,tstatus);		}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -292,14 +292,14 @@ int32_t FtdiDIFDriver :: DIFMonitoringSetAVDDshdn (int32_t status)   throw (Loca
 	try	{		UsbRegisterRead(taddress,&tstatus);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tstatus =(tstatus&0xFFEF) +((status&0x01)<<4);
 	try{UsbRegisterWrite(taddress,tstatus);		}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -313,14 +313,14 @@ int32_t FtdiDIFDriver :: DIFMonitoringSetDVDDshdn (int32_t status)   throw (Loca
 	try	{		UsbRegisterRead(taddress,&tstatus);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tstatus =(tstatus&0xFFDF) +((status&0x01)<<5);
 	try	{		UsbRegisterWrite(taddress,tstatus);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -334,14 +334,14 @@ int32_t FtdiDIFDriver :: DIFMonitoringSetConvertedChannels (int32_t channel)   t
 	try	{		UsbRegisterRead(taddress,&tstatus);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tstatus =(tstatus&0xFF3F) +((channel&0x03)<<6);
 	try	{		UsbRegisterWrite(taddress,tstatus);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -353,7 +353,7 @@ int32_t FtdiDIFDriver :: DIFMonitoringGetConfigRegister(uint32_t *status)   thro
 	try	{		UsbRegisterRead(taddress,status);			}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -369,7 +369,7 @@ throw (LocalHardwareException)
 	catch (LocalHardwareException& e)
 	{
 		*Temperature = 0;
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -383,7 +383,7 @@ int32_t FtdiDIFDriver :: DIFMonitoringGetDIFCurrent(uint32_t *DIFCurrent)    thr
 	catch (LocalHardwareException& e)
 	{
 		*DIFCurrent = 0;
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -397,7 +397,7 @@ int32_t FtdiDIFDriver :: DIFMonitoringGetSlabCurrent(uint32_t *SlabCurrent)    t
 	catch (LocalHardwareException& e)
 	{
 		*SlabCurrent = 0;
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -411,7 +411,7 @@ int32_t FtdiDIFDriver :: DIFMonitoringGetChannel4Monitoring(uint32_t *Ch4Value) 
 	catch (LocalHardwareException& e)
 	{
 		*Ch4Value = 0;
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -424,7 +424,7 @@ int32_t FtdiDIFDriver :: HardrocCommandSLCWrite(void)    throw (LocalHardwareExc
 	try	{		UsbCommandWrite	(taddress);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -436,7 +436,7 @@ int32_t FtdiDIFDriver :: HardrocCommandSLCWriteLocal(void)    throw (LocalHardwa
 	try	{		UsbCommandWrite	(taddress);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -446,7 +446,7 @@ int32_t FtdiDIFDriver :: HardrocCommandSLCWriteByte(unsigned char  tbyte)    thr
 	try	{		write(tbyte);		}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -458,7 +458,7 @@ int32_t FtdiDIFDriver :: HardrocCommandSLCWriteCRC(unsigned char  *tbyte)    thr
 	try	{		MonWritenAmoi(tbyte,2);		}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -470,7 +470,7 @@ throw (LocalHardwareException)
 	try	{		MonWritenAmoi(tbyte,n);		}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -486,7 +486,7 @@ throw (LocalHardwareException)
 	try	{		UsbCommandWrite	(taddress);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -502,7 +502,7 @@ throw (LocalHardwareException)
 	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -518,21 +518,21 @@ throw (LocalHardwareException)
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tdata =tdata | 0x01; 
 	try	{		UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	tdata =tdata & 0xFFFFFFFE;	
 	try	{		UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -548,21 +548,21 @@ throw (LocalHardwareException)
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tdata =tdata | 0x02; 
 	try	{		UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	tdata =tdata & 0xFFFFFFD;	
 	try	{		UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -576,21 +576,21 @@ int32_t FtdiDIFDriver :: BCIDReset(void)   throw (LocalHardwareException)
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tdata =tdata | 0x04; 
 	try	{	UsbRegisterWrite(taddress,tdata);}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	tdata =tdata & 0xFFFFFFFB;	
 	try	{		UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -605,21 +605,21 @@ throw (LocalHardwareException)
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tdata =tdata | 0x08; 
 	try{UsbRegisterWrite(taddress,tdata);}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	tdata =tdata & 0xFFFFFFF7;	
 	try	{		UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -637,7 +637,7 @@ throw (LocalHardwareException)
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	/*	
@@ -651,14 +651,14 @@ throw (LocalHardwareException)
 	try{UsbRegisterWrite(taddress,tdata);}
 	catch (LocalHardwareException& e)
 	{
-	std::cout<<e.message()<<std::endl;throw (e);
+	LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 	return -2;
 	}
 	tdata =0;
 	try{UsbRegisterWrite(taddress,tdata);}
 	catch (LocalHardwareException& e)
 	{
-	std::cout<<e.message()<<std::endl;throw (e);
+	LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 	return -2;
 	}
 	}	
@@ -668,28 +668,28 @@ throw (LocalHardwareException)
 	try{UsbRegisterWrite(taddress,tdata);}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	tdata =tdata | 0x08;	// *sc_resetn=0
 	try	{		UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	tdata =tdata & 0xFFFFFFF7;	 // *sc_resten = 1
 	try	{		UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	tdata =tdata | 0x10000;	 //select = 1
 	try	{		UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -704,21 +704,21 @@ throw (LocalHardwareException)
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tdata =tdata | 0x10; 
 	try{	UsbRegisterWrite(taddress,tdata);}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	tdata =tdata & 0xFFFFFFEF;	
 	try	{		UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -733,21 +733,21 @@ throw (LocalHardwareException)
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tdata =tdata | 0x20; 
 	try	{	UsbRegisterWrite(taddress,tdata);}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	tdata =tdata & 0xFFFFFFDF;	
 	try	{		UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -760,13 +760,13 @@ throw (LocalHardwareException)
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	tdata =tdata | 0x2000; 
 	try	{	UsbRegisterWrite(taddress,tdata);}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -2; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -2; }
 	tdata =tdata & 0xFFFFDFFF;	
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -2; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -2; }
 	return 0;
 }	
 
@@ -776,10 +776,10 @@ int32_t FtdiDIFDriver :: SetPowerAnalog(int32_t tstatus)    throw (LocalHardware
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata = ((tdata&0xFFFFFEFF) |(tstatus<<8));
 	try{	UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -2; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -2; }
 	return 0;
 }	
 
@@ -789,7 +789,7 @@ int32_t FtdiDIFDriver :: GetPowerAnalog(int32_t *tstatus)    throw (LocalHardwar
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	*tstatus= (tdata >>8)&0x01;
 	return 0;
 }	
@@ -801,10 +801,10 @@ int32_t FtdiDIFDriver :: SetPowerADC(int32_t tstatus)    throw (LocalHardwareExc
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0xFFFFFDFF) |(tstatus<<9));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	return 0;
 }	
 
@@ -814,7 +814,7 @@ int32_t FtdiDIFDriver :: GetPowerADC(int32_t *tstatus)    throw (LocalHardwareEx
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	*tstatus= (tdata >>9)&0x01;
 	return 0;
 }	
@@ -825,10 +825,10 @@ uint32_t taddress=0x03;
 uint32_t tdata;
 	
 try	{		UsbRegisterRead(taddress,&tdata);	}
-catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 tdata =((tdata&0xFFFFFBFF) |(tstatus<<10));
 try	{		UsbRegisterWrite(taddress,tdata);	}
-catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 return 0;
 }	
 
@@ -838,7 +838,7 @@ uint32_t taddress=0x03;
 uint32_t tdata;
 	
 try	{		UsbRegisterRead(taddress,&tdata);	}
-catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 *tstatus= (tdata >>10)&0x01;
 return 0;
 }	
@@ -849,11 +849,11 @@ int32_t FtdiDIFDriver :: SetPowerDigital(int32_t tstatus)    throw (LocalHardwar
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 
 	tdata =((tdata&0xFFFFF7FF) |(tstatus<<11));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	return 0;
 }	
 
@@ -863,7 +863,7 @@ int32_t FtdiDIFDriver :: GetPowerDigital(int32_t *tstatus)    throw (LocalHardwa
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	*tstatus= (tdata >>11)&0x01;
 	return 0;
 }	
@@ -874,10 +874,10 @@ int32_t FtdiDIFDriver :: SetPowerDAC(int32_t tstatus)    throw (LocalHardwareExc
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0xFFFFEFFF) |(tstatus<<12));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -887,7 +887,7 @@ int32_t FtdiDIFDriver :: GetPowerDAC(int32_t *tstatus)    throw (LocalHardwareEx
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus= (tdata >>12)&0x01;
 	return 0;
 }	
@@ -898,13 +898,13 @@ int32_t FtdiDIFDriver :: ResetCounter(int32_t tstatus)    throw (LocalHardwareEx
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata |=(1<<13);
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	tdata &=0xFFFFDFFF;
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -914,13 +914,13 @@ int32_t FtdiDIFDriver :: ClearAnalogSR(int32_t tstatus)    throw (LocalHardwareE
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata |=(1<<15);
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	tdata &=0xFFFF7FFF;
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -930,10 +930,10 @@ int32_t FtdiDIFDriver :: SetSCChoice(int32_t tstatus)    throw (LocalHardwareExc
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0xFFFDFFFF) |(tstatus<<17));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -943,7 +943,7 @@ int32_t FtdiDIFDriver :: GetSCChoice(int32_t *tstatus)    throw (LocalHardwareEx
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus= (tdata >>17)&0x01;
 	return 0;
 }	
@@ -954,10 +954,10 @@ int32_t FtdiDIFDriver :: SetCalibrationMode(int32_t tstatus)    throw (LocalHard
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0xFFFBFFFF) |(tstatus<<18));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -967,7 +967,7 @@ int32_t FtdiDIFDriver :: GetCalibrationMode(int32_t *tstatus)    throw (LocalHar
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus= (tdata >>18)&0x01;
 	return 0;
 }	
@@ -978,10 +978,10 @@ int32_t FtdiDIFDriver :: SetSetupWithCCC(int32_t tstatus)    throw (LocalHardwar
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0xFFF7FFFF) |(tstatus<<19));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -991,7 +991,7 @@ int32_t FtdiDIFDriver :: GetSetupWithCCC(int32_t *tstatus)    throw (LocalHardwa
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus= (tdata >>19)&0x01;
 	return 0;
 }	
@@ -1002,10 +1002,10 @@ int32_t FtdiDIFDriver :: SetSetupWithDCC(int32_t tstatus)    throw (LocalHardwar
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0xFFEFFFFF) |(tstatus<<20));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -1015,7 +1015,7 @@ int32_t FtdiDIFDriver :: GetSetupWithDCC(int32_t *tstatus)    throw (LocalHardwa
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus= (tdata >>20)&0x01;
 	return 0;
 }	
@@ -1026,10 +1026,10 @@ int32_t FtdiDIFDriver :: SetAcqTest(int32_t tstatus)    throw (LocalHardwareExce
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0xFFDFFFFF) |(tstatus<<21));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -1039,7 +1039,7 @@ int32_t FtdiDIFDriver :: GetAcqTest(int32_t *tstatus)    throw (LocalHardwareExc
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus= (tdata >>21)&0x01;
 	return 0;
 }	
@@ -1050,10 +1050,10 @@ int32_t FtdiDIFDriver :: Set4VforSC(int32_t tstatus)    throw (LocalHardwareExce
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0xFFBFFFFF) |(tstatus<<22));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -1063,7 +1063,7 @@ int32_t FtdiDIFDriver :: Get4VforSC(int32_t *tstatus)    throw (LocalHardwareExc
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus= (tdata >>22)&0x01;
 	return 0;
 }	
@@ -1074,10 +1074,10 @@ int32_t FtdiDIFDriver :: SetMode4VforSC(int32_t tstatus)    throw (LocalHardware
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0xFF7FFFFF) |(tstatus<<23));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -1087,7 +1087,7 @@ int32_t FtdiDIFDriver :: GetMode4VforSC(int32_t *tstatus)    throw (LocalHardwar
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus= (tdata >>23)&0x01;
 	return 0;
 }	
@@ -1098,10 +1098,10 @@ int32_t FtdiDIFDriver :: SetModeDCCCCC(int32_t tstatus)    throw (LocalHardwareE
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0xFEFFFFFF) |(tstatus<<24));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -1111,7 +1111,7 @@ int32_t FtdiDIFDriver :: GetModeDCCCCC(int32_t *tstatus)    throw (LocalHardware
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus= (tdata >>24)&0x01;
 	return 0;
 }	
@@ -1126,10 +1126,10 @@ int32_t FtdiDIFDriver :: SetHold(int32_t tstatus)    throw (LocalHardwareExcepti
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0xFDFFFFFF) |(tstatus<<25));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -1139,7 +1139,7 @@ int32_t FtdiDIFDriver :: GetHold(int32_t *tstatus)    throw (LocalHardwareExcept
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus= (tdata >>25)&0x01;
 	return 0;
 }	
@@ -1150,10 +1150,10 @@ int32_t FtdiDIFDriver :: SetTimeoutDigitalReadout(int32_t tstatus)    throw (Loc
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0xFBFFFFFF) |(tstatus<<26));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -1163,7 +1163,7 @@ int32_t FtdiDIFDriver :: GetTimeoutDigitalReadout(int32_t *tstatus)    throw (Lo
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus= (tdata >>26)&0x01;
 	return 0;
 }	
@@ -1174,10 +1174,10 @@ int32_t FtdiDIFDriver :: SetPowerPulsing(int32_t tstatus)    throw (LocalHardwar
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0xF7FFFFFF) |(tstatus<<27));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -1187,7 +1187,7 @@ int32_t FtdiDIFDriver :: GetPowerPulsing(int32_t *tstatus)    throw (LocalHardwa
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus= (tdata >>27)&0x01;
 	return 0;
 }
@@ -1198,10 +1198,10 @@ int32_t FtdiDIFDriver :: SetRealPowerPulsing(int32_t tstatus)    throw (LocalHar
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0xEFFFFFFF) |(tstatus<<28));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -1211,7 +1211,7 @@ int32_t FtdiDIFDriver :: GetRealPowerPulsing(int32_t *tstatus)    throw (LocalHa
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus= (tdata >>28)&0x01;
 	return 0;
 }
@@ -1222,10 +1222,10 @@ int32_t FtdiDIFDriver :: SetDIFCommandsONOFF(int32_t tstatus)    throw (LocalHar
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0xDFFFFFFF) |(tstatus<<29));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -1235,7 +1235,7 @@ int32_t FtdiDIFDriver :: GetDIFCommandsONOFF(int32_t *tstatus)    throw (LocalHa
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus= (tdata >>29)&0x01;
 	return 0;
 }
@@ -1246,10 +1246,10 @@ int32_t FtdiDIFDriver :: SetDROBtMode(int32_t tstatus)    throw (LocalHardwareEx
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0xBFFFFFFF) |(tstatus<<30));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -1259,7 +1259,7 @@ int32_t FtdiDIFDriver :: GetDROBtMode(int32_t *tstatus)    throw (LocalHardwareE
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus= (tdata >>30)&0x01;
 	return 0;
 }
@@ -1270,10 +1270,10 @@ int32_t FtdiDIFDriver :: SetClockFrequency(int32_t tstatus)    throw (LocalHardw
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1;}
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1;}
 	tdata =((tdata&0x7FFFFFFF) |(tstatus<<31));
 	try	{		UsbRegisterWrite(taddress,tdata);	}
-	catch (LocalHardwareException& e)  { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e)  { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -1283,7 +1283,7 @@ int32_t FtdiDIFDriver :: GetClockFrequency(int32_t *tstatus)    throw (LocalHard
 	uint32_t tdata;
 	
 	try	{		UsbRegisterRead(taddress,&tdata);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus= (tdata >>31)&0x01;
 	return 0;
 }
@@ -1298,7 +1298,7 @@ int32_t FtdiDIFDriver::SetControlRegister(int32_t tvalue)    throw (LocalHardwar
 	try{	UsbRegisterWrite(taddress,tvalue);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1312,7 +1312,7 @@ int32_t FtdiDIFDriver::GetControlRegister(uint32_t *tvalue)    throw (LocalHardw
 	catch (LocalHardwareException& e)
 	{
 		*tvalue=0;
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	return 0;
@@ -1330,7 +1330,7 @@ int32_t FtdiDIFDriver :: HardrocSetPowerPulsing(int32_t tstatus)    throw (Local
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	if (tstatus ==1)
@@ -1340,7 +1340,7 @@ int32_t FtdiDIFDriver :: HardrocSetPowerPulsing(int32_t tstatus)    throw (Local
 	try	{		UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	return 0;
@@ -1354,7 +1354,7 @@ int32_t FtdiDIFDriver :: HardrocGetPowerPulsing(int32_t *tstatus)    throw (Loca
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	*tstatus= (tdata >>27)&0x01;
@@ -1369,7 +1369,7 @@ int32_t FtdiDIFDriver :: SetSCClockFrequency(int32_t tstatus)    throw (LocalHar
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	if (tstatus ==1)
@@ -1379,7 +1379,7 @@ int32_t FtdiDIFDriver :: SetSCClockFrequency(int32_t tstatus)    throw (LocalHar
 	try{	UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1393,7 +1393,7 @@ int32_t FtdiDIFDriver :: GetSCClockFrequency(int32_t *tstatus)    throw (LocalHa
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	*tstatus= (tdata >>31)&0x01;
@@ -1506,7 +1506,7 @@ throw (LocalHardwareException)
 	try	{		UsbCommandWrite(taddress);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1520,7 +1520,7 @@ throw (LocalHardwareException)
 	try	{		UsbCommandWrite(taddress);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1535,7 +1535,7 @@ throw (LocalHardwareException)
 	try	{		UsbCommandWrite(taddress);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1549,7 +1549,7 @@ throw (LocalHardwareException)
 	try	{		UsbCommandWrite(taddress);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1563,7 +1563,7 @@ throw (LocalHardwareException)
 	try	{		UsbCommandWrite(taddress);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1577,7 +1577,7 @@ throw (LocalHardwareException)
 	try	{		UsbCommandWrite(taddress);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1595,7 +1595,7 @@ throw (LocalHardwareException)
 	try	{		UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1609,7 +1609,7 @@ int32_t  FtdiDIFDriver::HardrocGetTimerHoldRegister(uint32_t *thold)    throw (L
 	catch (LocalHardwareException& e)
 	{
 		*thold=0;
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	(*thold)=(*thold)&0x0F;
@@ -1623,7 +1623,7 @@ int32_t  FtdiDIFDriver :: HardrocStartAnalogAcq(void)    throw (LocalHardwareExc
 	try	{		UsbCommandWrite(taddress);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1636,7 +1636,7 @@ int32_t  FtdiDIFDriver :: HardrocSoftwareTriggerAnalogAcq(void)    throw (LocalH
 	try	{		UsbCommandWrite(taddress);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1650,7 +1650,7 @@ int32_t FtdiDIFDriver::HardrocSetNumericalReadoutMode(int32_t tmode)    throw (L
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	if (tmode ==1)
@@ -1660,7 +1660,7 @@ int32_t FtdiDIFDriver::HardrocSetNumericalReadoutMode(int32_t tmode)    throw (L
 	try{	UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1674,7 +1674,7 @@ int32_t FtdiDIFDriver::HardrocGetNumericalReadoutMode(int32_t *tmode)    throw (
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	*tmode=(tdata>>6)&0x01;
@@ -1689,7 +1689,7 @@ int32_t FtdiDIFDriver::HardrocSetNumericalReadoutStartMode(int32_t tmode)    thr
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	if (tmode ==1)
@@ -1699,7 +1699,7 @@ int32_t FtdiDIFDriver::HardrocSetNumericalReadoutStartMode(int32_t tmode)    thr
 	try{	UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1714,7 +1714,7 @@ int32_t FtdiDIFDriver::HardrocGetNumericalReadoutStartMode(int32_t *tmode)    th
 	catch (LocalHardwareException& e)
 	{
 		*tmode=0;
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	return 0;
@@ -1730,7 +1730,7 @@ throw (LocalHardwareException)
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tdata = tdata&(~((!0x01)<<22)) ;
@@ -1738,7 +1738,7 @@ throw (LocalHardwareException)
 	try{	UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1754,7 +1754,7 @@ throw (LocalHardwareException)
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	*tmode=(tdata>>22)&0x02;
@@ -1769,14 +1769,14 @@ int32_t FtdiDIFDriver::HardrocSetTestAllAsicsDefault(void)    throw (LocalHardwa
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tdata =tdata |((0x01)<<25);
 	try{	UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1790,7 +1790,7 @@ int32_t FtdiDIFDriver::HardrocGetTestAllAsics(int32_t *tmode)    throw (LocalHar
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	*tmode=(tdata>>25)&0x01;
@@ -1804,14 +1804,14 @@ int32_t FtdiDIFDriver::HardrocSetEnablePowerPulsing(int32_t tmode)    throw (Loc
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tdata =tdata |((tmode&0x01)<<27);
 	try{	UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1824,7 +1824,7 @@ int32_t FtdiDIFDriver::HardrocGetEnablePowerPulsing(int32_t *tmode)    throw (Lo
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	*tmode=(tdata>>27)&0x01;
@@ -1838,14 +1838,14 @@ int32_t FtdiDIFDriver::HardrocSetEnableTimeoutDigitalReadout(int32_t tmode)    t
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	tdata =tdata |((tmode&0x01)<<26);
 	try{	UsbRegisterWrite(taddress,tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1858,7 +1858,7 @@ int32_t FtdiDIFDriver::HardrocGetEnableTimeoutDigitalReadout(int32_t *tmode)    
 	try	{		UsbRegisterRead(taddress,&tdata);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	*tmode=(tdata>>22)&0x01;
@@ -1869,7 +1869,7 @@ int32_t FtdiDIFDriver::HardrocGetStatusRegister(uint32_t *tstatus)    throw (Loc
 {
 	uint32_t taddress=0x04;
 	try	{		UsbRegisterRead(taddress,tstatus);	}
-	catch (LocalHardwareException& e) { std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	return 0;
 }	
 
@@ -1879,7 +1879,7 @@ int32_t FtdiDIFDriver::HardrocGetMemFull(uint32_t *tstatus)    throw (LocalHardw
 	
 	taddress=0x04;
 	try	{		UsbRegisterRead(taddress,tstatus);	}
-	catch (LocalHardwareException& e) { *tstatus=0; std::cout<<e.message()<<std::endl;throw (e); return -1; }
+	catch (LocalHardwareException& e) { *tstatus=0; LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 	*tstatus=(*tstatus)&0x01;
 	return 0;
 }	
@@ -1892,7 +1892,7 @@ int32_t FtdiDIFDriver::HardrocGetRamFullCpt(uint32_t *tstatus)    throw (LocalHa
 	catch (LocalHardwareException& e)
 	{
 		*tstatus=0;
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	*tstatus=(*tstatus)&0xFFFFFFFF;
@@ -1906,7 +1906,7 @@ int32_t FtdiDIFDriver::HardrocSetSCDebugRegister(int32_t tvalue)    throw (Local
 	try{	UsbRegisterWrite(taddress,tvalue);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1920,7 +1920,7 @@ int32_t FtdiDIFDriver::HardrocGetSCDebugRegister(uint32_t *tvalue)    throw (Loc
 	catch (LocalHardwareException& e)
 	{
 		*tvalue=0;
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	*tvalue=(*tvalue)&0xFF;
@@ -1936,7 +1936,7 @@ int32_t FtdiDIFDriver::SetChipTypeRegister(int32_t tvalue)    throw (LocalHardwa
 	try{	UsbRegisterWrite(taddress,tvalue);	}
 	catch (LocalHardwareException& e)
 	{
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -2;
 	}
 	return 0;
@@ -1950,7 +1950,7 @@ int32_t FtdiDIFDriver::GetChipTypeRegister(uint32_t *tvalue)    throw (LocalHard
 	catch (LocalHardwareException& e)
 	{
 		*tvalue=0;
-		std::cout<<e.message()<<std::endl;throw (e);
+		LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 		return -1;
 	}
 	*tvalue=(*tvalue);
@@ -1963,12 +1963,12 @@ uint32_t taddress=0x03;
 uint32_t tampon;
 	
 try	{		UsbRegisterRead(taddress,&tampon);	}
-catch (LocalHardwareException& e) {std::cout<<e.message()<<std::endl;throw (e); return -1; }
+catch (LocalHardwareException& e) {LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -1; }
 
 tampon&=0xDFFF;
 tampon |=tvalue<<13;
 try{	UsbRegisterWrite(taddress,tampon);	}
-catch (LocalHardwareException& e) {std::cout<<e.message()<<std::endl;throw (e); return -2; }
+catch (LocalHardwareException& e) {LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e); return -2; }
 return 0;
 }	
 
@@ -1980,7 +1980,7 @@ try	{		UsbRegisterRead(taddress,tvalue);	}
 catch (LocalHardwareException& e)
 {
 *tvalue=0;
-std::cout<<e.message()<<std::endl;throw (e);
+LOG4CXX_ERROR(_logDIF," "<<e.message());throw (e);
 return -1;
 }
 return 0;

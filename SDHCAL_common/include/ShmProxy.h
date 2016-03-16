@@ -22,6 +22,7 @@
 #ifdef USE_DIM
 #include "dis.hxx"
 #endif
+#include "CommonLogger.h"
 
 class ShmProxy
  #ifdef USE_DIM
@@ -37,12 +38,12 @@ class ShmProxy
   void Configure();
   void Start(uint32_t run=0,std::string dir="/tmp",uint32_t nd=0);
   void Stop();
-  void purgeShm();
+  static void purgeShm(std::string memory_dir="/dev/shm");
   static void save2DevShm(unsigned char* cbuf,uint32_t size_buf,uint32_t dif_shift,std::string memory_dir);
   
   static void run2DevShm(uint32_t &run,std::string memory_dir);
 
-  static void transferToFile(unsigned char* cbuf,uint32_t size_buf,uint64_t bcid,uint32_t detector_event,uint32_t global_event,uint32_t id);
+  static void transferToFile(unsigned char* cbuf,uint32_t size_buf,uint64_t bcid,uint32_t detector_event,uint32_t global_event,uint32_t id,std::string memory_dir="/dev/shm");
 
 	static uint32_t getBufferDIF(unsigned char* cb,uint32_t idx=0);
   static uint32_t getBufferDTC(unsigned char* cb,uint32_t idx=0);
