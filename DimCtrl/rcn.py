@@ -108,6 +108,12 @@ p_par['json']=conf.jsonfile
 l_par=json.dumps(p_par,sort_keys=True)
 
 # set the connection mode
+if (results.sockport==None):
+    sp=os.getenv("SOCKPORT","Not Found")
+    if (sp!="Not Found"):
+        results.sockport=sp
+
+
 if (results.sockport !=None):
     socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", results.sockport)
     socket.socket = socks.socksocket

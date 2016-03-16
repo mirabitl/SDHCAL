@@ -3,23 +3,32 @@ export PATH=${DAQDIR}/DimCtrl:$PATH
 export PYTHONPATH=${DAQDIR}/DimCtrl:$PYTHONPATH
 export DAQCONFIG=config_m3_dome
 export DAQCONFIGFILE=${DAQDIR}/DimCtrl/${DAQCONFIG}.py
-alias run_LVON='rc.py -c $DAQCONFIG -a LVON'
-alias run_LVOFF='rc.py -c $DAQCONFIG -a LVOFF'	
-alias run_status='rc.py -c $DAQCONFIG -a status'
-alias run_evbstatus='rc.py -c $DAQCONFIG -a shmStatus'
-alias run_start='rc.py -c $DAQCONFIG -a start'
-alias run_stop='rc.py -c $DAQCONFIG -a stop'
-alias run_init='rc.py -c $DAQCONFIG -a initialise'
-alias run_config='rc.py -c $DAQCONFIG -a configure'
-alias run_destroy='rc.py -c $DAQCONFIG -a destroy'
-alias run_create='rc.py -c $DAQCONFIG -a createDaq'
-alias run_scandns='rc.py -c $DAQCONFIG -a Discover'
-alias run_services='rc.py -c $DAQCONFIG -a prepareServices'
-alias run_setpar='rc.py -c $DAQCONFIG -a setParameters'
+# uncomment if socks is used
+#export SOCKPORT=1080
+alias runc='rcn.py'
 
-alias run_fullconf='run_init;run_status;run_config;run_status'
-alias run_jobcreate='rc.py -c $DAQCONFIG -a createJobControl'
-alias run_jobstart='rc.py -c $DAQCONFIG -a jobStartAll'
-alias run_jobkill='rc.py -c $DAQCONFIG -a jobKillAll'
-alias run_jobstatus='rc.py -c $DAQCONFIG -a jobStatus'
-alias daq_restart='run_create;run_setpar;run_jobcreate;run_jobkill;run_job_start;run_scandns;run_setpar;run_services'
+
+
+
+# Old stuff
+
+#alias run_LVON='rc.py -c $DAQCONFIG -a LVON'
+#alias run_LVOFF='rc.py -c $DAQCONFIG -a LVOFF'	
+#alias run_status='rc.py -c $DAQCONFIG -a status'
+#alias run_evbstatus='rc.py -c $DAQCONFIG -a shmStatus'
+#alias run_start='rc.py -c $DAQCONFIG -a start'
+#alias run_stop='rc.py -c $DAQCONFIG -a stop'
+#alias run_init='rc.py -c $DAQCONFIG -a initialise'
+#alias run_config='rc.py -c $DAQCONFIG -a configure'
+#alias run_destroy='rc.py -c $DAQCONFIG -a destroy'
+#alias run_create='rc.py -c $DAQCONFIG -a createDaq'
+#alias run_scandns='rc.py -c $DAQCONFIG -a Discover'
+#alias run_services='rc.py -c $DAQCONFIG -a prepareServices'
+#alias run_setpar='rc.py -c $DAQCONFIG -a setParameters'
+
+#alias run_fullconf='run_init;run_status;run_config;run_status'
+#alias run_jobcreate='rc.py -c $DAQCONFIG -a createJobControl'
+#alias run_jobstart='rc.py -c $DAQCONFIG -a jobStartAll'
+#alias run_jobkill='rc.py -c $DAQCONFIG -a jobKillAll'
+#alias run_jobstatus='rc.py -c $DAQCONFIG -a jobStatus'
+#alias daq_restart='run_create;run_setpar;run_jobcreate;run_jobkill;run_job_start;run_scandns;run_setpar;run_services'
