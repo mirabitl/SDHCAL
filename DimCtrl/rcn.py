@@ -28,6 +28,7 @@ grp_action.add_argument('--daq-lvoff',action='store_true',help='put Zup LV OFF')
 grp_action.add_argument('--daq-initialise',action='store_true',help=' initialise the DAQ')
 grp_action.add_argument('--daq-configure',action='store_true',help=' configure the DAQ')
 grp_action.add_argument('--daq-status',action='store_true',help=' display DAQ status of all DIF')
+grp_action.add_argument('--daq-state',action='store_true',help=' display DAQ state')
 grp_action.add_argument('--daq-evbstatus',action='store_true',help=' display event builder status')
 grp_action.add_argument('--daq-startrun',action='store_true',help=' start the run')
 grp_action.add_argument('--daq-stoprun',action='store_true',help=' stop the run')
@@ -111,13 +112,13 @@ l_par=json.dumps(p_par,sort_keys=True)
 if (results.sockport==None):
     sp=os.getenv("SOCKPORT","Not Found")
     if (sp!="Not Found"):
-        results.sockport=sp
+        results.sockport=int(sp)
 
 
 if (results.sockport !=None):
     socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", results.sockport)
     socket.socket = socks.socksocket
-    print "on utilise sock",results.sockport
+    #print "on utilise sock",results.sockport
 # analyse the command
 lcgi={}
 r_cmd=None
@@ -125,12 +126,15 @@ if (results.daq_create):
     r_cmd='createDaq'
 elif(results.jc_create):
     r_cmd='createJobControl'
+    lcgi['name']=conf.jsonfile
 elif(results.jc_kill):
     r_cmd='jobKillAll'
 elif(results.jc_start):
     r_cmd='jobStartAll'
 elif(results.jc_status):
     r_cmd='jobStatus'
+elif(results.daq_state):
+    r_cmd='state'
 elif(results.daq_discover):
     r_cmd='Discover'
 elif(results.daq_setparameters):
@@ -256,8 +260,8 @@ elif(results.slc_store_stop):
 elif(results.slc_check_stop):
     r_cmd='stopCheck'
 
-print r_cmd
-print lcgi
+#print r_cmd
+#print lcgi
 
 
 def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
@@ -273,7 +277,7 @@ def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
            lqs=urllib.urlencode(lq)
            saction = '/%s?%s' % (command,lqs)
            myurl=myurl+saction
-           print myurl
+           #print myurl
            req=urllib2.Request(myurl)
            r1=urllib2.urlopen(req)
 
@@ -283,7 +287,7 @@ def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
        #conn = httplib.HTTPConnection(myurl)
        saction = '/%s' % command
        myurl=myurl+saction
-       print myurl
+       #print myurl
        req=urllib2.Request(myurl)
        r1=urllib2.urlopen(req)
        if (command=="status"):
