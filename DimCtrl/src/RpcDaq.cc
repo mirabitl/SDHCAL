@@ -159,7 +159,7 @@ void RpcDaq::allocateClients()
     _dbClient=new RpcDbClient::rpiClient(theDBPrefix_);
     
     _cccClient=new RpcCCCClient::rpiClient(theCCCPrefix_);
-
+    _DIFClients.clear();
     for (std::vector<std::string>::iterator it=theDIFPrefix_.begin();it!=theDIFPrefix_.end();it++)
       {
 	RpcDIFClient::rpiClient* s=new RpcDIFClient::rpiClient((*it));
