@@ -22,6 +22,10 @@ parser.add_argument('--channel', action='store',type=int, default=None,dest='cha
 parser.add_argument('--voltage', action='store',type=float, default=None,dest='voltage',help='set the hv voltage')
 parser.add_argument('--current', action='store',type=float, default=None,dest='current',help='set the hv current')
 
+parser.add_argument('--period', action='store',type=int, default=None,dest='period',help='set the tempo period')
+
+parser.add_argument('--account', action='store', default=None,dest='account',help='set the mysql account')
+
 results = parser.parse_args()
 
 # Analyse results
@@ -83,6 +87,10 @@ if (results.voltage !=None):
     lcgi['V']=results.voltage
 if (results.current !=None):
     lcgi['I']=results.current
+if (results.period !=None):
+    lcgi['period']=results.period
+if (results.account !=None):
+    lcgi['account']=results.account
 
     
 print lcgi
