@@ -167,9 +167,13 @@ void DimDIF::stop()
 }
 void DimDIF::destroy()
 {
-  _readoutStarted=false;
-  while (!_readoutCompleted)
-    usleep((uint32_t) 200000);
+  if (_readoutStarted)
+    {
+      _readoutStarted=false;
+      uint32_t ntry=0;
+      while (!_readoutCompleted && ntry<100)
+	{usleep((uint32_t) 200000);ntry++;}
+    }
   if (_rd!=NULL)
     {
       try

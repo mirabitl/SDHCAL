@@ -211,12 +211,21 @@ void RpcDIFDestroy::rpcHandler()
     }
   else
     {
+
       bool running=false;
       for ( std::map<uint32_t,DimDIF*>::iterator it=dm.begin();it!=dm.end();it++)
 	{
 	  running=running ||it->second->readoutStarted();
 	}
-      if (running) _server->joinThreads();
+      if (running)
+	{
+	  for ( std::map<uint32_t,DimDIF*>::iterator it=dm.begin();it!=dm.end();it++)
+	    {
+	      it->second->setReadoutStarted(false);
+	    }
+
+	  _server->joinThreads();
+	}
       for ( std::map<uint32_t,DimDIF*>::iterator it=dm.begin();it!=dm.end();it++)
 	{
 	  it->second->destroy();
