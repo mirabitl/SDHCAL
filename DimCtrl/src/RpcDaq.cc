@@ -273,7 +273,7 @@ void RpcDaq::setControlRegister(uint32_t reg) {_ctrlreg=reg;
 
 void RpcDaq::prepareServices()
   {
-    if (_state.compare("DISCOVERED")==0 || _state.compare("DESTROYED")==0 )
+    if (_state.compare("DISCOVERED")==0 || _state.compare("DESTROYED")==0 || _state.compare("PREPARED") )
       {
 	this->downloadDB(_dbstate);
 	this->initialiseWriter(_writerdir);
@@ -309,7 +309,7 @@ void RpcDaq::initialise()
 
 void RpcDaq::configure()
   {
-    if (_state.compare("INITIALISED")==0 || _state.compare("STOPPED")==0 )
+    if (_state.compare("INITIALISED")==0 || _state.compare("STOPPED")==0 ||(_state.compare("CONFIGURED")==0 ))
       {
 
 	_cccClient->cccreset();

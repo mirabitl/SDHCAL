@@ -14,13 +14,15 @@ import socket
 import time
 _wdd=None
 _wjobc=None
+_wsl=None
 
 class wddService(ServiceBase):
     @srpc(_returns=Iterable(String))
     def createDaq():    
         global _wdd
         _wdd=dc.RpcDaq()
-        yield 'Daq is created' 
+        yield 'Daq is created'
+        
 
     @srpc( String, _returns=Iterable(String))
     def setParameters(name):
@@ -187,7 +189,130 @@ class wddService(ServiceBase):
        _wdd.LVON()
        yield 'Lv is On'
 
-  
+    @srpc(_returns=Iterable(String))
+    def createSlowControl():    
+        global _wsl
+        _wsl=dc.DimSlowControl()
+        yield 'Slow Control is created'
+        
+    @srpc(_returns=Iterable(String))
+    def hvStatus():
+        global _wsl
+        if (_wsl!=None):
+            _wsl.readChannel(99)
+            yield _wsl.hvinfoCrate()
+        else:
+            yield " No slow control access"
+
+    @srpc(UnsignedInteger,_returns=Iterable(String))
+    def setReadoutPeriod(period):
+        global _wsl
+        if (_wsl!=None):
+            _wsl.setReadoutPeriod(period)
+            yield 'Period set to %d' % period
+        else:
+            yield " No slow control access"
+
+    @srpc(UnsignedInteger,_returns=Iterable(String))
+    def startStorage(period):
+        global _wsl
+        if (_wsl!=None):
+            _wsl.startStore(period)
+            yield 'Storage started with period set to %d' % period
+        else:
+            yield " No slow control access"
+
+    @srpc(UnsignedInteger,_returns=Iterable(String))
+    def startCheck(period):
+        global _wsl
+        if (_wsl!=None):
+            _wsl.startCheck(period)
+            yield 'HV check started with period set to %d' % period
+        else:
+            yield " No slow control access"
+
+    @srpc(_returns=Iterable(String))
+    def stopStorage():
+        global _wsl
+        if (_wsl!=None):
+            _wsl.stopStore()
+            yield ' Storage stopped'
+        else:
+            yield " No slow control access"
+            
+    @srpc(_returns=Iterable(String))
+    def stopCheck():
+        global _wsl
+        if (_wsl!=None):
+            _wsl.stopCheck()
+            yield ' HV check stopped'
+        else:
+            yield " No slow control access"
+
+    @srpc(_returns=Iterable(String))
+    def PT():
+        global _wsl
+        if (_wsl!=None):
+            yield ' P=%f T=%f' % (_wsl.pression(),_wsl.temperature())
+        else:
+            yield " No slow control access"
+
+
+    @srpc(String,_returns=Iterable(String))
+    def initialiseDB(account):
+        global _wsl
+        if (_wsl!=None):
+            _wsl.initialiseDB(account)
+            yield 'mySql initialise with %s' % account
+        else:
+            yield " No slow control access"
+
+    @srpc(_returns=Iterable(String))
+    def loadReferences():
+        global _wsl
+        if (_wsl!=None):
+            _wsl.loadReferences()
+            yield ' HV references load to the wiener crate'
+        else:
+            yield " No slow control access"
+
+
+    @srpc(UnsignedInteger,Float, _returns=Iterable(String))
+    def setVoltage(channel,V):
+        global _wsl
+        if (_wsl!=None):
+            _wsl.setVoltage(channel,V)
+            yield " channel %d set to %f " % (channel,V)
+        else:
+            yield " No slow control access"
+    @srpc(UnsignedInteger,Float, _returns=Iterable(String))
+    def setCurrentLimit(channel,I):
+        global _wsl
+        if (_wsl!=None):
+            _wsl.setCurrentLimit(channel,I)
+            yield " channel %d set current to %f " % (channel,I)
+        else:
+            yield " No slow control access"
+        
+    @srpc(UnsignedInteger, _returns=Iterable(String))
+    def HVON(channel):
+        global _wsl
+        if (_wsl!=None):
+            _wsl.HVON(channel)
+            yield " channel %d is ON " % (channel)
+        else:
+            yield " No slow control access"
+
+    @srpc(UnsignedInteger, _returns=Iterable(String))
+    def HVOFF(channel):
+        global _wsl
+        if (_wsl!=None):
+            _wsl.HVOFF(channel)
+            yield " channel %d is OFF " % (channel)
+        else:
+            yield " No slow control access"
+
+            
 if __name__=='__main__':
     # Python daemon boilerplate
     from wsgiref.simple_server import make_server

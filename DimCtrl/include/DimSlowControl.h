@@ -69,6 +69,8 @@ public:
   float iset(uint32_t chan); //done
   float vout(uint32_t chan); //done
   float iout(uint32_t chan); //done
+  float pression();
+  float temperature();
   std::string hvinfoChannel(uint32_t ichan);//done
   std::string hvinfoCrate();//done
 private:

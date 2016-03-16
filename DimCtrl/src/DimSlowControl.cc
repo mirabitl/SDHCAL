@@ -223,6 +223,8 @@ bool  DimSlowControl::getPTMean()
   
 }
 
+float DimSlowControl::pression(){ return _PRead;}
+float DimSlowControl::temperature(){ return _TRead;}
 float DimSlowControl::vset(uint32_t i){ return _hvchannels[i].vset;}
 float DimSlowControl::iset(uint32_t i){ return _hvchannels[i].iset;}
 float DimSlowControl::vout(uint32_t i){ return _hvchannels[i].vout;}
