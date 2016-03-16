@@ -11,7 +11,19 @@ import argparse
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-a', action='store', dest='cmd',default='status',help='action to be done')
+
+help_action="Action to be execute \n"
+help_action=help_action+" \n \t createDaq : create the RpcDaq object to communicate with the DAQ \n"
+help_action=help_action+" \n \t createJobControl : create the DimJobControlInterface object to communicate with the job control \n"
+
+help_action=help_action+" \n \t createSlowControl : create the DimSlowControl object to communicate with the wiener and BMP183 servers \n"
+
+help_action=help_action+" \n \t Discover : create the RpcDaq object to communicate with the DAQ \n"
+
+def dohelp():
+    return help_action
+parser.add_argument('-a', action='store', dest='cmd',choices=('createDaq','createJobControl','createSlowControl','Discover','setParameters','initialise','configure','start','status','shmStatus','stop','destroy','jobStatus','jobStartAll','jobKillAll','downloadDB','setControlRegister','hvStatus','PT','setVoltage','setCurrentLimit','HVON','HVOFF','initialiseDB','startStorage','stopStorage','starCheck','stopCheck','loadReferences'),
+                    default='jobStatus',help='Action to be done choices, {%(choices)s ')
 parser.add_argument('-c', action='store', dest='config',default=None,help='python config file')
 parser.add_argument('--socks', action='store', type=int,dest='sockport',default=None,help='use SOCKS port ')
 parser.add_argument('--dbstate', action='store', default=None,dest='dbstate',help='set the dbstate')
