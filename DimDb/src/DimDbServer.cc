@@ -57,6 +57,11 @@ void DimDbServer::doDelete()
 }
 void DimDbServer::doDownload(std::string state)
 {
+  char* pconf;
+  pconf = getenv ("CONFDB");
+  if (pconf!=NULL)
+    printf ("The current account is: %s",pconf);
+
   state_=state;
   if (theDBManager_!=NULL)
     {

@@ -1,5 +1,5 @@
 #!/bin/bash
-if [ -f /usr/include/ILCConfDB ];then
+if [ -d /usr/include/ILCConfDB ];then
     cd netLink;scons install -j 6;scons;cd -
     cd SDHCAL_common;scons install -j 6;scons;cd -
     cd SDHCAL_Readout;scons install -j 6;scons;cd -
