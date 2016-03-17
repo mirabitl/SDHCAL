@@ -191,6 +191,17 @@ void RpcDaq::doubleSwicthZup(unsigned int pause)
     std::cout<<" LV is ON"<<std::endl;
 
   }
+std::string RpcDaq::LVStatus()
+{
+  _zupClient->lvread();
+    Json::FastWriter fastWriter;
+  Json::Value fromScratch;
+  fromScratch["vset"]=_zupClient->vset();
+  fromScratch["vout"]=_zupClient->vout();
+  fromScratch["iout"]=_zupClient->iout();
+  return fastWriter.write(fromScratch);
+
+}
 void RpcDaq::LVON()
   {
      _zupClient->lvswitch(1);

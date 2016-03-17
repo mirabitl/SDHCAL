@@ -44,11 +44,13 @@ namespace RpcZupClient
   public:
     lvread(std::string name,int timeout=-1) : DimRpcInfo((char*) name.c_str(),-1){_sem.lock();}
     inline void doIt(int32_t i){int d=i;setData(d);_sem.lock();}
-    void rpcInfoHandler(){_rc=getInt();_sem.unlock();}
-    inline int32_t value(){return _rc;}
+    void rpcInfoHandler(){memcpy(_rc,getData(),getSize());_sem.unlock();}
+    inline float vset(){return _rc[0];}
+    inline float vout(){return _rc[1];}
+    inline float iout(){return _rc[2];}
   private:
     boost::interprocess::interprocess_mutex _sem;
-    int32_t _rc;
+    float _rc[3];
   };
 
   class lvswitch : public DimRpcInfo
@@ -110,7 +112,10 @@ namespace RpcZupClient
       else
 	this->publishState("ON");
     }
-    
+
+    inline float vset(){return _lvread->vset();}
+    inline float vout(){return _lvread->vout();}
+    inline float iout(){return _lvread->iout();}
     inline void setState(std::string s){_state.assign(s);}
     inline std::string state() const {return _state;}
     // Publish DIM services
