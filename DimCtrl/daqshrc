@@ -1,7 +1,7 @@
 export DAQDIR=${HOME}/SDHCAL
 export PATH=${DAQDIR}/DimCtrl:$PATH
 export PYTHONPATH=${DAQDIR}/DimCtrl:$PYTHONPATH
-export DAQCONFIG=config_m3_dome
+export DAQCONFIG=config_m3_example
 export DAQCONFIGFILE=${DAQDIR}/DimCtrl/${DAQCONFIG}.py
 # uncomment if socks is used
 #export SOCKPORT=1080
