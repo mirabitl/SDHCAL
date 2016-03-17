@@ -25,6 +25,7 @@ grp_action.add_argument('--daq-forceState',action='store_true',help='force the s
 grp_action.add_argument('--daq-services',action='store_true',help='Triggers teh download of the DB state, the initialisation of the Zup and of the CCC according to $DAQCONFIG values (compulsary before first initialise)')
 grp_action.add_argument('--daq-lvon',action='store_true',help='put Zup LV ON')
 grp_action.add_argument('--daq-lvoff',action='store_true',help='put Zup LV OFF')
+grp_action.add_argument('--daq-lvstatus',action='store_true',help='LV status')
 grp_action.add_argument('--daq-initialise',action='store_true',help=' initialise the DAQ')
 grp_action.add_argument('--daq-configure',action='store_true',help=' configure the DAQ')
 grp_action.add_argument('--daq-status',action='store_true',help=' display DAQ status of all DIF')
@@ -153,6 +154,8 @@ elif(results.daq_lvon):
     r_cmd='LVON'
 elif(results.daq_lvoff):
     r_cmd='LVOFF'
+elif(results.daq_lvstatus):
+    r_cmd='LVStatus'
 elif(results.daq_initialise):
     r_cmd='initialise'
 elif(results.daq_configure):
