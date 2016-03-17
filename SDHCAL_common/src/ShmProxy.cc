@@ -157,7 +157,7 @@ bool ShmProxy::performWrite()
   theSync_.lock();
   if (theSave_)
     {
-      LOG4CXX_INFO(_logShm,"Size of Map#"<<theBufferMap_.size())
+      LOG4CXX_DEBUG(_logShm,"Size of Map#"<<theBufferMap_.size())
       for (std::map<uint64_t,std::vector<unsigned char*> >::iterator it=theBufferMap_.begin();it!=theBufferMap_.end();it++)
 	{
 	  

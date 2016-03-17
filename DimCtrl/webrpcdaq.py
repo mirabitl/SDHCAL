@@ -145,6 +145,11 @@ class wddService(ServiceBase):
        yield _wdd.shmStatus()
 
     @srpc( _returns=Iterable(String))
+    def LVStatus():
+       global _wdd
+       yield _wdd.LVStatus()
+
+    @srpc( _returns=Iterable(String))
     def state():
        global _wdd
        yield _wdd.state()

@@ -25,6 +25,7 @@ public:
   void doubleSwicthZup(unsigned int pause);
   void LVON();
   void LVOFF();
+  std::string LVStatus();
   void downloadDB(std::string s);
   void downloadDB();
   void openCCC(std::string device);
