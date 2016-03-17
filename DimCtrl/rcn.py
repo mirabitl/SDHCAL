@@ -321,6 +321,21 @@ def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
            for x in ssj:
                print "#%.4d %10.2f %10.2f %10.2f %10.2f" % (x['channel'],x['vset'],x['iset'],x['vout'],x['iout'])
 
+       elif (command=="LVStatus"):
+           s=r1.read()
+           sj=json.loads(s)
+           ssj=json.loads(sj["LVStatusResponse"]["LVStatusResult"][0])
+           print "\033[1m %10s %10s %10s \033[0m" % ('VSET','VOUT','IOUT')
+           print " %10.2f %10.2f %10.2f" % (ssj['vset'],ssj['vout'],ssj['iout'])
+           #for x in ssj:
+           #    print "#%.4d %10.2f %10.2f %10.2f %10.2f" % (x['channel'],x['vset'],x['iset'],x['vout'],x['iout'])
+       elif (command=="shmStatus"):
+           s=r1.read()
+           sj=json.loads(s)
+           ssj=json.loads(sj["shmStatusResponse"]["shmStatusResult"][0])
+           print "\033[1m %10s %10s \033[0m" % ('Run','Event')
+           print " %10d %10d " % (ssj['run'],ssj['event'])
+
        else:
           print r1.read()
           return r1.read()
