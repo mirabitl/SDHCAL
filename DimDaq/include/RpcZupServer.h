@@ -54,6 +54,7 @@ public:
   void Open(std::string,uint32_t m);
   void Read();
   void Switch(uint32_t m);
+  float* readstatus(){return _status;}
 private:
   std::string _state;
   float _status[3];

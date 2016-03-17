@@ -19,14 +19,15 @@ void RpcZupOpen::rpcHandler()
   int32_t rc=0;
    setData(rc);
 }
-RpcZupRead::RpcZupRead(RpcZupServer* r,std::string name) : DimRpc(name.c_str(),"I:1","I:1"),_server(r) {}
+RpcZupRead::RpcZupRead(RpcZupServer* r,std::string name) : DimRpc(name.c_str(),"I:1","F:3"),_server(r) {}
 
 void RpcZupRead::rpcHandler()
 {
   LOG4CXX_INFO(_logDDIF," CMD: Read called");
   _server->Read();
-  int32_t rc=0;
-   setData(rc);
+  float rc[3];
+  memcpy(rc,_server->readstatus(),3*sizeof(float));
+  setData(rc,3*sizeof(float));
 }
 RpcZupSwitch::RpcZupSwitch(RpcZupServer* r,std::string name) : DimRpc(name.c_str(),"I:1","I:1"),_server(r) {}
 
