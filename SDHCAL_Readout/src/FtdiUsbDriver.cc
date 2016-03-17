@@ -57,6 +57,7 @@ FtdiUsbDriver::FtdiUsbDriver(char * deviceIdentifier, uint32_t productid )     t
  int ret;
  int ntry=0;
  theProduct_=productid;
+ printf("%s \n",deviceIdentifier);
 start:
 	if (ftdi_init(&theFtdi) < 0)
 	{

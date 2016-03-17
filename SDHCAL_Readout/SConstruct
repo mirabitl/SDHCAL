@@ -132,6 +132,7 @@ EXE_LIBS=LIBRARIES
 EXE_LIBS.append("SDHCALReadout")
 dsv=env.Program("bin/dsv",source="src/dsv.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 dsdcc=env.Program("bin/dsdcc",source="src/dsdcc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+mdcc=env.Program("bin/mdcc",source="src/testmdcc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
 
 #Python module
@@ -145,6 +146,7 @@ env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SDHCALReadout)
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",SDHCALReadout)
 env.Install(DHCAL_ROOT+"/opt/dhcal/bin",dsv)
 env.Install(DHCAL_ROOT+"/opt/dhcal/bin",dsdcc)
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",mdcc)
 env.Install(DHCAL_ROOT+"/opt/dhcal/bin","#bin/ListDevices.py")
 env.Install(DHCAL_ROOT+"/opt/dhcal/bin","#bin/scan_devices.sh")
 env.Install(DHCAL_ROOT+"/opt/dhcal/include/readout",myinc)
