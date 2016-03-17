@@ -16,7 +16,8 @@
 #include <termios.h>
 
 #include <unistd.h>
-
+#include <string>
+#include <iostream>
 
 
 class Zup
@@ -101,17 +102,55 @@ public:
   {
     
     wr=write(fd1,":OUT1;",6);usleep(50000);
-    printf("Bytes sent are %d \n",wr);
+    //printf("Bytes sent are %d \n",wr);
   }
   void OFF()
   {
 
     wr=write(fd1,":OUT0;",6);usleep(50000);
-    printf("Bytes sent are %d \n",wr);
+    //printf("Bytes sent are %d \n",wr);
 
+  }
+
+  void readCommand(std::string cmd)
+  {
+    //std::cout<<cmd<<std::endl;
+    wr=write(fd1,cmd.substr(0,6).c_str(),6);
+    //std::cout<<"sleep "<<std::endl;
+    for (int i=0;i<500;i++) usleep(100);
+    memset(buff,0,100);
+    int32_t nchar=0,rd=0;
+    while (nchar==0)
+      {
+	rd=read(fd1,&buff[nchar],100);
+	//std::cout<<"rd "<<rd<<" nch"<<nchar<<std::endl;
+	if (rd>0)
+	  nchar=rd;
+	else
+	  usleep(50);
+      }
+    // Repete la lecture tant qu'il ya des char
+    while (rd>1)
+      {
+	rd=read(fd1,&buff[nchar],100);
+	//std::cout<<"rd "<<rd<<" nch"<<nchar<<std::endl;
+	if (rd>1) nchar+=rd;
+
+      }
+    //
+    memset(&buff[nchar-1],0,100-(nchar-1));
+    //buff[nchar-1]=0;
+    std::string ret(buff);
+    std::cout<<ret<<std::endl;
+    //printf("%s\n",buff);
   }
   void INFO()
   {
+    this->readCommand(":MDL?;");
+    this->readCommand(":VOL!;");
+    this->readCommand(":VOL?;");
+    this->readCommand(":CUR?;");
+    /*
     wr=write(fd1,":MDL?;",6);usleep(50000);
     memset(buff,0,100);rd=read(fd1,buff,100); printf("%s \n",buff);
     wr=write(fd1,":VOL!;",6);usleep(50000);
@@ -120,27 +159,37 @@ public:
     memset(buff,0,100);rd=read(fd1,buff,100); printf("%s \n",buff);
     wr=write(fd1,":CUR?;",6);usleep(50000);
     memset(buff,0,100);rd=read(fd1,buff,100); printf("%s \n",buff);
+    */
   }
   float ReadVoltageSet()
   {
+    this->readCommand(":VOL!;");
+    /*
     wr=write(fd1,":VOL!;",6);usleep(50000);
     memset(buff,0,100);rd=read(fd1,buff,100); printf("%s \n",buff);
+    */
     float v;
     sscanf(buff,"SV%f",&v);
     return v;
   }
   float ReadVoltageUsed()
   {
+    this->readCommand(":VOL?;");
+    /*
     wr=write(fd1,":VOL?;",6);usleep(50000);
     memset(buff,0,100);rd=read(fd1,buff,100); printf("%s \n",buff);
+    */
     float v;
     sscanf(buff,"AV%f",&v);
     return v;
   }
   float ReadCurrentUsed()
   {
+    this->readCommand(":CUR?;");
+    /*
     wr=write(fd1,":CUR?;",6);usleep(50000);
     memset(buff,0,100);rd=read(fd1,buff,100); printf("%s \n",buff);
+    */
     float v;
     sscanf(buff,"AA%f",&v);
     return v;
@@ -162,14 +211,17 @@ int main()
   // Open the serial port. 
   //
   Zup z("/dev/ttyUSB0",1);
-  z.INFO();
+  //z.INFO();
+  printf("%f %f %f \n",z.ReadVoltageSet(),z.ReadVoltageUsed(),z.ReadCurrentUsed());
   //getchar();
   z.ON();
   getchar();
-  z.INFO();
+  //z.INFO();
+  printf("%f %f %f \n",z.ReadVoltageSet(),z.ReadVoltageUsed(),z.ReadCurrentUsed());
   z.OFF();
   getchar();
-  z.INFO();
+  //z.INFO();
+  printf("%f %f %f \n",z.ReadVoltageSet(),z.ReadVoltageUsed(),z.ReadCurrentUsed());
   // getchar();
 }
 #endif
