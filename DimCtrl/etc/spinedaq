@@ -1,0 +1,16 @@
+#!/bin/bash
+
+
+trap 'kill -TERM $PID' TERM INT
+
+export DAQDIR=/home/acqilc/SDHCAL
+source ${DAQDIR}/bashrc
+cd  ${DAQDIR}/DimCtrl
+export LD_LIBRARY_PATH=.:./lib:$LD_LIBRARY_PATH
+./webrpcdaq.py &
+
+PID=$!
+wait $PID
+trap - TERM INT
+wait $PID
+EXIT_STATUS=$?
