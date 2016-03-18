@@ -5,6 +5,7 @@
 #include "RpcDbClient.h"
 #include "RpcZupClient.h"
 #include "RpcShmClient.h"
+#include "RpcMdcClient.h"
 #include <unistd.h>
 #include <stdint.h>
 
@@ -56,6 +57,13 @@ public:
   std::string msg(){return _msg;}
   std::string status();
   std::string shmStatus();
+
+  void openMdc();
+  void pauseTrigger();
+  void resumeTrigger();
+  void resetTriggerCounters();
+  std::string triggerStatus();
+  
   void setState(std::string s);
   std::string state();
   // Publish DIM services
@@ -67,7 +75,7 @@ private:
 
 
 
-  std::string theDBPrefix_,theCCCPrefix_,theWriterPrefix_,theProxyPrefix_,theZupPrefix_;
+  std::string theDBPrefix_,theCCCPrefix_,theWriterPrefix_,theProxyPrefix_,theZupPrefix_,theMdcPrefix_;
   std::vector<std::string> theDIFPrefix_;
   std::vector<RpcDIFClient::rpiClient*> _DIFClients;
   
@@ -75,6 +83,7 @@ private:
   RpcZupClient::rpiClient* _zupClient;
   RpcDbClient::rpiClient* _dbClient;
   RpcCCCClient::rpiClient* _cccClient;
+  RpcMdcClient::rpiClient* _mdcClient;
 
 
   Json::Value _jparam;
@@ -82,6 +91,7 @@ private:
   std::string _dccname;
   std::string _zupdevice;
   std::string _writerdir;
+  std::string _mdcname;
   uint32_t _zupport;
   uint32_t _ctrlreg;
   uint32_t _run;

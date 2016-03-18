@@ -145,6 +145,25 @@ class wddService(ServiceBase):
        yield _wdd.shmStatus()
 
     @srpc( _returns=Iterable(String))
+    def triggerStatus():
+       global _wdd
+       yield _wdd.triggerStatus()
+
+    @srpc( _returns=Iterable(String))
+    def resetTrigger():
+       global _wdd
+       yield _wdd.resetTriggerCounters()
+
+    @srpc( _returns=Iterable(String))
+    def pause():
+       global _wdd
+       yield _wdd.pauseTrigger()
+    @srpc( _returns=Iterable(String))
+    def resume():
+       global _wdd
+       yield _wdd.resumeTrigger()
+
+    @srpc( _returns=Iterable(String))
     def LVStatus():
        global _wdd
        yield _wdd.LVStatus()

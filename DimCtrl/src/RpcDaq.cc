@@ -7,7 +7,7 @@
 
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 
-RpcDaq::RpcDaq()
+RpcDaq::RpcDaq() :_shClient(NULL),_dbClient(NULL),_cccClient(NULL),_mdcClient(NULL),_zupClient(NULL)
   {
     
   cout<<"Building RpcDaq"<<endl;
@@ -26,7 +26,7 @@ RpcDaq::RpcDaq()
   //  cout<<"Starting DimDaqCtrl"<<endl;
   }
 
-RpcDaq::~RpcDaq()
+RpcDaq::~RpcDaq() 
   {
   delete _shmState;
   }
@@ -77,8 +77,10 @@ void RpcDaq::doScandns()
       }
     
     cout<<"0"<<endl;
+    theDBPrefix_="";
     dbr->getServices("/DB/*/DOWNLOAD" ); 
     cout<<"1\n";
+    
     while(type = dbr->getNextService(service, format)) 
       { 
 	cout << service << " -  " << format << endl; 
@@ -90,6 +92,7 @@ void RpcDaq::doScandns()
       } 
     // Get the CCC prefix
     cout<<"2\n";
+    theCCCPrefix_="";
     dbr->getServices("/DCS/*/STATE" ); 
     while(type = dbr->getNextService(service, format)) 
       { 
@@ -98,6 +101,18 @@ void RpcDaq::doScandns()
 	ss.assign(service);
 	size_t n=ss.find("/STATE");
 	theCCCPrefix_=ss.substr(0,n);
+      } 
+    // Get the MDC prefix
+    cout<<"2\n";
+    theMdcPrefix_="";
+    dbr->getServices("/MDCS/STATE" ); 
+    while(type = dbr->getNextService(service, format)) 
+      { 
+	cout << service << " -  " << format << endl; 
+	std::string ss;
+	ss.assign(service);
+	size_t n=ss.find("/STATE");
+	theMdcPrefix_=ss.substr(0,n);
       } 
 
     theWriterPrefix_="";
@@ -153,12 +168,16 @@ void RpcDaq::allocateClients()
     LOG4CXX_INFO (_logWriter, "this is a info message, after parsing configuration file");
     
     std::cout<<theDBPrefix_<<" "<<theCCCPrefix_<<" "<<theWriterPrefix_<<" "<<theProxyPrefix_<<" "<<theZupPrefix_<<std::endl;
-
+    if (theWriterPrefix_.size()>1)
     _shClient= new RpcShmClient::rpiClient(theWriterPrefix_);
-    _zupClient=new RpcZupClient::rpiClient(theZupPrefix_);
+    if (theZupPrefix_.size()>1)
+      _zupClient=new RpcZupClient::rpiClient(theZupPrefix_);
+    if (theDBPrefix_.size()>1)
     _dbClient=new RpcDbClient::rpiClient(theDBPrefix_);
-    
-    _cccClient=new RpcCCCClient::rpiClient(theCCCPrefix_);
+    if (theCCCPrefix_.size()>1)
+      _cccClient=new RpcCCCClient::rpiClient(theCCCPrefix_);
+    if (theMdcPrefix_.size()>1)
+      _mdcClient=new RpcMdcClient::rpiClient(theMdcPrefix_);
     _DIFClients.clear();
     for (std::vector<std::string>::iterator it=theDIFPrefix_.begin();it!=theDIFPrefix_.end();it++)
       {
@@ -170,16 +189,28 @@ void RpcDaq::allocateClients()
 
 void RpcDaq::initialiseWriter(std::string directory)
   {
+    if (_shClient==NULL){LOG4CXX_ERROR(_logCtrl, "No shm client");return;}
     _shClient->initialise();
     _shClient->directory(directory);
   }
 
 void RpcDaq::initialiseZup(int port,std::string device)
   {
+     if (_zupClient==NULL)
+      {
+	LOG4CXX_ERROR(_logCtrl, "No zup client");
+	return;
+      }
     _zupClient->open(port,device);
   }
 void RpcDaq::doubleSwicthZup(unsigned int pause)
   {
+    if (_zupClient==NULL)
+      {
+	LOG4CXX_ERROR(_logCtrl, "No zup client");
+	return;
+      }
+
     _zupClient->lvswitch(0);
     sleep((unsigned int) 2);
     _zupClient->lvswitch(1);
@@ -193,9 +224,19 @@ void RpcDaq::doubleSwicthZup(unsigned int pause)
   }
 std::string RpcDaq::LVStatus()
 {
-  _zupClient->lvread();
-    Json::FastWriter fastWriter;
+  Json::FastWriter fastWriter;
   Json::Value fromScratch;
+  fromScratch["vset"]=-1;
+  fromScratch["vout"]=-1;
+  fromScratch["iout"]=-1;
+
+  if (_zupClient==NULL)
+    {
+      LOG4CXX_ERROR(_logCtrl, "No zup client");
+      return fastWriter.write(fromScratch);
+    }
+
+  _zupClient->lvread();
   fromScratch["vset"]=_zupClient->vset();
   fromScratch["vout"]=_zupClient->vout();
   fromScratch["iout"]=_zupClient->iout();
@@ -204,26 +245,32 @@ std::string RpcDaq::LVStatus()
 }
 void RpcDaq::LVON()
   {
+    if (_zupClient==NULL){LOG4CXX_ERROR(_logCtrl, "No zup client");return;}
+
      _zupClient->lvswitch(1);
   }
 void RpcDaq::LVOFF()
   {
+    if (_zupClient==NULL){LOG4CXX_ERROR(_logCtrl, "No zup client");return;}
      _zupClient->lvswitch(0);
   }
 
 void RpcDaq::downloadDB(std::string s)
   {
+    if (_dbClient==NULL){LOG4CXX_ERROR(_logCtrl, "No DB client");return;}
     _dbClient->deletedb();
     _dbClient->download(s);
   }
 
 void RpcDaq::downloadDB()
 {
+  if (_dbClient==NULL){LOG4CXX_ERROR(_logCtrl, "No DB client");return;}
   std::cout<<"Downloading "<<_dbstate<<std::endl;
   this->downloadDB(_dbstate);
 }
 void RpcDaq::openCCC(std::string device)
   {
+    if (_cccClient==NULL){LOG4CXX_ERROR(_logCtrl, "No CCC client");return;}
     _cccClient->open(device);
     
 
@@ -232,6 +279,7 @@ void RpcDaq::openCCC(std::string device)
 
 void RpcDaq::configureCCC()
   {
+    if (_cccClient==NULL){LOG4CXX_ERROR(_logCtrl, "No CCC client");return;}
     _cccClient->configure();
     _cccClient->stop();
     sleep((unsigned int) 1);
@@ -269,6 +317,7 @@ void RpcDaq::setParameters(std::string jsonString)
       std::cout<<"Parsing failed"<<std::endl;
     _dbstate=_jparam["dbstate"].asString();
     _dccname=_jparam["dccname"].asString();
+    _mdcname=_jparam["mdcname"].asString();
     _zupdevice=_jparam["zupdevice"].asString();
     _writerdir=_jparam["writerdir"].asString();;
     _zupport=_jparam["zupport"].asUInt();
@@ -290,6 +339,8 @@ void RpcDaq::prepareServices()
 	this->initialiseWriter(_writerdir);
 	this->initialiseZup(_zupport,_zupdevice);
 	this->openCCC(_dccname);
+	if (_mdcClient!=NULL && _mdcname.size()>3)
+	  this->openMdc();
 	this->publishState("PREPARED");
 	_msg="=>OK";
       }
@@ -320,6 +371,7 @@ void RpcDaq::initialise()
 
 void RpcDaq::configure()
   {
+    if (_cccClient==NULL){LOG4CXX_ERROR(_logCtrl, "No CCC client");return;}
     if (_state.compare("INITIALISED")==0 || _state.compare("STOPPED")==0 ||(_state.compare("CONFIGURED")==0 ))
       {
 
@@ -387,7 +439,11 @@ void RpcDaq::configureDIF(uint32_t reg)
   }
 void RpcDaq::start1(RpcDIFClient::rpiClient* d) {d->start();}
 void RpcDaq::start(uint32_t tempo)
-  { boost::thread_group g;
+  {
+    if (_cccClient==NULL){LOG4CXX_ERROR(_logCtrl, "No CCC client");return;}
+    if (_shClient==NULL){LOG4CXX_ERROR(_logCtrl, "No SHM client");return;}
+    if (_dbClient==NULL){LOG4CXX_ERROR(_logCtrl, "No DB client");return;}
+    boost::thread_group g;
     if (_state.compare("CONFIGURED")==0 || _state.compare("STOPPED")==0 )
       {
 
@@ -437,6 +493,9 @@ void RpcDaq::start(uint32_t tempo)
 
 void RpcDaq::stop(uint32_t tempo)
   {
+    if (_cccClient==NULL){LOG4CXX_ERROR(_logCtrl, "No CCC client");return;}
+    if (_shClient==NULL){LOG4CXX_ERROR(_logCtrl, "No SHM client");return;}
+
     if (_state.compare("STARTED")==0 )
       {
 
@@ -487,12 +546,17 @@ void RpcDaq::destroy()
 
 std::string RpcDaq::shmStatus()
 {
+  Json::FastWriter fastWriter;
+  Json::Value fromScratch;
+  fromScratch["run"]=-1;
+  fromScratch["event"]=-1;
+  
+  if (_shClient==NULL){LOG4CXX_ERROR(_logCtrl, "No SHM client");return  fastWriter.write(fromScratch);}
+
   //  std::stringstream s0;
   _shClient->status();
   //s0<<" ShmWriter=>Run "<<_shClient->run()<<" Event "<<_shClient->event();
   //return s0.str();
-  Json::FastWriter fastWriter;
-  Json::Value fromScratch;
   fromScratch["run"]=_shClient->run();
   fromScratch["event"]=_shClient->event();
   return fastWriter.write(fromScratch);
@@ -522,3 +586,37 @@ void RpcDaq::setState(std::string s){_state.assign(s);}
 std::string RpcDaq::state()  {return _state;}
   // Publish DIM services
 void RpcDaq::publishState(std::string s){setState(s);_shmState->updateService((char*) _state.c_str());}
+
+void RpcDaq::openMdc()
+{
+  if (_mdcClient==NULL){LOG4CXX_ERROR(_logCtrl, "No MDC client");return;}
+  _mdcClient->open(_mdcname);
+}
+void RpcDaq::pauseTrigger()
+{
+  if (_mdcClient==NULL){LOG4CXX_ERROR(_logCtrl, "No MDC client");return;}
+  _mdcClient->pause();
+}
+void RpcDaq::resumeTrigger()
+{
+  if (_mdcClient==NULL){LOG4CXX_ERROR(_logCtrl, "No MDC client");return;}
+  _mdcClient->resume();
+}
+void RpcDaq::resetTriggerCounters()
+{
+  if (_mdcClient==NULL){LOG4CXX_ERROR(_logCtrl, "No MDC client");return;}
+  _mdcClient->reset();
+}
+  
+std::string RpcDaq::triggerStatus()
+{
+   Json::FastWriter fastWriter;
+  Json::Value fromScratch;
+  fromScratch["spill"]=-1;
+  fromScratch["busy"]=-1;
+  if (_mdcClient==NULL){LOG4CXX_ERROR(_logCtrl, "No MDC client");return fastWriter.write(fromScratch);}
+  _mdcClient->status();
+  fromScratch["spill"]=_mdcClient->spillCount();
+  fromScratch["busy"]=_mdcClient->busyCount();
+  return fastWriter.write(fromScratch);
+}
