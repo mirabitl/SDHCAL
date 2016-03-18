@@ -33,6 +33,10 @@ grp_action.add_argument('--daq-state',action='store_true',help=' display DAQ sta
 grp_action.add_argument('--daq-evbstatus',action='store_true',help=' display event builder status')
 grp_action.add_argument('--daq-startrun',action='store_true',help=' start the run')
 grp_action.add_argument('--daq-stoprun',action='store_true',help=' stop the run')
+grp_action.add_argument('--trig-status',action='store_true',help=' display trigger counter status')
+grp_action.add_argument('--trig-reset',action='store_true',help=' reset trigger counter')
+grp_action.add_argument('--trig-pause',action='store_true',help=' trigger soft veto')
+grp_action.add_argument('--trig-resume',action='store_true',help=' trigger soft veto release')
 grp_action.add_argument('--daq-destroy',action='store_true',help='destroy the DIF readout, back to the PREPARED state')
 grp_action.add_argument('--daq-downloaddb',action='store_true',help='download the dbsate specified in --dbstate=state')
 grp_action.add_argument('--daq-ctrlreg',action='store_true',help='set the ctrlregister specified with --ctrlreg=register')
@@ -103,6 +107,7 @@ p_par['zupport']=conf.zupport
 p_par['writerdir']=conf.directory
 p_par['ctrlreg']=conf.register
 p_par['dccname']=conf.dccname
+p_par['mdcname']=conf.mdcname
 p_par['daqhost']=conf.daqhost
 p_par['daqport']=conf.daqport
 p_par['json']=conf.jsonfile
@@ -184,6 +189,14 @@ elif(results.daq_ctrlreg):
     else:
         print 'Please specify the value --ctrlreg=0xX######'
         exit(0)
+elif(results.trig_status):
+    r_cmd='triggerStatus'
+elif(results.trig_reset):
+    r_cmd='resetTrigger'
+elif(results.trig_pause):
+    r_cmd='pause'
+elif(results.trig_resume):
+    r_cmd='resume'
 elif(results.slc_create):
     r_cmd='createSlowControl'
 elif(results.slc_initialisesql):
@@ -335,6 +348,12 @@ def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
            ssj=json.loads(sj["shmStatusResponse"]["shmStatusResult"][0])
            print "\033[1m %10s %10s \033[0m" % ('Run','Event')
            print " %10d %10d " % (ssj['run'],ssj['event'])
+       elif (command=="triggerStatus"):
+           s=r1.read()
+           sj=json.loads(s)
+           ssj=json.loads(sj["triggerStatusResponse"]["triggerStatusResult"][0])
+           print "\033[1m %10s %10s \033[0m" % ('Spill','Busy')
+           print " %10d %10d " % (ssj['spill'],ssj['busy'])
 
        else:
           print r1.read()

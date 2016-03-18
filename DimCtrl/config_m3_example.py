@@ -7,6 +7,7 @@ jsonfile='/data/NAS/config/h2_m3_031016.json'
 zupdevice='/dev/ttyUSB0'
 zupport=1
 dccname="DCCCCC01"
+mdcname="MDCC01"
 
 register=0x89580000
 # 115 + petit seup
