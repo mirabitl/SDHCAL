@@ -152,16 +152,19 @@ class wddService(ServiceBase):
     @srpc( _returns=Iterable(String))
     def resetTrigger():
        global _wdd
-       yield _wdd.resetTriggerCounters()
+       _wdd.resetTriggerCounters()
+       yield "Trigger counters are reset"
 
     @srpc( _returns=Iterable(String))
     def pause():
        global _wdd
-       yield _wdd.pauseTrigger()
+       _wdd.pauseTrigger()
+       yield "Trigger is paused"
     @srpc( _returns=Iterable(String))
     def resume():
        global _wdd
-       yield _wdd.resumeTrigger()
+       _wdd.resumeTrigger()
+       yield "Trigger is resumed"
 
     @srpc( _returns=Iterable(String))
     def LVStatus():
