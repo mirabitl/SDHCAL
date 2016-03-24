@@ -1,5 +1,6 @@
 # DB installation
    cd /opt/dhcal/
+
    svn co https://lyosvn.in2p3.fr/repository/ilc/src/online/database/ILCConfDB
    cd ILCConfDB/
    source setEnv.sh 
