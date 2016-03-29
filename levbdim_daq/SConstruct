@@ -84,7 +84,7 @@ else:
   boostthread='boost_thread-mt'
 
 Use_Dim=True
-Use_Oracle=True
+Use_Oracle=os.path.exists("/usr/include/ILCConfDB")
 #os.environ.has_key("DIM_DNS_NODE")
 
 # includes
@@ -145,7 +145,14 @@ env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
 
 
 # Library source
-LIBRARY_SOURCES=Glob("#src/*.cc")
+#LIBRARY_SOURCES=Glob("#src/*.cc")
+
+#print LIBRARY_SOURCES
+LIBRARY_SOURCES=['src/LDIF.cc','src/LDIFServer.cc','src/LCccServer.cc','src/LZupServer.cc','src/LMdccServer.cc']
+
+if (Use_Oracle):
+  LIBRARY_SOURCES.append('src/LDbServer.cc')
+print LIBRARY_SOURCES
 
 #Shared library
 levbdimdaq=env.SharedLibrary("#lib/levbdimdaq",LIBRARY_SOURCES)
