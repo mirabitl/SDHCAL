@@ -103,10 +103,7 @@ LMdccServer::LMdccServer(std::string name) : _mdcc(NULL)
 {
 
   
-  std::stringstream s0;
-  s0.str(std::string());
-  s0<<"LMdccServer-"<<name;
-  DimServer::start(s0.str().c_str()); 
+ 
 
   _fsm=new levbdim::fsm(name);
 
@@ -125,7 +122,10 @@ LMdccServer::LMdccServer(std::string name) : _mdcc(NULL)
   _fsm->addTransition("CMD","PAUSED","PAUSED",boost::bind(&LMdccServer::cmd, this,_1));
   _fsm->addTransition("CMD","RUNNING","RUNNING",boost::bind(&LMdccServer::cmd, this,_1));
 
-	
+  std::stringstream s0;
+  s0.str(std::string());
+  s0<<"LMdccServer-"<<name;
+  DimServer::start(s0.str().c_str()); 
 
 }
 

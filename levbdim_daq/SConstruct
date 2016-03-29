@@ -84,6 +84,7 @@ else:
   boostthread='boost_thread-mt'
 
 Use_Dim=True
+Use_Oracle=True
 #os.environ.has_key("DIM_DNS_NODE")
 
 # includes
@@ -95,6 +96,9 @@ if (Use_Dim):
     INCLUDES.append("/opt/xdaq/include/dim")
 INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
 
+if (Use_Oracle):
+  INCLUDES.append("/usr/include/ILCConfDB")
+
 CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2"]
 
 #Library ROOT + some of XDAQ + DB 
@@ -103,7 +107,8 @@ CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN
 #LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
 LIBRARIES=['pthread',  'm', 'stdc++',boostsystem,boostthread,'SDHCALcommon','SDHCALReadout','dim','netlink','cslm','log4cxx','levbdim']
 
-
+if (Use_Oracle):
+  LIBRARIES=LIBRARIES+['dl','uuid', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c','SDHCALDB']
 
 #Library path XDAQ,DHCAL and ROOT + Python
 if (Bit64):
@@ -152,10 +157,20 @@ EXE_LIBPATH=LIBRARY_PATHS
 EXE_LIBPATH.append("#lib")
 EXE_LIBS=LIBRARIES
 EXE_LIBS.append("levbdimdaq")
+plist=[]
 ldifd=env.Program("bin/levbdim_dif",source="src/LDIFDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+plist.append(ldifd)
 lzupd=env.Program("bin/levbdim_zup",source="src/LZupDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+plist.append(lzupd)
 lcccd=env.Program("bin/levbdim_ccc",source="src/LCccDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+plist.append(lcccd)
 lmdccd=env.Program("bin/levbdim_mdcc",source="src/LMdccDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+plist.append(lmdccd)
+
+if (Use_Oracle):
+  ldbd=env.Program("bin/levbdim_db",source="src/LDbDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+  plist.append(ldbd)
+
 #rpcz=env.Program("bin/dimrpc_zup",source="src/rpczup.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 #rpcc=env.Program("bin/dimrpc_ccc",source="src/rpcccc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 #rpmd=env.Program("bin/dimrpc_mdc",source="src/rpcmdc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
@@ -172,7 +187,7 @@ for x in Glob("#include/*.h"):
   myinc.append("include/"+x.name)
 print myinc
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",levbdimdaq)
-env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[ldifd,lzupd,lcccd,lmdccd])
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",plist)
 ###env.Install("/opt/dhcal/lib",levbdimdaq)
 ###env.Install("/opt/dhcal/include/readout",myinc)
 
