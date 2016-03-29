@@ -1,0 +1,114 @@
+
+#include "LZupServer.hh"
+
+
+
+
+void LZupServer::configure(levbdim::fsmmessage* m)
+{
+  LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
+  uint32_t port=m->content()["port"].asInt();
+  std::string device=m->content()["device"].asString();
+  
+ this->Open(device,port);
+ this->read(m);
+}
+void LZupServer::on(levbdim::fsmmessage* m)
+{
+  LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
+  this->Switch(1);
+  this->read(m);
+}
+void LZupServer::off(levbdim::fsmmessage* m)
+{
+  LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
+  this->Switch(0);
+  this->read(m);
+}
+void LZupServer::read(levbdim::fsmmessage* m)
+{
+  LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
+  this->Read();
+  Json::Value r;
+  r["vset"]=_status[0];
+  r["vout"]=_status[1];
+  r["iout"]=_status[2];
+  m->setAnswer(r);
+}
+
+
+LZupServer::LZupServer(std::string name) : _zup(NULL)
+{
+  _fsm=new levbdim::fsm(name);
+  
+// Register state
+  _fsm->addState("CREATED");
+  _fsm->addState("CONFIGURED");
+  _fsm->addState("ON");
+  _fsm->addState("OFF");
+
+  _fsm->addTransition("CONFIGURE","CREATED","CONFIGURED",boost::bind(&LZupServer::configure, this,_1));
+  _fsm->addTransition("ON","CONFIGURED","ON",boost::bind(&LZupServer::on, this,_1));
+  _fsm->addTransition("ON","OFF","ON",boost::bind(&LZupServer::on, this,_1));
+  _fsm->addTransition("OFF","CONFIGURED","OFF",boost::bind(&LZupServer::off, this,_1));
+  _fsm->addTransition("OFF","ON","OFF",boost::bind(&LZupServer::off, this,_1));
+  _fsm->addTransition("READ","ON","ON",boost::bind(&LZupServer::read, this,_1));
+  _fsm->addTransition("READ","OFF","OFF",boost::bind(&LZupServer::read, this,_1));
+  _fsm->addTransition("READ","CONFIGURED","CONFIGURED",boost::bind(&LZupServer::read, this,_1));
+
+  std::stringstream s0;
+  s0.str(std::string());
+  s0<<"/DZUP/"<<name<<"/STATUS";
+  memset(_status,0,3*sizeof(float));
+  _zsStatus = new DimService(s0.str().c_str(),"F:3",_status,3*sizeof(float));
+  s0.str(std::string());
+  s0<<"LZupServer-"<<name;
+  DimServer::start(s0.str().c_str()); 
+
+
+	
+
+}
+
+void LZupServer::Open(std::string s, uint32_t port)
+{
+  
+  if (_zup!=NULL)
+    delete _zup;
+  _zup= new Zup(s,port);
+
+  this->Read();
+}
+void LZupServer::Read()
+{
+  if (_zup==NULL)
+    {
+      LOG4CXX_ERROR(_logLdaq," Zup not created ");
+      return;
+    }
+  sleep((unsigned int) 1);
+  _status[0]=_zup->ReadVoltageSet();
+  _status[1]=_zup->ReadVoltageUsed();
+  _status[2]=_zup->ReadCurrentUsed();
+  this->publishStatus();
+}
+
+void LZupServer::Switch(uint32_t mode)
+{
+  if (_zup==NULL)
+    {
+      LOG4CXX_ERROR(_logLdaq," Zup not created ");
+      return;
+    }
+  if (mode==0)
+    {
+      LOG4CXX_INFO(_logLdaq,"Switching OFF "<<mode);
+      _zup->OFF();
+    }
+  else
+    {
+      LOG4CXX_INFO(_logLdaq,"Switching ON "<<mode);
+      _zup->ON();
+    }
+  this->Read();
+}

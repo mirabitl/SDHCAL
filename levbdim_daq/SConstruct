@@ -153,6 +153,7 @@ EXE_LIBPATH.append("#lib")
 EXE_LIBS=LIBRARIES
 EXE_LIBS.append("levbdimdaq")
 ldifd=env.Program("bin/levbdim_dif",source="src/LDIFDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+lzupd=env.Program("bin/levbdim_zup",source="src/LZupDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 #rpcz=env.Program("bin/dimrpc_zup",source="src/rpczup.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 #rpcc=env.Program("bin/dimrpc_ccc",source="src/rpcccc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 #rpmd=env.Program("bin/dimrpc_mdc",source="src/rpcmdc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
@@ -169,7 +170,7 @@ for x in Glob("#include/*.h"):
   myinc.append("include/"+x.name)
 print myinc
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",levbdimdaq)
-env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[ldifd])
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[ldifd,lzupd])
 ###env.Install("/opt/dhcal/lib",levbdimdaq)
 ###env.Install("/opt/dhcal/include/readout",myinc)
 
