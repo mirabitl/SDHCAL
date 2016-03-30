@@ -40,10 +40,14 @@ void LDIFServer::scan(levbdim::fsmmessage* m)
    Json::Value array;
    for ( std::map<uint32_t,FtdiDeviceInfo*>::iterator it=fm.begin();it!=fm.end();it++)
      {
-       array.append(it->first);
+
        LDIF* d= new LDIF(it->second);
        this->getDIFMap().insert(std::make_pair(it->first,d));
        LOG4CXX_INFO(_logLdaq," CMD: SCANDEVICE created LDIF @ "<<std::hex<<d<<std::dec);
+       Json::Value jd;
+       jd["detid"]=d->detectorId();
+       jd["sourceid"]=it->first;
+       array.append(jd);
      }
 
    m->setAnswer(array);

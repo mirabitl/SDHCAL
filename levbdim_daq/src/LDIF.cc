@@ -1,6 +1,6 @@
 #include "LDIF.hh"
 #include "ShmProxy.h"
-LDIF::LDIF(FtdiDeviceInfo* ftd) : _rd(NULL),_state("CREATED"),_dsStatus(NULL),_dsState(NULL),_dsData(NULL)
+LDIF::LDIF(FtdiDeviceInfo* ftd) : _rd(NULL),_state("CREATED"),_dsStatus(NULL),_dsState(NULL),_dsData(NULL),_detid(100)
 {
   // Creation of data structure
   memcpy(&_ftd,ftd,sizeof(FtdiDeviceInfo));
@@ -379,7 +379,7 @@ void LDIF::registration()
   s0<<"/DDS/DIF"<<_status->id<<"/STATE";
   _dsState=new DimService(s0.str().c_str(),(char*) _state.c_str());
 
-  _dsData = new levbdim::datasource(100,_status->id,MAX_EVENT_SIZE);
+  _dsData = new levbdim::datasource(_detid,_status->id,MAX_EVENT_SIZE);
 }
 
 

@@ -61,6 +61,7 @@ public:
   inline void setReadoutStarted(bool t){_readoutStarted=t;}
   inline bool readoutStarted() const { return _readoutStarted;}
   inline bool running() const { return _running;}
+  inline uint32_t detectorId() const {return _detid;}
 private:
   FtdiDeviceInfo _ftd;
   DIFStatus* _status;
@@ -72,7 +73,7 @@ private:
   DimService* _dsStatus;
   DimService* _dsState;
   levbdim::datasource* _dsData;
-
+  uint32_t _detid;
 
   bool _running,_readoutStarted,_readoutCompleted;
 };
