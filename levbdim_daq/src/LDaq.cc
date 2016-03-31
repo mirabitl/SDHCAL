@@ -184,7 +184,7 @@ void LDaq::prepare(levbdim::fsmmessage* m)
       _builderClient->set<std::string>("proctype",m->content()["proctype"].asString());
       _builderClient->set<std::string>("filepath",m->content()["filepath"].asString());
       _builderClient->set<std::string>("memorypath",m->content()["memorypath"].asString());
-      _mdccClient->post("INITIALISE");
+      _builderClient->post("INITIALISE");
 
     }
 }

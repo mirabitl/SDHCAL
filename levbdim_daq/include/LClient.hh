@@ -23,7 +23,7 @@ public:
     _m.setValue(fastWriter.write(_msg));
     this->execute(&_m);
   }
-  inline Json::Value reply(){return _m.content()["answer"];}
+  inline Json::Value reply(){return msg()->content()["answer"];}
 private:
   Json::Value _jpar,_msg;
   levbdim::fsmmessage _m;

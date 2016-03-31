@@ -322,7 +322,7 @@ LDIFServer::LDIFServer(std::string name)
   _fsm->addState("THRESHOLDSET");
   _fsm->addState("GAINSET");
   _fsm->addTransition("SCAN","CREATED","SCANNED",boost::bind(&LDIFServer::scan, this,_1));
-  _fsm->addTransition("INTIALISE","SCANNED","INITIALISED",boost::bind(&LDIFServer::initialise, this,_1));
+  _fsm->addTransition("INITIALISE","SCANNED","INITIALISED",boost::bind(&LDIFServer::initialise, this,_1));
   _fsm->addTransition("REGISTERDB","INITIALISED","DBREGISTERED",boost::bind(&LDIFServer::registerdb, this,_1));
   _fsm->addTransition("REGISTERDB","DBREGISTERED","DBREGISTERED",boost::bind(&LDIFServer::registerdb, this,_1));
   _fsm->addTransition("CONFIGURE","DBREGISTERED","CONFIGURED",boost::bind(&LDIFServer::configure, this,_1));
