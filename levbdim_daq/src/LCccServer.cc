@@ -137,7 +137,7 @@ void LCccServer::cmd(levbdim::fsmmessage* m)
   _fsm->addTransition("STOP","RUNNING","CONFIGURED",boost::bind(&LCccServer::stop, this,_1));
   _fsm->addTransition("DESTROY","CONFIGURED","OPENED",boost::bind(&LCccServer::open, this,_1));
   
-  _fsm->addTransition("CMD","OPENED","OPENED",boost::bind(&LCccServer::cmd, this,_1));
+  // _fsm->addTransition("CMD","OPENED","OPENED",boost::bind(&LCccServer::cmd, this,_1));
   _fsm->addTransition("CMD","INITIALISED","INITIALISED",boost::bind(&LCccServer::cmd, this,_1));
   _fsm->addTransition("CMD","CONFIGURED","CONFIGURED",boost::bind(&LCccServer::cmd, this,_1));
 

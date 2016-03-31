@@ -160,6 +160,7 @@ void LDaq::prepare(levbdim::fsmmessage* m)
       _cccClient->clear();
       _cccClient->set<std::string>("device",m->content()["dccname"].asString());
       _cccClient->post("OPEN");
+      _cccClient->post("INITIALISE");
     }
   // Mdc
   if (_mdccClient)
@@ -291,12 +292,13 @@ void LDaq::initialise(levbdim::fsmmessage* m)
 void LDaq::configure(levbdim::fsmmessage* m)
 {
   // Configure CCC
+  std::cout<<m->content();
   if (_cccClient)
     {
-      _cccClient->clear();
-      _cccClient->clear();_mdccClient->set<std::string>("name","CCCRESET");_mdccClient->post("CMD");
-      _cccClient->clear();_mdccClient->set<std::string>("name","DIFRESET");_mdccClient->post("CMD");
 
+      _cccClient->clear();_cccClient->set<std::string>("name","CCCRESET");_cccClient->post("CMD");
+      _cccClient->clear();_cccClient->set<std::string>("name","DIFRESET");_cccClient->post("CMD");
+      std::cout<<"RESET DONE"<<std::endl;
     }
 
   // register to the dbstate
@@ -308,14 +310,16 @@ void LDaq::configure(levbdim::fsmmessage* m)
       g.create_thread(boost::bind(&LDaq::singleregisterdb, this,(*it)));
     }
   g.join_all();
+  std::cout<<this->status()<<std::endl;
   //Configure them
   for (std::vector<LClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     {
       (*it)->clear();
-      (*it)->set<std::string>("ctrlreg",m->content()["ctrlreg"].asString());
+      (*it)->set<uint32_t>("ctrlreg",m->content()["ctrlreg"].asUInt());
       g.create_thread(boost::bind(&LDaq::singleconfigure, this,(*it)));
     }
-
+  g.join_all();
+  std::cout<<this->status()<<std::endl;
   // Status
   Json::Value jsta= toJson(this->difstatus());
   // Configure the builder
@@ -323,6 +327,7 @@ void LDaq::configure(levbdim::fsmmessage* m)
     {
       // Build complete list of data sources
       Json::Value jsou;
+      jsou.clear();
       const Json::Value& jdevs=jsta;
       for (Json::ValueConstIterator it = jdevs.begin(); it != jdevs.end(); ++it)
 	{
@@ -331,6 +336,7 @@ void LDaq::configure(levbdim::fsmmessage* m)
 	  jd["sourceid"]=(*it)["id"];
 	  jsou.append(jd);
 	}
+      std::cout<<"SENDING "<<jsou<<std::endl;
       _builderClient->clear();
       _builderClient->set<Json::Value>("sources",jsou);
       _builderClient->post("CONFIGURE");
@@ -360,7 +366,7 @@ void LDaq::start(levbdim::fsmmessage* m)
    if (_builderClient)
     {
       _builderClient->clear();
-      _builderClient->set<int>("sources",_run);
+      _builderClient->set<int>("run",_run);
       _builderClient->post("START");
     }
   //Start the CCC
