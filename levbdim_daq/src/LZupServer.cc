@@ -12,6 +12,7 @@ void LZupServer::configure(levbdim::fsmmessage* m)
   
  this->Open(device,port);
  this->read(m);
+ std::cout<<"reponse=> "<<m->content()["answer"]<<std::endl;
 }
 void LZupServer::on(levbdim::fsmmessage* m)
 {

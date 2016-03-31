@@ -109,13 +109,13 @@ void LDaq::discover(levbdim::fsmmessage* m)
     }
     
 
-  _dbClient=findFSM(dbr,"/FSM/LDbServer*/STATE" );
-  _cccClient=findFSM(dbr,"/FSM/LCccServer*/STATE" );
-  _mdccClient=findFSM(dbr,"/FSM/LMdccServer*/STATE" );
-  _zupClient=findFSM(dbr,"/FSM/LZupServer*/STATE" );
-  _builderClient=findFSM(dbr,"/FSM/LBuilder*/STATE" ); 
+  _dbClient=findFSM(dbr,"/FSM/Db*/STATE" );
+  _cccClient=findFSM(dbr,"/FSM/Ccc*/STATE" );
+  _mdccClient=findFSM(dbr,"/FSM/Mdcc*/STATE" );
+  _zupClient=findFSM(dbr,"/FSM/Zup*/STATE" );
+  _builderClient=findFSM(dbr,"/FSM/Builder*/STATE" ); 
   _DIFClients.clear();
-  dbr->getServices("/FSM/LDIFServer*/STATE" );
+  dbr->getServices("/FSM/DIF*/STATE" );
   std::stringstream s0;
 
   while(type = dbr->getNextService(service, format)) 
@@ -154,6 +154,7 @@ void LDaq::prepare(levbdim::fsmmessage* m)
       std::cout<<"Current zup values "<<_zupClient->reply()<<std::endl;
     }
   // Ccc
+  std::cout<<" CCC client "<<_cccClient<<std::endl;
   if (_cccClient)
     {
       _cccClient->clear();
