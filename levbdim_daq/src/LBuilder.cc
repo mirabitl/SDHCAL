@@ -73,7 +73,7 @@ void LBuilder::initialise(levbdim::fsmmessage* m)
   _evb->cleanShm();
 
   // Add a writer
-  if (_proctype.compare("basicwritter")==0)
+  if (_proctype.compare("basicwriter")==0)
     {
       _writer= new levbdim::basicwriter(_filepath);
       _evb->registerProcessor(_writer);
