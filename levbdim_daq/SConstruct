@@ -189,7 +189,7 @@ if (Use_Oracle):
 #dzups=env.Program("bin/dimzup",source="src/dzup.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
 #Python module
-#_levbdimdaq=env.PythonModule('_Llevbdimdaq', ['Llevbdimdaq.i'],LIBPATH="#lib",LIBS="levbdimdaq")
+_levbdimdaq=env.PythonModule('_LDaq', ['LDaq.i'],LIBPATH="#lib",LIBS="levbdimdaq")
 
 myinc=[]
 for x in Glob("#include/*.h"):
