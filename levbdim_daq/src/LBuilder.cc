@@ -15,6 +15,8 @@ LBuilder::LBuilder(std::string name) : _evb(NULL),_writer(NULL)
   _fsm->addTransition("STOP","RUNNING","CONFIGURED",boost::bind(&LBuilder::stop, this,_1));
   _fsm->addTransition("HALT","RUNNING","INITIALISED",boost::bind(&LBuilder::halt, this,_1));
   _fsm->addTransition("DESTROY","INITIALISED","CREATED",boost::bind(&LBuilder::destroy, this,_1));
+  _fsm->addTransition("STATUS","CONFIGURED","CONFIGURED",boost::bind(&LBuilder::status, this,_1));
+  _fsm->addTransition("STATUS","RUNNING","RUNNING",boost::bind(&LBuilder::status, this,_1));
 
   //Start server
   std::stringstream s0;
@@ -93,6 +95,15 @@ void LBuilder::stop(levbdim::fsmmessage* m)
 
     _evb->stop();
     _writer->stop();
+}
+void LBuilder::status(levbdim::fsmmessage* m)
+{
+  
+    LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
+    Json::Value rp;
+    rp["run"]=_writer->runNumber();
+    rp["event"]=_writer->eventNumber();
+    m->setAnswer(rp);
 }
 void LBuilder::halt(levbdim::fsmmessage* m)
 {

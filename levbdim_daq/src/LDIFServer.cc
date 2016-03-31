@@ -85,6 +85,67 @@ void LDIFServer::initialise(levbdim::fsmmessage* m)
     }
 }
 
+void LDIFServer::status(levbdim::fsmmessage* m)
+{
+
+  LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
+  uint32_t difid=m->content()["difid"].asInt();
+
+  int32_t rc=1;
+  std::map<uint32_t,LDIF*> dm=this->getDIFMap();
+  Json::Value array_slc;
+  if (difid>0 )
+    {
+      std::map<uint32_t,LDIF*>::iterator itd=dm.find(difid);
+      if (itd==dm.end())
+	{
+	  LOG4CXX_ERROR(_logLdaq," please do Scan devices first the dif  "<<difid<<"is not registered");
+	  rc=-1;
+	  return;
+	}
+      
+
+      Json::Value ds;
+      ds["detid"]=itd->second->detectorId();
+      ds["state"]=itd->second->state();
+      ds["id"]=itd->second->status()->id;
+      ds["status"]=itd->second->status()->status;
+      ds["slc"]=itd->second->status()->slc;
+      ds["gtc"]=itd->second->status()->gtc;
+      ds["bcid"]=(Json::Value::UInt64)itd->second->status()->bcid;
+      ds["bytes"]=(Json::Value::UInt64)itd->second->status()->bytes;
+      ds["host"]=itd->second->status()->host;
+      array_slc.append(ds);
+      m->setAnswer(array_slc);
+      return;
+    }
+  else
+    {
+
+      for ( std::map<uint32_t,LDIF*>::iterator it=dm.begin();it!=dm.end();it++)
+	{
+
+	  Json::Value ds;
+	  ds["detid"]=it->second->detectorId();
+	  ds["state"]=it->second->state();
+	  ds["id"]=it->second->status()->id;
+	  ds["status"]=it->second->status()->status;
+	  ds["slc"]=it->second->status()->slc;
+	  ds["gtc"]=it->second->status()->gtc;
+	  ds["bcid"]=(Json::Value::UInt64) it->second->status()->bcid;
+	  ds["bytes"]=(Json::Value::UInt64)it->second->status()->bytes;
+	  ds["host"]=it->second->status()->host;
+	  array_slc.append(ds);
+
+
+
+	}
+      m->setAnswer(array_slc);
+      return;
+    }
+}
+
+
 void LDIFServer::configure(levbdim::fsmmessage* m)
 {
 
@@ -257,7 +318,7 @@ LDIFServer::LDIFServer(std::string name)
   _fsm->addState("DBREGISTERED");
   _fsm->addState("CONFIGURED");
   _fsm->addState("RUNNING");
-  _fsm->addState("STOP");
+  _fsm->addState("STOPPED");
   _fsm->addState("THRESHOLDSET");
   _fsm->addState("GAINSET");
   _fsm->addTransition("SCAN","CREATED","SCANNED",boost::bind(&LDIFServer::scan, this,_1));
@@ -272,6 +333,12 @@ LDIFServer::LDIFServer(std::string name)
   _fsm->addTransition("DESTROY","STOP","CREATED",boost::bind(&LDIFServer::destroy, this,_1));
   _fsm->addTransition("DESTROY","CONFIGURED","CREATED",boost::bind(&LDIFServer::destroy, this,_1));
 
+  _fsm->addTransition("STATUS","SCANNED","SCANNED",boost::bind(&LDIFServer::status, this,_1));
+  _fsm->addTransition("STATUS","INITIALISED","INITIALISED",boost::bind(&LDIFServer::status, this,_1));
+  _fsm->addTransition("STATUS","DBREGISTERED","DBREGISTERED",boost::bind(&LDIFServer::status, this,_1));
+  _fsm->addTransition("STATUS","CONFIGURED","CONFIGURED",boost::bind(&LDIFServer::status, this,_1));
+  _fsm->addTransition("STATUS","RUNNING","RUNNING",boost::bind(&LDIFServer::status, this,_1));
+  _fsm->addTransition("STATUS","STOPPED","STOPPED",boost::bind(&LDIFServer::status, this,_1));
 
   
 

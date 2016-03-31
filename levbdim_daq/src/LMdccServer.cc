@@ -117,6 +117,7 @@ LMdccServer::LMdccServer(std::string name) : _mdcc(NULL)
   _fsm->addTransition("RESUME","PAUSED","RUNNING",boost::bind(&LMdccServer::resume, this,_1));
   _fsm->addTransition("RESET","PAUSED","PAUSED",boost::bind(&LMdccServer::reset, this,_1));
   _fsm->addTransition("PAUSE","RUNNING","PAUSED",boost::bind(&LMdccServer::pause, this,_1));
+  _fsm->addTransition("PAUSE","PAUSED","PAUSED",boost::bind(&LMdccServer::pause, this,_1));
   _fsm->addTransition("DESTROY","PAUSED","CREATED",boost::bind(&LMdccServer::close, this,_1));
   
   _fsm->addTransition("CMD","PAUSED","PAUSED",boost::bind(&LMdccServer::cmd, this,_1));

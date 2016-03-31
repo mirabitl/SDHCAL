@@ -29,6 +29,7 @@ public:
   void start(levbdim::fsmmessage* m);
   void stop(levbdim::fsmmessage* m);
   void destroy(levbdim::fsmmessage* m);
+  void status(levbdim::fsmmessage* m);
   void prepareDevices();
   void startDIFThread(LDIF* d);
   void registerDB(std::string state);
