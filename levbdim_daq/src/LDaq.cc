@@ -258,8 +258,8 @@ void LDaq::initialise(levbdim::fsmmessage* m)
       _cccClient->clear();
       _cccClient->post("CONFIGURE");
       _cccClient->post("STOP");
-      _cccClient->clear();_mdccClient->set<std::string>("name","CCCRESET");_mdccClient->post("CMD");
-      _cccClient->clear();_mdccClient->set<std::string>("name","DIFRESET");_mdccClient->post("CMD");
+      _cccClient->clear();_cccClient->set<std::string>("name","CCCRESET");_cccClient->post("CMD");
+      _cccClient->clear();_cccClient->set<std::string>("name","DIFRESET");_cccClient->post("CMD");
 
     }
 

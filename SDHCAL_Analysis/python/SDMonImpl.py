@@ -229,6 +229,7 @@ class ImageViewer(QtGui.QMainWindow, SDMon.Ui_MainWindow):
         self.canvas.cd()
         
         self.heff.Draw("COLZ")
+        self.canvas.Modified()
         self.canvas.Update()
     def histoClick(self):
         host=str(self.leHost.text().toAscii())
@@ -266,6 +267,7 @@ class ImageViewer(QtGui.QMainWindow, SDMon.Ui_MainWindow):
                 h.Draw()
         else:
             h.Draw()
+        self.canvas.Modified()
         self.canvas.Update()
     def connectActions(self):
         print "On connecte",self.leHost.text().toAscii()
