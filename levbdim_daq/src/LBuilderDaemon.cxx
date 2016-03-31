@@ -16,7 +16,7 @@ LOG4CXX_INFO (_logLdaq, "this is a info message, after parsing configuration fil
   std::stringstream s0;
   char hname[80];
   gethostname(hname,80);
-  s0<<"Ccc-"<<hname;
+  s0<<"Builder-"<<hname;
 
 
   LBuilder* s=new LBuilder(s0.str());
