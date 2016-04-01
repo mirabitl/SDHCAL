@@ -168,10 +168,10 @@ void LDaq::prepare(levbdim::fsmmessage* m)
       _mdccClient->clear();
       _mdccClient->set<std::string>("device",m->content()["mdccname"].asString());
       _mdccClient->post("OPEN");
-      _mdccClient->clear();
+      //_mdccClient->clear();
       // Stop trigger ane reset counters
-      _mdccClient->post("PAUSE");
-      _mdccClient->post("RESET");
+      //_mdccClient->post("PAUSE");
+      //_mdccClient->post("RESET");
       _mdccClient->clear();
       _mdccClient->set<std::string>("name","STATUS");
       _mdccClient->post("CMD");
@@ -224,9 +224,6 @@ void LDaq::singleregisterdb(LClient* d)
 }
 void LDaq::singleconfigure(LClient* d)
 {
-  d->clear();
-  d->set<int>("difid",0);
-  
   d->post("CONFIGURE");
 }
 void LDaq::singlestart(LClient* d)
@@ -258,9 +255,10 @@ void LDaq::initialise(levbdim::fsmmessage* m)
       _cccClient->clear();
       _cccClient->post("CONFIGURE");
       _cccClient->post("STOP");
+      ::sleep(1);
       _cccClient->clear();_cccClient->set<std::string>("name","CCCRESET");_cccClient->post("CMD");
       _cccClient->clear();_cccClient->set<std::string>("name","DIFRESET");_cccClient->post("CMD");
-
+      ::sleep(1);
     }
 
   // Make a DIF SCAN
@@ -316,6 +314,7 @@ void LDaq::configure(levbdim::fsmmessage* m)
     {
       (*it)->clear();
       (*it)->set<uint32_t>("ctrlreg",m->content()["ctrlreg"].asUInt());
+      (*it)->set<int32_t>("difid",0);
       g.create_thread(boost::bind(&LDaq::singleconfigure, this,(*it)));
     }
   g.join_all();
@@ -361,7 +360,7 @@ void LDaq::start(levbdim::fsmmessage* m)
       g.create_thread(boost::bind(&LDaq::singlestart, this,(*it)));
     }
   g.join_all();
-
+  ::sleep(5);
   // Start the builder
    if (_builderClient)
     {
@@ -377,7 +376,7 @@ void LDaq::start(levbdim::fsmmessage* m)
   // Resume the MDCC
    if (_mdccClient)
      {
-       _mdccClient->post("RESET");
+       //_mdccClient->post("RESET");
        _mdccClient->post("RESUME");
      }
 
