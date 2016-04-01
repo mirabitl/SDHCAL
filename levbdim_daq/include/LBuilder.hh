@@ -5,6 +5,7 @@
 #include "datasocket.hh"
 #include "shmdriver.hh"
 #include "basicwriter.hh"
+#include "LcioShmProcessor.hh"
 #include "LdaqLogger.hh"
 
 class LBuilder {
@@ -24,7 +25,7 @@ private:
   std::vector<levbdim::datasocket*> _sources;
   std::string _memorypath,_filepath,_proctype;
   levbdim::shmdriver* _evb;
-  levbdim::basicwriter* _writer;
+  levbdim::shmprocessor* _writer;
 };
 
 #endif

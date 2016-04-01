@@ -78,6 +78,11 @@ void LBuilder::initialise(levbdim::fsmmessage* m)
       _writer= new levbdim::basicwriter(_filepath);
       _evb->registerProcessor(_writer);
     }
+  if (_proctype.compare("lcio")==0)
+    {
+      _writer= new LcioShmProcessor(_filepath,"UNSETUP");
+      _evb->registerProcessor(_writer);
+    }
   
 }
 void LBuilder::start(levbdim::fsmmessage* m)
@@ -85,8 +90,8 @@ void LBuilder::start(levbdim::fsmmessage* m)
     LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
     Json::Value jc=m->content();
     int32_t run=jc["run"].asInt();
-    _writer->start(run);
-    _evb->start();
+    //_writer->start(run);
+    _evb->start(run);
 }
 void LBuilder::stop(levbdim::fsmmessage* m)
 {
@@ -94,15 +99,15 @@ void LBuilder::stop(levbdim::fsmmessage* m)
     LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
 
     _evb->stop();
-    _writer->stop();
+    //_writer->stop();
 }
 void LBuilder::status(levbdim::fsmmessage* m)
 {
   
     LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
     Json::Value rp;
-    rp["run"]=_writer->runNumber();
-    rp["event"]=_writer->eventNumber();
+    rp["run"]=_evb->run();
+    rp["event"]=_evb->event();
     m->setAnswer(rp);
 }
 void LBuilder::halt(levbdim::fsmmessage* m)

@@ -42,6 +42,9 @@ public:
   void  resumeTrigger();
   void  resetTriggerCounters();
   std::string  triggerStatus();
+  std::string state(){return _fsm->state();}
+  void forceState(std::string s){_fsm->setState(s);}
+
 private:
   levbdim::fsm* _fsm;
   LClient* _dbClient,*_zupClient,*_cccClient,*_mdccClient,*_builderClient;

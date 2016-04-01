@@ -83,13 +83,22 @@ else:
   boostsystem='boost_system-mt'
   boostthread='boost_thread-mt'
 
+#Library ROOT + some of XDAQ + DB 
+ROOT_LIBS=[lib[2:] for lib in filter(lambda x: (x[:2]=="-l"), commands.getoutput("$ROOTSYS/bin/root-config --libs --ldflags --glibs").split(" "))
+]
+ROOT_LIBS.append('XMLIO')
+ROOT_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getoutput("$ROOTSYS/bin/root-config --libs ").split(" "))]
+
+
+  
 Use_Dim=True
 Use_Oracle=os.path.exists("/usr/include/ILCConfDB")
+Use_LCIO=True
 #os.environ.has_key("DIM_DNS_NODE")
 
 # includes
 INCLUDES=['include',"/usr/include/boost141/",DHCAL_ROOT+"/SDHCAL_common/include",DHCAL_ROOT+"/SDHCAL_DB/include",DHCAL_ROOT+"/SDHCAL_Readout/include","/usr/include/jsoncpp","/opt/dhcal/levbdim/include"]
-
+INCLUDES.append("/usr/include/libxml2")
 if (Use_Dim):
   INCLUDES.append(DIM_ROOT+"/dim")
   if (platform=="SLC5"):
@@ -99,6 +108,12 @@ INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as con
 if (Use_Oracle):
   INCLUDES.append("/usr/include/ILCConfDB")
 
+if (Use_LCIO):
+  INCLUDES.append(os.path.join(os.getenv("LCIODIR"),"include"))
+  INCLUDES.append(os.path.join(os.getenv("LCIODIR"),"include","IMPL"))
+  INCLUDES.append(DHCAL_ROOT+"/SDHCAL_EventReader/include")
+
+  
 CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2"]
 
 #Library ROOT + some of XDAQ + DB 
@@ -110,9 +125,12 @@ LIBRARIES=['pthread',  'm', 'stdc++',boostsystem,boostthread,'SDHCALcommon','SDH
 if (Use_Oracle):
   LIBRARIES=LIBRARIES+['dl','uuid', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c','SDHCALDB']
 
+if (Use_LCIO):
+  LIBRARIES=LIBRARIES+ROOT_LIBS+['SDHCALEventReader','lcio','sio']
+
 #Library path XDAQ,DHCAL and ROOT + Python
 if (Bit64):
-	LIBRARY_PATHS=["/usr/lib64","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/levbdim/lib"]
+  LIBRARY_PATHS=["/usr/lib64","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/levbdim/lib"]
 else:
   LIBRARY_PATHS=["/usr/lib","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/levbdim/lib"]
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
@@ -124,7 +142,9 @@ if Use_Dim:
 #   INCLUDES.append("/opt/xdaq/include/dim")
 #   LIBRARIES.append("dim")
 #   
-
+if (Use_LCIO):
+  LIBRARY_PATHS.append(os.path.join(os.getenv("LCIODIR"),"lib"))
+  LIBRARY_PATHS=ROOT_LIBPATH+LIBRARY_PATHS
 
 #link flags
 LDFLAGS=["-fPIC","-dynamiclib"]
