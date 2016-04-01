@@ -109,11 +109,11 @@ void LDIF::readout()
       try 
 	{
 				
-	  uint32_t nread=_rd->DoHardrocV2ReadoutDigitalData((unsigned char*) _dsData->payload());
-	  //printf(" Je lis %d %d \n",difid,nread);
+	  uint32_t nread=_rd->DoHardrocV2ReadoutDigitalData(cbuf);
+	  //printf(" Je lis %d => %d \n",_status->id,nread);
 	  if (nread==0) continue;
 	 
-	  //memcpy(_data,cbuf,nread);
+	  memcpy((unsigned char*) _dsData->payload(),cbuf,nread);
 	  //this->publishData(nread);
 	 
 	  _status->gtc=ShmProxy::getBufferDTC(cbuf);

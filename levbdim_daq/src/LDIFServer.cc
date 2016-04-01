@@ -151,8 +151,8 @@ void LDIFServer::configure(levbdim::fsmmessage* m)
 
   LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
   uint32_t difid=m->content()["difid"].asInt();
-  uint32_t ctrlreg=m->content()["ctrlreg"].asInt();
-
+  uint32_t ctrlreg=m->content()["ctrlreg"].asUInt();
+  LOG4CXX_INFO(_logLdaq," Configuring with "<<difid<<" ctr "<<ctrlreg<<" cont "<<m->content());
   int32_t rc=1;
   std::map<uint32_t,LDIF*> dm=this->getDIFMap();
   Json::Value array_slc;
