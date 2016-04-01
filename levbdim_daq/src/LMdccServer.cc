@@ -6,7 +6,7 @@ void LMdccServer::open(levbdim::fsmmessage* m)
   std::string device=m->content()["device"].asString();
   doOpen(device);
   //_mdcc->maskTrigger();
-  _mdcc->resetCounter();
+  //_mdcc->resetCounter();
 }
 void LMdccServer::close(levbdim::fsmmessage* m)
 {
@@ -65,6 +65,7 @@ void LMdccServer::cmd(levbdim::fsmmessage* m)
     }
   if (cmd_name.compare("STATUS")==0)
     {
+      LOG4CXX_INFO(_logLdaq," execute: "<<cmd_name);
       Json::Value rc;
       rc["version"]=_mdcc->version();
       rc["id"]=_mdcc->id();
@@ -77,6 +78,7 @@ void LMdccServer::cmd(levbdim::fsmmessage* m)
     }
   if (cmd_name.compare("WRITEREG")==0)
     {
+      LOG4CXX_INFO(_logLdaq," execute: "<<cmd_name);
       uint32_t adr=m->content()["address"].asInt();
       uint32_t val=m->content()["value"].asInt();
       _mdcc->writeRegister(adr,val);
@@ -84,6 +86,7 @@ void LMdccServer::cmd(levbdim::fsmmessage* m)
     }
   if (cmd_name.compare("READREG")==0)
     {
+      LOG4CXX_INFO(_logLdaq," execute: "<<cmd_name);
       uint32_t adr=m->content()["address"].asInt();
 
       uint32_t val=_mdcc->readRegister(adr);

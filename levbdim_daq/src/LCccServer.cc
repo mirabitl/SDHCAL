@@ -73,26 +73,31 @@ void LCccServer::cmd(levbdim::fsmmessage* m)
     }
   if (cmd_name.compare("PAUSE")==0)
     {
+      LOG4CXX_INFO(_logLdaq," execute: "<<cmd_name);
       ccc->getCCCReadout()->DoSendPauseTrigger();
       return;
     }
   if (cmd_name.compare("RESUME")==0)
     {
+      LOG4CXX_INFO(_logLdaq," execute: "<<cmd_name);
       ccc->getCCCReadout()->DoSendResumeTrigger();
       return;
     }
   if (cmd_name.compare("DIFRESET")==0)
     {
+      LOG4CXX_INFO(_logLdaq," execute: "<<cmd_name);
       ccc->getCCCReadout()->DoSendDIFReset();
       return;
     }
   if (cmd_name.compare("CCCRESET")==0)
     {
+      LOG4CXX_INFO(_logLdaq," execute: "<<cmd_name);
       ccc->getCCCReadout()->DoSendCCCReset();
       return;
     }
   if (cmd_name.compare("WRITEREG")==0)
     {
+      LOG4CXX_INFO(_logLdaq," execute: "<<cmd_name);
       uint32_t adr=m->content()["address"].asInt();
       uint32_t val=m->content()["value"].asInt();
       ccc->getCCCReadout()->DoWriteRegister(adr,val);
@@ -100,6 +105,7 @@ void LCccServer::cmd(levbdim::fsmmessage* m)
     }
   if (cmd_name.compare("READREG")==0)
     {
+      LOG4CXX_INFO(_logLdaq," execute: "<<cmd_name);
       uint32_t adr=m->content()["address"].asInt();
 
       uint32_t val=ccc->getCCCReadout()->DoReadRegister(adr);
