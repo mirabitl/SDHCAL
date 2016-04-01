@@ -1,5 +1,8 @@
 #include "LBuilder.hh"
-
+#include "basicwriter.hh"
+#ifdef USE_LCIO
+#include "LcioShmProcessor.hh"
+#endif
 LBuilder::LBuilder(std::string name) : _evb(NULL),_writer(NULL)
 {
   _fsm=new levbdim::fsm(name);
@@ -78,12 +81,13 @@ void LBuilder::initialise(levbdim::fsmmessage* m)
       _writer= new levbdim::basicwriter(_filepath);
       _evb->registerProcessor(_writer);
     }
+#ifdef USE_LCIO
   if (_proctype.compare("lcio")==0)
     {
       _writer= new LcioShmProcessor(_filepath,"UNSETUP");
       _evb->registerProcessor(_writer);
     }
-  
+#endif  
 }
 void LBuilder::start(levbdim::fsmmessage* m)
 {

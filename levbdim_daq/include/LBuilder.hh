@@ -4,8 +4,6 @@
 #include "fsm.hh"
 #include "datasocket.hh"
 #include "shmdriver.hh"
-#include "basicwriter.hh"
-#include "LcioShmProcessor.hh"
 #include "LdaqLogger.hh"
 
 class LBuilder {

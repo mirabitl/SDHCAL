@@ -329,6 +329,7 @@ LDIFServer::LDIFServer(std::string name)
   _fsm->addTransition("CONFIGURE","CONFIGURED","CONFIGURED",boost::bind(&LDIFServer::configure, this,_1));
   _fsm->addTransition("CONFIGURE","STOPPED","CONFIGURED",boost::bind(&LDIFServer::configure, this,_1));
   _fsm->addTransition("START","CONFIGURED","RUNNING",boost::bind(&LDIFServer::start, this,_1));
+  _fsm->addTransition("START","STOPPED","RUNNING",boost::bind(&LDIFServer::start, this,_1));
   _fsm->addTransition("STOP","RUNNING","STOPPED",boost::bind(&LDIFServer::stop, this,_1));
   _fsm->addTransition("DESTROY","STOP","CREATED",boost::bind(&LDIFServer::destroy, this,_1));
   _fsm->addTransition("DESTROY","CONFIGURED","CREATED",boost::bind(&LDIFServer::destroy, this,_1));
