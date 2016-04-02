@@ -230,8 +230,9 @@ void LDaq::singlestart(LClient* d)
 {
   d->clear();
   d->set<int>("difid",0);
-  std::cout<<"Posting START"<<std::endl;
+  //std::cout<<"Posting START"<<std::endl;
   d->post("START");
+  //std::cout<<"received "<<d->reply()<<std::endl;
 }
 void LDaq::singlestop(LClient* d)
 {
@@ -356,7 +357,7 @@ void LDaq::start(levbdim::fsmmessage* m)
   boost::thread_group g;
   for (std::vector<LClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     {
-      std::cout<<"Creating thread"<<std::endl;
+      //std::cout<<"Creating thread"<<std::endl;
       (*it)->clear();
       g.create_thread(boost::bind(&LDaq::singlestart, this,(*it)));
     }
