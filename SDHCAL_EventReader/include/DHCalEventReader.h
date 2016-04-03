@@ -388,6 +388,8 @@ int readOneEvent(int run,int event);
   void modifyRunHeader(LCRunHeader* run){ /* not needed */ ;}
   //! <i>Internal</i> parse the DIF buffer 
   int parseRawEvent(int rushift=23);
+  //! <i>Internal</i> parse the DIF buffer 
+  int parseSDHCALEvent();
   //! register dif chambers
   void difInChamber(uint32_t dif,uint32_t ch);
   //! Get Chamber of a dif
