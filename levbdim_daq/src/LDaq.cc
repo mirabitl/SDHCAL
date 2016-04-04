@@ -182,7 +182,8 @@ void LDaq::prepare(levbdim::fsmmessage* m)
   if (_builderClient)
     {
       _builderClient->clear();
-      _builderClient->set<std::string>("proctype",m->content()["proctype"].asString());
+      //_builderClient->set<std::string>("proctype",m->content()["proctype"].asString());
+      _builderClient->set<Json::Value>("proclist",m->content()["proclist"]);
       _builderClient->set<std::string>("filepath",m->content()["filepath"].asString());
       _builderClient->set<std::string>("memorypath",m->content()["memorypath"].asString());
       _builderClient->post("INITIALISE");
@@ -504,6 +505,7 @@ void LDaq::setParameters(std::string jsonString)
     _writerdir=_jparam["filepath"].asString();;
     _memorydir=_jparam["memorypath"].asString();;
     _proctype=_jparam["proctype"].asString();;
+    _proclist=_jparam["proclist"];
     _zupport=_jparam["zupport"].asUInt();
     _ctrlreg=_jparam["ctrlreg"].asUInt();
     

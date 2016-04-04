@@ -51,7 +51,7 @@ private:
   std::vector<LClient*> _DIFClients;
   std::string _strParam;
   Json::Value _jparam;
-
+  Json::Value _proclist;
   std::string _dbstate,_dccname,_mdccname,_zupdevice,_writerdir,_memorydir,_proctype;
   uint32_t _zupport,_ctrlreg,_run;
 };

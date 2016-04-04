@@ -71,10 +71,36 @@ void LBuilder::initialise(levbdim::fsmmessage* m)
   _filepath = m->content()["filepath"].asString();
   _proctype= m->content()["proctype"].asString();
   // Now create the builder
+
   _evb= new levbdim::shmdriver(_memorypath);
   _evb->createDirectories();
   _evb->cleanShm();
 
+
+   Json::Value jc=m->content();
+  const Json::Value& jsources = jc["proclist"];
+  for (Json::ValueConstIterator it = jsources.begin(); it != jsources.end(); ++it)
+    {
+      const Json::Value& source = *it;
+      std::string name=source.asString();
+        // Add a writer
+      if (name.compare("basicwriter")==0)
+    {
+      _writer= new levbdim::basicwriter(_filepath);
+      _evb->registerProcessor(_writer);
+    }
+#ifdef USE_LCIO
+  if (name.compare("lcio")==0)
+    {
+      _writer= new LcioShmProcessor(_filepath,"UNSETUP");
+      _evb->registerProcessor(_writer);
+    }
+#endif
+
+    }
+
+
+  /*  
   // Add a writer
   if (_proctype.compare("basicwriter")==0)
     {
@@ -87,7 +113,8 @@ void LBuilder::initialise(levbdim::fsmmessage* m)
       _writer= new LcioShmProcessor(_filepath,"UNSETUP");
       _evb->registerProcessor(_writer);
     }
-#endif  
+#endif
+  */
 }
 void LBuilder::start(levbdim::fsmmessage* m)
 {
