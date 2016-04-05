@@ -372,7 +372,7 @@ int DHCalEventReader::parseSDHCALEvent()
 	  levbdim::buffer m((char*) tcbuf,0);
 	  m.setPayloadSize(rusize-3*sizeof(uint32_t)-sizeof(uint64_t));
 	  //std::cout<<" Source found "<<m.detectorId()<<" "<<m.dataSourceId()<<std::endl;
-	  if (m.detectorId()<100) continue;
+	  if (m.detectorId()!=100) continue;
 	  //uint32_t idstart=DIFUnpacker::getStartOfDIF(tcbuf,rusize,theXdaqShift_);
 	  uint32_t idstart=DIFUnpacker::getStartOfDIF((unsigned char*) m.ptr(),m.size(),20);
 	  //std::cout<<" Start at "<<idstart<<std::endl;
@@ -390,9 +390,13 @@ int DHCalEventReader::parseSDHCALEvent()
 	}
     }
 
-  std::vector<uint32_t> seed;seed.clear();      
+  std::vector<uint32_t> seed;seed.clear();
+  IMPL::LCCollectionVec* HitVec=this->createRawCalorimeterHits(seed);
   try{
-    evt_->addCollection(this->createRawCalorimeterHits(seed),"SDHCALRawHits");
+    if (HitVec->getNumberOfElements()!=0 &&HitVec->getNumberOfElements()<200000 )
+      evt_->addCollection(HitVec,"SDHCALRawHits");
+    else
+      delete HitVec;
   }
   catch( IOException& e) {
     std::cout << e.what() << std::endl ;

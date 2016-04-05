@@ -74,7 +74,7 @@ void LcioShmProcessor::processEvent(uint32_t gtc,std::vector<levbdim::buffer*> v
   _der->writeEvent(false);		
    
   theEventNumber_++;
- 
+  //delete _der->getEvent();
 
 
   if (theEventNumber_%100==0)
