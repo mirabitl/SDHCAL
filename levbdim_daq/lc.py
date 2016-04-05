@@ -355,8 +355,8 @@ def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
            s=r1.read()
            sj=json.loads(s)
            ssj=json.loads(sj["triggerStatusResponse"]["triggerStatusResult"][0])
-           print "\033[1m %10s %10s \033[0m" % ('Spill','Busy')
-           print " %10d %10d " % (ssj['spill'],ssj['busy'])
+           print "\033[1m %10s %10s %10s %10s \033[0m" % ('Spill','Busy1','Busy2','Busy3')
+           print " %10d %10d %10d %10d  " % (ssj['spill'],ssj['busy1'],ssj['busy2'],ssj['busy3'])
 
        else:
           print r1.read()

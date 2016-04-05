@@ -12,5 +12,6 @@ dbstate="Dome_42chambres_Reference_v4_163"
 filepath="/data/NAS/February2016"
 memorypath="/dev/shm/levbdim"
 proclist=["lcio","basicwriter"]
+#proclist=[]
 daqhost='lyosdhcal9.in2p3.fr'
 daqport=8200
