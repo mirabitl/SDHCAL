@@ -380,7 +380,7 @@ void LDaq::start(levbdim::fsmmessage* m)
    if (_mdccClient)
      {
        //_mdccClient->post("RESET");
-       _mdccClient->post("RESUME");
+       //_mdccClient->post("RESUME");
      }
 
    m->setAnswer(toJson(this->difstatus()));  
