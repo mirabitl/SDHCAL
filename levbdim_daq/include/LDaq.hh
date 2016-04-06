@@ -40,6 +40,8 @@ public:
   std::string  status();
   void  pauseTrigger();
   void  resumeTrigger();
+  void  pauseEcal();
+  void  resumeEcal();
   void  resetTriggerCounters();
   std::string  triggerStatus();
   void  triggerSpillOn(uint32_t nc);

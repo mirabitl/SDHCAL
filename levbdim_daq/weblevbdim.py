@@ -158,6 +158,16 @@ class wddService(ServiceBase):
        global _wdd
        _wdd.resumeTrigger()
        yield "Trigger is resumed"
+    @srpc( _returns=Iterable(String))
+    def pauseEcal():
+       global _wdd
+       _wdd.pauseEcal()
+       yield "Trigger is paused"
+    @srpc( _returns=Iterable(String))
+    def resumeEcal():
+       global _wdd
+       _wdd.resumeEcal()
+       yield "Trigger is resumed"
 
     @srpc( UnsignedInteger, _returns=Iterable(String))
     def triggerSpillOn(nclock):

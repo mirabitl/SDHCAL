@@ -550,6 +550,16 @@ void LDaq::resumeTrigger()
   if (_mdccClient==NULL){LOG4CXX_ERROR(_logLdaq, "No MDC client");return;}
   _mdccClient->post("RESUME");
 }
+void LDaq::pauseEcal()
+{
+  if (_mdccClient==NULL){LOG4CXX_ERROR(_logLdaq, "No MDC client");return;}
+  _mdccClient->post("ECALPAUSE");
+}
+void LDaq::resumeEcal()
+{
+  if (_mdccClient==NULL){LOG4CXX_ERROR(_logLdaq, "No MDC client");return;}
+  _mdccClient->post("ECALRESUME");
+}
 void LDaq::resetTriggerCounters()
 {
   if (_mdccClient==NULL){LOG4CXX_ERROR(_logLdaq, "No MDC client");return;}

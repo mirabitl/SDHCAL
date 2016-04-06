@@ -37,6 +37,8 @@ grp_action.add_argument('--trig-status',action='store_true',help=' display trigg
 grp_action.add_argument('--trig-reset',action='store_true',help=' reset trigger counter')
 grp_action.add_argument('--trig-pause',action='store_true',help=' trigger soft veto')
 grp_action.add_argument('--trig-resume',action='store_true',help=' trigger soft veto release')
+grp_action.add_argument('--ecal-pause',action='store_true',help=' trigger soft veto')
+grp_action.add_argument('--ecal-resume',action='store_true',help=' trigger soft veto release')
 grp_action.add_argument('--trig-spillon',action='store_true',help=' set spill nclock on with --clock=nc (20ns)')
 grp_action.add_argument('--trig-spilloff',action='store_true',help=' set spill nclock off withc --clock=nc (20ns) ')
 grp_action.add_argument('--daq-destroy',action='store_true',help='destroy the DIF readout, back to the PREPARED state')
@@ -211,7 +213,10 @@ elif(results.trig_spilloff):
     else:
         print 'Please specify the number of clock --clock=xx'
         exit(0)
-
+elif(results.ecal_pause):
+    r_cmd='pauseEcal'
+elif(results.ecal_resume):
+    r_cmd='resumeEcal'
 elif(results.trig_reset):
     r_cmd='resetTrigger'
 elif(results.trig_pause):
@@ -374,8 +379,8 @@ def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
            s=r1.read()
            sj=json.loads(s)
            ssj=json.loads(sj["triggerStatusResponse"]["triggerStatusResult"][0])
-           print "\033[1m %10s %10s %10s %10s %12s %12s \033[0m" % ('Spill','Busy1','Busy2','Busy3','SpillOn','SpillOff')
-           print " %10d %10d %10d %10d  %12d %12d " % (ssj['spill'],ssj['busy1'],ssj['busy2'],ssj['busy3'],ssj['spillon'],ssj['spilloff'])
+           print "\033[1m %10s %10s %10s %10s %12s %12s %10s %10s \033[0m" % ('Spill','Busy1','Busy2','Busy3','SpillOn','SpillOff','Mask','EcalMask')
+           print " %10d %10d %10d %10d  %12d %12d %10d %10d " % (ssj['spill'],ssj['busy1'],ssj['busy2'],ssj['busy3'],ssj['spillon'],ssj['spilloff'],ssj['mask'],ssj['ecalmask'])
 
        else:
           print r1.read()
