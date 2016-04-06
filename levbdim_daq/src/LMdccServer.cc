@@ -71,7 +71,11 @@ void LMdccServer::cmd(levbdim::fsmmessage* m)
       rc["id"]=_mdcc->id();
       rc["mask"]=_mdcc->mask();
       rc["spill"]=_mdcc->spillCount();
-      rc["busy"]=_mdcc->busyCount();
+      rc["busy1"]=_mdcc->busy1Count();
+      rc["busy2"]=_mdcc->busy2Count();
+      rc["busy3"]=_mdcc->busy3Count();
+      rc["spillon"]=_mdcc->spillOn();
+      rc["spilloff"]=_mdcc->spillOff();
       m->setAnswer(rc);
 
       return;
@@ -94,6 +98,22 @@ void LMdccServer::cmd(levbdim::fsmmessage* m)
       r["address"]=adr;
       r["value"]=val;
       m->setAnswer(r);
+      return;
+    }
+  if (cmd_name.compare("SPILLON")==0)
+    {
+      LOG4CXX_INFO(_logLdaq," execute: "<<cmd_name);
+      uint32_t nc=m->content()["nclock"].asUInt();
+
+      _mdcc->setSpillOn(nc);
+      return;
+    }
+  if (cmd_name.compare("SPILLOFF")==0)
+    {
+      LOG4CXX_INFO(_logLdaq," execute: "<<cmd_name);
+      uint32_t nc=m->content()["nclock"].asUInt();
+
+      _mdcc->setSpillOff(nc);
       return;
     }
 
