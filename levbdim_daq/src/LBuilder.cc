@@ -1,5 +1,6 @@
 #include "LBuilder.hh"
 #include "basicwriter.hh"
+#include "monitorProcessor.hh"
 #ifdef USE_LCIO
 #include "LcioShmProcessor.hh"
 #endif
@@ -89,6 +90,12 @@ void LBuilder::initialise(levbdim::fsmmessage* m)
       _writer= new levbdim::basicwriter(_filepath);
       _evb->registerProcessor(_writer);
     }
+      if (name.compare("monitor")==0)
+    {
+      levbdim::shmprocessor* m= new levbdim::monitorProcessor("/dev/shm/monitor");
+      _evb->registerProcessor(m);
+    }
+
 #ifdef USE_LCIO
   if (name.compare("lcio")==0)
     {
