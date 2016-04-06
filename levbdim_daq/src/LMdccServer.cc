@@ -39,6 +39,27 @@ void LMdccServer::resume(levbdim::fsmmessage* m)
     }
   _mdcc->unmaskTrigger();
 }
+void LMdccServer::ecalpause(levbdim::fsmmessage* m)
+{
+  LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
+  if (_mdcc==NULL)
+    {
+       LOG4CXX_ERROR(_logLdaq,"Please open MDC01 first");
+       return;
+    }
+  _mdcc->maskEcal();
+}
+void LMdccServer::ecalresume(levbdim::fsmmessage* m)
+{
+  LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
+  if (_mdcc==NULL)
+    {
+       LOG4CXX_ERROR(_logLdaq,"Please open MDC01 first");
+       return;
+    }
+  _mdcc->unmaskEcal();
+}
+
 void LMdccServer::reset(levbdim::fsmmessage* m)
 {
   LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
@@ -76,6 +97,7 @@ void LMdccServer::cmd(levbdim::fsmmessage* m)
       rc["busy3"]=_mdcc->busy3Count();
       rc["spillon"]=_mdcc->spillOn();
       rc["spilloff"]=_mdcc->spillOff();
+      rc["ecalmask"]=_mdcc->ecalmask();
       m->setAnswer(rc);
 
       return;
@@ -145,6 +167,10 @@ LMdccServer::LMdccServer(std::string name) : _mdcc(NULL)
   
   _fsm->addTransition("CMD","PAUSED","PAUSED",boost::bind(&LMdccServer::cmd, this,_1));
   _fsm->addTransition("CMD","RUNNING","RUNNING",boost::bind(&LMdccServer::cmd, this,_1));
+  _fsm->addTransition("ECALPAUSE","PAUSED","PAUSED",boost::bind(&LMdccServer::cmd, this,_1));
+  _fsm->addTransition("ECALPAUSE","RUNNING","RUNNING",boost::bind(&LMdccServer::cmd, this,_1));
+  _fsm->addTransition("ECALRESUME","PAUSED","PAUSED",boost::bind(&LMdccServer::cmd, this,_1));
+  _fsm->addTransition("ECALRESUME","RUNNING","RUNNING",boost::bind(&LMdccServer::cmd, this,_1));
 
   std::stringstream s0;
   s0.str(std::string());

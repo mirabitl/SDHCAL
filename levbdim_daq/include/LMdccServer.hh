@@ -21,6 +21,8 @@ public:
   void close(levbdim::fsmmessage* m);
   void pause(levbdim::fsmmessage* m);
   void resume(levbdim::fsmmessage* m);
+  void ecalpause(levbdim::fsmmessage* m);
+  void ecalresume(levbdim::fsmmessage* m);
   void reset(levbdim::fsmmessage* m);
   void cmd(levbdim::fsmmessage* m);
   void doOpen(std::string s);
