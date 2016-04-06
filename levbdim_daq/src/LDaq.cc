@@ -565,3 +565,23 @@ std::string LDaq::triggerStatus()
   Json::FastWriter fastWriter;
   return fastWriter.write(_mdccClient->reply());
 }
+void LDaq::triggerSpillOn(uint32_t nc)
+{
+  if (_mdccClient==NULL){LOG4CXX_ERROR(_logLdaq, "No MDC client");return;}
+  _mdccClient->clear();
+  _mdccClient->set<std::string>("name","SPILLON");
+  _mdccClient->set<uint32_t>("nclock",nc);
+  _mdccClient->post("CMD");
+  Json::FastWriter fastWriter;
+  return;
+}
+void LDaq::triggerSpillOff(uint32_t nc)
+{
+  if (_mdccClient==NULL){LOG4CXX_ERROR(_logLdaq, "No MDC client");return;}
+  _mdccClient->clear();
+  _mdccClient->set<std::string>("name","SPILLOFF");
+  _mdccClient->set<uint32_t>("nclock",nc);
+  _mdccClient->post("CMD");
+  Json::FastWriter fastWriter;
+  return;
+}

@@ -159,6 +159,19 @@ class wddService(ServiceBase):
        _wdd.resumeTrigger()
        yield "Trigger is resumed"
 
+    @srpc( UnsignedInteger, _returns=Iterable(String))
+    def triggerSpillOn(nclock):
+       global _wdd
+       _wdd.triggerSpillOn(nclock)
+       yield "Spill On set to %d clock" % nclock
+
+    @srpc( UnsignedInteger, _returns=Iterable(String))
+    def triggerSpillOff(nclock):
+       global _wdd
+       _wdd.triggerSpillOff(nclock)
+       yield "Spill Off set to %d clock" % nclock
+
+
     @srpc( _returns=Iterable(String))
     def LVStatus():
        global _wdd

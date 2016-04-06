@@ -42,6 +42,8 @@ public:
   void  resumeTrigger();
   void  resetTriggerCounters();
   std::string  triggerStatus();
+  void  triggerSpillOn(uint32_t nc);
+  void  triggerSpillOff(uint32_t nc);
   std::string state(){return _fsm->state();}
   void forceState(std::string s){_fsm->setState(s);}
 

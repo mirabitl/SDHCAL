@@ -37,6 +37,8 @@ grp_action.add_argument('--trig-status',action='store_true',help=' display trigg
 grp_action.add_argument('--trig-reset',action='store_true',help=' reset trigger counter')
 grp_action.add_argument('--trig-pause',action='store_true',help=' trigger soft veto')
 grp_action.add_argument('--trig-resume',action='store_true',help=' trigger soft veto release')
+grp_action.add_argument('--trig-spillon',action='store_true',help=' set spill nclock on with --clock=nc (20ns)')
+grp_action.add_argument('--trig-spilloff',action='store_true',help=' set spill nclock off withc --clock=nc (20ns) ')
 grp_action.add_argument('--daq-destroy',action='store_true',help='destroy the DIF readout, back to the PREPARED state')
 grp_action.add_argument('--daq-downloaddb',action='store_true',help='download the dbsate specified in --dbstate=state')
 grp_action.add_argument('--daq-ctrlreg',action='store_true',help='set the ctrlregister specified with --ctrlreg=register')
@@ -76,6 +78,8 @@ parser.add_argument('--voltage', action='store',type=float, default=None,dest='v
 parser.add_argument('--current', action='store',type=float, default=None,dest='current',help='set the hv current')
 
 parser.add_argument('--period', action='store',type=int, default=None,dest='period',help='set the tempo period')
+
+parser.add_argument('--clock', action='store',type=int, default=None,dest='clock',help='set the number of 20 ns clock')
 
 parser.add_argument('--account', action='store', default=None,dest='account',help='set the mysql account')
 
@@ -193,6 +197,21 @@ elif(results.daq_ctrlreg):
         exit(0)
 elif(results.trig_status):
     r_cmd='triggerStatus'
+elif(results.trig_spillon):
+    r_cmd='triggerSpillOn'
+    if (results.clock!=None):
+        lcgi['nclock']=results.clock
+    else:
+        print 'Please specify the number of clock --clock=xx'
+        exit(0)
+elif(results.trig_spilloff):
+    r_cmd='triggerSpillOff'
+    if (results.clock!=None):
+        lcgi['nclock']=results.clock
+    else:
+        print 'Please specify the number of clock --clock=xx'
+        exit(0)
+
 elif(results.trig_reset):
     r_cmd='resetTrigger'
 elif(results.trig_pause):
@@ -355,8 +374,8 @@ def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
            s=r1.read()
            sj=json.loads(s)
            ssj=json.loads(sj["triggerStatusResponse"]["triggerStatusResult"][0])
-           print "\033[1m %10s %10s %10s %10s \033[0m" % ('Spill','Busy1','Busy2','Busy3')
-           print " %10d %10d %10d %10d  " % (ssj['spill'],ssj['busy1'],ssj['busy2'],ssj['busy3'])
+           print "\033[1m %10s %10s %10s %10s %12s %12s \033[0m" % ('Spill','Busy1','Busy2','Busy3','SpillOn','SpillOff')
+           print " %10d %10d %10d %10d  %12d %12d " % (ssj['spill'],ssj['busy1'],ssj['busy2'],ssj['busy3'],ssj['spillon'],ssj['spilloff'])
 
        else:
           print r1.read()
