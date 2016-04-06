@@ -59,8 +59,11 @@ uint32_t MDCCReadout::spillOff(){return this->readRegister(0x9);}
 void MDCCReadout::setSpillOn(uint32_t nc){this->writeRegister(0x8,nc);}
 void MDCCReadout::setSpillOff(uint32_t nc){this->writeRegister(0x9,nc);}
 uint32_t MDCCReadout::mask(){return this->readRegister(0x2);}
+uint32_t MDCCReadout::ecalmask(){return this->readRegister(0x10);}
 void MDCCReadout::maskTrigger(){this->writeRegister(0x2,0x1);}
 void MDCCReadout::unmaskTrigger(){this->writeRegister(0x2,0x0);}
+void MDCCReadout::maskEcal(){this->writeRegister(0x10,0x1);}
+void MDCCReadout::unmaskEcal(){this->writeRegister(0x10,0x0);}
 void MDCCReadout::resetCounter(){this->writeRegister(0x4,0x1);this->writeRegister(0x4,0x0);}
 uint32_t MDCCReadout::readRegister(uint32_t adr)
 {

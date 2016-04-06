@@ -21,8 +21,11 @@ public:
   uint32_t readRegister(uint32_t addr);
   void maskTrigger();
   void unmaskTrigger();
+  void maskEcal();
+  void unmaskEcal();
   void resetCounter();
   uint32_t mask();
+  uint32_t ecalmask();
   uint32_t spillCount();
   uint32_t busy1Count();
   uint32_t busy2Count();
