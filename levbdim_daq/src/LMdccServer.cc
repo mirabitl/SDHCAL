@@ -167,10 +167,10 @@ LMdccServer::LMdccServer(std::string name) : _mdcc(NULL)
   
   _fsm->addTransition("CMD","PAUSED","PAUSED",boost::bind(&LMdccServer::cmd, this,_1));
   _fsm->addTransition("CMD","RUNNING","RUNNING",boost::bind(&LMdccServer::cmd, this,_1));
-  _fsm->addTransition("ECALPAUSE","PAUSED","PAUSED",boost::bind(&LMdccServer::cmd, this,_1));
-  _fsm->addTransition("ECALPAUSE","RUNNING","RUNNING",boost::bind(&LMdccServer::cmd, this,_1));
-  _fsm->addTransition("ECALRESUME","PAUSED","PAUSED",boost::bind(&LMdccServer::cmd, this,_1));
-  _fsm->addTransition("ECALRESUME","RUNNING","RUNNING",boost::bind(&LMdccServer::cmd, this,_1));
+  _fsm->addTransition("ECALPAUSE","PAUSED","PAUSED",boost::bind(&LMdccServer::ecalpause, this,_1));
+  _fsm->addTransition("ECALPAUSE","RUNNING","RUNNING",boost::bind(&LMdccServer::ecalpause, this,_1));
+  _fsm->addTransition("ECALRESUME","PAUSED","PAUSED",boost::bind(&LMdccServer::ecalresume, this,_1));
+  _fsm->addTransition("ECALRESUME","RUNNING","RUNNING",boost::bind(&LMdccServer::ecalresume, this,_1));
 
   std::stringstream s0;
   s0.str(std::string());
