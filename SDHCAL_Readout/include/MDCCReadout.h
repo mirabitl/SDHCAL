@@ -24,7 +24,13 @@ public:
   void resetCounter();
   uint32_t mask();
   uint32_t spillCount();
-  uint32_t busyCount();
+  uint32_t busy1Count();
+  uint32_t busy2Count();
+  uint32_t busy3Count();
+  uint32_t spillOn();
+  uint32_t spillOff();
+  void setSpillOn(uint32_t nc);
+  void setSpillOff(uint32_t nc);
   uint32_t version();
   uint32_t id();
 

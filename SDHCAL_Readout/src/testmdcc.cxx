@@ -9,20 +9,20 @@ int main()
 
   m.maskTrigger();
   m.resetCounter();
-  printf(" After reset+unmask vers %d id %d count %d : %d  mask %d \n",m.version(),m.id(),m.spillCount(),m.busyCount(),m.mask());
+  printf(" After reset+unmask vers %d id %d count %d : %d  mask %d \n",m.version(),m.id(),m.spillCount(),m.busy1Count(),m.mask());
   getchar();
   m.unmaskTrigger();
 
   for (int i=0;i<120;i++)
     {
-      printf(" After %d s vers %d id %d count %d : %d  mask %d \n",i,m.version(),m.id(),m.spillCount(),m.busyCount(),m.mask());
+      printf(" After %d s vers %d id %d count %d : %d  mask %d \n",i,m.version(),m.id(),m.spillCount(),m.busy1Count(),m.mask());
 
       sleep((unsigned int) 1);
     }
 
   m.maskTrigger();
   getchar();
-  printf(" After mask vers %d id %d count %d : %d  mask %d \n",m.version(),m.id(),m.spillCount(),m.busyCount(),m.mask());
+  printf(" After mask vers %d id %d count %d : %d  mask %d \n",m.version(),m.id(),m.spillCount(),m.busy1Count(),m.mask());
   getchar();
   m.unmaskTrigger();
  

@@ -51,7 +51,13 @@ void MDCCReadout::close()
 uint32_t MDCCReadout::version(){return this->readRegister(0x100);}
 uint32_t MDCCReadout::id(){return this->readRegister(0x1);}
 uint32_t MDCCReadout::spillCount(){return this->readRegister(0x3);}
-uint32_t MDCCReadout::busyCount(){return this->readRegister(0x5);}
+uint32_t MDCCReadout::busy1Count(){return this->readRegister(0x5);}
+uint32_t MDCCReadout::busy2Count(){return this->readRegister(0x6);}
+uint32_t MDCCReadout::busy3Count(){return this->readRegister(0x7);}
+uint32_t MDCCReadout::spillOn(){return this->readRegister(0x8);}
+uint32_t MDCCReadout::spillOff(){return this->readRegister(0x9);}
+void MDCCReadout::setSpillOn(uint32_t nc){this->writeRegister(0x8,nc);}
+void MDCCReadout::setSpillOff(uint32_t nc){this->writeRegister(0x9,nc);}
 uint32_t MDCCReadout::mask(){return this->readRegister(0x2);}
 void MDCCReadout::maskTrigger(){this->writeRegister(0x2,0x1);}
 void MDCCReadout::unmaskTrigger(){this->writeRegister(0x2,0x0);}
