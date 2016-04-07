@@ -40,7 +40,8 @@ grp_action.add_argument('--trig-resume',action='store_true',help=' trigger soft 
 grp_action.add_argument('--ecal-pause',action='store_true',help=' trigger soft veto')
 grp_action.add_argument('--ecal-resume',action='store_true',help=' trigger soft veto release')
 grp_action.add_argument('--trig-spillon',action='store_true',help=' set spill nclock on with --clock=nc (20ns)')
-grp_action.add_argument('--trig-spilloff',action='store_true',help=' set spill nclock off withc --clock=nc (20ns) ')
+grp_action.add_argument('--trig-spilloff',action='store_true',help=' set spill nclock off with --clock=nc (20ns) ')
+grp_action.add_argument('--trig-beam',action='store_true',help=' set spill nclock off with --clock=nc (20ns) ')
 grp_action.add_argument('--daq-destroy',action='store_true',help='destroy the DIF readout, back to the PREPARED state')
 grp_action.add_argument('--daq-downloaddb',action='store_true',help='download the dbsate specified in --dbstate=state')
 grp_action.add_argument('--daq-ctrlreg',action='store_true',help='set the ctrlregister specified with --ctrlreg=register')
@@ -201,6 +202,13 @@ elif(results.daq_ctrlreg):
         exit(0)
 elif(results.trig_status):
     r_cmd='triggerStatus'
+elif(results.trig_beam):
+    r_cmd='triggerBeam'
+    if (results.clock!=None):
+        lcgi['nclock']=results.clock
+    else:
+        print 'Please specify the number of clock --clock=xx'
+        exit(0)
 elif(results.trig_spillon):
     r_cmd='triggerSpillOn'
     if (results.clock!=None):
@@ -371,7 +379,7 @@ def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
            print " %10.2f %10.2f %10.2f" % (ssj['vset'],ssj['vout'],ssj['iout'])
            #for x in ssj:
            #    print "#%.4d %10.2f %10.2f %10.2f %10.2f" % (x['channel'],x['vset'],x['iset'],x['vout'],x['iout'])
-       elif (command=="shmStatus"):
+       elif (command=="shmStatus" and not results.verbose):
            s=r1.read()
            sj=json.loads(s)
            ssj=json.loads(sj["shmStatusResponse"]["shmStatusResult"][0])
@@ -381,8 +389,8 @@ def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
            s=r1.read()
            sj=json.loads(s)
            ssj=json.loads(sj["triggerStatusResponse"]["triggerStatusResult"][0])
-           print "\033[1m %10s %10s %10s %10s %12s %12s %10s %10s \033[0m" % ('Spill','Busy1','Busy2','Busy3','SpillOn','SpillOff','Mask','EcalMask')
-           print " %10d %10d %10d %10d  %12d %12d %10d %10d " % (ssj['spill'],ssj['busy1'],ssj['busy2'],ssj['busy3'],ssj['spillon'],ssj['spilloff'],ssj['mask'],ssj['ecalmask'])
+           print "\033[1m %10s %10s %10s %10s %12s %12s %10s %10s %10s \033[0m" % ('Spill','Busy1','Busy2','Busy3','SpillOn','SpillOff','Beam','Mask','EcalMask')
+           print " %10d %10d %10d %10d  %12d %12d %12d %10d %10d " % (ssj['spill'],ssj['busy1'],ssj['busy2'],ssj['busy3'],ssj['spillon'],ssj['spilloff'],ssj['beam'],ssj['mask'],ssj['ecalmask'])
 
        else:
           print r1.read()
