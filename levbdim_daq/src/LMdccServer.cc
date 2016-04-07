@@ -98,6 +98,7 @@ void LMdccServer::cmd(levbdim::fsmmessage* m)
       rc["spillon"]=_mdcc->spillOn();
       rc["spilloff"]=_mdcc->spillOff();
       rc["ecalmask"]=_mdcc->ecalmask();
+      rc["beam"]=_mdcc->beam();
       m->setAnswer(rc);
 
       return;
