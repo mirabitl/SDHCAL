@@ -138,6 +138,14 @@ void LMdccServer::cmd(levbdim::fsmmessage* m)
       _mdcc->setSpillOff(nc);
       return;
     }
+  if (cmd_name.compare("BEAM")==0)
+    {
+      LOG4CXX_INFO(_logLdaq," execute: "<<cmd_name);
+      uint32_t nc=m->content()["nclock"].asUInt();
+
+      _mdcc->setBeam(nc);
+      return;
+    }
 
 }
 
