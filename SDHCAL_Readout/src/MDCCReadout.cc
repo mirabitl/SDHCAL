@@ -58,6 +58,11 @@ uint32_t MDCCReadout::spillOn(){return this->readRegister(0x8);}
 uint32_t MDCCReadout::spillOff(){return this->readRegister(0x9);}
 void MDCCReadout::setSpillOn(uint32_t nc){this->writeRegister(0x8,nc);}
 void MDCCReadout::setSpillOff(uint32_t nc){this->writeRegister(0x9,nc);}
+uint32_t MDCCReadout::beam(){return this->readRegister(0xa);}
+void MDCCReadout::setBeam(uint32_t nc){this->writeRegister(0xa,nc);}
+
+
+
 uint32_t MDCCReadout::mask(){return this->readRegister(0x2);}
 uint32_t MDCCReadout::ecalmask(){return this->readRegister(0x10);}
 void MDCCReadout::maskTrigger(){this->writeRegister(0x2,0x1);}
