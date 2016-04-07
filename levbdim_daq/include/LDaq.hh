@@ -46,6 +46,7 @@ public:
   std::string  triggerStatus();
   void  triggerSpillOn(uint32_t nc);
   void  triggerSpillOff(uint32_t nc);
+  void  triggerBeam(uint32_t nc);
   std::string state(){return _fsm->state();}
   void forceState(std::string s){_fsm->setState(s);}
 

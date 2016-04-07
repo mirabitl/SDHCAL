@@ -176,6 +176,12 @@ class wddService(ServiceBase):
        yield "Spill On set to %d clock" % nclock
 
     @srpc( UnsignedInteger, _returns=Iterable(String))
+    def triggerBeam(nclock):
+       global _wdd
+       _wdd.triggerBeam(nclock)
+       yield "Beam length set to %d clock" % nclock
+
+    @srpc( UnsignedInteger, _returns=Iterable(String))
     def triggerSpillOff(nclock):
        global _wdd
        _wdd.triggerSpillOff(nclock)
