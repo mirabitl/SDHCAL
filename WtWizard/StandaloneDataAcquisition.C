@@ -31,20 +31,21 @@
 // c++0x only, for std::bind
 // #include <functional>
 using namespace  std;
+#include "LCIOWritterInterface.h"
 #include "DIFMultiClient.h"
 #include "OracleDIFDBManager.h"
 #include "Tokenizer.h"
-#include "LCIOWritterInterface.h"
-using namespace Wt;
+
+//using namespace Wt;
 
 /*
  * A simple hello world application class which demonstrates how to react
  * to events, read input, and give feed-back.
  */
-class StandaloneDataAcquisition : public WApplication
+class StandaloneDataAcquisition : public Wt::WApplication
 {
 public:
-  StandaloneDataAcquisition(const WEnvironment& env);
+  StandaloneDataAcquisition(const Wt::WEnvironment& env);
 
 private:
   DIFMultiClient* theClient_;
@@ -54,28 +55,28 @@ private:
   uint32_t theRunNumber_;
 
 
-  WLineEdit *LE_CCCHost_;
-  WLineEdit *LE_DIFHosts_;
-  WLineEdit *LE_DataDirectory_;
-  WLineEdit *LE_DBState_;
-  WLineEdit *LE_ControlRegister_;
-  WLineEdit *LE_Session_;
-  WCheckBox *CB_SaveData_;
-  WSpinBox  *SB_CCCPort_;
-  WSpinBox  *SB_DIFPort_;
-  WSpinBox  *SB_NumberOfDIFs_;
-  WSpinBox  *SB_DefaultRunNumber_;
-  WLineEdit *LE_State_;
-  WPushButton *PB_Initialise_;
-  WPushButton *PB_Configure_;
-  WPushButton *PB_Start_;
-  WPushButton *PB_Stop_;
-  WPushButton *PB_Halt_;
-  WPushButton *PB_Destroy_;
-  WPushButton *PB_RefreshStatus_;
-  WTable *TB_DIFStatus_;
-  WLineEdit *LE_RunStatus_;
-  WContainerWidget *container_;
+  Wt::WLineEdit *LE_CCCHost_;
+  Wt::WLineEdit *LE_DIFHosts_;
+  Wt::WLineEdit *LE_DataDirectory_;
+  Wt::WLineEdit *LE_DBState_;
+  Wt::WLineEdit *LE_ControlRegister_;
+  Wt::WLineEdit *LE_Session_;
+  Wt::WCheckBox *CB_SaveData_;
+  Wt::WSpinBox  *SB_CCCPort_;
+  Wt::WSpinBox  *SB_DIFPort_;
+  Wt::WSpinBox  *SB_NumberOfDIFs_;
+  Wt::WSpinBox  *SB_DefaultRunNumber_;
+  Wt::WLineEdit *LE_State_;
+  Wt::WPushButton *PB_Initialise_;
+  Wt::WPushButton *PB_Configure_;
+  Wt::WPushButton *PB_Start_;
+  Wt::WPushButton *PB_Stop_;
+  Wt::WPushButton *PB_Halt_;
+  Wt::WPushButton *PB_Destroy_;
+  Wt::WPushButton *PB_RefreshStatus_;
+  Wt::WTable *TB_DIFStatus_;
+  Wt::WLineEdit *LE_RunStatus_;
+  Wt::WContainerWidget *container_;
   Wt::WTabWidget *tabW_; 
   void saveData(std::string fn =".daq/last.txt");
   void readData(std::string fn =".daq/last.txt");
@@ -117,7 +118,7 @@ void StandaloneDataAcquisition::readData(std::string fn)
   if ( !parsingSuccessful )
     {
         // report to the user the failure and their locations in the document.
-        std::cout  << reader.getFormatedErrorMessages()
+        std::cout  << reader.getFormattedErrorMessages()
                << "\n";
     }
 
@@ -177,16 +178,16 @@ void StandaloneDataAcquisition::buildParametersForm(Wt::WGroupBox *wb)
   vbox->addLayout(hbCCC);
 
 
-  hbCCC->addWidget(new WText("CCC Host: "));  // show some text
-  LE_CCCHost_ = new WLineEdit(wb);                     // allow text input
+  hbCCC->addWidget(new Wt::WText("CCC Host: "));  // show some text
+  LE_CCCHost_ = new Wt::WLineEdit(wb);                     // allow text input
   LE_CCCHost_->setFocus(); 
   LE_CCCHost_->changed().connect( boost::bind(&StandaloneDataAcquisition::saveData, this, ".daq/last.txt"));
 
   hbCCC->addWidget(LE_CCCHost_);
  
 
-  hbCCC->addWidget(new WText("CCC PORT: "));  // show some text  
-  SB_CCCPort_= new WSpinBox(wb);
+  hbCCC->addWidget(new Wt::WText("CCC PORT: "));  // show some text  
+  SB_CCCPort_= new Wt::WSpinBox(wb);
   SB_CCCPort_->setValue(5000);
   SB_CCCPort_->setRange(1000,10000);
   SB_CCCPort_->setSingleStep(100);
@@ -196,26 +197,26 @@ void StandaloneDataAcquisition::buildParametersForm(Wt::WGroupBox *wb)
   vbox->addLayout(hbDIF);
 
   //vbox->addWidget(new WText("\n \n \n \n \n \n "));
-  hbDIF->addWidget(new WText("DIF Hosts separated by comma: "));  // show some text
-  LE_DIFHosts_ = new WLineEdit(wb);                     // allow text input
+  hbDIF->addWidget(new Wt::WText("DIF Hosts separated by comma: "));  // show some text
+  LE_DIFHosts_ = new Wt::WLineEdit(wb);                     // allow text input
   hbDIF->addWidget(LE_DIFHosts_);
   LE_DIFHosts_->changed().connect(boost::bind(&StandaloneDataAcquisition::saveData, this, ".daq/last.txt"));
-  hbDIF->addWidget(new WText("DIF PORT: "));  // show some text  
-  SB_DIFPort_= new WSpinBox(wb);
+  hbDIF->addWidget(new Wt::WText("DIF PORT: "));  // show some text  
+  SB_DIFPort_= new Wt::WSpinBox(wb);
   SB_DIFPort_->setValue(4000);
   SB_DIFPort_->setRange(1000,10000);
   SB_DIFPort_->setSingleStep(100);
   hbDIF->addWidget( SB_DIFPort_);
   SB_DIFPort_->changed().connect(boost::bind(&StandaloneDataAcquisition::saveData, this, ".daq/last.txt"));
   //vbox->addWidget(new WText("\n \n \n \n \n \n "));
-  vbox->addWidget(new WText("Database State: "));  // show some text
+  vbox->addWidget(new Wt::WText("Database State: "));  // show some text
 
-  LE_DBState_ = new WLineEdit(wb);
+  LE_DBState_ = new Wt::WLineEdit(wb);
   vbox->addWidget( LE_DBState_);                     // allow text input
   LE_DBState_->changed().connect(boost::bind(&StandaloneDataAcquisition::saveData, this, ".daq/last.txt"));
-  vbox->addWidget(new WText("Control Register: "));  // show some text
+  vbox->addWidget(new Wt::WText("Control Register: "));  // show some text
 
-  LE_ControlRegister_ = new WLineEdit(wb);                     // allow text input
+  LE_ControlRegister_ = new Wt::WLineEdit(wb);                     // allow text input
   LE_ControlRegister_->setText("0x80000000");
   
   vbox->addWidget( LE_ControlRegister_);
@@ -224,18 +225,18 @@ void StandaloneDataAcquisition::buildParametersForm(Wt::WGroupBox *wb)
   Wt::WHBoxLayout *hbSTO = new Wt::WHBoxLayout();
   vbox->addLayout(hbSTO);
   //vbox->addWidget(new WText("\n \n \n \n \n \n "));
-  hbSTO->addWidget(new WText("Storage directory "));  // show some text
-  LE_DataDirectory_ = new WLineEdit(wb);                     // allow text input
+  hbSTO->addWidget(new Wt::WText("Storage directory "));  // show some text
+  LE_DataDirectory_ = new Wt::WLineEdit(wb);                     // allow text input
   hbSTO->addWidget(LE_DataDirectory_);
   LE_DataDirectory_->changed().connect(boost::bind(&StandaloneDataAcquisition::saveData, this, ".daq/last.txt"));
-  hbSTO->addWidget(new WText("Number of DIFs: "));  // show some text  
-  SB_NumberOfDIFs_= new WSpinBox(wb);
+  hbSTO->addWidget(new Wt::WText("Number of DIFs: "));  // show some text  
+  SB_NumberOfDIFs_= new Wt::WSpinBox(wb);
   SB_NumberOfDIFs_->setValue(1);
   SB_NumberOfDIFs_->setRange(1,255);
   SB_NumberOfDIFs_->setSingleStep(1);
   hbSTO->addWidget( SB_NumberOfDIFs_);
   SB_NumberOfDIFs_->changed().connect(boost::bind(&StandaloneDataAcquisition::saveData, this, ".daq/last.txt"));
-  CB_SaveData_= new WCheckBox(wb);
+  CB_SaveData_= new Wt::WCheckBox(wb);
   hbSTO->addWidget( CB_SaveData_);
   CB_SaveData_->changed().connect(boost::bind(&StandaloneDataAcquisition::saveData, this, ".daq/last.txt"));
   //vbox->addWidget(new WText("\n \n \n \n \n \n "));
@@ -244,13 +245,13 @@ void StandaloneDataAcquisition::buildParametersForm(Wt::WGroupBox *wb)
   Wt::WHBoxLayout *hbsave = new Wt::WHBoxLayout();
   vbox->addLayout(hbsave);
   //vbox->addWidget(new WText("\n \n \n \n \n \n "));
-  hbsave->addWidget(new WText("Session Name "));  // show some text
-   LE_Session_ = new WLineEdit(wb);                     // allow text input
+  hbsave->addWidget(new Wt::WText("Session Name "));  // show some text
+   LE_Session_ = new Wt::WLineEdit(wb);                     // allow text input
   hbsave->addWidget(LE_Session_);
-  WPushButton *saveb = new WPushButton("Save", wb); // create a button
-  saveb->setMargin(5, Left);                                 // add 5 pixels margin
-  WPushButton *loadb = new WPushButton("load", wb); // create a button
-  loadb->setMargin(5, Left);     
+  Wt::WPushButton *saveb = new Wt::WPushButton("Save", wb); // create a button
+  saveb->setMargin(5, Wt::Left);                                 // add 5 pixels margin
+  Wt::WPushButton *loadb = new Wt::WPushButton("load", wb); // create a button
+  loadb->setMargin(5, Wt::Left);     
                             // add 5 pixels margin
   hbsave->addWidget(saveb);
   hbsave->addWidget(loadb);
@@ -285,8 +286,8 @@ Wt::WContainerWidget *container = new Wt::WContainerWidget();
 
 
 */
-StandaloneDataAcquisition::StandaloneDataAcquisition(const WEnvironment& env)
-  : WApplication(env),theClient_(NULL),LE_RunStatus_(NULL),TB_DIFStatus_(NULL)
+StandaloneDataAcquisition::StandaloneDataAcquisition(const Wt::WEnvironment& env)
+  : Wt::WApplication(env),theClient_(NULL),LE_RunStatus_(NULL),TB_DIFStatus_(NULL)
 {
   setTitle("Standalone Data Acquisition");                               // application title
   container_ = new Wt::WContainerWidget(root());
@@ -313,11 +314,11 @@ groupBoxParam->addStyleClass("centered-example");
 
   tabW_->setStyleClass("tabwidget");
 
-  root()->addWidget(new WBreak());                       // insert a line break
-  WPushButton *b1 = new WPushButton("Kill the Session", root()); // create a button
-  b1->setMargin(5, Left);                                 // add 5 pixels margin
+  root()->addWidget(new Wt::WBreak());                       // insert a line break
+  Wt::WPushButton *b1 = new Wt::WPushButton("Kill the Session", root()); // create a button
+  b1->setMargin(5, Wt::Left);                                 // add 5 pixels margin
 
-  root()->addWidget(new WBreak());                       // insert a line break
+  root()->addWidget(new Wt::WBreak());                       // insert a line break
 
 
 
@@ -353,19 +354,19 @@ void StandaloneDataAcquisition::buildDaqForm(Wt::WGroupBox *wb)
 
   vbox->addLayout(hbFSM);
 
-  PB_Initialise_= new WPushButton("Initialise", wb);
-  PB_Configure_= new WPushButton("Configure", wb);PB_Configure_->disable();
-  PB_Start_= new WPushButton("Start", wb);PB_Start_->disable();
-  PB_Stop_= new WPushButton("Stop", wb);PB_Stop_->disable();
-  PB_Halt_= new WPushButton("Halt", wb);PB_Halt_->disable();
-  PB_Destroy_= new WPushButton("Destroy", wb);PB_Destroy_->disable();
+  PB_Initialise_= new Wt::WPushButton("Initialise", wb);
+  PB_Configure_= new Wt::WPushButton("Configure", wb);PB_Configure_->disable();
+  PB_Start_= new Wt::WPushButton("Start", wb);PB_Start_->disable();
+  PB_Stop_= new Wt::WPushButton("Stop", wb);PB_Stop_->disable();
+  PB_Halt_= new Wt::WPushButton("Halt", wb);PB_Halt_->disable();
+  PB_Destroy_= new Wt::WPushButton("Destroy", wb);PB_Destroy_->disable();
   hbFSM->addWidget(PB_Initialise_);  // show some text
   hbFSM->addWidget(PB_Configure_);  // show some text
   hbFSM->addWidget(PB_Start_);  // show some text
   hbFSM->addWidget(PB_Stop_);  // show some text
   hbFSM->addWidget(PB_Halt_);  // show some text
   hbFSM->addWidget(PB_Destroy_);  // show some text
-  LE_State_ = new WLineEdit(wb);                     // allow text input
+  LE_State_ = new Wt::WLineEdit(wb);                     // allow text input
   LE_State_->setText("Destroyed");
   LE_State_->disable();
   vbox->addWidget(LE_State_);
@@ -645,15 +646,15 @@ void StandaloneDataAcquisition::createMonitoringForm(Wt::WGroupBox *wb)
 	{
 	  printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
 	     
-	  LE_RunStatus_ = new WLineEdit(wb);                     // allow text input
+	  LE_RunStatus_ = new Wt::WLineEdit(wb);                     // allow text input
 	  LE_RunStatus_->disable();
 	  printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
 	}
       if (TB_DIFStatus_==NULL)
 	{
 	  printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
-	  TB_DIFStatus_= new WTable(wb);
-	  printf("%s %d %x\n",__PRETTY_FUNCTION__,__LINE__,TB_DIFStatus_);
+	  TB_DIFStatus_= new Wt::WTable(wb);
+	  //printf("%s %d %x\n",__PRETTY_FUNCTION__,__LINE__,(uint32_t)TB_DIFStatus_);
 	  TB_DIFStatus_->setHeaderCount(1);
 	  printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
 	  TB_DIFStatus_->setWidth("80%");
@@ -662,7 +663,7 @@ void StandaloneDataAcquisition::createMonitoringForm(Wt::WGroupBox *wb)
 	  TB_DIFStatus_->clear();
 	  printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
 	}
-      PB_RefreshStatus_= new WPushButton("Refresh", wb);
+      PB_RefreshStatus_= new Wt::WPushButton("Refresh", wb);
       PB_RefreshStatus_->clicked().connect(this, &StandaloneDataAcquisition::updateMonitoringForm);
       printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
 }
@@ -735,7 +736,7 @@ void StandaloneDataAcquisition::updateMonitoringForm()
  TB_DIFStatus_->addStyleClass("table-striped",true); 
  TB_DIFStatus_->addStyleClass("table-bordered",true); 
 }
-WApplication *createApplication(const WEnvironment& env)
+Wt::WApplication *createApplication(const Wt::WEnvironment& env)
 {
   /*
    * You could read information from the environment to decide whether
@@ -751,12 +752,12 @@ int main(int argc, char **argv)
    * start the server application (FastCGI or httpd) that starts listening
    * for requests, and handles all of the application life cycles.
    *
-   * The last argument to WRun specifies the function that will instantiate
+   * The last argument to WmRun specifies the function that will instantiate
    * new application objects. That function is executed when a new user surfs
    * to the Wt application, and after the library has negotiated browser
    * support. The function should return a newly instantiated application
    * object.
    */
-  return WRun(argc, argv, &createApplication);
+  return Wt::WRun(argc, argv, &createApplication);
 }
 
