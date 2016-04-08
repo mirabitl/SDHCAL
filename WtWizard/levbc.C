@@ -35,17 +35,17 @@ using namespace  std;
 #include "DIFMultiClient.h"
 #include "OracleDIFDBManager.h"
 #include "Tokenizer.h"
-
+#include <json/json.h>
 //using namespace Wt;
 
 /*
  * A simple hello world application class which demonstrates how to react
  * to events, read input, and give feed-back.
  */
-class StandaloneDataAcquisition : public Wt::WApplication
+class levbc : public Wt::WApplication
 {
 public:
-  StandaloneDataAcquisition(const Wt::WEnvironment& env);
+  levbc(const Wt::WEnvironment& env);
 
 private:
   DIFMultiClient* theClient_;
@@ -75,16 +75,13 @@ private:
   Wt::WPushButton *PB_Destroy_;
   Wt::WPushButton *PB_RefreshStatus_;
   Wt::WTable *TB_DIFStatus_;
+  Wt::WTable *TB_TrigStatus_;
   Wt::WLineEdit *LE_RunStatus_;
+  Wt::WLineEdit *LE_RunNumber_;
+  Wt::WLineEdit *LE_EventNumber_;
   Wt::WContainerWidget *container_;
   Wt::WTabWidget *tabW_; 
-  void saveData(std::string fn =".daq/last.txt");
-  void readData(std::string fn =".daq/last.txt");
-  void saveDataHandler();
-  void readDataHandler();
-  void buildParametersForm(Wt::WGroupBox *wb);
-  void SaveParameters();
-  void LoadParameters();
+  
 
   void Quit();
   void buildDaqForm(Wt::WGroupBox *wb);
@@ -109,171 +106,10 @@ private:
 
 };
 
-void StandaloneDataAcquisition::readData(std::string fn)
-{
-  Json::Value root;   // will contains the root value after parsing.
-  Json::Reader reader;
-  std::ifstream test(fn.c_str(), std::ifstream::binary);
-  bool parsingSuccessful = reader.parse( test, root, false );
-  if ( !parsingSuccessful )
-    {
-        // report to the user the failure and their locations in the document.
-        std::cout  << reader.getFormattedErrorMessages()
-               << "\n";
-    }
-
-    std::string CCCHost = root.get("CCCHost", "UTF-8" ).asString();
-    LE_CCCHost_->setText(CCCHost);
-    std::string DIFHosts = root.get("DIFHosts", "UTF-8" ).asString();
-    LE_DIFHosts_->setText(DIFHosts);
-    std::string DBState = root.get("DBState", "UTF-8" ).asString();
-    LE_DBState_->setText(DBState);
-    std::string DataDirectory = root.get("DataDirectory", "UTF-8" ).asString();
-    LE_DataDirectory_->setText(DataDirectory);
-    std::string ControlRegister = root.get("ControlRegister", "UTF-8" ).asString();
-    LE_ControlRegister_->setText(ControlRegister);
-    
-    uint32_t NumberOfDIFs=root.get("NumberOfDIFs", "UTF-8" ).asUInt();
-    SB_NumberOfDIFs_->setValue(NumberOfDIFs);
-    uint32_t CCCPort=root.get("CCCPort", "UTF-8" ).asUInt();
-    SB_CCCPort_->setValue(CCCPort);
-    uint32_t DIFPort=root.get("DIFPort", "UTF-8" ).asUInt();
-    SB_DIFPort_->setValue(DIFPort);
-    uint32_t SaveData=root.get("SaveData", "UTF-8" ).asUInt();
-    CB_SaveData_->setChecked(SaveData);
-
-    std::cout << NumberOfDIFs << "\n";
-}
-void StandaloneDataAcquisition::saveData(std::string fn)
-{
-  std::cout<<"hello there "<<std::endl;
-  std::ofstream file;// can be merged to std::ofstream file("file.txt");
-  file.open(fn.c_str());
-  Json::Value event;   
-  event["CCCHost"]=LE_CCCHost_->text().toUTF8();
-  event["CCCPort"]=SB_CCCPort_->value();
-  event["DIFHosts"]=LE_DIFHosts_->text().toUTF8();
-  event["DIFPort"]=SB_DIFPort_->value();
-  event["DBState"]=LE_DBState_->text().toUTF8();
-  event["NumberOfDIFs"]=SB_NumberOfDIFs_->value();
-  event["DataDirectory"]=LE_DataDirectory_->text().toUTF8();
-  event["SaveData"]=CB_SaveData_->checkState();
-  event["ControlRegister"]=LE_ControlRegister_->text().toUTF8();
-
-  file <<event;
-  file.close();// is not necessary because the destructor closes the open file by default
-  //fprintf(pFile,"%s\n",LE_CCCHost_->text().toUTF8().c_str());
 
 
-}
-void StandaloneDataAcquisition::buildParametersForm(Wt::WGroupBox *wb)
-{
-
-  Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout();
-  vbox->setContentsMargins(2,2,2,2);
-  wb->setLayout(vbox);
-
-  Wt::WHBoxLayout *hbCCC = new Wt::WHBoxLayout();
-
-  vbox->addLayout(hbCCC);
 
 
-  hbCCC->addWidget(new Wt::WText("CCC Host: "));  // show some text
-  LE_CCCHost_ = new Wt::WLineEdit(wb);                     // allow text input
-  LE_CCCHost_->setFocus(); 
-  LE_CCCHost_->changed().connect( boost::bind(&StandaloneDataAcquisition::saveData, this, ".daq/last.txt"));
-
-  hbCCC->addWidget(LE_CCCHost_);
- 
-
-  hbCCC->addWidget(new Wt::WText("CCC PORT: "));  // show some text  
-  SB_CCCPort_= new Wt::WSpinBox(wb);
-  SB_CCCPort_->setValue(5000);
-  SB_CCCPort_->setRange(1000,10000);
-  SB_CCCPort_->setSingleStep(100);
-  hbCCC->addWidget(SB_CCCPort_);
-  SB_CCCPort_->changed().connect(boost::bind(&StandaloneDataAcquisition::saveData, this, ".daq/last.txt"));
-  Wt::WHBoxLayout *hbDIF = new Wt::WHBoxLayout();
-  vbox->addLayout(hbDIF);
-
-  //vbox->addWidget(new WText("\n \n \n \n \n \n "));
-  hbDIF->addWidget(new Wt::WText("DIF Hosts separated by comma: "));  // show some text
-  LE_DIFHosts_ = new Wt::WLineEdit(wb);                     // allow text input
-  hbDIF->addWidget(LE_DIFHosts_);
-  LE_DIFHosts_->changed().connect(boost::bind(&StandaloneDataAcquisition::saveData, this, ".daq/last.txt"));
-  hbDIF->addWidget(new Wt::WText("DIF PORT: "));  // show some text  
-  SB_DIFPort_= new Wt::WSpinBox(wb);
-  SB_DIFPort_->setValue(4000);
-  SB_DIFPort_->setRange(1000,10000);
-  SB_DIFPort_->setSingleStep(100);
-  hbDIF->addWidget( SB_DIFPort_);
-  SB_DIFPort_->changed().connect(boost::bind(&StandaloneDataAcquisition::saveData, this, ".daq/last.txt"));
-  //vbox->addWidget(new WText("\n \n \n \n \n \n "));
-  vbox->addWidget(new Wt::WText("Database State: "));  // show some text
-
-  LE_DBState_ = new Wt::WLineEdit(wb);
-  vbox->addWidget( LE_DBState_);                     // allow text input
-  LE_DBState_->changed().connect(boost::bind(&StandaloneDataAcquisition::saveData, this, ".daq/last.txt"));
-  vbox->addWidget(new Wt::WText("Control Register: "));  // show some text
-
-  LE_ControlRegister_ = new Wt::WLineEdit(wb);                     // allow text input
-  LE_ControlRegister_->setText("0x80000000");
-  
-  vbox->addWidget( LE_ControlRegister_);
-  LE_ControlRegister_->changed().connect(boost::bind(&StandaloneDataAcquisition::saveData, this, ".daq/last.txt"));
-  //vbox->addWidget(new WText("\n \n \n \n \n \n "));
-  Wt::WHBoxLayout *hbSTO = new Wt::WHBoxLayout();
-  vbox->addLayout(hbSTO);
-  //vbox->addWidget(new WText("\n \n \n \n \n \n "));
-  hbSTO->addWidget(new Wt::WText("Storage directory "));  // show some text
-  LE_DataDirectory_ = new Wt::WLineEdit(wb);                     // allow text input
-  hbSTO->addWidget(LE_DataDirectory_);
-  LE_DataDirectory_->changed().connect(boost::bind(&StandaloneDataAcquisition::saveData, this, ".daq/last.txt"));
-  hbSTO->addWidget(new Wt::WText("Number of DIFs: "));  // show some text  
-  SB_NumberOfDIFs_= new Wt::WSpinBox(wb);
-  SB_NumberOfDIFs_->setValue(1);
-  SB_NumberOfDIFs_->setRange(1,255);
-  SB_NumberOfDIFs_->setSingleStep(1);
-  hbSTO->addWidget( SB_NumberOfDIFs_);
-  SB_NumberOfDIFs_->changed().connect(boost::bind(&StandaloneDataAcquisition::saveData, this, ".daq/last.txt"));
-  CB_SaveData_= new Wt::WCheckBox(wb);
-  hbSTO->addWidget( CB_SaveData_);
-  CB_SaveData_->changed().connect(boost::bind(&StandaloneDataAcquisition::saveData, this, ".daq/last.txt"));
-  //vbox->addWidget(new WText("\n \n \n \n \n \n "));
-  //this->readData();
-  
-  Wt::WHBoxLayout *hbsave = new Wt::WHBoxLayout();
-  vbox->addLayout(hbsave);
-  //vbox->addWidget(new WText("\n \n \n \n \n \n "));
-  hbsave->addWidget(new Wt::WText("Session Name "));  // show some text
-   LE_Session_ = new Wt::WLineEdit(wb);                     // allow text input
-  hbsave->addWidget(LE_Session_);
-  Wt::WPushButton *saveb = new Wt::WPushButton("Save", wb); // create a button
-  saveb->setMargin(5, Wt::Left);                                 // add 5 pixels margin
-  Wt::WPushButton *loadb = new Wt::WPushButton("load", wb); // create a button
-  loadb->setMargin(5, Wt::Left);     
-                            // add 5 pixels margin
-  hbsave->addWidget(saveb);
-  hbsave->addWidget(loadb);
- 
-
-  saveb->clicked().connect(this,&StandaloneDataAcquisition::saveDataHandler);
-  loadb->clicked().connect(this,&StandaloneDataAcquisition::readDataHandler);
-
-}
-
-void StandaloneDataAcquisition::saveDataHandler()
-{
- std::string fn=".daq/"+LE_Session_->text().toUTF8()+".txt";
-  std::cout<<fn<<" to be used"<<std::endl;
- this->saveData(fn);
-}
-void StandaloneDataAcquisition::readDataHandler()
-{
- std::string fn=".daq/"+LE_Session_->text().toUTF8()+".txt";
-  std::cout<<fn<<" to be used"<<std::endl;
- this->readData(fn);
-}
 /*
  * The env argument contains information about the new session, and
  * the initial request. It must be passed to the WApplication
@@ -286,27 +122,38 @@ Wt::WContainerWidget *container = new Wt::WContainerWidget();
 
 
 */
-StandaloneDataAcquisition::StandaloneDataAcquisition(const Wt::WEnvironment& env)
-  : Wt::WApplication(env),theClient_(NULL),LE_RunStatus_(NULL),TB_DIFStatus_(NULL)
+std::string exec(const char* cmd) {
+    FILE* pipe = popen(cmd, "r");
+    if (!pipe) return "ERROR";
+    char buffer[128];
+    std::string result = "";
+    while (!feof(pipe)) {
+        if (fgets(buffer, 128, pipe) != NULL)
+            result += buffer;
+    }
+    pclose(pipe);
+    return result;
+}
+levbc::levbc(const Wt::WEnvironment& env)
+  : Wt::WApplication(env),theClient_(NULL),LE_RunStatus_(NULL),TB_DIFStatus_(NULL),LE_RunNumber_(NULL),LE_EventNumber_(NULL)
 {
+
+   std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-state -v");
+   std::cout<<"Youpi Ya "<<res<<std::endl;
   setTitle("Standalone Data Acquisition");                               // application title
   container_ = new Wt::WContainerWidget(root());
 
   tabW_ = new Wt::WTabWidget(container_);
-  Wt::WGroupBox *groupBoxParam = new Wt::WGroupBox("Parametres");
-  tabW_->addTab(groupBoxParam,"Parametres", Wt::WTabWidget::PreLoading);
-
-groupBoxParam->addStyleClass("centered-example");
- buildParametersForm(groupBoxParam);
+ 
 
   Wt::WGroupBox *groupBoxDaq = new Wt::WGroupBox("Daq Control");
-  tabW_->addTab(groupBoxDaq,"Daq Control", Wt::WTabWidget::PreLoading);
+  tabW_->addTab(groupBoxDaq,"Daq Control");//, Wt::WTabWidget::PreLoading);
 
   groupBoxDaq->addStyleClass("centered-example");
 
   buildDaqForm(groupBoxDaq);
   Wt::WGroupBox *groupBoxDaqStatus = new Wt::WGroupBox("Daq Status");
-  tabW_->addTab(groupBoxDaqStatus,"Daq Status", Wt::WTabWidget::PreLoading);
+  tabW_->addTab(groupBoxDaqStatus,"Daq Status");//, Wt::WTabWidget::PreLoading);
 
   groupBoxDaqStatus->addStyleClass("centered-example");
 
@@ -328,12 +175,12 @@ groupBoxParam->addStyleClass("centered-example");
    * - simple Wt-way
    */
 
-  b1->clicked().connect(this, &StandaloneDataAcquisition::Quit);
-  tabW_->currentChanged().connect(this,&StandaloneDataAcquisition::updateMonitoringForm);
+  b1->clicked().connect(this, &levbc::Quit);
+  tabW_->currentChanged().connect(this,&levbc::updateMonitoringForm);
 
 }
 
-void StandaloneDataAcquisition::Quit()
+void levbc::Quit()
 {
   /*
    * Update the text, using text input into the nameEdit_ field.
@@ -343,45 +190,47 @@ void StandaloneDataAcquisition::Quit()
 
   this->quit();
 }
-void StandaloneDataAcquisition::buildDaqForm(Wt::WGroupBox *wb)
+void levbc::buildDaqForm(Wt::WGroupBox *wb)
 {
 
   Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout();
-  vbox->setContentsMargins(2,2,2,2);
+  //vbox->setContentsMargins(2,2,2,2);
   wb->setLayout(vbox);
+  //wb->resize(200,200);
 
   Wt::WHBoxLayout *hbFSM = new Wt::WHBoxLayout();
 
-  vbox->addLayout(hbFSM);
+
 
   PB_Initialise_= new Wt::WPushButton("Initialise", wb);
-  PB_Configure_= new Wt::WPushButton("Configure", wb);PB_Configure_->disable();
-  PB_Start_= new Wt::WPushButton("Start", wb);PB_Start_->disable();
-  PB_Stop_= new Wt::WPushButton("Stop", wb);PB_Stop_->disable();
-  PB_Halt_= new Wt::WPushButton("Halt", wb);PB_Halt_->disable();
-  PB_Destroy_= new Wt::WPushButton("Destroy", wb);PB_Destroy_->disable();
+  PB_Configure_= new Wt::WPushButton("Configure", wb);//PB_Configure_->disable();
+  PB_Start_= new Wt::WPushButton("Start", wb);//PB_Start_->disable();
+  PB_Stop_= new Wt::WPushButton("Stop", wb);//PB_Stop_->disable();
+  PB_Halt_= new Wt::WPushButton("Halt", wb);//PB_Halt_->disable();
+  PB_Destroy_= new Wt::WPushButton("Destroy", wb);//PB_Destroy_->disable();
   hbFSM->addWidget(PB_Initialise_);  // show some text
   hbFSM->addWidget(PB_Configure_);  // show some text
   hbFSM->addWidget(PB_Start_);  // show some text
   hbFSM->addWidget(PB_Stop_);  // show some text
   hbFSM->addWidget(PB_Halt_);  // show some text
   hbFSM->addWidget(PB_Destroy_);  // show some text
+  vbox->addLayout(hbFSM);
   LE_State_ = new Wt::WLineEdit(wb);                     // allow text input
   LE_State_->setText("Destroyed");
   LE_State_->disable();
   vbox->addWidget(LE_State_);
-  PB_Initialise_->clicked().connect(this,&StandaloneDataAcquisition::InitialiseButtonHandler);
+  PB_Initialise_->clicked().connect(this,&levbc::InitialiseButtonHandler);
 
-  PB_Start_->clicked().connect(this,&StandaloneDataAcquisition::StartButtonHandler);
-  PB_Configure_->clicked().connect(this,&StandaloneDataAcquisition::ConfigureButtonHandler);
-  PB_Stop_->clicked().connect(this,&StandaloneDataAcquisition::StopButtonHandler);
-  PB_Halt_->clicked().connect(this,&StandaloneDataAcquisition::HaltButtonHandler);
-  PB_Destroy_->clicked().connect(this,&StandaloneDataAcquisition::DestroyButtonHandler);
+  PB_Start_->clicked().connect(this,&levbc::StartButtonHandler);
+  PB_Configure_->clicked().connect(this,&levbc::ConfigureButtonHandler);
+  PB_Stop_->clicked().connect(this,&levbc::StopButtonHandler);
+  PB_Halt_->clicked().connect(this,&levbc::HaltButtonHandler);
+  PB_Destroy_->clicked().connect(this,&levbc::DestroyButtonHandler);
 
 
 }
 
-void StandaloneDataAcquisition::InitialiseButtonHandler()
+void levbc::InitialiseButtonHandler()
 {
   try {
     this->InitialiseAction();
@@ -399,7 +248,7 @@ void StandaloneDataAcquisition::InitialiseButtonHandler()
 
 
 }
-void StandaloneDataAcquisition::InitialiseAction()
+void levbc::InitialiseAction()
 {
 
   // Instantiate
@@ -457,7 +306,7 @@ void StandaloneDataAcquisition::InitialiseAction()
    std::cout<<"Fin de l'initialise"<<this->sessionId()<<std::endl;  
   theRunInfo_=NULL;
 }
-void StandaloneDataAcquisition::ConfigureButtonHandler()
+void levbc::ConfigureButtonHandler()
 {
   try {
     this->ConfigureAction();
@@ -474,7 +323,7 @@ void StandaloneDataAcquisition::ConfigureButtonHandler()
 
 
 }
-void StandaloneDataAcquisition::ConfigureAction()
+void levbc::ConfigureAction()
 {
    theProxy_->Initialise();
   printf("5\n");
@@ -519,7 +368,7 @@ void StandaloneDataAcquisition::ConfigureAction()
     }
   std::cout<<" New run starting ------------------->"<<theRunNumber_<<std::endl;
 }
-void StandaloneDataAcquisition::StartButtonHandler()
+void levbc::StartButtonHandler()
 {
   try {
     this->StartAction();
@@ -536,7 +385,7 @@ void StandaloneDataAcquisition::StartButtonHandler()
   PB_Destroy_->enable();
 
 }
-void StandaloneDataAcquisition::StartAction()
+void levbc::StartAction()
 {
   theClient_->getCCCClient()->doStart();
   theClient_->getCCCClient()->doStop();
@@ -554,7 +403,7 @@ void StandaloneDataAcquisition::StartAction()
   std::cout<<"Fin de l'Enable"<<std::endl;  
 
 }
-void StandaloneDataAcquisition::StopButtonHandler()
+void levbc::StopButtonHandler()
 {
   try {
     this->StopAction();
@@ -571,7 +420,7 @@ void StandaloneDataAcquisition::StopButtonHandler()
   PB_Destroy_->enable();
 
 }
-void StandaloneDataAcquisition::StopAction()
+void levbc::StopAction()
 {
   theClient_->Stop();
   theProxy_->Stop();
@@ -588,7 +437,7 @@ void StandaloneDataAcquisition::StopAction()
     }
 }
 
-void StandaloneDataAcquisition::HaltButtonHandler()
+void levbc::HaltButtonHandler()
 {
   try {
     this->HaltAction();
@@ -606,12 +455,12 @@ void StandaloneDataAcquisition::HaltButtonHandler()
   PB_Destroy_->enable();
 
 }
-void StandaloneDataAcquisition::HaltAction()
+void levbc::HaltAction()
 {
   this->StopAction();
 }
 
-void StandaloneDataAcquisition::DestroyButtonHandler()
+void levbc::DestroyButtonHandler()
 {
   try {
     this->DestroyAction();
@@ -632,7 +481,7 @@ void StandaloneDataAcquisition::DestroyButtonHandler()
 
 }
 
-void StandaloneDataAcquisition::DestroyAction()
+void levbc::DestroyAction()
 {
    theClient_->Destroy();
    printf("2\n");
@@ -640,16 +489,48 @@ void StandaloneDataAcquisition::DestroyAction()
    theClient_=NULL;
 }
 
-void StandaloneDataAcquisition::createMonitoringForm(Wt::WGroupBox *wb)
+void levbc::createMonitoringForm(Wt::WGroupBox *wb)
 {
-      if (LE_RunStatus_==NULL)
-	{
-	  printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
+ Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout();
+  //vbox->setContentsMargins(2,2,2,2);
+  wb->setLayout(vbox);
+  //wb->resize(200,200);
+
+  Wt::WHBoxLayout *hbRun = new Wt::WHBoxLayout();
+  
+  if (LE_RunStatus_==NULL)
+    {
+      LE_RunStatus_ = new Wt::WLineEdit(wb);                     // allow text input
+      LE_RunStatus_->disable();
+      hbRun->addWidget(LE_RunStatus_);
+    }
+  if (LE_RunNumber_==NULL)
+    {
 	     
-	  LE_RunStatus_ = new Wt::WLineEdit(wb);                     // allow text input
-	  LE_RunStatus_->disable();
-	  printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
-	}
+      LE_RunNumber_ = new Wt::WLineEdit(wb);                     // allow text input
+      LE_RunNumber_->disable();
+      hbRun->addWidget(LE_RunNumber_);
+    }
+  if (LE_EventNumber_==NULL)
+    {
+      LE_EventNumber_ = new Wt::WLineEdit(wb);                     // allow text input
+      LE_EventNumber_->disable();
+      hbRun->addWidget(LE_EventNumber_);
+    }
+  PB_RefreshStatus_= new Wt::WPushButton("Refresh", wb);
+  PB_RefreshStatus_->clicked().connect(this, &levbc::updateMonitoringForm);
+  hbRun->addWidget(PB_RefreshStatus_);
+  vbox->addLayout(hbRun);
+  Wt::WHBoxLayout *hbTrig = new Wt::WHBoxLayout();
+  TB_TrigStatus_= new Wt::WTable(wb);
+  TB_TrigStatus_->setHeaderCount(1);
+  TB_TrigStatus_->setWidth("80%");
+  TB_TrigStatus_->clear();
+  TB_TrigStatus_->addStyleClass("table-bordered",true); 
+
+  hbTrig->addWidget(TB_TrigStatus_);
+  vbox->addLayout(hbTrig);
+  Wt::WHBoxLayout *hbDIF = new Wt::WHBoxLayout();
       if (TB_DIFStatus_==NULL)
 	{
 	  printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
@@ -662,12 +543,12 @@ void StandaloneDataAcquisition::createMonitoringForm(Wt::WGroupBox *wb)
 
 	  TB_DIFStatus_->clear();
 	  printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
+	  hbDIF->addWidget(TB_DIFStatus_);
 	}
-      PB_RefreshStatus_= new Wt::WPushButton("Refresh", wb);
-      PB_RefreshStatus_->clicked().connect(this, &StandaloneDataAcquisition::updateMonitoringForm);
+      vbox->addLayout(hbDIF);
       printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
 }
-void StandaloneDataAcquisition::buildMonitoringForm(Wt::WGroupBox *wb)
+void levbc::buildMonitoringForm(Wt::WGroupBox *wb)
 {
   if (theClient_==NULL)
     {
@@ -690,13 +571,38 @@ void StandaloneDataAcquisition::buildMonitoringForm(Wt::WGroupBox *wb)
     }
 }
 
-void StandaloneDataAcquisition::updateMonitoringForm()
+void levbc::updateMonitoringForm()
 {
-  if (theClient_==NULL) return;
-  
+  //if (theClient_==NULL) return;
+  std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-state -v");
+  Json::Reader reader;
+  Json::Value jsta;
+  bool parsingSuccessful = reader.parse(res,jsta);
   std::stringstream s;
-  s<<theRunNumber_;
+  s<<jsta["stateResponse"]["stateResult"][0].asString();
   LE_RunStatus_->setText(s.str());
+  //return;
+  res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-evb -v");
+  //std::cout<<res<<std::endl;
+  jsta.clear();
+  parsingSuccessful = reader.parse(res,jsta);
+  Json::Value jdev1;
+  parsingSuccessful = reader.parse(jsta["shmStatusResponse"]["shmStatusResult"][0].asString(),jdev1);
+  LE_RunNumber_->setText(jdev1["run"].asString());
+  LE_EventNumber_->setText(jdev1["event"].asString());
+  
+res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-status -v");
+  //std::cout<<res<<std::endl;
+  jsta.clear();
+  parsingSuccessful = reader.parse(res,jsta);
+  parsingSuccessful = reader.parse(jsta["statusResponse"]["statusResult"][0].asString(),jdev1);
+
+  const Json::Value& jdevs= jdev1;
+  //std::cout<<jdevs<<std::endl;
+  //for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
+  //  {	  //TB_DIFStatus_->elementAt(irow, 0)->addWidget();
+  //   std::cout<<(*jt);
+  //  }
   // Header
   TB_DIFStatus_->clear();
   TB_DIFStatus_->setHeaderCount(1);
@@ -709,32 +615,81 @@ void StandaloneDataAcquisition::updateMonitoringForm()
   TB_DIFStatus_->elementAt(0, 3)->addWidget(new Wt::WText("L BCID"));
   TB_DIFStatus_->elementAt(0, 4)->addWidget(new Wt::WText("L GTC"));
   TB_DIFStatus_->elementAt(0, 5)->addWidget(new Wt::WText("Bytes"));
-  uint32_t irow=1;
-  for (uint32_t i=0;i<theClient_->getNumberOfDIFs();i++)
-    {
-      DIFClient* d= theClient_->getDIFClient(i);
-      std::map<uint32_t,DIFInfo> dmap=d->getDIFMapStatus();
-      for (std::map<uint32_t,DIFInfo>::iterator itm=dmap.begin();itm!=dmap.end();itm++)
-	{
-	  //TB_DIFStatus_->elementAt(irow, 0)->addWidget();
-	  new Wt::WText(Wt::WString::fromUTF8(d->getHost()),TB_DIFStatus_->elementAt(irow, 0));
 
-	  std::stringstream sdif;sdif<<itm->first;
-	  TB_DIFStatus_->elementAt(irow, 1)->addWidget(new Wt::WText(sdif.str()));
-	  std::stringstream sstatus;sstatus<<std::hex<<itm->second.status;
-	  TB_DIFStatus_->elementAt(irow, 2)->addWidget(new Wt::WText(sstatus.str()));
-	  std::stringstream sbcid;sbcid<<itm->second.lastReceivedBCID;
-	  TB_DIFStatus_->elementAt(irow, 3)->addWidget(new Wt::WText(sbcid.str()));
-	  std::stringstream sgtc;sgtc<<itm->second.lastReceivedGTC;
-	  TB_DIFStatus_->elementAt(irow, 4)->addWidget(new Wt::WText(sgtc.str()));
-	  std::stringstream sbytes;sbytes<<itm->second.bytesReceived;
-	  TB_DIFStatus_->elementAt(irow, 5)->addWidget(new Wt::WText(sbytes.str()));
-	  irow++;
-	}
+  uint32_t irow=1;
+  for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
+    {	  //TB_DIFStatus_->elementAt(irow, 0)->addWidget();
+      std::cout<<(*jt);
+      new Wt::WText(Wt::WString::fromUTF8("oops"),TB_DIFStatus_->elementAt(irow, 0));
+      
+      std::stringstream sdif;sdif<<(*jt)["id"].asUInt();
+      TB_DIFStatus_->elementAt(irow, 1)->addWidget(new Wt::WText(sdif.str()));
+      
+      std::stringstream sstatus;sstatus<<std::hex<<(*jt)["slc"].asUInt();
+      TB_DIFStatus_->elementAt(irow, 2)->addWidget(new Wt::WText(sstatus.str()));
+      
+      std::stringstream sbcid;sbcid<<(*jt)["bcid"].asUInt64();
+      TB_DIFStatus_->elementAt(irow, 3)->addWidget(new Wt::WText(sbcid.str()));
+      
+      std::stringstream sgtc;sgtc<<(*jt)["gtc"].asUInt();
+      TB_DIFStatus_->elementAt(irow, 4)->addWidget(new Wt::WText(sgtc.str()));
+      std::stringstream sbytes;sbytes<<(*jt)["bytes"].asUInt64();
+      TB_DIFStatus_->elementAt(irow, 5)->addWidget(new Wt::WText(sbytes.str()));
+      
+      irow++;
     }
-  // TB_DIFStatus_->addStyleClass("table form-inline"); 
- TB_DIFStatus_->addStyleClass("table-striped",true); 
- TB_DIFStatus_->addStyleClass("table-bordered",true); 
+  TB_DIFStatus_->addStyleClass("table-striped",true); 
+  TB_DIFStatus_->addStyleClass("table-bordered",true); 
+  
+  res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --trig-status -v");
+  //std::cout<<res<<std::endl;
+  jsta.clear();
+  parsingSuccessful = reader.parse(res,jsta);
+  //std::cout<<jsta;
+  parsingSuccessful = reader.parse(jsta["triggerStatusResponse"]["triggerStatusResult"][0].asString(),jdev1);
+  
+  const Json::Value& jdevs1=jdev1;
+
+  //std::cout<<jdevs<<std::endl;
+  //for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
+  //  {	  //TB_DIFStatus_->elementAt(irow, 0)->addWidget();
+  //   std::cout<<(*jt);
+  //  }
+  // Header
+  TB_TrigStatus_->clear();
+  TB_TrigStatus_->setHeaderCount(1);
+  printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
+  TB_TrigStatus_->setWidth("80%");
+
+  TB_TrigStatus_->elementAt(0, 0)->addWidget(new Wt::WText("Spill"));
+  TB_TrigStatus_->elementAt(0, 1)->addWidget(new Wt::WText("busy1"));
+  TB_TrigStatus_->elementAt(0, 2)->addWidget(new Wt::WText("busy2"));
+  TB_TrigStatus_->elementAt(0, 3)->addWidget(new Wt::WText("busy3"));
+  TB_TrigStatus_->elementAt(0, 4)->addWidget(new Wt::WText("Ecal"));
+  TB_TrigStatus_->elementAt(0, 5)->addWidget(new Wt::WText("Mask"));
+  irow=1;
+
+  std::stringstream spill;spill<<" "<<jdev1["spill"].asUInt()<<" ";
+  TB_TrigStatus_->elementAt(irow, 1)->addWidget(new Wt::WText(spill.str()));
+  
+      
+  std::stringstream sdif;sdif<<jdev1["busy1"].asUInt();
+  TB_TrigStatus_->elementAt(irow, 1)->addWidget(new Wt::WText(sdif.str()));
+      
+  std::stringstream sstatus;sstatus<<std::hex<<jdev1["busy2"].asUInt();
+  TB_TrigStatus_->elementAt(irow, 2)->addWidget(new Wt::WText(sstatus.str()));
+      
+  std::stringstream sbcid;sbcid<<jdev1["busy3"].asUInt();
+  TB_TrigStatus_->elementAt(irow, 3)->addWidget(new Wt::WText(sbcid.str()));
+      
+  std::stringstream sgtc;sgtc<<jdev1["ecalmask"].asUInt();
+  TB_TrigStatus_->elementAt(irow, 4)->addWidget(new Wt::WText(sgtc.str()));
+  std::stringstream sbytes;sbytes<<jdev1["mask"].asUInt();
+  TB_TrigStatus_->elementAt(irow, 5)->addWidget(new Wt::WText(sbytes.str()));
+      
+    
+  //TB_TrigStatus_->addStyleClass("table form-inline"); 
+ //TB_TrigStatus_->addStyleClass("table-striped",true); 
 }
 Wt::WApplication *createApplication(const Wt::WEnvironment& env)
 {
@@ -742,7 +697,7 @@ Wt::WApplication *createApplication(const Wt::WEnvironment& env)
    * You could read information from the environment to decide whether
    * the user has permission to start a new application
    */
-  return new StandaloneDataAcquisition(env);
+  return new levbc(env);
 }
 
 int main(int argc, char **argv)
