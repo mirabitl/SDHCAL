@@ -595,3 +595,13 @@ void LDaq::triggerSpillOff(uint32_t nc)
   Json::FastWriter fastWriter;
   return;
 }
+void LDaq::triggerBeam(uint32_t nc)
+{
+  if (_mdccClient==NULL){LOG4CXX_ERROR(_logLdaq, "No MDC client");return;}
+  _mdccClient->clear();
+  _mdccClient->set<std::string>("name","BEAM");
+  _mdccClient->set<uint32_t>("nclock",nc);
+  _mdccClient->post("CMD");
+  Json::FastWriter fastWriter;
+  return;
+}

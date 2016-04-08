@@ -40,7 +40,8 @@ grp_action.add_argument('--trig-resume',action='store_true',help=' trigger soft 
 grp_action.add_argument('--ecal-pause',action='store_true',help=' trigger soft veto')
 grp_action.add_argument('--ecal-resume',action='store_true',help=' trigger soft veto release')
 grp_action.add_argument('--trig-spillon',action='store_true',help=' set spill nclock on with --clock=nc (20ns)')
-grp_action.add_argument('--trig-spilloff',action='store_true',help=' set spill nclock off withc --clock=nc (20ns) ')
+grp_action.add_argument('--trig-spilloff',action='store_true',help=' set spill nclock off with --clock=nc (20ns) ')
+grp_action.add_argument('--trig-beam',action='store_true',help=' set spill nclock off with --clock=nc (20ns) ')
 grp_action.add_argument('--daq-destroy',action='store_true',help='destroy the DIF readout, back to the PREPARED state')
 grp_action.add_argument('--daq-downloaddb',action='store_true',help='download the dbsate specified in --dbstate=state')
 grp_action.add_argument('--daq-ctrlreg',action='store_true',help='set the ctrlregister specified with --ctrlreg=register')
@@ -84,6 +85,8 @@ parser.add_argument('--period', action='store',type=int, default=None,dest='peri
 parser.add_argument('--clock', action='store',type=int, default=None,dest='clock',help='set the number of 20 ns clock')
 
 parser.add_argument('--account', action='store', default=None,dest='account',help='set the mysql account')
+
+parser.add_argument('-v','--verbose',action='store_true',default=False,help='set the mysql account')
 
 results = parser.parse_args()
 
@@ -199,6 +202,13 @@ elif(results.daq_ctrlreg):
         exit(0)
 elif(results.trig_status):
     r_cmd='triggerStatus'
+elif(results.trig_beam):
+    r_cmd='triggerBeam'
+    if (results.clock!=None):
+        lcgi['nclock']=results.clock
+    else:
+        print 'Please specify the number of clock --clock=xx'
+        exit(0)
 elif(results.trig_spillon):
     r_cmd='triggerSpillOn'
     if (results.clock!=None):
@@ -307,7 +317,7 @@ elif(results.slc_check_stop):
 
 
 def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
-   
+   global results 
    if (lq!=None):
        if (len(lq)!=0):
            myurl = "http://"+host+ ":%d" % (port)
@@ -332,7 +342,7 @@ def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
        #print myurl
        req=urllib2.Request(myurl)
        r1=urllib2.urlopen(req)
-       if (command=="status"):
+       if (command=="status" and not results.verbose):
            s=r1.read()
            sj=json.loads(s)
            ssj=json.loads(sj["statusResponse"]["statusResult"][0])
@@ -345,7 +355,7 @@ def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
                #print d
                #for d in x["difs"]:
                print '#%4d %5x %6d %12d %12d %15s %s ' % (d["id"],d["slc"],d["gtc"],d["bcid"],d["bytes"],d["host"],d["state"])
-       elif (command=="jobStatus"):
+       elif (command=="jobStatus" and not results.verbose ):
            s=r1.read()
            sj=json.loads(s)
            ssj=json.loads(sj["jobStatusResponse"]["jobStatusResult"][0])
@@ -353,7 +363,7 @@ def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
            for x in ssj:
                if (x['DAQ']=='Y'):
                    print "%6d %15s %25s %20s" % (x['PID'],x['NAME'],x['HOST'],x['STATUS'])
-       elif (command=="hvStatus"):
+       elif (command=="hvStatus" and not results.verbose):
            s=r1.read()
            sj=json.loads(s)
            ssj=json.loads(sj["hvStatusResponse"]["hvStatusResult"][0])
@@ -361,7 +371,7 @@ def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
            for x in ssj:
                print "#%.4d %10.2f %10.2f %10.2f %10.2f" % (x['channel'],x['vset'],x['iset'],x['vout'],x['iout'])
 
-       elif (command=="LVStatus"):
+       elif (command=="LVStatus" and not results.verbose ):
            s=r1.read()
            sj=json.loads(s)
            ssj=json.loads(sj["LVStatusResponse"]["LVStatusResult"][0])
@@ -369,18 +379,18 @@ def sendcommand2(command,host=p_par["daqhost"],port=p_par['daqport'],lq=None):
            print " %10.2f %10.2f %10.2f" % (ssj['vset'],ssj['vout'],ssj['iout'])
            #for x in ssj:
            #    print "#%.4d %10.2f %10.2f %10.2f %10.2f" % (x['channel'],x['vset'],x['iset'],x['vout'],x['iout'])
-       elif (command=="shmStatus"):
+       elif (command=="shmStatus" and not results.verbose):
            s=r1.read()
            sj=json.loads(s)
            ssj=json.loads(sj["shmStatusResponse"]["shmStatusResult"][0])
            print "\033[1m %10s %10s \033[0m" % ('Run','Event')
            print " %10d %10d " % (ssj['run'],ssj['event'])
-       elif (command=="triggerStatus"):
+       elif (command=="triggerStatus" and not results.verbose):
            s=r1.read()
            sj=json.loads(s)
            ssj=json.loads(sj["triggerStatusResponse"]["triggerStatusResult"][0])
-           print "\033[1m %10s %10s %10s %10s %12s %12s %10s %10s \033[0m" % ('Spill','Busy1','Busy2','Busy3','SpillOn','SpillOff','Mask','EcalMask')
-           print " %10d %10d %10d %10d  %12d %12d %10d %10d " % (ssj['spill'],ssj['busy1'],ssj['busy2'],ssj['busy3'],ssj['spillon'],ssj['spilloff'],ssj['mask'],ssj['ecalmask'])
+           print "\033[1m %10s %10s %10s %10s %12s %12s %10s %10s %10s \033[0m" % ('Spill','Busy1','Busy2','Busy3','SpillOn','SpillOff','Beam','Mask','EcalMask')
+           print " %10d %10d %10d %10d  %12d %12d %12d %10d %10d " % (ssj['spill'],ssj['busy1'],ssj['busy2'],ssj['busy3'],ssj['spillon'],ssj['spilloff'],ssj['beam'],ssj['mask'],ssj['ecalmask'])
 
        else:
           print r1.read()

@@ -34,6 +34,9 @@ public:
   uint32_t spillOff();
   void setSpillOn(uint32_t nc);
   void setSpillOff(uint32_t nc);
+  uint32_t beam();
+  void setBeam(uint32_t nc);
+
   uint32_t version();
   uint32_t id();
 

@@ -98,6 +98,7 @@ void LMdccServer::cmd(levbdim::fsmmessage* m)
       rc["spillon"]=_mdcc->spillOn();
       rc["spilloff"]=_mdcc->spillOff();
       rc["ecalmask"]=_mdcc->ecalmask();
+      rc["beam"]=_mdcc->beam();
       m->setAnswer(rc);
 
       return;
@@ -136,6 +137,14 @@ void LMdccServer::cmd(levbdim::fsmmessage* m)
       uint32_t nc=m->content()["nclock"].asUInt();
 
       _mdcc->setSpillOff(nc);
+      return;
+    }
+  if (cmd_name.compare("BEAM")==0)
+    {
+      LOG4CXX_INFO(_logLdaq," execute: "<<cmd_name);
+      uint32_t nc=m->content()["nclock"].asUInt();
+
+      _mdcc->setBeam(nc);
       return;
     }
 
