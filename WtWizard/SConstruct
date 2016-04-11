@@ -57,15 +57,15 @@ if Arm:
   boostsystem='boost_system'
   boostthread='boost_thread'
 else:
-  boostsystem='boost_system-mt'
-  boostthread='boost_thread-mt'
+  boostsystem='boost_system'
+  boostthread='boost_thread'
 
 
 Use_Dim=False
 #os.environ.has_key("DIM_DNS_NODE")
 
 # includes
-INCLUDES=['include',"/usr/include/libxml2/","/usr/include/boost141/","/usr/include/jsoncpp","/usr/include/ILCConfDB/","/usr/include/boost/",DHCAL_ROOT+"/SDHCAL_common/include",DHCAL_ROOT+"/SDHCAL_Client/include",DHCAL_ROOT+"/SDHCAL_DB/include",DHCAL_ROOT+"/SDHCAL_Analysis/include",NetLink+"/include",NetLink+"/cslm",os.getenv("LCIODIR")+"/include"]
+INCLUDES=['include',"/usr/include/libxml2/","/usr/include/boost141/","/usr/include/jsoncpp","/usr/include/ILCConfDB/","/usr/include/boost/",DHCAL_ROOT+"/SDHCAL_common/include",DHCAL_ROOT+"/SDHCAL_Client/include",DHCAL_ROOT+"/SDHCAL_DB/include",DHCAL_ROOT+"/SDHCAL_EventReader/include",NetLink+"/include",NetLink+"/cslm",os.getenv("LCIODIR")+"/include","/usr/include/Wt","/usr/include/Wt/Ext"]
 
 
 INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
@@ -80,15 +80,15 @@ ROOT_LIBS.append('XMLIO')
 ROOT_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getoutput("$ROOTSYS/bin/root-config --libs ").split(" "))]
 
 #LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
-LIBRARIES=ROOT_LIBS+['jsoncpp','pthread',  'm', 'stdc++','netlink',boostsystem,boostthread,'cslm','SDHCALcommon','SDHCALDB','SDHCALClient','SDHCALAnalysis','wthttp','wt','boost_regex','boost_signals','boost_system','boost_thread','boost_filesystem','boost_date_time','wtdbo','wtdbosqlite3','xerces-c','lcio','ilcconfdb']
+LIBRARIES=ROOT_LIBS+['jsoncpp','pthread',  'm', 'stdc++','netlink',boostsystem,boostthread,'cslm','SDHCALcommon','SDHCALDB','SDHCALClient','SDHCALEventReader','wthttp','wt','boost_regex','boost_signals','boost_system','boost_thread','boost_filesystem','boost_date_time','wtdbo','wtext','wtdbosqlite3','xerces-c','lcio','sio','ilcconfdb','log4cxx','levbdim','dim']
 
 
 
 #Library path XDAQ,DHCAL and ROOT + Python
 if (Bit64):
-	LIBRARY_PATHS=ROOT_LIBPATH+["/usr/lib64","/usr/local/lib",NetLink+"/lib",DHCAL_ROOT+"/opt/dhcal/lib"]
+	LIBRARY_PATHS=ROOT_LIBPATH+["/usr/lib64","/usr/local/lib",NetLink+"/lib",DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/lcio/v02-00/lib","/opt/dhcal/levbdim/lib","/opt/dhcal/dim/linux"]
 else:
-  LIBRARY_PATHS=ROOT_LIBPATH+["/opt/dhcal/lib","/usr/lib","/usr/local/lib",NetLink+"/lib",DHCAL_ROOT+"/opt/dhcal/lib"]
+  LIBRARY_PATHS=ROOT_LIBPATH+["/opt/dhcal/lib","/usr/lib","/usr/local/lib",NetLink+"/lib",DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/lcio/v02-00/lib"]
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
 
 if Use_Dim:
@@ -99,7 +99,7 @@ if Use_Dim:
 
 
 #link flags
-LDFLAGS=["-fPIC","-dynamiclib","-Wl","--no-as-needed"]
+LDFLAGS=["-fPIC","-dynamiclib"]
 
 
 # SWIG
@@ -116,9 +116,9 @@ env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIB
 
 env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
 
-StandaloneDataAcquisition=env.Program("StandaloneDataAcquisition",source=["StandaloneDataAcquisition.C","Tokenizer.cpp"])
+levbc=env.Program("levbc",source=["levbc.C","Tokenizer.cpp"])
 
-Default([StandaloneDataAcquisition])
+Default([levbc])
 
 
 
