@@ -111,7 +111,7 @@ void RpcMdccStatus::rpcHandler()
   rc[1]=mdc->id();
   rc[2]=mdc->mask();
   rc[3]=mdc->spillCount();
-  rc[4]=mdc->busyCount();
+  rc[4]=mdc->busy1Count();
 
 
    setData(rc,5*sizeof(int32_t));
