@@ -37,7 +37,7 @@
 #include "MarlinParameter.h"
 #include <map>
 //#include <ext/hash_map>
-
+#include <dlfcn.h>
 using namespace std ;
 /** 
 \mainpage
@@ -335,6 +335,10 @@ int readOneEvent(int run,int event);
       @param a  a pointer to a DHCALAnalyzer
   */
   void registerAnalysis(DHCALAnalyzer* a);
+  /** 
+      @param name, name of a  DHCALAnalyzer library
+  */
+  void registerAnalysis(std::string name);
   
   //! Loops on all DHCALanalyzer and call processEvent()
   void analyzeEvent();

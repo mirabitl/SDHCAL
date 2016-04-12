@@ -979,6 +979,22 @@ void  DHCalEventReader::registerAnalysis(DHCALAnalyzer* a)
   vProcess_.push_back(a);
 }
 
+void  DHCalEventReader::registerAnalysis(std::string name)
+{
+  std::stringstream s;
+  s<<"lib"<<name<<".so";
+  void* library = dlopen(s.str().c_str(), RTLD_NOW);
+
+    // Get the loadFilter function, for loading objects
+  DHCALAnalyzer* (*create)();
+  create = (DHCALAnalyzer* (*)())dlsym(library, "loadAnalyzer");
+  //void (*destroy)(Filter*);
+  // destroy = (void (*)(Filter*))dlsym(library, "deleteFilter");
+    // Get a new filter object
+  DHCALAnalyzer* a=(DHCALAnalyzer*) create();
+  vProcess_.push_back(a);
+}
+
 void  DHCalEventReader::analyzeEvent()
 {
   for (std::vector<DHCALAnalyzer*>::iterator it=vProcess_.begin();it!=vProcess_.end();it++)
