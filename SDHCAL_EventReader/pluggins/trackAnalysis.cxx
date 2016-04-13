@@ -15,7 +15,7 @@
 #include <fstream>
 #include <sstream>
 #include <math.h>
-
+#include "recoTrack.hh"
 
 #define STEP printf("%s %d\n",__FUNCTION__,__LINE__)
 
@@ -616,6 +616,19 @@ void trackAnalysis::drawHits()
     {
       hcgposi->Reset();
     }
+  TH2* hpx = rootHandler_->GetTH2("realx");
+  TH2* hpy = rootHandler_->GetTH2("realy");
+
+  if (hpx==NULL)
+    {
+      hpx =rootHandler_->BookTH2("realx",200,-10.,150.,120,-10.,120.);
+      hpy =rootHandler_->BookTH2("realy",200,-10.,150.,120,-10.,120.);
+    }
+  else
+    {
+      hpx->Reset();
+      hpy->Reset();
+    }
 
   if (hcgposi!=0 )
     {
@@ -684,10 +697,12 @@ void trackAnalysis::drawHits()
 	}
       else
 	hdisp->Reset();
-      
+      std::vector<recoTrack> vtk;
       for (std::vector<planeCluster*>::iterator ic=realClusters_.begin();ic!=realClusters_.end();ic++)
 	{
 	  planeCluster* c0=(*ic);
+	  hpx->Fill(c0->Z(),c0->X());
+	  hpy->Fill(c0->Z(),c0->Y());
 	  if ((*ic)->isUsed()) continue;
 	  for (std::vector<planeCluster*>::iterator jc=realClusters_.begin();jc!=realClusters_.end();jc++)
 	    {
@@ -695,13 +710,18 @@ void trackAnalysis::drawHits()
 	      if ((*jc)->Z()<=(*ic)->Z()) continue;
 	      planeCluster* c1=(*jc);
 	      ROOT::Math::XYZVector d=(*c1)-(*c0);
+	      if (d.Mag2()>100.) continue;
+
+
 	      bool good=false;
+	      recoTrack tk;
 	      for (std::vector<planeCluster*>::iterator kc=realClusters_.begin();kc!=realClusters_.end();kc++)
 		{
 		  if ((*kc)->isUsed()) continue;
 		  if ((*kc)->Z()<=(*jc)->Z()) continue;
 		  planeCluster* c2=(*kc);
 		  ROOT::Math::XYZVector d1=(*c2)-(*c1);
+		  if (d1.Mag2()>100.) continue;
 		  double s=d.Dot(d1)/sqrt(d.Mag2()*d1.Mag2());
 		  //std::cout<<s<<std::endl;
 		  if (abs(s-1.)<1E-2)
@@ -709,15 +729,56 @@ void trackAnalysis::drawHits()
 		      (*ic)->setUse(true);
 		      (*jc)->setUse(true);
 		      (*kc)->setUse(true);
+
+		      tk.addPoint((*ic));
+		      tk.addPoint((*jc));
+		      tk.addPoint((*kc));
 		      good=true;
 		      break;
 		    }
 		}
 	      if (good)
-		hdisp->Fill(d.Theta(),d.Phi(),1.);
+		{
+		  for (std::vector<planeCluster*>::iterator kc=realClusters_.begin();kc!=realClusters_.end();kc++)
+		    {
+		      if ((*kc)->isUsed()) continue;
+		      if (tk.distance((*kc))<1.5)
+			{
+			  tk.addPoint((*kc));
+			  (*kc)->setUse(true);
+			}
+		      //std::cout<<tk.distance((*kc))<<std::endl;
+		    }
+		  if (tk.size()>3)
+		    {
+		      std::cout<<tk;
+		      tk.Dump();
+
+		      vtk.push_back(tk);
+		    }
+
+		  hdisp->Fill(d.Theta(),d.Phi(),1.);
+		}
 	    }
 	}
+      /*
+      for (std::vector<recoTrack>::iterator it=vtk.begin();it!=vtk.end();it++)
+	{
+	  std::cout<<(*it);
+	  // for (std::vector<planeCluster*>::iterator kc=realClusters_.begin();kc!=realClusters_.end();kc++)
+	  //   {
+	  //     std::cout<<it->distance((*kc))<<std::endl;
+	      
+	  //   }
+	  for (std::vector<ROOT::Math::XYZPoint*>::iterator kc=it->points().begin();kc!=it->points().end();kc++)
+	    {
+	      std::cout<<"\t Z:"<<(*kc)->Z()<<std::endl;
+	    }
 
+
+	}
+      */ 
+      
       //for (int i=1;i<=15;i++)
       //	for (int j=1;j<15;j++)
       //  if (hdisp->GetBinContent(i,j)<12) hdisp->SetBinContent(i,j,0);
@@ -731,14 +792,23 @@ void trackAnalysis::drawHits()
      
       TCHits->cd(3);
       
-      TProfile2D* hpx1=hcgposi->Project3DProfile("yx");
-      hpx1->SetLineColor(kGreen);
-      hpx1->Draw("BOX");
+      hpx->SetLineColor(kRed);
+      hpx->Draw("BOX");
+      for (std::vector<recoTrack>::iterator it=vtk.begin();it!=vtk.end();it++)
+	{
+	  it->linex()->Draw("SAME");
+	}
       TCHits->cd(4);
       
-      TProfile2D* hpy1=hcgposi->Project3DProfile("zx");
-      hpy1->SetLineColor(kGreen);
-      hpy1->Draw("BOX");
+
+
+      hpy->SetLineColor(kRed);
+      hpy->Draw("BOX");
+
+      for (std::vector<recoTrack>::iterator it=vtk.begin();it!=vtk.end();it++)
+	{
+	  it->liney()->Draw("SAME");
+	}
       
       TCHits->Modified();
       TCHits->Draw();

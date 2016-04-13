@@ -92,7 +92,13 @@ env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIB
 
 
 #Shared library
-rawAnalysis=env.SharedLibrary("rawAnalysis",source=['rawAnalysis.cxx','jsonGeo.cxx','RecoHit.cxx','planeCluster.cxx','hitMonitor.cxx'])
-trackAnalysis=env.SharedLibrary("trackAnalysis",source=['trackAnalysis.cxx','jsonGeo.cxx','RecoHit.cxx','planeCluster.cxx','hitMonitor.cxx'])
+lmreco=env.SharedLibrary("lmreco",source=['jsonGeo.cxx','RecoHit.cxx','planeCluster.cxx','hitMonitor.cxx','recoTrack.cxx'])
+LIBRARIESPLUG=["lmreco"]+LIBRARIES
+LIBRARY_PATHS.append(".")
 
-Default([rawAnalysis,trackAnalysis])
+env1 = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIESPLUG,LIBPATH=LIBRARY_PATHS)
+rawAnalysis=env1.SharedLibrary("rawAnalysis",source=['rawAnalysis.cxx'])
+trackAnalysis=env1.SharedLibrary("trackAnalysis",source=['trackAnalysis.cxx'])
+
+Default([lmreco,rawAnalysis,trackAnalysis])
+env1.Install("../../opt/dhcal/lib",[lmreco,rawAnalysis,trackAnalysis])
