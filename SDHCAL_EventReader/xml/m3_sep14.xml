@@ -70,6 +70,7 @@
     <parameter name="FrogNeventFile" value="50"/>
 
     <parameter name="geometry" type="string">/home/mirabito/cernbox/m3_avril2015.json</parameter>
+    <parameter name="CollectionName" type="string">SDHCALRawHits</parameter>
     <parameter name="DifGeom">
       181,1,0.,64.000000,1.,1. 
       94,1,0.,32.000000,1.,1. 

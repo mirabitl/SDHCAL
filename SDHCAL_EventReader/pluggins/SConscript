@@ -93,5 +93,6 @@ env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIB
 
 #Shared library
 rawAnalysis=env.SharedLibrary("rawAnalysis",source=['rawAnalysis.cxx','jsonGeo.cxx','RecoHit.cxx','planeCluster.cxx','hitMonitor.cxx'])
+trackAnalysis=env.SharedLibrary("trackAnalysis",source=['trackAnalysis.cxx','jsonGeo.cxx','RecoHit.cxx','planeCluster.cxx','hitMonitor.cxx'])
 
-Default([rawAnalysis])
+Default([rawAnalysis,trackAnalysis])

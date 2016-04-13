@@ -985,9 +985,12 @@ void  DHCalEventReader::registerAnalysis(std::string name)
   s<<"lib"<<name<<".so";
   void* library = dlopen(s.str().c_str(), RTLD_NOW);
 
+  printf("%s %x \n",dlerror(),library);
     // Get the loadFilter function, for loading objects
   DHCALAnalyzer* (*create)();
   create = (DHCALAnalyzer* (*)())dlsym(library, "loadAnalyzer");
+  printf("%s %x \n",dlerror(),create);
+  printf("%s lods to %x \n",s.str().c_str(),create); 
   //void (*destroy)(Filter*);
   // destroy = (void (*)(Filter*))dlsym(library, "deleteFilter");
     // Get a new filter object
