@@ -435,6 +435,8 @@ void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
    
    theNplans_=this->fillVector(seed);
    if (_hits.size()<80) return;
+   recoTrack::combine(realClusters_,_geo,_vtk);
+   if (_vtk.size()<1) return;
    this->drawHits();
    char c;c=getchar();putchar(c); if (c=='.') exit(0);
    if (theNplans_<minChambersInTime_) return;
@@ -642,7 +644,7 @@ void trackAnalysis::drawHits()
 
       if (TCHits==NULL)
 	{
-	  TCHits=new TCanvas("TCHits","tChits1",1300,600);
+	  TCHits=new TCanvas("TCHits","tChits1",900,900);
 	  TCHits->Modified();
 	  TCHits->Draw();
 	  TCHits->Divide(2,2);
@@ -697,6 +699,7 @@ void trackAnalysis::drawHits()
 	}
       else
 	hdisp->Reset();
+      /*
       std::vector<recoTrack> vtk;
       for (std::vector<planeCluster*>::iterator ic=realClusters_.begin();ic!=realClusters_.end();ic++)
 	{
@@ -751,8 +754,8 @@ void trackAnalysis::drawHits()
 		    }
 		  if (tk.size()>3)
 		    {
-		      std::cout<<tk;
-		      tk.Dump();
+		      //std::cout<<tk;
+		      //tk.Dump();
 
 		      vtk.push_back(tk);
 		    }
@@ -761,6 +764,7 @@ void trackAnalysis::drawHits()
 		}
 	    }
 	}
+      */
       /*
       for (std::vector<recoTrack>::iterator it=vtk.begin();it!=vtk.end();it++)
 	{
@@ -791,12 +795,32 @@ void trackAnalysis::drawHits()
 
      
       TCHits->cd(3);
-      
+      hpx->Reset();
+      hpy->Reset();
+      for (std::vector<recoTrack*>::iterator it=_vtk.begin();it!=_vtk.end();it++)
+	{
+	  std::cout<<(*(*it));
+	  (*it)->Dump();
+	  for (std::vector<ROOT::Math::XYZPoint*>::iterator ip=(*it)->points().begin();ip!=(*it)->points().end();ip++)
+	    {
+	      for (std::vector<planeCluster*>::iterator ic=realClusters_.begin();ic!=realClusters_.end();ic++)
+		if ((ROOT::Math::XYZPoint*) (*ic)==(*ip))
+		  {
+		    //std::cout<<" Cluster found"<<std::endl;
+		    for (std::vector<RecoHit*>::iterator ih=(*ic)->hits().begin();ih!=(*ic)->hits().end();ih++)
+		      {
+			hpx->Fill((*ih)->Z(),(*ih)->X());
+			hpy->Fill((*ih)->Z(),(*ih)->Y());
+		      }
+		  }
+	    }
+
+	}
       hpx->SetLineColor(kRed);
       hpx->Draw("BOX");
-      for (std::vector<recoTrack>::iterator it=vtk.begin();it!=vtk.end();it++)
+      for (std::vector<recoTrack*>::iterator it=_vtk.begin();it!=_vtk.end();it++)
 	{
-	  it->linex()->Draw("SAME");
+	  (*it)->linex()->Draw("SAME");
 	}
       TCHits->cd(4);
       
@@ -805,9 +829,9 @@ void trackAnalysis::drawHits()
       hpy->SetLineColor(kRed);
       hpy->Draw("BOX");
 
-      for (std::vector<recoTrack>::iterator it=vtk.begin();it!=vtk.end();it++)
+      for (std::vector<recoTrack*>::iterator it=_vtk.begin();it!=_vtk.end();it++)
 	{
-	  it->liney()->Draw("SAME");
+	  (*it)->liney()->Draw("SAME");
 	}
       
       TCHits->Modified();

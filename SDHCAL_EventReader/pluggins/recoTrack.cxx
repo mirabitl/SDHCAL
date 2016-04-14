@@ -94,3 +94,91 @@ TLine* recoTrack::liney()
 {
   return new TLine(zmin_,_orig.Y()+_dir.Y()*zmin_,zmax_,_orig.Y()+_dir.Y()*zmax_);
 }
+void recoTrack::clean(float cut)
+{
+  for (std::vector<ROOT::Math::XYZPoint*>::iterator ip=_points.begin();ip!=_points.end();)
+    {
+      if (distance((*ip))>cut)
+	_points.erase(ip);
+      else
+	ip++;
+    }
+  regression();		
+
+}
+ void recoTrack::combine(std::vector<planeCluster*> pc,jsonGeo* g,  std::vector<recoTrack*> &vtk)
+{
+  for (std::vector<recoTrack*>::iterator itk=vtk.begin();itk!=vtk.end();itk++) delete (*itk);
+  vtk.clear();
+  float maxDistSeed=g->cuts()["maxDistSeed"].asFloat();//10
+  float maxDistSeed2=maxDistSeed*maxDistSeed;
+  float cosSeed=g->cuts()["cosSeed"].asFloat();//0.01
+  float tkDistCut=g->cuts()["tkDistCut"].asFloat();//1.5
+  uint32_t minTkPoint=g->cuts()["tkMinPoint"].asUInt();
+  std::cout<<maxDistSeed2<<" "<<cosSeed<<" "<<tkDistCut<<" "<<minTkPoint<<std::endl;
+  for (std::vector<planeCluster*>::iterator ic=pc.begin();ic!=pc.end();ic++)
+    {
+	  planeCluster* c0=(*ic);
+	  if ((*ic)->isUsed()) continue;
+	  for (std::vector<planeCluster*>::iterator jc=pc.begin();jc!=pc.end();jc++)
+	    {
+	      if ((*jc)->isUsed()) continue;
+	      if ((*jc)->Z()<=(*ic)->Z()) continue;
+	      planeCluster* c1=(*jc);
+	      ROOT::Math::XYZVector d=(*c1)-(*c0);
+	      if (d.Mag2()>maxDistSeed2) continue;
+
+
+	      bool good=false;
+	      recoTrack* tk=new recoTrack();
+	      for (std::vector<planeCluster*>::iterator kc=pc.begin();kc!=pc.end();kc++)
+		{
+		  if ((*kc)->isUsed()) continue;
+		  if ((*kc)->Z()<=(*jc)->Z()) continue;
+		  planeCluster* c2=(*kc);
+		  ROOT::Math::XYZVector d1=(*c2)-(*c1);
+		  if (d1.Mag2()>maxDistSeed2) continue;
+		  double s=d.Dot(d1)/sqrt(d.Mag2()*d1.Mag2());
+		  //std::cout<<s<<std::endl;
+		  if (abs(s-1.)<cosSeed)
+		    {
+		      (*ic)->setUse(true);
+		      (*jc)->setUse(true);
+		      (*kc)->setUse(true);
+
+		      tk->addPoint((*ic));
+		      tk->addPoint((*jc));
+		      tk->addPoint((*kc));
+		      good=true;
+		      break;
+		    }
+		}
+	      if (good)
+		{
+		  for (std::vector<planeCluster*>::iterator kc=pc.begin();kc!=pc.end();kc++)
+		    {
+		      if ((*kc)->isUsed()) continue;
+		      if (tk->distance((*kc))<tkDistCut)
+			{
+			  tk->addPoint((*kc));
+			  (*kc)->setUse(true);
+			}
+		      //std::cout<<tk->distance((*kc))<<std::endl;
+		    }
+		  // Now clean a few
+		  tk->clean(tkDistCut);
+		  if (tk->size()>=minTkPoint)
+		    {
+		      //std::cout<<tk;
+		      //tk.Dump();
+
+		      vtk.push_back(tk);
+		      break;
+		    }
+
+
+		}
+	    }
+	}
+      return;
+}

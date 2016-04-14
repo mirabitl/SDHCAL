@@ -1,4 +1,10 @@
 {
+    "cuts":{
+	"maxDistSeed":10.0,
+	"cosSeed":0.01,
+	"tkDistCut":1.5,
+	"tkMinPoint":4
+    },
     "difs":{
 	"181":{"chamber":1,"di":0.0,"dj":64.000000,"poli":1.0,"polj":1.0,"type":"HR2PAD"}, 
 	"94":{"chamber":1,"di":0.0,"dj":32.000000,"poli":1.0,"polj":1.0,"type":"HR2PAD"}, 

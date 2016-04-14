@@ -36,6 +36,7 @@ public:
   inline uint32_t chamber(){return hits_[0]->chamber();} 
   inline uint32_t plan(){return hits_[0]->plan();} 
   inline uint32_t size(){return hits_.size();}
+  inline std::vector<RecoHit*>& hits(){return hits_;}
   inline bool isUsed(){return _used;}
   inline void setUse(bool t ){_used=t;}
 private:

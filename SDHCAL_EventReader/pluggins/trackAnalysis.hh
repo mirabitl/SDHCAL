@@ -25,6 +25,7 @@
 #include "RecoHit.hh"
 #include "planeCluster.hh"
 #include "hitMonitor.hh"
+#include "recoTrack.hh"
 #include "UtilDefs.h"
 
 
@@ -192,5 +193,6 @@ private:
   uint32_t firstInteractionPlane_,lastInteractionPlane_;
   uint32_t _runNumber;
   jsonGeo* _geo;
+  std::vector<recoTrack*> _vtk;
 };
 #endif
