@@ -19,7 +19,7 @@
     </parameter>
     <!-- limit the number of processed records (run+evt): -->  
     <parameter name="MaxRecordNumber" value="8000" />  
-    <parameter name="SkipNEvents" value="0" />  
+    <parameter name="SkipNEvents" value="600" />  
     <parameter name="SupressCheck" value="false" />  
     <!--parameter name="GearXMLFile"> gear_ldc.xml </parameter-->  
     <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> DEBUG  </parameter> 
@@ -69,7 +69,7 @@
     <parameter name="VisFileName" value="/tmp/FrogDisplay_"/>
     <parameter name="FrogNeventFile" value="50"/>
 
-    <parameter name="geometry" type="string">/home/mirabito/cernbox/m3_avril2015.json</parameter>
+    <parameter name="geometry" type="string">pluggins/m3_avril2015.json</parameter>
     <parameter name="CollectionName" type="string">SDHCALRawHits</parameter>
     <parameter name="DifGeom">
       181,1,0.,64.000000,1.,1. 

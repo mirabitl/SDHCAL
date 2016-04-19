@@ -202,3 +202,209 @@ void hitMonitor::DIFStudy( IMPL::LCCollectionVec* rhcol,bool external)
     }
 
 }
+
+void hitMonitor::trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCluster*> &clusters,std::string tkdir)
+{
+  uint32_t minTkExtPoint=_geo->cuts()["tkExtMinPoint"].asUInt();
+  float tkChi2=_geo->cuts()["tkChi2"].asFloat();
+  float edge=_geo->cuts()["edge"].asFloat();
+  //std::cout << minTkExtPoint<<" "<<tkChi2<<" "<<edge<<std::endl;
+  // book all chamber
+  uint32_t nch=0;
+  //STEP;
+  for (int ich=1;ich<60;ich++)
+    {
+      Json::Value jch=_geo->chamberGeo(ich);
+      if (jch.empty()) continue;
+      nch++;
+      std::stringstream namec("");
+      namec<<tkdir+"/Plan"<<ich;
+      TH1* hposx = rootHandler_->GetTH1(namec.str()+"/XPos");	   
+      TH1* hposy = rootHandler_->GetTH1(namec.str()+"/YPos");	   
+      TH1* hpullx = rootHandler_->GetTH1(namec.str()+"/XDist");	   
+      TH1* hpully = rootHandler_->GetTH1(namec.str()+"/YDist");	   
+      TH1* hmult = rootHandler_->GetTH1(namec.str()+"/Multiplicity");	   
+      TH2* hext= rootHandler_->GetTH2(namec.str()+"/ext");
+      TH2* hfound= rootHandler_->GetTH2(namec.str()+"/found");
+      TH2* hnear= rootHandler_->GetTH2(namec.str()+"/near");
+      TH2* hfound1= rootHandler_->GetTH2(namec.str()+"/found1");
+      TH2* hfound2= rootHandler_->GetTH2(namec.str()+"/found2");
+      TH2* hmul= rootHandler_->GetTH2(namec.str()+"/mul");
+      TH1* hdx= rootHandler_->GetTH1(namec.str()+"/dx");
+      TH1* hdy= rootHandler_->GetTH1(namec.str()+"/dy");
+      TH2* hderr= rootHandler_->GetTH2(namec.str()+"/derr");
+      TH2* hmiss= rootHandler_->GetTH2(namec.str()+"/missing");
+
+      if (hposx==0)
+	{
+	  float xi=jch["x0"].asFloat();
+	  float xa=jch["x1"].asFloat();
+	  float yi=jch["y0"].asFloat();	  
+	  float ya=jch["y1"].asFloat();
+	  int nx=int(xa-xi)+1;
+	  int ny=int(ya-yi)+1;
+	  hposx =rootHandler_->BookTH1( namec.str()+"/XPos",115,-10.,110.);
+	  hposy =rootHandler_->BookTH1( namec.str()+"/YPos",115,-10.,110.);
+	  hpullx =rootHandler_->BookTH1( namec.str()+"/XDist",200,-5.,5.);
+	  hpully =rootHandler_->BookTH1( namec.str()+"/YDist",200,-5.,5.);
+	  hmult =rootHandler_->BookTH1( namec.str()+"/Multiplicity",50,0.,50.);
+	  hext= rootHandler_->BookTH2(namec.str()+"/ext",nx,xi,xa,ny,yi,ya);
+	  hfound= rootHandler_->BookTH2(namec.str()+"/found",nx,xi,xa,ny,yi,ya);
+	  hnear= rootHandler_->BookTH2(namec.str()+"/near",nx,xi,xa,ny,yi,ya);
+	  hfound1= rootHandler_->BookTH2(namec.str()+"/found1",nx,xi,xa,ny,yi,ya);
+	  hfound2= rootHandler_->BookTH2(namec.str()+"/found2",nx,xi,xa,ny,yi,ya);
+	  hmiss= rootHandler_->BookTH2(namec.str()+"/missing",nx,xi,xa,ny,yi,ya);
+	  hmul= rootHandler_->BookTH2(namec.str()+"/mul",nx,xi,xa,ny,yi,ya);
+	  hdx=  rootHandler_->BookTH1(namec.str()+"/dx",400,-4.,4.);
+	  hdy=  rootHandler_->BookTH1(namec.str()+"/dy",400,-4.,4.);
+	  hderr=  rootHandler_->BookTH2(namec.str()+"/derr",400,-4.,4.,400,-4.,4.);
+	  
+	}
+
+    }
+  //STEP;
+  TH1* hngood = rootHandler_->GetTH1(tkdir+"/NumberOfTracks");
+  if (hngood==0)
+    {
+      hngood = rootHandler_->BookTH1(tkdir+"/NumberOfTracks",21,-0.1,20.9);
+    }
+  hngood->Fill(tracks.size()*1.);
+  if (tracks.size()==0) return;
+  for (std::vector<recoTrack*>::iterator it=tracks.begin();it!=tracks.end();it++)
+    {
+      // STEP;    
+      recoTrack* ptk = (*it);
+
+      //DEBUG_PRINT("Tk=%d Time=%d %f %f %f %f %f \n",theTrackIndex_,currentTime_,tk.ax_,tk.bx_,tk.ay_,tk.by_,tk.chi2_);
+      TH1* htchi2 = rootHandler_->GetTH1(tkdir+"/Chi2");
+      TH1* htpchi2 = rootHandler_->GetTH1(tkdir+"/ProbChi2");
+      TH1* htnpoint = rootHandler_->GetTH1(tkdir+"/NumberOfPoints");
+      TH1* htax = rootHandler_->GetTH1(tkdir+"/Ax");
+      TH1* htay = rootHandler_->GetTH1(tkdir+"/Ay");
+      TH1* htxh = rootHandler_->GetTH1(tkdir+"/xh");
+      TH1* htyh = rootHandler_->GetTH1(tkdir+"/yh");
+      TH1* hnpl= rootHandler_->GetTH1(tkdir+"/Nplanes");
+
+      if (htchi2==0)
+	{
+	  htchi2 = rootHandler_->BookTH1(tkdir+"/Chi2",500,0.,100.);
+	  htpchi2 = rootHandler_->BookTH1(tkdir+"/ProbChi2",1000,0.,1.);
+	  htnpoint = rootHandler_->BookTH1(tkdir+"/NumberOfPoints",60,0.,60.);
+	  htax = rootHandler_->BookTH1(tkdir+"/Ax",200,-10.,10.);
+	  htay = rootHandler_->BookTH1(tkdir+"/Ay",200,-10.,10.);
+	  hnpl=  rootHandler_->BookTH1(tkdir+"/Nplanes",51,-0.1,50.9);
+	}      
+
+
+      htchi2->Fill(ptk->chi2());
+      htpchi2->Fill(ptk->pchi2());
+      //DEBUG_PRINT("track %f %d %f %f \n",tk.chi2_,2*tk.getList().size()-4,TMath::Prob(tk.chi2_,2*tk.getList().size()-4),tkChi2Cut_);
+      //getchar();
+      htnpoint->Fill(ptk->points().size());
+
+      htax->Fill(ptk->dir().X());
+
+      htay->Fill(ptk->dir().Y());
+
+      //STEP;
+      //       if (tracks.size()>1)
+      //DEBUG_PRINT("\t %d good hits found \n",tk.getList().size());
+      for (std::vector<ROOT::Math::XYZPoint*>::iterator ip=ptk->points().begin();ip!=ptk->points().end();ip++)
+	{
+	  std::vector<planeCluster*>::iterator ic=std::find(clusters.begin(),clusters.end(),(planeCluster*)(*ip));
+	  if (ic==clusters.end()) continue;
+	  // if (tracks.size()>1)
+	  //   DEBUG_PRINT("\t \t %f %f %f \n",tk.getList()[i].X(),tk.getList()[i].Y(),tk.getList()[i].Z());
+	  //(tk.getList())[i].Print();
+	  hnpl->Fill(1.*(*ic)->chamber());
+	  std::stringstream namec("");
+	  namec<<tkdir+"/Plan"<<(*ic)->chamber();
+	  TH1* hposx = rootHandler_->GetTH1(namec.str()+"/XPos");	   
+	  TH1* hposy = rootHandler_->GetTH1(namec.str()+"/YPos");	   
+	  TH1* hpullx = rootHandler_->GetTH1(namec.str()+"/XDist");	   
+	  TH1* hpully = rootHandler_->GetTH1(namec.str()+"/YDist");	   
+	  TH1* hmult = rootHandler_->GetTH1(namec.str()+"/Multiplicity");	   
+	  if (hposx==NULL)
+	    {
+	      std::cout <<"Opps "<<namec.str()<<std::endl;
+	      continue;
+	    }
+
+	  hposx->Fill((*ip)->X());
+	  hposy->Fill((*ip)->Y());
+	  ROOT::Math::XYZPoint pex=(*it)->extrapolate((*ip)->Z());
+	  ROOT::Math::XYZVector dex=pex-(*(*ip));
+	  hpullx->Fill(dex.X());
+	  hpully->Fill(dex.Y());
+	  hmult->Fill((*ic)->size());
+	}
+      //STEP;
+      if ((*it)->pchi2()<tkChi2) continue;
+      for (int ich=1;ich<60;ich++)
+	{
+	  Json::Value jch=_geo->chamberGeo(ich);
+	  if (jch.empty()) continue;
+	  if ((*it)->zmin()>jch["z0"].asFloat()+edge) continue;
+	  if ((*it)->zmax()<jch["z0"].asFloat()-edge) continue;
+
+	  recoTrack tkext;
+	  for (std::vector<ROOT::Math::XYZPoint*>::iterator ip=(*it)->points().begin();ip!=(*it)->points().end();ip++)
+	    {
+	      if (abs((*ip)->Z()-jch["z0"].asFloat())<1E-3)
+		continue;
+	      else
+		tkext.addPoint((*ip));
+	    }
+	  if (tkext.size()<minTkExtPoint) continue;
+	  //if (tkext.pchi2()<tkChi2) continue;
+	  tkext.regression();
+	  std::stringstream namec("");
+	  namec<<tkdir+"/Plan"<<ich;
+	  TH2* hext= rootHandler_->GetTH2(namec.str()+"/ext");
+	  TH2* hfound= rootHandler_->GetTH2(namec.str()+"/found");
+	  TH2* hnear= rootHandler_->GetTH2(namec.str()+"/near");
+	  TH2* hfound1= rootHandler_->GetTH2(namec.str()+"/found1");
+	  TH2* hfound2= rootHandler_->GetTH2(namec.str()+"/found2");
+	  TH2* hmul= rootHandler_->GetTH2(namec.str()+"/mul");
+	  TH1* hdx= rootHandler_->GetTH1(namec.str()+"/dx");
+	  TH1* hdy= rootHandler_->GetTH1(namec.str()+"/dy");
+	  TH2* hderr= rootHandler_->GetTH2(namec.str()+"/derr");
+	  TH2* hmiss= rootHandler_->GetTH2(namec.str()+"/missing");
+	  
+	  ROOT::Math::XYZPoint pex=(*it)->extrapolate(jch["z0"].asFloat());
+	  if (pex.X()<jch["x0"].asFloat()+5) continue;
+	  if (pex.X()>jch["x1"].asFloat()-5) continue;
+	  if (pex.Y()<jch["y0"].asFloat()+5) continue;
+	  if (pex.Y()>jch["y1"].asFloat()-5) continue;
+	  hext->Fill(pex.X(),pex.Y());
+	  std::vector<planeCluster*>::iterator icf=clusters.end();
+	  double dist=999999.;
+	  for (std::vector<planeCluster*>::iterator ic=clusters.begin();ic!=clusters.end();ic++)
+	    {
+	      if (abs((*ic)->Z()-jch["z0"].asFloat())>1E-3) continue;
+	      ROOT::Math::XYZVector dex=pex-(*(*ic));
+	      if (dex.Mag2()<4.)
+		{
+		  hfound->Fill(pex.X(),pex.Y());
+		  float nx=(*ic)->hits().size();
+
+		  double errx=100./96./sqrt(12.)/sqrt(nx);
+		  double erry=100./96./sqrt(12.)/sqrt(nx);
+		  hdx->Fill(dex.X()/errx);
+		  hdy->Fill(dex.Y()/erry);
+		  hderr->Fill(dex.X(),dex.Y());
+		  if (dex.Mag2()<dist)
+		    {
+		      dist=dex.Mag2();
+		      icf=ic;
+		    }
+		}
+	    }
+	  if (icf==clusters.end())
+	    hmiss->Fill(pex.X(),pex.Y());
+	  else
+	    hnear->Fill((*icf)->X(),(*icf)->Y());    
+	}
+      //STEP;
+    }
+}

@@ -7,7 +7,7 @@
 pcaComponents::pcaComponents(){memset(_components,0,21*sizeof(double));}
 
 
-RecoHit::RecoHit(jsonGeo *g,IMPL::RawCalorimeterHitImpl* h) : _raw(h),_geo(g)
+RecoHit::RecoHit(jsonGeo *g,IMPL::RawCalorimeterHitImpl* h) : _raw(h),_geo(g),_used(false)
 {
   _geo->convert(this->dif(),this->asic(),this->channel(),this);
   int ithr= amplitude()&0x3;

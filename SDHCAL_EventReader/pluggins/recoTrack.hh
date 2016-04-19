@@ -25,6 +25,10 @@ public:
       _points.push_back(t.at(i));
     _orig=t.orig();
     _dir=t.dir();
+    _chi2=t.chi2();
+    _pchi2=t.pchi2();
+    zmin_=t.zmin();
+    zmax_=t.zmax();
     regression();
   }
 
@@ -35,6 +39,7 @@ public:
   void clear();
   void clean(float cut);
   void addPoint(ROOT::Math::XYZPoint* p);
+  void remove(ROOT::Math::XYZPoint* p);
   double distance(ROOT::Math::XYZPoint* p);
   ROOT::Math::XYZPoint extrapolate(double z);
   void regression();
@@ -46,6 +51,11 @@ public:
   ROOT::Math::XYZPoint* at(uint32_t i) const {return _points[i];}
   std::vector<ROOT::Math::XYZPoint*>& points() { return _points;}
   void Dump( std::ostream &os=std::cout );
+  void setChi2(double chi2);
+  inline double chi2() const {return _chi2;}
+  inline double pchi2() const {return _pchi2;}
+  inline float zmin() const { return zmin_;}
+  inline float zmax() const { return zmax_;}
   friend std::ostream &operator<<( std::ostream &os, 
                                        const recoTrack &obj)
   {
@@ -65,7 +75,7 @@ private:
   std::vector<ROOT::Math::XYZPoint*> _points;
   ROOT::Math::XYZVector _dir;
   ROOT::Math::XYZPoint  _orig;
-
+  double _chi2,_pchi2;
 
 };
 #endif

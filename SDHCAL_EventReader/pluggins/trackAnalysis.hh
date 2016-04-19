@@ -94,6 +94,8 @@ public:
   uint32_t PMAnalysis(uint32_t difid);
   void clearClusters();
   void fillPlaneClusters();
+  void tagMips();
+  std::vector<uint32_t> cleanMap(uint32_t nchmin);
 
 private:
 
@@ -194,5 +196,6 @@ private:
   uint32_t _runNumber;
   jsonGeo* _geo;
   std::vector<recoTrack*> _vtk;
+  double _pMip,_pMipCand;
 };
 #endif

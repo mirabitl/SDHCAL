@@ -30,11 +30,13 @@ class RecoHit : public ROOT::Math::XYZPoint
 public:
   enum Type {THR0=0,THR1=1,THR2=2,CORE=3,EDGE=4,ISOLATED=5,HOUGH=6,MIP=7};
 
-  RecoHit(){_geo=NULL;_raw=NULL;}
+  RecoHit(){_geo=NULL;_raw=NULL;_used=false;}
   RecoHit(const RecoHit& obj)
   {
     _raw=obj.raw();
     _geo=obj.geo();
+    _weight=obj.weight();
+    _used=obj.isUsed();
     initialise(_geo,_raw);
   }
 
@@ -54,8 +56,11 @@ public:
   uint16_t I(){return int(X()/1.04125);}
   uint16_t  J(){return int(Y()/1.04125);}
   IMPL::RawCalorimeterHitImpl* raw() const {return _raw;}
-  jsonGeo* geo() const {return _geo;}
-  
+  inline jsonGeo* geo() const {return _geo;}
+  inline void setWeight(float t)  { _weight=t;}
+  inline float weight() const {return _weight;}
+  inline void setUse(bool t)  { _used=t;}
+  inline bool isUsed() const {return _used;}
 
   template <class T>
   static pcaComponents calculateComponents(std::vector<T*> vnear_)
@@ -138,6 +143,7 @@ private:
   jsonGeo* _geo;
   IMPL::RawCalorimeterHitImpl* _raw;
   std::bitset<8> _tag;
-
+  float _weight;
+  bool _used;
 };
 #endif

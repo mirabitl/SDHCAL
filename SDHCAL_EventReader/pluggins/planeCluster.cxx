@@ -14,6 +14,7 @@ void planeCluster::add(RecoHit* h)
 {
   hits_.push_back(h);
   calcPos();
+  h->setUse(true);
 }
 double planeCluster::dist(RecoHit* h1,RecoHit* h2)
 {
@@ -66,6 +67,7 @@ void planeCluster::calcPos()
 {
 	// DEBUG_PRINT("On rentre dans calcpos %d \n",hits_.size());
   int n=0;double x=0,x2=0,y=0,y2=0,x_=0,y_=0;
+
 	for (std::vector<RecoHit*>::iterator it= hits_.begin();it!=hits_.end();it++)
 	{
 		//  std::cout<<"\t "<<(int) (*it)->X()<<" "<<(int) (*it)->Y()<<std::endl; 
@@ -91,6 +93,8 @@ void planeCluster::calcPos()
 		y_=-10000.;
 	}
 	this->SetXYZ(x_,y_,hits_[0]->Z());
+
+	
 	return;
 
 }

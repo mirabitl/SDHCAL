@@ -39,6 +39,10 @@ public:
   inline std::vector<RecoHit*>& hits(){return hits_;}
   inline bool isUsed(){return _used;}
   inline void setUse(bool t ){_used=t;}
+  bool operator < (const planeCluster& str) const
+  {
+    return (Z() < str.Z());
+  }
 private:
   void add(RecoHit*);
   void calcPos();

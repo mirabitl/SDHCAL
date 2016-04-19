@@ -1,9 +1,14 @@
 {
     "cuts":{
-	"maxDistSeed":10.0,
-	"cosSeed":0.01,
-	"tkDistCut":1.5,
-	"tkMinPoint":4
+	"maxDistSeed":7.0,
+	"cosSeed":0.09,
+	"tkDistCut":1.0,
+	"tkMinPoint":4,
+	"tkExtMinPoint":10,
+	"tkChi2":0.01,
+	"edge":6.0,
+	"minPlans":7,
+	"mipRate":0.6
     },
     "difs":{
 	"181":{"chamber":1,"di":0.0,"dj":64.000000,"poli":1.0,"polj":1.0,"type":"HR2PAD"}, 

@@ -19,36 +19,39 @@
 #include <vector>
 #include <map>
 #include "RecoHit.hh"
+#include "planeCluster.hh"
+#include "recoTrack.hh"
 
 
 class hitMonitor 
 {
 public:
-	hitMonitor(jsonGeo* g);
-	void clear();
-	void FillTimeAsic(IMPL::LCCollectionVec* rhcol);
-	void DIFStudy( IMPL::LCCollectionVec* rhcol,bool external=false);	
+  hitMonitor(jsonGeo* g);
+  void clear();
+  void FillTimeAsic(IMPL::LCCollectionVec* rhcol);
+  void DIFStudy( IMPL::LCCollectionVec* rhcol,bool external=false);	
 
 
-	void setFirstChamber(uint32_t i);
+  void setFirstChamber(uint32_t i);
 
-	void setLastChamber(uint32_t i);
-	void setExtrapolationMinimumPoint(uint32_t i);
-	void setExtrapolationMinimumChi2(float i);
-	void setChamberEdgeCut( float i);
-	void setUseTk4(bool t);
-	int getEventIntegratedTime(){return  theEventIntegratedTime_;}
+  void setLastChamber(uint32_t i);
+  void setExtrapolationMinimumPoint(uint32_t i);
+  void setExtrapolationMinimumChi2(float i);
+  void setChamberEdgeCut( float i);
+  void setUseTk4(bool t);
+  int getEventIntegratedTime(){return  theEventIntegratedTime_;}
+  void trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCluster*> &clusters,std::string tkdir);
 private:
 
-	uint32_t theTrackIndex_,theFirstChamber_,theLastChamber_,theExtrapolationMinimumPoint_;
-	float theExtrapolationMinimumChi2_,theChamberEdgeCut_ ,theTrackAngularCut_,theExtrapolationDistanceCut_;
-	bool useTk4_;
-	DCHistogramHandler* rootHandler_;
+  uint32_t theTrackIndex_,theFirstChamber_,theLastChamber_,theExtrapolationMinimumPoint_;
+  float theExtrapolationMinimumChi2_,theChamberEdgeCut_ ,theTrackAngularCut_,theExtrapolationDistanceCut_;
+  bool useTk4_;
+  DCHistogramHandler* rootHandler_;
 	
 
-	std::map<uint32_t,uint64_t> theAsicCount_;
-	int theIntegratedTime_;	
-	int theEventIntegratedTime_;
+  std::map<uint32_t,uint64_t> theAsicCount_;
+  int theIntegratedTime_;	
+  int theEventIntegratedTime_;
   jsonGeo* _geo;
 };
 #endif

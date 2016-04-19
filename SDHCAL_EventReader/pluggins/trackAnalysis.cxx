@@ -17,7 +17,7 @@
 #include <math.h>
 #include "recoTrack.hh"
 
-#define STEP printf("%s %d\n",__FUNCTION__,__LINE__)
+
 
 
 
@@ -188,7 +188,7 @@ void trackAnalysis::initHistograms()
   //  rootHandler_->BookTH1("/Clusters/EST1",100,0.,300.);
 }
 
-trackAnalysis::trackAnalysis() :trackIndex_(0),nAnalyzed_(0),clockSynchCut_(8), spillSize_(90000),maxHitCount_(500000),minHitCount_(20),
+trackAnalysis::trackAnalysis() :trackIndex_(0),nAnalyzed_(0),clockSynchCut_(8), spillSize_(90000),maxHitCount_(500000),minHitCount_(10),
 									     tkMinPoint_(3),tkExtMinPoint_(3),tkBigClusterSize_(32),tkChi2Cut_(0.01),tkDistCut_(5.),tkExtChi2Cut_(0.01),tkExtDistCut_(10.),tkAngularCut_(20.),zLastAmas_(134.),
 									     findTracks_(true),dropFirstSpillEvent_(false),useSynchronised_(true),chamberEdge_(5.),rebuild_(false),oldAlgo_(true),collectionName_("DHCALRawHits"),
 									     tkFirstChamber_(1),tkLastChamber_(61),useTk4_(false),offTimePrescale_(1),houghIndex_(0),theRhcolTime_(0.),theTimeSortTime_(0.),theTrackingTime_(0),
@@ -244,7 +244,7 @@ void trackAnalysis::presetParameters()
     {
         if ((it=m.find("geometry"))!=m.end())
 	 _geo=new jsonGeo(it->second.getStringValue());
-
+	if ((it=m.find("SkipEvents"))!=m.end()) theSkip_=it->second.getIntValue();
   
       if ((it=m.find("ClockSynchCut"))!=m.end()) clockSynchCut_=it->second.getIntValue();
       if ((it=m.find("SpillSize"))!=m.end()) spillSize_=it->second.getDoubleValue();
@@ -272,7 +272,7 @@ void trackAnalysis::presetParameters()
       if ((it=m.find("OffTimePrescale"))!=m.end()) offTimePrescale_=it->second.getIntValue();
       if ((it=m.find("Seuil"))!=m.end()) theSeuil_=it->second.getIntValue();
       if ((it=m.find("Interactif"))!=m.end()) draw_=it->second.getBoolValue();
-      if ((it=m.find("SkipEvents"))!=m.end()) theSkip_=it->second.getIntValue();
+
       if ((it=m.find("zLastAmas"))!=m.end()) zLastAmas_=it->second.getDoubleValue();
       if ((it=m.find("MonitoringPath"))!=m.end()) theMonitoringPath_=it->second.getStringValue();
       if ((it=m.find("MonitoringPeriod"))!=m.end()) theMonitoringPeriod_=it->second.getIntValue();
@@ -433,12 +433,30 @@ void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
    uint32_t tag=theCerenkovTag_;
    //printf("%d %d \n",seed,theCerenkovTag_);
    
-   theNplans_=this->fillVector(seed);
-   if (_hits.size()<80) return;
+   theNplans_=this->fillVolume(seed);
+
+   if (nPlansAll_.count()<_geo->cuts()["minPlans"].asUInt()) return;
+   this->TagIsolated(1,48);
+   //if (_pMipCand<_geo->cuts()["mipRate"].asFloat()) return; // Muon selection
+
+   
+   this->fillVector(seed);
+   //if (_hits.size()<30) return;
    recoTrack::combine(realClusters_,_geo,_vtk);
-   if (_vtk.size()<1) return;
-   this->drawHits();
-   char c;c=getchar();putchar(c); if (c=='.') exit(0);
+   this->tagMips();
+
+   //   std::cout<<"Seed :"<<seed<<" plans :"<<theNplans_<<std::endl;   
+   if (_pMip>_geo->cuts()["mipRate"].asFloat())
+     _monitor->trackHistos(_vtk,realClusters_,"/Principal");
+   else
+   //if (_vtk.size()<1 && _hits.size()<150.) return;
+   //if (_pMip>0.05) return;
+   //if (_pMip<=1E-5 && _hits.size()<55) return;
+   //std::cout<<" Np lnas " <<theNplans_<<std::endl;
+     if (_pMip>1E-6) {
+       //this->drawHits();
+       //char c;c=getchar();putchar(c); if (c=='.') exit(0);
+     }
    if (theNplans_<minChambersInTime_) return;
    
   return;
@@ -545,9 +563,9 @@ void trackAnalysis::processEvent()
   
   PMAnalysis(3);
   
-  reader_->findTimeSeeds(7);
-  
-  std::vector<uint32_t> vseeds=reader_->getTimeSeeds();
+  reader_->findTimeSeeds(_geo->cuts()["minPlans"].asUInt());
+  std::vector<uint32_t> vseeds =this->cleanMap(_geo->cuts()["minPlans"].asUInt());
+    //std::vector<uint32_t> vseeds=reader_->getTimeSeeds();
 
   
    INFO_PRINT("================>  %d  Number of seeds %d \n",evt_->getEventNumber(),(int) vseeds.size());
@@ -620,16 +638,29 @@ void trackAnalysis::drawHits()
     }
   TH2* hpx = rootHandler_->GetTH2("realx");
   TH2* hpy = rootHandler_->GetTH2("realy");
+  TH2* hpix = rootHandler_->GetTH2("ix");
+  TH2* hpiy = rootHandler_->GetTH2("iy");
+  TH1* hc2 = rootHandler_->GetTH1("chi2");
+  TH1* hdx = rootHandler_->GetTH1("dx");
+  TH1* hdy = rootHandler_->GetTH1("dy");
 
   if (hpx==NULL)
     {
+      hdx =rootHandler_->BookTH1("dx",100,-3.,3.);
+      hdy =rootHandler_->BookTH1("dy",100,-3.,3.);
+      hc2 =rootHandler_->BookTH1("chi2",500,0.,1.);
       hpx =rootHandler_->BookTH2("realx",200,-10.,150.,120,-10.,120.);
       hpy =rootHandler_->BookTH2("realy",200,-10.,150.,120,-10.,120.);
+      hpix =rootHandler_->BookTH2("ix",200,-10.,150.,120,-10.,120.);
+      hpiy =rootHandler_->BookTH2("iy",200,-10.,150.,120,-10.,120.);
+
     }
   else
     {
       hpx->Reset();
       hpy->Reset();
+      hpix->Reset();
+      hpiy->Reset();
     }
 
   if (hcgposi!=0 )
@@ -637,10 +668,15 @@ void trackAnalysis::drawHits()
       hcgposi->Reset();
       
       for (std::vector<RecoHit>::iterator ih=_hits.begin();ih!=_hits.end();ih++)
-	hcgposi->Fill(ih->Z(),ih->X(),ih->Y());//(*ih)->Z(),(*ih)->X(),(*ih)->Y());
-      
+	{
+	  hcgposi->Fill(ih->Z(),ih->X(),ih->Y());//(*ih)->Z(),(*ih)->X(),(*ih)->Y());
+	  if (ih->weight()>0.25)
+	    {
+	      hpix->Fill(ih->Z(),ih->X());//(*ih)->Z(),(*ih)->X(),(*ih)->Y());
+	      hpiy->Fill(ih->Z(),ih->Y());//(*ih)->Z(),(*ih)->X(),(*ih)->Y());
+	    }
 
-
+	}
 
       if (TCHits==NULL)
 	{
@@ -789,35 +825,72 @@ void trackAnalysis::drawHits()
       
       hcgposi->SetMarkerStyle(25);
       hcgposi->SetMarkerColor(kRed);
-      hdisp->Draw("COLZ");
+      //      hdisp->Draw("COLZ");
+      TH1* hweight= rootHandler_->GetTH1("/HitStudy/showerweight");
+      //hweight->Reset();
+      //for (std::vector<RecoHit>::iterator ih=_hits.begin();ih!=_hits.end();ih++)
+      //	if (ih->weight()>1E-2)
+      //	  hweight->Fill(ih->weight());
+      hweight->Draw();
       TCHits->Modified();
       TCHits->Draw();
-
-     
-      TCHits->cd(3);
       hpx->Reset();
       hpy->Reset();
+      float paderr=1./sqrt(12.);
       for (std::vector<recoTrack*>::iterator it=_vtk.begin();it!=_vtk.end();it++)
 	{
-	  std::cout<<(*(*it));
-	  (*it)->Dump();
+	  //std::cout<<(*(*it));
+	  //(*it)->Dump();
+	  float chi2=0;
 	  for (std::vector<ROOT::Math::XYZPoint*>::iterator ip=(*it)->points().begin();ip!=(*it)->points().end();ip++)
 	    {
+	      float cont=(*it)->distance((*ip));
+	     
 	      for (std::vector<planeCluster*>::iterator ic=realClusters_.begin();ic!=realClusters_.end();ic++)
 		if ((ROOT::Math::XYZPoint*) (*ic)==(*ip))
 		  {
+		    float errx=sqrt((*ic)->hits().size())*paderr;
+		    float erry=sqrt((*ic)->hits().size())*paderr;
+		    float err=sqrt(errx*errx+erry*erry);
+		    cont=cont*cont/err/err;
 		    //std::cout<<" Cluster found"<<std::endl;
 		    for (std::vector<RecoHit*>::iterator ih=(*ic)->hits().begin();ih!=(*ic)->hits().end();ih++)
 		      {
 			hpx->Fill((*ih)->Z(),(*ih)->X());
 			hpy->Fill((*ih)->Z(),(*ih)->Y());
 		      }
+		    ROOT::Math::XYZPoint pex=(*it)->extrapolate((*ip)->Z());
+		    ROOT::Math::XYZVector dex=pex-(*(*ip));
+		    hdx->Fill(dex.X()/errx);
+		    hdy->Fill(dex.Y()/erry);
+		    break;
 		  }
+	      chi2+=cont;
 	    }
-
+	  //std::cout<<"chi2 "<<chi2<<" ndf"<<(*it)->points().size()*2-4<<" "<<TMath::Prob(chi2,(*it)->points().size()*2-4)<<std::endl;
+	  hc2->Fill((*it)->pchi2());
 	}
-      hpx->SetLineColor(kRed);
-      hpx->Draw("BOX");
+      TH1* hmip= rootHandler_->GetTH1("/HitStudy/mip");
+      if (hmip!=NULL)
+	hmip->Draw();
+       TCHits->Modified();
+      TCHits->Draw();
+      TCHits->cd(3);
+      /*
+
+      hdx->Draw();
+      TCHits->cd(4);
+      hdy->Draw();
+
+      */
+      hpix->SetLineColor(kGreen);
+      hpix->Draw("BOX");
+
+
+      if (hpix->GetEntries()>0)
+	hpx->Draw("BOXSAME");
+      else
+	hpx->Draw("BOX");
       for (std::vector<recoTrack*>::iterator it=_vtk.begin();it!=_vtk.end();it++)
 	{
 	  (*it)->linex()->Draw("SAME");
@@ -825,15 +898,21 @@ void trackAnalysis::drawHits()
       TCHits->cd(4);
       
 
+      hpiy->SetLineColor(kGreen);
+
+      hpiy->Draw("BOX");
 
       hpy->SetLineColor(kRed);
-      hpy->Draw("BOX");
+      if (hpiy->GetEntries()>0)
+	hpy->Draw("BOXSAME");
+      else
+	hpy->Draw("BOX");
 
       for (std::vector<recoTrack*>::iterator it=_vtk.begin();it!=_vtk.end();it++)
 	{
 	  (*it)->liney()->Draw("SAME");
 	}
-      
+
       TCHits->Modified();
       TCHits->Draw();
       TCHits->Update();
@@ -870,7 +949,10 @@ void trackAnalysis::fillPlaneClusters()
   for (std::vector<RecoHit>::iterator ih=_hits.begin();ih<_hits.end();ih++)
     {
       
-      if (ih->isTagged(RecoHit::CORE)==1) continue;
+      //if (ih->isTagged(RecoHit::CORE)==1) continue;
+      if (ih->isUsed()) continue;
+      if (ih->weight()<1E-3) continue;
+      if (ih->weight()>20E-2) continue;
       bool merged=false;
       for (std::vector<planeCluster*>::iterator ic=realClusters_.begin();ic!=realClusters_.end();ic++)
 	{
@@ -883,11 +965,27 @@ void trackAnalysis::fillPlaneClusters()
       realClusters_.push_back(c);
       allClusters_.push_back(c);
     }
+
+  // Add adjacent hist
+  for (std::vector<RecoHit>::iterator ih=_hits.begin();ih<_hits.end();ih++)
+    {
+      
+      //if (ih->isTagged(RecoHit::CORE)==1) continue;
+      if (ih->isUsed()) continue;
+      bool merged=false;
+      for (std::vector<planeCluster*>::iterator ic=realClusters_.begin();ic!=realClusters_.end();ic++)
+	{
+	  if (ih->chamber()!=(*ic)->chamber()) continue;
+	  merged=(*ic)->Append(&(*ih),2.); // avant 4 et normalement 2
+	  if (merged) break;
+	}
+    }
   
   //printf("OLA %d %d \n",allClusters_.size(),realClusters_.size());
   for (std::vector<RecoHit>::iterator ih=_hits.begin();ih<_hits.end();ih++)
     {
-      if (ih->isTagged(RecoHit::CORE)!=1) continue;
+      if (ih->isUsed()) continue;
+      if (ih->weight()<20E-2) continue;
       bool merged=false;
       for (std::vector<planeCluster*>::iterator ic=interactionClusters_.begin();ic!=interactionClusters_.end();ic++)
 	{
@@ -1320,35 +1418,52 @@ uint32_t trackAnalysis::fillVolume(uint32_t seed)
   //_keys.clear();
   _hits.clear();
 
-  std::bitset<61> planes(0);
-  
+  //std::bitset<61> planes(0);
+  nPlansAll_.reset();
 
   uint32_t ncount=0;
   
   if (iseed->second.size()>4096) return 0;
+
+  std::bitset<64> difc[255];
+  for (int i=0;i<255;i++) difc[i].set(0);
+  for (std::vector<IMPL::RawCalorimeterHitImpl*>::iterator ihit=iseed->second.begin();ihit!=iseed->second.end();ihit++)
+    {
+      IMPL::RawCalorimeterHitImpl* hit =(*ihit);
+      uint32_t dif =hit->getCellID0()&0xFF;
+      uint32_t asic = (0xFF & (hit->getCellID0()&0xFF00)>>8);
+      difc[dif].set(asic,1);
+      
+    }
+  for (int i=0;i<255;i++) if (difc[i].count()>24) {
+      INFO_PRINT(" DIF %d Count %d  at seed %d \n",i,difc[i].count(),seed);
+      return 0;
+    }
   for (std::vector<IMPL::RawCalorimeterHitImpl*>::iterator ihit=iseed->second.begin();ihit!=iseed->second.end();ihit++)
     {
       IMPL::RawCalorimeterHitImpl* hit =(*ihit);
       RecoHit h(_geo,hit);
-      planes.set(h.plan());
+      nPlansAll_.set(h.plan());
       _hits.push_back(h);
       //_keys.push_back(makekey(I,J,chid));
 
       ncount++;
     }
   DEBUG_PRINT("Total number of Hit in buildVolume %d  %d => planes %d \n",ncount,seed,planes.count());
-  return planes.count();
+  return nPlansAll_.count();
 }
 
 void trackAnalysis::TagIsolated(uint32_t fpl,uint32_t lpl)
 {
   TH1* hweight= rootHandler_->GetTH1("/HitStudy/showerweight");
+  TH1* hmipc= rootHandler_->GetTH1("/HitStudy/mipcand");
   TH1* hnv= rootHandler_->GetTH1("/HitStudy/nv");
   TH2* hweight2= rootHandler_->GetTH2("/HitStudy/showerweight2");
   if (hweight==NULL)
     {
       //hweight=(TH1F*) rootHandler_->BookTH1("showerweight",100,0.,2.);
-      hweight= rootHandler_->BookTH1("/HitStudy/showerweight",110,-0.1,0.99);
+      hweight= rootHandler_->BookTH1("/HitStudy/showerweight",160,-0.1,1.5);
+      hmipc= rootHandler_->BookTH1("/HitStudy/mipcand",160,-0.1,1.5);
       hnv= rootHandler_->BookTH1("/HitStudy/nv",150,0.,150.);
       hweight2= rootHandler_->BookTH2("/HitStudy/showerweight2",150,0.,150.,110,-0.1,0.99);
     }
@@ -1358,6 +1473,8 @@ void trackAnalysis::TagIsolated(uint32_t fpl,uint32_t lpl)
   uint32_t nedge=0,ncore=0,niso=0;
   int32_t ixmin=-6,ixmax=6; // 6 avant
   std::vector<RecoHit*> vnear_;
+  float dcut2=36.; //36.
+  int nmipc=0;
   for (std::vector<RecoHit>::iterator it=_hits.begin();it!=_hits.end();it++)
     {
       vnear_.clear();
@@ -1365,7 +1482,8 @@ void trackAnalysis::TagIsolated(uint32_t fpl,uint32_t lpl)
 	 {
 	   if (jt==it) continue;
 	   ROOT::Math::XYZVector d=(*it)-(*jt);
-	   if (d.Mag2()<36.)
+	   float dist=2*(abs(d.X())+abs(d.y()))+abs(d.Z());
+	   if (dist<dcut2)
 	     vnear_.push_back(&(*jt));
 	 }
       /*
@@ -1397,6 +1515,8 @@ void trackAnalysis::TagIsolated(uint32_t fpl,uint32_t lpl)
        pcaComponents c=RecoHit::calculateComponents<RecoHit>(vnear_);
        double w=0;
        if (c[5]!=0) w=sqrt((c[4]+c[3])/c[5]);
+       h0->setWeight(w);
+       if (w>2E-2 && w<2E-1) nmipc++;
        if (c[5]==0 || vnear_.size()<=3)
 	 {
 	   h0->setTag(RecoHit::ISOLATED,true);niso++;
@@ -1406,7 +1526,7 @@ void trackAnalysis::TagIsolated(uint32_t fpl,uint32_t lpl)
 	 {
 	   hweight->Fill(w);
 	   hweight2->Fill(vnear_.size()*1.,w);
-	   if (w<0.25 && vnear_.size()<20) // 0.3 before  
+	   if (w<0.2 && vnear_.size()<20) // 0.3 before  
 	     {h0->setTag(RecoHit::EDGE,true);nedge++;}
 	   else
 	     {h0->setTag(RecoHit::CORE,true);ncore++;}
@@ -1414,6 +1534,8 @@ void trackAnalysis::TagIsolated(uint32_t fpl,uint32_t lpl)
        
     }
   coreRatio_=ncore*1./(nedge+niso);
+  _pMipCand=nmipc*1./_hits.size();
+  hmipc->Fill(nmipc*1./_hits.size());
   return;
 }
 
@@ -1424,13 +1546,13 @@ uint32_t trackAnalysis::fillVector(uint32_t seed)
 
  
   //INFO_PRINT("%s-%d %d %f  \n",__PRETTY_FUNCTION__,__LINE__,reader_->getPositionMap().begin()->second.getPlan(),reader_->getPositionMap().begin()->second.getZ0());    
-  uint32_t nplans=this->fillVolume(seed);
+  //  uint32_t nplans=this->fillVolume(seed);
+  //if (nplans<7) return 0;
   uint32_t nhit=_hits.size();
   
   //INFO_PRINT("%s-%d %d %f  \n",__PRETTY_FUNCTION__,__LINE__,reader_->getPositionMap().begin()->second.getPlan(),reader_->getPositionMap().begin()->second.getZ0());    
   if (nhit<minHitCount_) return 0;
   if (nhit>maxHitCount_) return 0;
-  this->TagIsolated(1,48);
 //  STEP;
  
   theTkHitVector_.clear();
@@ -1442,54 +1564,97 @@ uint32_t trackAnalysis::fillVector(uint32_t seed)
     }
   
   this->fillPlaneClusters();
-  INFO_PRINT("Hits %d tk %d ===> %d clusters %d Real %d Interaction \n",_hits.size(),theTkHitVector_.size(),allClusters_.size(),realClusters_.size(),interactionClusters_.size());
+  DEBUG_PRINT("Hits %d tk %d ===> %d clusters %d Real %d Interaction \n",_hits.size(),theTkHitVector_.size(),allClusters_.size(),realClusters_.size(),interactionClusters_.size());
   
-  //this->tagMips();
 
-  return nplans;
+
+  return nPlansAll_.count();
 }
-#ifdef TAGMIPS
+
 void trackAnalysis::tagMips()
 {
-  
-  DEBUG_PRINT("Clusters=> %d ",npBuf_);
-  theComputerTrack_->associate(npBuf_,_x,_y,_z,_layer);
-  
-  uint32_t nmip=0;
-  for (unsigned int i=0;i<theComputerTrack_->getCandidates().size();i++)
+
+  uint32_t nmip=0,nc=0;
+
+  double paderr=100./96./sqrt(12.); 
+  for (std::vector<recoTrack*>::iterator it=_vtk.begin();it!=_vtk.end();it++)
     {
-      RecoCandTk& tk = theComputerTrack_->getCandidates()[i];
-#ifdef CORRECT_GEOM
-      tk.ax_/=1.04125;
-      tk.bx_/=1.04125;
-      tk.ay_/=1.04125;
-      tk.by_/=1.04125;
-#endif
-      for (std::vector<planeCluster*>::iterator ic=realClusters_.begin();ic!=realClusters_.end();ic++)
-	    {
-	      float dx=tk.getXext((*ic)->Z())-(*ic)->X();
-	      float dy=tk.getYext((*ic)->Z())-(*ic)->Y();
-	      if (sqrt(dx*dx+dy*dy)<2.)
-		{
-		  // DEBUG_PRINT("Point (%f,%f,%f) dist %f %f -> %f  \n",(*ic)->X(),(*ic)->Y(),(*ic)->Z(),dx,dy,sqrt(dx*dx+dy*dy));
-		for (std::vector<RecoHit*>::iterator ih=(*ic)->getHits()->begin();ih!=(*ic)->getHits()->end();ih++)
+      double chi2=0;
+      for (std::vector<ROOT::Math::XYZPoint*>::iterator ip=(*it)->points().begin();ip!=(*it)->points().end();ip++)
+	{
+	  double cont=(*it)->distance((*ip));
+	  double err=0;
+	  bool found=false;   
+	  for (std::vector<planeCluster*>::iterator ic=realClusters_.begin();ic!=realClusters_.end();ic++)
+	    if ((ROOT::Math::XYZPoint*) (*ic)==(*ip))
+	      {
+		double errx=1./sqrt((*ic)->hits().size())*paderr;
+		double erry=1./sqrt((*ic)->hits().size())*paderr;
+		err=sqrt(errx*errx+erry*erry);
+		for (std::vector<RecoHit*>::iterator ih=(*ic)->hits().begin();ih!=(*ic)->hits().end();ih++)
 		  {
-		    if ((*ih)->isTagged(RecoHit::MIP)==0)
-		      {
-			// DEBUG_PRINT("Point (%f,%f,%f) dist %f %f -> %f  \n",(*ic)->X(),(*ic)->Y(),(*ic)->Z(),dx,dy,sqrt(dx*dx+dy*dy));
-			(*ih)->setTag(RecoHit::MIP,true);
-			hitVolume_[(*ih)->chamber()-1][(*ih)->I()-1][(*ih)->J()-1].setTag(RecoHit::MIP,true);
+		    (*ih)->setTag(RecoHit::MIP,true);
 			nmip++;
-		      }
 		  }
-		}
+		found=true;
+		break;
+	      }
+
+	  if (!found)
+	    std::cout<<"Cluster not found!!!"<<std::endl;
+	  else
+	    {
+	      chi2+=cont*cont/err/err;
+	      nc++;
 	    }
 	}
+      //std::cout<<"chi2 "<<chi2<<" ndf"<<(*it)->points().size()*2-4<<" "<<TMath::Prob(chi2,(*it)->points().size()*2-4)<<std::endl;
+	  (*it)->setChi2(chi2);
+	  //  std::cout<<(*it)->chi2()<<" prob "<<(*it)->pchi2()<<std::endl;
+    }
   
-   DEBUG_PRINT("==> MIPS hit %d -> %.2f Length %f \n",nmip,nmip*100./theHitVector_.size(),theComputerTrack_->Length()); 
 
+  _pMip=nmip*1./_hits.size();
+
+  TH1* hmip= rootHandler_->GetTH1("/HitStudy/mip");
+
+  if (hmip==NULL)
+    {
+      //hweight=(TH1F*) rootHandler_->BookTH1("showerweight",100,0.,2.);
+      hmip= rootHandler_->BookTH1("/HitStudy/mip",110,-0.05,1.05);
+    }
+  hmip->Fill(_pMip);
+  DEBUG_PRINT("==> MIPS hit %d -> %.2f Length %d \n",nmip,nmip*100./_hits.size(),nc);
 }
-#endif
+
+
+std::vector<uint32_t> trackAnalysis::cleanMap(uint32_t nchmin)
+{
+  std::vector<uint32_t> vs;vs.clear();
+  std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> >& pmap=reader_->getPhysicsEventMap();
+  //INFO_PRINT("Number of seeds %d \n",pmap.size());
+  for (std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> >::iterator iseed=pmap.begin();iseed!=pmap.end();iseed++)
+    {
+      std::bitset<64> plans(0);
+      for (std::vector<IMPL::RawCalorimeterHitImpl*>::iterator ih=iseed->second.begin();ih!=iseed->second.end();ih++)
+	{
+	  uint32_t difid=(*ih)->getCellID0()&0xFF;
+	  Json::Value dif=_geo->difGeo(difid);
+	  plans.set(dif["chamber"].asUInt(),1);
+	  
+	}
+
+      if (plans.count()>=nchmin)
+	{
+	  vs.push_back(iseed->first);
+
+	}
+
+    }
+  //INFO_PRINT("Number of seeds after cut %d \n",vs.size());
+  return vs;
+}
+ 
 
 
 extern "C" 

@@ -21,6 +21,7 @@
 #else
 #define INFO_PRINT(format, args...) ((void)0)
 #endif
+#define STEP printf("%s %d\n",__FUNCTION__,__LINE__)
 
 std::string itoa(int k);
 

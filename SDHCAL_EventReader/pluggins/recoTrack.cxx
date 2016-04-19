@@ -1,5 +1,5 @@
 #include "recoTrack.hh"
-
+#include "TMath.h"
 recoTrack::recoTrack() :_valid(false)
 {
   clear();
@@ -21,6 +21,7 @@ void recoTrack::addPoint(ROOT::Math::XYZPoint* p)
   _valid=(_points.size()>2);
   this->regression();
 }
+
 double recoTrack::distance(ROOT::Math::XYZPoint* p)
 {
   if (_dir.Mag2()<1E-3)
@@ -50,6 +51,7 @@ void recoTrack::regression()
   zmax_=-100000;
   double wxt=0;
   double wyt=0;
+
   for (std::vector<ROOT::Math::XYZPoint*>::iterator ip=_points.begin();ip!=_points.end();ip++)
     {
       if ((*ip)->Z()<zmin_) zmin_=(*ip)->Z();
@@ -106,6 +108,18 @@ void recoTrack::clean(float cut)
   regression();		
 
 }
+void recoTrack::remove(ROOT::Math::XYZPoint* p)
+{
+  for (std::vector<ROOT::Math::XYZPoint*>::iterator ip=_points.begin();ip!=_points.end();)
+    {
+      if ((*ip)==p)
+	_points.erase(ip);
+      else
+	ip++;
+    }
+  regression();		
+
+}
  void recoTrack::combine(std::vector<planeCluster*> pc,jsonGeo* g,  std::vector<recoTrack*> &vtk)
 {
   for (std::vector<recoTrack*>::iterator itk=vtk.begin();itk!=vtk.end();itk++) delete (*itk);
@@ -115,7 +129,7 @@ void recoTrack::clean(float cut)
   float cosSeed=g->cuts()["cosSeed"].asFloat();//0.01
   float tkDistCut=g->cuts()["tkDistCut"].asFloat();//1.5
   uint32_t minTkPoint=g->cuts()["tkMinPoint"].asUInt();
-  std::cout<<maxDistSeed2<<" "<<cosSeed<<" "<<tkDistCut<<" "<<minTkPoint<<std::endl;
+  //std::cout<<maxDistSeed2<<" "<<cosSeed<<" "<<tkDistCut<<" "<<minTkPoint<<std::endl;
   for (std::vector<planeCluster*>::iterator ic=pc.begin();ic!=pc.end();ic++)
     {
 	  planeCluster* c0=(*ic);
@@ -181,4 +195,9 @@ void recoTrack::clean(float cut)
 	    }
 	}
       return;
+}
+void recoTrack::setChi2(double chi2)
+{
+  _chi2=chi2;
+  _pchi2=TMath::Prob(_chi2,_points.size()*2-4);
 }
