@@ -2,12 +2,12 @@
     "cuts":{
 	"maxDistSeed":7.0,
 	"cosSeed":0.09,
-	"tkDistCut":1.0,
+	"tkDistCut":1.5,
 	"tkMinPoint":4,
-	"tkExtMinPoint":10,
+	"tkExtMinPoint":40,
 	"tkChi2":0.01,
 	"edge":6.0,
-	"minPlans":7,
+	"minPlans":4,
 	"mipRate":0.6
     },
     "difs":{

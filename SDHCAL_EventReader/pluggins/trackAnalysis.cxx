@@ -16,7 +16,7 @@
 #include <sstream>
 #include <math.h>
 #include "recoTrack.hh"
-
+#include <sys/time.h>
 
 
 
@@ -188,7 +188,7 @@ void trackAnalysis::initHistograms()
   //  rootHandler_->BookTH1("/Clusters/EST1",100,0.,300.);
 }
 
-trackAnalysis::trackAnalysis() :trackIndex_(0),nAnalyzed_(0),clockSynchCut_(8), spillSize_(90000),maxHitCount_(500000),minHitCount_(10),
+trackAnalysis::trackAnalysis() :trackIndex_(0),nAnalyzed_(0),clockSynchCut_(8), spillSize_(90000),maxHitCount_(500000),minHitCount_(5),
 									     tkMinPoint_(3),tkExtMinPoint_(3),tkBigClusterSize_(32),tkChi2Cut_(0.01),tkDistCut_(5.),tkExtChi2Cut_(0.01),tkExtDistCut_(10.),tkAngularCut_(20.),zLastAmas_(134.),
 									     findTracks_(true),dropFirstSpillEvent_(false),useSynchronised_(true),chamberEdge_(5.),rebuild_(false),oldAlgo_(true),collectionName_("DHCALRawHits"),
 									     tkFirstChamber_(1),tkLastChamber_(61),useTk4_(false),offTimePrescale_(1),houghIndex_(0),theRhcolTime_(0.),theTimeSortTime_(0.),theTrackingTime_(0),
@@ -249,7 +249,7 @@ void trackAnalysis::presetParameters()
       if ((it=m.find("ClockSynchCut"))!=m.end()) clockSynchCut_=it->second.getIntValue();
       if ((it=m.find("SpillSize"))!=m.end()) spillSize_=it->second.getDoubleValue();
       if ((it=m.find("MaxHitCount"))!=m.end()) maxHitCount_=it->second.getIntValue();
-      if ((it=m.find("MinHitCount"))!=m.end()) minHitCount_=it->second.getIntValue();
+      //if ((it=m.find("MinHitCount"))!=m.end()) minHitCount_=it->second.getIntValue();
       if ((it=m.find("MinChambersInTime"))!=m.end()) minChambersInTime_=it->second.getIntValue();
       if ((it=m.find("TkMinPoint"))!=m.end()) tkMinPoint_=it->second.getIntValue();
       if ((it=m.find("TkExtMinPoint"))!=m.end()) tkExtMinPoint_=it->second.getIntValue();
@@ -410,7 +410,7 @@ void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 {
 
  
-  
+  ptime("Enter");
 
   currentTime_=seed;
   
@@ -432,19 +432,39 @@ void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
    theCerenkovTag_=this->CerenkovTagger(3,seed);
    uint32_t tag=theCerenkovTag_;
    //printf("%d %d \n",seed,theCerenkovTag_);
-   
+   ptime("Init");
    theNplans_=this->fillVolume(seed);
-
+   ptime("fillVolume");
    if (nPlansAll_.count()<_geo->cuts()["minPlans"].asUInt()) return;
+   // Ask at least 3 Plans in the 5 first
+   uint32_t npf=0,npl=0;
+   for (int i=1;i<=5;i++)
+     if (nPlansAll_[i]) npf++;
+   for (int i=41;i<=45;i++)
+     if (nPlansAll_[i]) npl++;
+   if (npf<3) return;
+   //   std::cout<<nPlansAll_.to_string()<<std::endl;
+
    this->TagIsolated(1,48);
+   ptime("Tag iso");
+   if (_pMipCand<2E-2 &&_hits.size()<25) return;
    //if (_pMipCand<_geo->cuts()["mipRate"].asFloat()) return; // Muon selection
 
    
    this->fillVector(seed);
+
+   ptime("fill vector");
    //if (_hits.size()<30) return;
    recoTrack::combine(realClusters_,_geo,_vtk);
+   ptime("combine");
    this->tagMips();
-
+   ptime("tagmip");
+   if (_pMip>-1E-5 && _pMip<-10.6)
+     {
+       std::cout<<_hits.size()<<" hits "<<_pMipCand*100<<" % low weight "<<realClusters_.size()<<" clusters "<<_pMip*100<<" % Mip tagged"<<std::endl;
+       this->drawHits();
+       char c;c=getchar();putchar(c); if (c=='.') exit(0);
+       }
    //   std::cout<<"Seed :"<<seed<<" plans :"<<theNplans_<<std::endl;   
    if (_pMip>_geo->cuts()["mipRate"].asFloat())
      _monitor->trackHistos(_vtk,realClusters_,"/Principal");
@@ -871,8 +891,12 @@ void trackAnalysis::drawHits()
 	  hc2->Fill((*it)->pchi2());
 	}
       TH1* hmip= rootHandler_->GetTH1("/HitStudy/mip");
-      if (hmip!=NULL)
-	hmip->Draw();
+      //if (hmip!=NULL)
+      //	hmip->Draw();
+      TH1* hwmip= rootHandler_->GetTH1("/HitStudy/weightmip");
+      if (hwmip!=NULL)
+	hwmip->Draw();
+	    
        TCHits->Modified();
       TCHits->Draw();
       TCHits->cd(3);
@@ -939,25 +963,90 @@ void trackAnalysis::clearClusters()
   nPlansAll_.reset();
     
 }
+void trackAnalysis::ptime( std::string s)
+{
+#ifdef DEBUG
+
+gettimeofday(&endT, NULL); 
+
+timersub(&endT, &startT, &diffT);
+
+ printf("%s **time taken = %ld %ld\n",s.c_str(),diffT.tv_sec, diffT.tv_usec);
+ gettimeofday(&startT, NULL);
+#endif
+}
 void trackAnalysis::fillPlaneClusters()
 {
   //printf("DEBUT\n");
   
   clearClusters();
+
+  
+  for (std::vector<RecoHit>::iterator ih=_hits.begin();ih<_hits.end();ih++)
+    {
+      
+      //if (ih->weight()>0.25) continue;
+      if (ih->isUsed()) continue;
+      bool merged=false;
+      double z=(*ih).Z();
+      for (std::vector<planeCluster*>::iterator ic=allClusters_.begin();ic!=allClusters_.end();ic++)
+	{
+	  if (abs((*ic)->Z()-z)>0.5) continue;
+	  //if (ih->chamber()!=(*ic)->chamber()) continue;
+	  merged=(*ic)->Append(&(*ih),2.); // avant 4 et normalement 2
+	  if (merged) break;
+	}
+      if (merged) continue;
+      planeCluster* c= new planeCluster(&(*ih));
+      allClusters_.push_back(c);
+    }
+  
+   for (std::vector<planeCluster*>::iterator ic=allClusters_.begin();ic!=allClusters_.end();ic++)
+    {
+      if ((*ic)->getHits()->size()<=4)
+	realClusters_.push_back((*ic));
+      else
+	{
+	  bool mipc=false;
+	  if ((*ic)->getHits()->size()<7)
+	    for (std::vector<RecoHit*>::iterator ih=(*ic)->getHits()->begin();ih!=(*ic)->getHits()->end();ih++)
+	      if ((*ih)->weight()<0.25) {mipc=true;break;}
+	  if (mipc)
+	    realClusters_.push_back((*ic));
+	  else
+	    interactionClusters_.push_back((*ic));
+	  }
+    }
+  lastInteractionPlane_=0;
+  firstInteractionPlane_=100;
+  for (std::vector<planeCluster*>::iterator ic=interactionClusters_.begin();ic!=interactionClusters_.end();ic++)
+    {
+      uint32_t ch=(*ic)->plan();
+      nPlansInteraction_.set(ch,true);
+      nPlansAll_.set(ch,true);
+      if (lastInteractionPlane_<ch) lastInteractionPlane_=ch;
+      if (firstInteractionPlane_>ch) firstInteractionPlane_=ch;
+    }
+  return;   
+  
+
   
   //return;
+  uint32_t nlow=0;
   for (std::vector<RecoHit>::iterator ih=_hits.begin();ih<_hits.end();ih++)
     {
       
       //if (ih->isTagged(RecoHit::CORE)==1) continue;
       if (ih->isUsed()) continue;
+      //std::cout<<ih->weight()<<std::endl;
       if (ih->weight()<1E-3) continue;
-      if (ih->weight()>20E-2) continue;
+      if (ih->weight()>25E-2) continue;
+      nlow++;
       bool merged=false;
       for (std::vector<planeCluster*>::iterator ic=realClusters_.begin();ic!=realClusters_.end();ic++)
 	{
 	  if (ih->chamber()!=(*ic)->chamber()) continue;
-	  merged=(*ic)->Append(&(*ih),2.); // avant 4 et normalement 2
+	  merged=(*ic)->Append(&(*ih),4.); // avant 4 et normalement 2
 	  if (merged) break;
 	}
       if (merged) continue;
@@ -976,16 +1065,16 @@ void trackAnalysis::fillPlaneClusters()
       for (std::vector<planeCluster*>::iterator ic=realClusters_.begin();ic!=realClusters_.end();ic++)
 	{
 	  if (ih->chamber()!=(*ic)->chamber()) continue;
-	  merged=(*ic)->Append(&(*ih),2.); // avant 4 et normalement 2
+	  merged=(*ic)->Append(&(*ih),4.); // avant 4 et normalement 2
 	  if (merged) break;
 	}
     }
   
-  //printf("OLA %d %d \n",allClusters_.size(),realClusters_.size());
+  //printf("OLA Low %d all %d real %d \n",nlow,allClusters_.size(),realClusters_.size());
   for (std::vector<RecoHit>::iterator ih=_hits.begin();ih<_hits.end();ih++)
     {
       if (ih->isUsed()) continue;
-      if (ih->weight()<20E-2) continue;
+      if (ih->weight()<25E-2) continue;
       bool merged=false;
       for (std::vector<planeCluster*>::iterator ic=interactionClusters_.begin();ic!=interactionClusters_.end();ic++)
 	{
@@ -998,7 +1087,7 @@ void trackAnalysis::fillPlaneClusters()
       interactionClusters_.push_back(c);
       allClusters_.push_back(c);
     }
-  
+  //printf("OLI all %d interaction %d \n",allClusters_.size(),interactionClusters_.size());
   // Move small cluster from interactionClusters_ to realClusters_
   for (std::vector<planeCluster*>::iterator ic=interactionClusters_.begin();ic!=interactionClusters_.end();)
     {
@@ -1021,6 +1110,7 @@ void trackAnalysis::fillPlaneClusters()
 	  realClusters_.erase(ic);
 	}
     }
+  //printf("OLF real %d  interaction %d \n",realClusters_.size(),interactionClusters_.size());
   // Now find first and last interaction planes
   
   lastInteractionPlane_=0;
@@ -1457,6 +1547,7 @@ void trackAnalysis::TagIsolated(uint32_t fpl,uint32_t lpl)
 {
   TH1* hweight= rootHandler_->GetTH1("/HitStudy/showerweight");
   TH1* hmipc= rootHandler_->GetTH1("/HitStudy/mipcand");
+  TH2* hmipch= rootHandler_->GetTH2("/HitStudy/mipcandhit");
   TH1* hnv= rootHandler_->GetTH1("/HitStudy/nv");
   TH2* hweight2= rootHandler_->GetTH2("/HitStudy/showerweight2");
   if (hweight==NULL)
@@ -1464,6 +1555,7 @@ void trackAnalysis::TagIsolated(uint32_t fpl,uint32_t lpl)
       //hweight=(TH1F*) rootHandler_->BookTH1("showerweight",100,0.,2.);
       hweight= rootHandler_->BookTH1("/HitStudy/showerweight",160,-0.1,1.5);
       hmipc= rootHandler_->BookTH1("/HitStudy/mipcand",160,-0.1,1.5);
+      hmipch= rootHandler_->BookTH2("/HitStudy/mipcandhit",250,0.,1500,160,-0.1,1.5);
       hnv= rootHandler_->BookTH1("/HitStudy/nv",150,0.,150.);
       hweight2= rootHandler_->BookTH2("/HitStudy/showerweight2",150,0.,150.,110,-0.1,0.99);
     }
@@ -1473,7 +1565,7 @@ void trackAnalysis::TagIsolated(uint32_t fpl,uint32_t lpl)
   uint32_t nedge=0,ncore=0,niso=0;
   int32_t ixmin=-6,ixmax=6; // 6 avant
   std::vector<RecoHit*> vnear_;
-  float dcut2=36.; //36.
+  float dcut2=47.; //36.
   int nmipc=0;
   for (std::vector<RecoHit>::iterator it=_hits.begin();it!=_hits.end();it++)
     {
@@ -1482,8 +1574,9 @@ void trackAnalysis::TagIsolated(uint32_t fpl,uint32_t lpl)
 	 {
 	   if (jt==it) continue;
 	   ROOT::Math::XYZVector d=(*it)-(*jt);
-	   float dist=2*(abs(d.X())+abs(d.y()))+abs(d.Z());
-	   if (dist<dcut2)
+	   //	   if (abs(d.Z())<1) continue;
+	   //float dist=2*(abs(d.X())+abs(d.y()))+abs(d.Z());
+	   if (d.Mag2()<47)
 	     vnear_.push_back(&(*jt));
 	 }
       /*
@@ -1512,15 +1605,16 @@ void trackAnalysis::TagIsolated(uint32_t fpl,uint32_t lpl)
 	 }
       */
       RecoHit* h0=&(*it);
+      hnv->Fill(vnear_.size()*1.);
        pcaComponents c=RecoHit::calculateComponents<RecoHit>(vnear_);
        double w=0;
        if (c[5]!=0) w=sqrt((c[4]+c[3])/c[5]);
        h0->setWeight(w);
-       if (w>2E-2 && w<2E-1) nmipc++;
+       if (w<2.5E-1) nmipc++;
        if (c[5]==0 || vnear_.size()<=3)
 	 {
 	   h0->setTag(RecoHit::ISOLATED,true);niso++;
-	   hnv->Fill(vnear_.size()*1.);
+
 	 }
        else
 	 {
@@ -1535,7 +1629,8 @@ void trackAnalysis::TagIsolated(uint32_t fpl,uint32_t lpl)
     }
   coreRatio_=ncore*1./(nedge+niso);
   _pMipCand=nmipc*1./_hits.size();
-  hmipc->Fill(nmipc*1./_hits.size());
+  hmipc->Fill(_pMipCand);
+  hmipch->Fill(_hits.size(),_pMipCand);
   return;
 }
 
@@ -1562,8 +1657,9 @@ uint32_t trackAnalysis::fillVector(uint32_t seed)
       if (h.isTagged(RecoHit::ISOLATED)!=1) 
 	theTkHitVector_.push_back(&h);
     }
-  
+  ptime("after tkhit");
   this->fillPlaneClusters();
+  std::sort(realClusters_.begin(),realClusters_.end(),PlaneCompare());
   DEBUG_PRINT("Hits %d tk %d ===> %d clusters %d Real %d Interaction \n",_hits.size(),theTkHitVector_.size(),allClusters_.size(),realClusters_.size(),interactionClusters_.size());
   
 
@@ -1574,6 +1670,19 @@ uint32_t trackAnalysis::fillVector(uint32_t seed)
 void trackAnalysis::tagMips()
 {
 
+  TH1* hmip= rootHandler_->GetTH1("/HitStudy/mip");
+  TH1* hwmip= rootHandler_->GetTH1("/HitStudy/weightmip");
+  TH2* hmiph= rootHandler_->GetTH2("/HitStudy/miphit");
+
+  if (hmip==NULL)
+    {
+      //hweight=(TH1F*) rootHandler_->BookTH1("showerweight",100,0.,2.);
+      hmip= rootHandler_->BookTH1("/HitStudy/mip",110,-0.05,1.05);
+      hwmip= rootHandler_->BookTH1("/HitStudy/weightmip",210,-0.05,1.05);
+      hmiph= rootHandler_->BookTH2("/HitStudy/miphit",250,0.,1500.,110,-0.05,1.05);
+    }
+
+  //hwmip->Reset();
   uint32_t nmip=0,nc=0;
 
   double paderr=100./96./sqrt(12.); 
@@ -1594,6 +1703,7 @@ void trackAnalysis::tagMips()
 		for (std::vector<RecoHit*>::iterator ih=(*ic)->hits().begin();ih!=(*ic)->hits().end();ih++)
 		  {
 		    (*ih)->setTag(RecoHit::MIP,true);
+		    hwmip->Fill((*ih)->weight());
 			nmip++;
 		  }
 		found=true;
@@ -1615,15 +1725,8 @@ void trackAnalysis::tagMips()
   
 
   _pMip=nmip*1./_hits.size();
-
-  TH1* hmip= rootHandler_->GetTH1("/HitStudy/mip");
-
-  if (hmip==NULL)
-    {
-      //hweight=(TH1F*) rootHandler_->BookTH1("showerweight",100,0.,2.);
-      hmip= rootHandler_->BookTH1("/HitStudy/mip",110,-0.05,1.05);
-    }
   hmip->Fill(_pMip);
+  hmiph->Fill(_hits.size(),_pMip);
   DEBUG_PRINT("==> MIPS hit %d -> %.2f Length %d \n",nmip,nmip*100./_hits.size(),nc);
 }
 

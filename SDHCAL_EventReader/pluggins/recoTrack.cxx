@@ -130,9 +130,17 @@ void recoTrack::remove(ROOT::Math::XYZPoint* p)
   float tkDistCut=g->cuts()["tkDistCut"].asFloat();//1.5
   uint32_t minTkPoint=g->cuts()["tkMinPoint"].asUInt();
   //std::cout<<maxDistSeed2<<" "<<cosSeed<<" "<<tkDistCut<<" "<<minTkPoint<<std::endl;
+  /* uint32_t nc=0;
+    for (std::vector<planeCluster*>::iterator ic=pc.begin();ic!=pc.end();ic++)
+    {
+	  planeCluster* c0=(*ic);
+	  std::cout<<"Z["<<nc++<<"]="<<c0->Z()<<std::endl; 
+    }
+  */
   for (std::vector<planeCluster*>::iterator ic=pc.begin();ic!=pc.end();ic++)
     {
 	  planeCluster* c0=(*ic);
+	  //std::cout<<"Z["<<nc<<"]="<<c0->Z()<<std::endl; 
 	  if ((*ic)->isUsed()) continue;
 	  for (std::vector<planeCluster*>::iterator jc=pc.begin();jc!=pc.end();jc++)
 	    {
@@ -163,6 +171,7 @@ void recoTrack::remove(ROOT::Math::XYZPoint* p)
 		      tk->addPoint((*ic));
 		      tk->addPoint((*jc));
 		      tk->addPoint((*kc));
+		      //std::cout<<"seed "<<(*ic)->Z()<<" "<<(*jc)->Z()<<" "<<(*kc)->Z()<<" min "<<tk->zmin()<<" "<<tk->zmax()<<std::endl;
 		      good=true;
 		      break;
 		    }
@@ -172,10 +181,20 @@ void recoTrack::remove(ROOT::Math::XYZPoint* p)
 		  for (std::vector<planeCluster*>::iterator kc=pc.begin();kc!=pc.end();kc++)
 		    {
 		      if ((*kc)->isUsed()) continue;
+		      //if ((*kc)->Z()<tk->zmax()) continue;
 		      if (tk->distance((*kc))<tkDistCut)
 			{
-			  tk->addPoint((*kc));
-			  (*kc)->setUse(true);
+			  //std::cout<<" "<<abs((*kc)->Z()-tk->zmin())
+			  //		   <<" "<<abs((*kc)->Z()-tk->zmax())<<std::endl;
+			  if (((*kc)->Z()<tk->zmin()-10)||
+			      ((*kc)->Z()>tk->zmax()+10)) continue;
+			  else
+			    {
+			      //std::cout<<(*kc)->Z()<<" add to  "<<tk->zmax()<<std::endl;
+			      
+			      tk->addPoint((*kc));
+			      (*kc)->setUse(true);
+			    }
 			}
 		      //std::cout<<tk->distance((*kc))<<std::endl;
 		    }
@@ -200,4 +219,33 @@ void recoTrack::setChi2(double chi2)
 {
   _chi2=chi2;
   _pchi2=TMath::Prob(_chi2,_points.size()*2-4);
+}
+
+void recoTrack::getChi2(std::vector<planeCluster*> clusters)
+{
+  double chi2=0,paderr=100./96./sqrt(12.);
+  for (std::vector<ROOT::Math::XYZPoint*>::iterator ip=this->points().begin();ip!=this->points().end();ip++)
+    {
+      double cont=this->distance((*ip));
+      double err=0;
+      bool found=false;
+      std::vector<planeCluster*>::iterator ic=std::find(clusters.begin(),clusters.end(),(planeCluster*) (*ip));
+      
+      if (ic!=clusters.end())
+	{
+	  double errx=1./sqrt((*ic)->hits().size())*paderr;
+	  double erry=1./sqrt((*ic)->hits().size())*paderr;
+	  err=sqrt(errx*errx+erry*erry);
+	  chi2+=cont*cont/err/err;
+	  //nc++;
+
+	}
+      else
+	std::cout<<"Cluster noit found !!!"<<std::endl;
+
+    }
+
+//std::cout<<"chi2 "<<chi2<<" ndf"<<this->points().size()*2-4<<" "<<TMath::Prob(chi2,this->points().size()*2-4)<<std::endl;
+  this->setChi2(chi2);
+
 }

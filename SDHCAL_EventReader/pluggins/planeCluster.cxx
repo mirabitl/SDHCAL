@@ -18,11 +18,13 @@ void planeCluster::add(RecoHit* h)
 }
 double planeCluster::dist(RecoHit* h1,RecoHit* h2)
 {
-	if (h1->chamber()!=h2->chamber()) return 1E12;
-	ROOT::Math::XYZVector d=(*h1)-(*h2);
-	double distx = TMath::Abs(d.X());
-	double disty = TMath::Abs(d.Y());
-
+  //if (h1->chamber()!=h2->chamber()) return 1E12;
+  //ROOT::Math::XYZVector d=(*h1)-(*h2);
+  //double distx = TMath::Abs(d.X());
+  //double disty = TMath::Abs(d.Y());
+  if (abs(h1->Z()-h2->Z())>0.5) return 1E12;
+  double distx=abs(h1->X()-h2->X());
+  double disty=abs(h1->Y()-h2->Y());
 	//std::cout<<h1.X()<<" "<<h2.X()<<" "<<distx<<std::endl;
 	if (distx>disty) 
 	return distx;
@@ -60,7 +62,7 @@ void planeCluster::Print()
   std::cout<<(*hits_.begin())->chamber()<<":"<<X()<<"/"<<Y()<<" "<<hits_.size()<<std::endl;
 	for (std::vector<RecoHit*>::iterator it= hits_.begin();it!=hits_.end();it++)
 	{
-	  std::cout<<"\t "<<(int) (*it)->X()<<" "<<(int) (*it)->Y()<<std::endl; 
+	  std::cout<<"\t "<<(*it)->dif()<<" "<<(int) (*it)->X()<<" "<<(int) (*it)->Y()<<std::endl; 
 	}
 }
 void planeCluster::calcPos()

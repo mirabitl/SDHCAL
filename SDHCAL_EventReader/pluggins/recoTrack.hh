@@ -13,7 +13,8 @@
 #include <Math/Vector3Dfwd.h>
 #include <Math/DisplacementVector3D.h>
 #include <ostream>
-#include <bitset> 
+#include <bitset>
+
 class recoTrack
 {
 public:
@@ -29,7 +30,6 @@ public:
     _pchi2=t.pchi2();
     zmin_=t.zmin();
     zmax_=t.zmax();
-    regression();
   }
 
 
@@ -69,6 +69,8 @@ public:
     return os;
   }
   static void combine(std::vector<planeCluster*> pc,jsonGeo* g,std::vector<recoTrack*>& vtk);
+  void getChi2(std::vector<planeCluster*> clusters);
+
 private:
   bool _valid;
   float zmin_,zmax_;

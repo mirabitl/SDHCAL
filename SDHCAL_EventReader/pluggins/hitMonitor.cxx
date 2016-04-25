@@ -231,7 +231,9 @@ void hitMonitor::trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCl
       TH2* hfound2= rootHandler_->GetTH2(namec.str()+"/found2");
       TH2* hmul= rootHandler_->GetTH2(namec.str()+"/mul");
       TH1* hdx= rootHandler_->GetTH1(namec.str()+"/dx");
+      TH2* hdx2= rootHandler_->GetTH2(namec.str()+"/dx2");
       TH1* hdy= rootHandler_->GetTH1(namec.str()+"/dy");
+      TH2* hdy2= rootHandler_->GetTH2(namec.str()+"/dy2");
       TH2* hderr= rootHandler_->GetTH2(namec.str()+"/derr");
       TH2* hmiss= rootHandler_->GetTH2(namec.str()+"/missing");
 
@@ -256,8 +258,10 @@ void hitMonitor::trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCl
 	  hmiss= rootHandler_->BookTH2(namec.str()+"/missing",nx,xi,xa,ny,yi,ya);
 	  hmul= rootHandler_->BookTH2(namec.str()+"/mul",nx,xi,xa,ny,yi,ya);
 	  hdx=  rootHandler_->BookTH1(namec.str()+"/dx",400,-4.,4.);
+	  hdx2=  rootHandler_->BookTH2(namec.str()+"/dx2",11,-0.1,10.9,300,-3.,3.);
 	  hdy=  rootHandler_->BookTH1(namec.str()+"/dy",400,-4.,4.);
 	  hderr=  rootHandler_->BookTH2(namec.str()+"/derr",400,-4.,4.,400,-4.,4.);
+	  hdy2=  rootHandler_->BookTH2(namec.str()+"/dy2",11,-0.1,10.9,300,-3.,3.);
 	  
 	}
 
@@ -327,6 +331,9 @@ void hitMonitor::trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCl
 	  if (hposx==NULL)
 	    {
 	      std::cout <<"Opps "<<namec.str()<<std::endl;
+	      std::cout<<"Cluster "<<(*ic)->Z()<<" "<<(*ic)->X()<<std::endl;
+	      (*ic)->Print();
+	      //exit(0);
 	      continue;
 	    }
 
@@ -348,6 +355,7 @@ void hitMonitor::trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCl
 	  if ((*it)->zmax()<jch["z0"].asFloat()-edge) continue;
 
 	  recoTrack tkext;
+	  tkext.clear();
 	  for (std::vector<ROOT::Math::XYZPoint*>::iterator ip=(*it)->points().begin();ip!=(*it)->points().end();ip++)
 	    {
 	      if (abs((*ip)->Z()-jch["z0"].asFloat())<1E-3)
@@ -355,8 +363,9 @@ void hitMonitor::trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCl
 	      else
 		tkext.addPoint((*ip));
 	    }
+	  tkext.getChi2(clusters);
 	  if (tkext.size()<minTkExtPoint) continue;
-	  //if (tkext.pchi2()<tkChi2) continue;
+	  if (tkext.pchi2()<tkChi2) continue;
 	  tkext.regression();
 	  std::stringstream namec("");
 	  namec<<tkdir+"/Plan"<<ich;
@@ -367,7 +376,9 @@ void hitMonitor::trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCl
 	  TH2* hfound2= rootHandler_->GetTH2(namec.str()+"/found2");
 	  TH2* hmul= rootHandler_->GetTH2(namec.str()+"/mul");
 	  TH1* hdx= rootHandler_->GetTH1(namec.str()+"/dx");
+	  TH2* hdx2= rootHandler_->GetTH2(namec.str()+"/dx2");
 	  TH1* hdy= rootHandler_->GetTH1(namec.str()+"/dy");
+	  TH2* hdy2= rootHandler_->GetTH2(namec.str()+"/dy2");
 	  TH2* hderr= rootHandler_->GetTH2(namec.str()+"/derr");
 	  TH2* hmiss= rootHandler_->GetTH2(namec.str()+"/missing");
 	  
@@ -391,7 +402,9 @@ void hitMonitor::trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCl
 		  double errx=100./96./sqrt(12.)/sqrt(nx);
 		  double erry=100./96./sqrt(12.)/sqrt(nx);
 		  hdx->Fill(dex.X()/errx);
+		  hdx2->Fill(nx*1.,dex.X()/errx);
 		  hdy->Fill(dex.Y()/erry);
+		  hdy2->Fill(nx*1.,dex.Y()/erry);
 		  hderr->Fill(dex.X(),dex.Y());
 		  if (dex.Mag2()<dist)
 		    {

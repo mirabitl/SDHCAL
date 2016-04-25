@@ -96,7 +96,13 @@ public:
   void fillPlaneClusters();
   void tagMips();
   std::vector<uint32_t> cleanMap(uint32_t nchmin);
-
+  struct PlaneCompare {
+    bool operator()(const planeCluster* l, const planeCluster* r) {
+      return l->Z() < r->Z();
+    }
+  };
+  void ptime(std::string s);
+    
 private:
 
 
@@ -104,6 +110,7 @@ private:
   int nInSynch_,run_;
   double externalTriggerTime_,lastSpill_,lastPowerPulsedTime_;
 
+  struct timeval diffT, startT, endT;
 
 
   std::map<uint32_t,uint32_t> asicCount_;
