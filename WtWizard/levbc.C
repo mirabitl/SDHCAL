@@ -40,6 +40,7 @@ using namespace  std;
 #include "Tokenizer.h"
 #include <json/json.h>
 //using namespace Wt;
+ #define STEP printf("%s %d\n",__FUNCTION__,__LINE__)
 
 /*
  * A simple hello world application class which demonstrates how to react
@@ -79,6 +80,7 @@ private:
   Wt::WPushButton *PB_Destroy_;
   Wt::WPushButton *PB_RefreshStatus_;
   Wt::WPushButton *PB_Status_;
+  Wt::WPushButton *PB_HVStatus_;
   Wt::WTable *TB_DIFStatus_;
   Wt::WTable *TB_TrigStatus_;
   Wt::WLineEdit *LE_RunStatus_;
@@ -87,14 +89,18 @@ private:
   Wt::WContainerWidget *container_;
   Wt::WTabWidget *tabW_; 
   Wt::WText* tDaqStatus_;
+  Wt::WText* tHVStatus_;
   
   std::string currentState_;
   void Quit();
   void buildDaqForm(Wt::WPanel *wb);
+  void buildHVForm(Wt::WPanel *wb);
   void fillDaqStatus(Wt::WPanel *wb);
+  void fillHVStatus(Wt::WPanel *wb);
   void ServiceButtonHandler();
   void LVButtonHandler();
   void checkState();
+  void checkSlowControl();
   void InitialiseButtonHandler();
   void InitialiseAction();
   void ConfigureButtonHandler();
@@ -115,6 +121,7 @@ private:
   void updateMonitoringForm();
   void toggleButtons();
   std::string daqStatus();
+  std::string hvStatus();
 };
 
 
@@ -150,14 +157,27 @@ levbc::levbc(const Wt::WEnvironment& env)
 {
 
   Wt::WApplication::instance()->useStyleSheet("bootstrap/css/bootstrap.min.css");
-   std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-state -v");
-   std::cout<<"Youpi Ya "<<res<<std::endl;
+  std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --available -v");
+  std::cout<<"Youpi Ya "<<res<<std::endl;
   setTitle("Standalone Data Acquisition");                               // application title
   container_ = new Wt::WContainerWidget(root());
   container_->setStyleClass("bootstrap");
   tabW_ = new Wt::WTabWidget(container_);
  
 
+
+
+
+  Wt::WPanel *groupBoxHV = new Wt::WPanel();
+  groupBoxHV->setTitle("HV Control");
+  groupBoxHV->setCollapsible(true);
+  
+  tabW_->addTab(groupBoxHV,"HV Control");//, Wt::WTabWidget::PreLoading);
+
+  groupBoxHV->addStyleClass("centered-example");
+  buildHVForm(groupBoxHV);
+
+  
   //Wt::WGroupBox *groupBoxDaq = new Wt::WGroupBox("Daq Control");
   Wt::WPanel *groupBoxDaq = new Wt::WPanel();
   groupBoxDaq->setTitle("Daq Control");
@@ -169,7 +189,7 @@ levbc::levbc(const Wt::WEnvironment& env)
   buildDaqForm(groupBoxDaq);
 
 
-    //Wt::WGroupBox *groupBoxDaq = new Wt::WGroupBox("Daq Control");
+    //Wt::WGroupBox *groupBoxDaq = new Wt::WGroupBox("Daq Control");w
   
   //tabW_->addTab(groupBoxDaq,"Daq Control");//, Wt::WTabWidget::PreLoading);
 
@@ -214,8 +234,72 @@ void levbc::Quit()
   this->quit();
 }
 
+
+std::string levbc::hvStatus()
+{
+  std::stringstream os;
+  std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --slc-pt -v");
+
+  //if (theClient_==NULL) return;
+  Json::Reader reader;
+  Json::Value jsta;
+  
+  os<<"<h4> Environment </h4>"<<std::endl;
+  
+  jsta.clear();
+  bool parsingSuccessful = reader.parse(res,jsta);
+  //std::cout<<jsta<<std::endl;
+  Json::Value jdev1;
+  parsingSuccessful = reader.parse(jsta["PTResponse"]["PTResult"][0].asString(),jdev1);
+  //std::cout<<jdev1;
+  os<<"<table style=\"width:100%\">";
+  os<<"<tr><th style=\"text-align:left\">Pression</th><th style=\"text-align:left\">Temperature</th> </tr>";
+
+  os<<"<tr><td>"<<jdev1["P"].asFloat()<<"</td>";
+  os<<"<td>"<<jdev1["T"].asFloat()<<"</td></tr>";
+  os<<"</table>";
+
+
+  res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --slc-hvstatus -v");
+  //std::cout<<res<<std::endl;
+  jsta.clear();
+  parsingSuccessful = reader.parse(res,jsta);
+  //  std::cout<<jsta;
+  parsingSuccessful = reader.parse(jsta["hvStatusResponse"]["hvStatusResult"][0].asString(),jdev1);
+  //std::cout<<jdev1;
+  const Json::Value& jdevs= jdev1;
+  //std::cout<<jdevs<<std::endl;
+  //for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
+  //  {	  //TB_DIFStatus_->elementAt(irow, 0)->addWidget();
+  //   std::cout<<(*jt);
+  //  }
+  // Header
+  os<<"<h4> HV Status </h4>"<<std::endl;
+  os<<"<table style=\"width:100%\">";
+  os<<"<tr><th style=\"text-align:left\">Channel</th><th style=\"text-align:left\">VSET</th> <th style=\"text-align:left\">ISET</th><th style=\"text-align:left\">VOUT</th><th style=\"text-align:left\">IOUT</th></tr>";
+  uint32_t irow=1;
+  for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
+    {	  //TB_DIFStatus_->elementAt(irow, 0)->addWidget();
+      //std::cout<<(*jt);
+
+      os<<"<tr>";
+      os<<"<td>"<<(*jt)["channel"].asUInt()<<"</td>";
+      os<<"<td>"<<(*jt)["vset"].asFloat()<<"</td>";
+      os<<"<td>"<<(*jt)["iset"].asFloat()<<"</td>";
+      os<<"<td>"<<(*jt)["vout"].asFloat()<<"</td>";
+      os<<"<td>"<<(*jt)["iout"].asFloat()<<"</td>";
+      os<<"</tr>";
+      irow++;
+    }
+  os<<"</table>"<<std::endl;
+  std::cout<<os.str();
+  return os.str();
+}
+
+
 std::string levbc::daqStatus()
 {
+  STEP;
   std::stringstream os;
   std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-state -v");
 
@@ -223,36 +307,53 @@ std::string levbc::daqStatus()
   Json::Reader reader;
   Json::Value jsta;
   bool parsingSuccessful = reader.parse(res,jsta);
+  currentState_=jsta["stateResponse"]["stateResult"][0].asString();
   os<<"<h4> State :"<<jsta["stateResponse"]["stateResult"][0].asString()<<"</h4>";
   //Event builder
-
+  STEP;
   os<<"<h4> Low Voltage </h4>"<<std::endl;
   res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-lvsta -v");
   jsta.clear();
   parsingSuccessful = reader.parse(res,jsta);
   Json::Value jdev1;
+  std::cout<<"JSTA"<<jsta;
   parsingSuccessful = reader.parse(jsta["LVStatusResponse"]["LVStatusResult"][0].asString(),jdev1);
-  os<<"<table style=\"width:100%\">";
-  os<<"<tr><th style=\"text-align:left\">VSET</th><th style=\"text-align:left\">VOUT</th> <th style=\"text-align:left\">IOUT</th></tr>";
+  std::cout<<jdev1<<jdev1.empty()<<jsta["LVStatusResponse"]["LVStatusResult"][0];
+  STEP;
+  if (jsta["LVStatusResponse"]["LVStatusResult"][0].asString().compare("null")!=0)
+    {
+      os<<"<table style=\"width:100%\">";
+      os<<"<tr><th style=\"text-align:left\">VSET</th><th style=\"text-align:left\">VOUT</th> <th style=\"text-align:left\">IOUT</th></tr>";
+      
+      os<<"<tr><td>"<<jdev1["vset"].asFloat()<<"</td>";
+      os<<"<td>"<<jdev1["vout"].asFloat()<<"</td>";
+      os<<"<td>"<<jdev1["iout"].asFloat()<<"</td></tr>";
+      os<<"</table>";
+    }
 
-  os<<"<tr><td>"<<jdev1["vset"].asFloat()<<"</td>";
-  os<<"<td>"<<jdev1["vout"].asFloat()<<"</td>";
-  os<<"<td>"<<jdev1["iout"].asFloat()<<"</td></tr>";
-  os<<"</table>";
-
-
+  STEP;
+  
   res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-evb -v");
-  //std::cout<<res<<std::endl;
+  std::cout<<res<<std::endl;
   jsta.clear();
   parsingSuccessful = reader.parse(res,jsta);
-
+  jdev1.clear();
   parsingSuccessful = reader.parse(jsta["shmStatusResponse"]["shmStatusResult"][0].asString(),jdev1);
-
-  os<<"<h4> Event Builder:</h4>";
-  os<<"<p><b>Run:</b> "<<jdev1["run"].asString()<<"</p>";
-  os<<"<p><b>Event:</b> "<<jdev1["event"].asString()<<"</p>";
-
-
+  std::cout<<currentState_<<currentState_.compare("INITIALISED")<<std::endl;
+  std::cout<<jdev1<<std::endl;
+  STEP;
+  if (parsingSuccessful && !jdev1.empty())
+    {
+      try {
+      os<<"<h4> Event Builder:</h4>";
+      os<<"<p><b>Run:</b> "<<jdev1["run"].asString()<<"</p>";
+      os<<"<p><b>Event:</b> "<<jdev1["event"].asString()<<"</p>";
+      }
+      catch(...)
+	{
+	}
+    }
+  STEP;
   os<<"<h4> Trigger Status MDCC:</h4>"<<std::endl;
   res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --trig-status -v");
   //std::cout<<res<<std::endl;
@@ -260,16 +361,21 @@ std::string levbc::daqStatus()
   parsingSuccessful = reader.parse(res,jsta);
   //std::cout<<jsta;
   parsingSuccessful = reader.parse(jsta["triggerStatusResponse"]["triggerStatusResult"][0].asString(),jdev1);
-  os<<"<table style=\"width:100%\">";
-  os<<"<tr><th style=\"text-align:left\">Spill</th><th style=\"text-align:left\">SDHCAL</th> <th style=\"text-align:left\">ECAL</th><th style=\"text-align:left\" >Spare</th><th style=\"text-align:left\">ECAL mask</th><th style=\"text-align:left\">Mask</th></tr>";
+  if (parsingSuccessful && !jdev1["spill"].empty())
+    {
 
-  os<<"<tr><td>"<<jdev1["spill"].asUInt()<<"</td>";
-  os<<"<td>"<<jdev1["busy1"].asUInt()<<"</td>";
-  os<<"<td>"<<jdev1["busy2"].asUInt()<<"</td>";
-  os<<"<td>"<<jdev1["busy3"].asUInt()<<"</td>";
-  os<<"<td>"<<jdev1["ecalmask"].asUInt()<<"</td>";
-  os<<"<td>"<<jdev1["mask"].asUInt()<<"</td></tr>";
-  os<<"</table>";
+      os<<"<table style=\"width:100%\">";
+      os<<"<tr><th style=\"text-align:left\">Spill</th><th style=\"text-align:left\">SDHCAL</th> <th style=\"text-align:left\">ECAL</th><th style=\"text-align:left\" >Spare</th><th style=\"text-align:left\">ECAL mask</th><th style=\"text-align:left\">Mask</th></tr>";
+      
+      os<<"<tr><td>"<<jdev1["spill"].asUInt()<<"</td>";
+      os<<"<td>"<<jdev1["busy1"].asUInt()<<"</td>";
+      os<<"<td>"<<jdev1["busy2"].asUInt()<<"</td>";
+      os<<"<td>"<<jdev1["busy3"].asUInt()<<"</td>";
+      os<<"<td>"<<jdev1["ecalmask"].asUInt()<<"</td>";
+      os<<"<td>"<<jdev1["mask"].asUInt()<<"</td></tr>";
+      os<<"</table>";
+    }
+  STEP;
   if (!CB_DIF_->isChecked()) return os.str();
   res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-status -v");
   //std::cout<<res<<std::endl;
@@ -387,6 +493,102 @@ void levbc::buildDaqForm(Wt::WPanel *wp)
   PB_Status_->clicked().connect(this,&levbc::checkState);
 
 
+}
+void levbc::fillHVStatus(Wt::WPanel *wp)
+{
+  Wt::WContainerWidget *wb = new Wt::WContainerWidget();
+  wp->setCentralWidget(wb);
+  Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout();
+  vbox->setContentsMargins(12,12,12,12);
+  wb->setLayout(vbox);
+  //wb->resize(200,200);
+  
+  Wt::WHBoxLayout *hbFSM = new Wt::WHBoxLayout();
+  //  LE_State_ = new Wt::WLineEdit();                     // allow text input
+  // LE_State_->setText("Destroyed");
+  // LE_State_->disable();
+  // this->checkState();
+  // std::stringstream s;
+  // s<<"<h4>State:"<<currentState_<<"</h4>";
+  tHVStatus_=new Wt::WText(this->hvStatus(),Wt::XHTMLText);
+  hbFSM->addWidget(tHVStatus_);
+  
+  vbox->addLayout(hbFSM);
+}
+
+void levbc::buildHVForm(Wt::WPanel *wp)
+{
+  STEP;
+  Wt::WContainerWidget *wb = new Wt::WContainerWidget();
+  wp->setCentralWidget(wb);
+  Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout();
+  vbox->setContentsMargins(12,12,12,12);
+  wb->setLayout(vbox);
+
+  //wb->resize(200,200);
+
+  Wt::WHBoxLayout *hbFSM = new Wt::WHBoxLayout();
+  STEP;
+
+
+  /*  PB_Service_= new Wt::WPushButton("Service", wb);
+  PB_LV_= new Wt::WPushButton("LV Switch", wb);
+  PB_Initialise_= new Wt::WPushButton("Initialise", wb);
+  PB_Configure_= new Wt::WPushButton("Configure", wb);//PB_Configure_->disable();
+  PB_Start_= new Wt::WPushButton("Start", wb);//PB_Start_->disable();
+  PB_Stop_= new Wt::WPushButton("Stop", wb);//PB_Stop_->disable();
+  PB_Destroy_= new Wt::WPushButton("Destroy", wb);//PB_Destroy_->disable();
+  */
+  PB_HVStatus_= new Wt::WPushButton("Status", wb);//PB_Destroy_->disable();
+  /*
+  CB_DIF_ = new Wt::WCheckBox("Check DIF", wb);
+  CB_DIF_->setChecked(false);
+  hbFSM->addWidget(PB_Service_);  // show some text
+  hbFSM->addWidget(PB_LV_);  // show some text
+  hbFSM->addWidget(PB_Initialise_);  // show some text
+  hbFSM->addWidget(PB_Configure_);  // show some text
+  hbFSM->addWidget(PB_Start_);  // show some text
+  hbFSM->addWidget(PB_Stop_);  // show some text
+  hbFSM->addWidget(PB_Destroy_);  // show some text
+  */
+  hbFSM->addWidget(PB_HVStatus_);  // show some text
+  // hbFSM->addWidget(CB_DIF_);  // show some text
+  vbox->addLayout(hbFSM);
+  STEP;
+  Wt::WPanel *pStatus = new Wt::WPanel();
+  pStatus->setTitle("Slow Control Status");
+  pStatus->setCollapsible(true);
+  STEP;
+  fillHVStatus(pStatus);
+  STEP;
+  vbox->addWidget(pStatus);
+  STEP;
+  // Wt::WHBoxLayout *hbinfo = new Wt::WHBoxLayout();
+  // Wt::WGroupBox *groupBox = new Wt::WGroupBox();
+  // LE_State_ = new Wt::WLineEdit();                     // allow text input
+  // LE_State_->setText("Destroyed");
+  // LE_State_->disable();
+  //this->checkState();
+  // groupBox->addWidget(LE_State_);
+  // hbinfo->addWidget(groupBox);
+  // vbox->addLayout(hbinfo);
+  /*
+  PB_Service_->clicked().connect(this,&levbc::ServiceButtonHandler);
+  PB_LV_->clicked().connect(this,&levbc::LVButtonHandler);
+  PB_Initialise_->clicked().connect(this,&levbc::InitialiseButtonHandler);
+
+  PB_Start_->clicked().connect(this,&levbc::StartButtonHandler);
+  PB_Configure_->clicked().connect(this,&levbc::ConfigureButtonHandler);
+  PB_Stop_->clicked().connect(this,&levbc::StopButtonHandler);
+  PB_Destroy_->clicked().connect(this,&levbc::DestroyButtonHandler);
+  */
+  PB_HVStatus_->clicked().connect(this,&levbc::checkSlowControl);
+  STEP;
+
+}
+void levbc::checkSlowControl()
+{
+  tHVStatus_->setText(this->hvStatus());
 }
 void levbc::checkState()
 {
@@ -826,148 +1028,11 @@ void levbc::createMonitoringForm(Wt::WGroupBox *wb)
       vbox->addLayout(hbDIF);
       printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
 }
-void levbc::buildMonitoringForm(Wt::WGroupBox *wb)
-{
-  if (theClient_==NULL)
-    {
-      printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
-      createMonitoringForm(wb);
-      LE_RunStatus_->setText("DAQ is destroyed");
-      
-
-    }
-  else
-    {
-      printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
-      createMonitoringForm(wb);
-      std::stringstream s("");
-      s<<"Current Run is "<<theRunNumber_;
-      std::cout<<s.str()<<std::endl;
-      LE_RunStatus_->setText(s.str());
-      printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
-      updateMonitoringForm();
-    }
-}
 
 void levbc::updateMonitoringForm()
 {
+  return;
   //if (theClient_==NULL) return;
-  std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-state -v");
-  Json::Reader reader;
-  Json::Value jsta;
-  bool parsingSuccessful = reader.parse(res,jsta);
-  std::stringstream s;
-  s<<jsta["stateResponse"]["stateResult"][0].asString();
-  LE_RunStatus_->setText(s.str());
-  //return;
-  res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-evb -v");
-  //std::cout<<res<<std::endl;
-  jsta.clear();
-  parsingSuccessful = reader.parse(res,jsta);
-  Json::Value jdev1;
-  parsingSuccessful = reader.parse(jsta["shmStatusResponse"]["shmStatusResult"][0].asString(),jdev1);
-  LE_RunNumber_->setText(jdev1["run"].asString());
-  LE_EventNumber_->setText(jdev1["event"].asString());
-  
-res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-status -v");
-  //std::cout<<res<<std::endl;
-  jsta.clear();
-  parsingSuccessful = reader.parse(res,jsta);
-  parsingSuccessful = reader.parse(jsta["statusResponse"]["statusResult"][0].asString(),jdev1);
-
-  const Json::Value& jdevs= jdev1;
-  //std::cout<<jdevs<<std::endl;
-  //for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
-  //  {	  //TB_DIFStatus_->elementAt(irow, 0)->addWidget();
-  //   std::cout<<(*jt);
-  //  }
-  // Header
-  TB_DIFStatus_->clear();
-  TB_DIFStatus_->setHeaderCount(1);
-  printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
-  TB_DIFStatus_->setWidth("80%");
-
-  TB_DIFStatus_->elementAt(0, 0)->addWidget(new Wt::WText("Host"));
-  TB_DIFStatus_->elementAt(0, 1)->addWidget(new Wt::WText("DIF"));
-  TB_DIFStatus_->elementAt(0, 2)->addWidget(new Wt::WText("Status"));
-  TB_DIFStatus_->elementAt(0, 3)->addWidget(new Wt::WText("L BCID"));
-  TB_DIFStatus_->elementAt(0, 4)->addWidget(new Wt::WText("L GTC"));
-  TB_DIFStatus_->elementAt(0, 5)->addWidget(new Wt::WText("Bytes"));
-
-  uint32_t irow=1;
-  for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
-    {	  //TB_DIFStatus_->elementAt(irow, 0)->addWidget();
-      std::cout<<(*jt);
-      new Wt::WText(Wt::WString::fromUTF8("oops"),TB_DIFStatus_->elementAt(irow, 0));
-      
-      std::stringstream sdif;sdif<<(*jt)["id"].asUInt();
-      TB_DIFStatus_->elementAt(irow, 1)->addWidget(new Wt::WText(sdif.str()));
-      
-      std::stringstream sstatus;sstatus<<std::hex<<(*jt)["slc"].asUInt();
-      TB_DIFStatus_->elementAt(irow, 2)->addWidget(new Wt::WText(sstatus.str()));
-      
-      std::stringstream sbcid;sbcid<<(*jt)["bcid"].asUInt64();
-      TB_DIFStatus_->elementAt(irow, 3)->addWidget(new Wt::WText(sbcid.str()));
-      
-      std::stringstream sgtc;sgtc<<(*jt)["gtc"].asUInt();
-      TB_DIFStatus_->elementAt(irow, 4)->addWidget(new Wt::WText(sgtc.str()));
-      std::stringstream sbytes;sbytes<<(*jt)["bytes"].asUInt64();
-      TB_DIFStatus_->elementAt(irow, 5)->addWidget(new Wt::WText(sbytes.str()));
-      
-      irow++;
-    }
-  TB_DIFStatus_->addStyleClass("table-striped",true); 
-  TB_DIFStatus_->addStyleClass("table-bordered",true); 
-  
-  res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --trig-status -v");
-  //std::cout<<res<<std::endl;
-  jsta.clear();
-  parsingSuccessful = reader.parse(res,jsta);
-  //std::cout<<jsta;
-  parsingSuccessful = reader.parse(jsta["triggerStatusResponse"]["triggerStatusResult"][0].asString(),jdev1);
-  
-  const Json::Value& jdevs1=jdev1;
-
-  //std::cout<<jdevs<<std::endl;
-  //for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
-  //  {	  //TB_DIFStatus_->elementAt(irow, 0)->addWidget();
-  //   std::cout<<(*jt);
-  //  }
-  // Header
-  TB_TrigStatus_->clear();
-  TB_TrigStatus_->setHeaderCount(1);
-  printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
-  TB_TrigStatus_->setWidth("80%");
-
-  TB_TrigStatus_->elementAt(0, 0)->addWidget(new Wt::WText("Spill"));
-  TB_TrigStatus_->elementAt(0, 1)->addWidget(new Wt::WText("busy1"));
-  TB_TrigStatus_->elementAt(0, 2)->addWidget(new Wt::WText("busy2"));
-  TB_TrigStatus_->elementAt(0, 3)->addWidget(new Wt::WText("busy3"));
-  TB_TrigStatus_->elementAt(0, 4)->addWidget(new Wt::WText("Ecal"));
-  TB_TrigStatus_->elementAt(0, 5)->addWidget(new Wt::WText("Mask"));
-  irow=1;
-
-  std::stringstream spill;spill<<" "<<jdev1["spill"].asUInt()<<" ";
-  TB_TrigStatus_->elementAt(irow, 1)->addWidget(new Wt::WText(spill.str()));
-  
-      
-  std::stringstream sdif;sdif<<jdev1["busy1"].asUInt();
-  TB_TrigStatus_->elementAt(irow, 1)->addWidget(new Wt::WText(sdif.str()));
-      
-  std::stringstream sstatus;sstatus<<std::hex<<jdev1["busy2"].asUInt();
-  TB_TrigStatus_->elementAt(irow, 2)->addWidget(new Wt::WText(sstatus.str()));
-      
-  std::stringstream sbcid;sbcid<<jdev1["busy3"].asUInt();
-  TB_TrigStatus_->elementAt(irow, 3)->addWidget(new Wt::WText(sbcid.str()));
-      
-  std::stringstream sgtc;sgtc<<jdev1["ecalmask"].asUInt();
-  TB_TrigStatus_->elementAt(irow, 4)->addWidget(new Wt::WText(sgtc.str()));
-  std::stringstream sbytes;sbytes<<jdev1["mask"].asUInt();
-  TB_TrigStatus_->elementAt(irow, 5)->addWidget(new Wt::WText(sbytes.str()));
-      
-    
-  //TB_TrigStatus_->addStyleClass("table form-inline"); 
- //TB_TrigStatus_->addStyleClass("table-striped",true); 
 }
 Wt::WApplication *createApplication(const Wt::WEnvironment& env)
 {
