@@ -26,7 +26,22 @@ class wddService(ServiceBase):
             yield 'Daq is created'
         else:
             yield 'Daq is already created'
-        
+
+    @srpc(_returns=Iterable(String))
+    def available():    
+        global _wdd
+        global _wjobc
+        global _wsl
+        daq="NONE"
+        job="NONE"
+        slow="NONE"
+        if (_wdd!=None):
+            daq="CREATED"
+        if (_wjobc!=None):
+            job="CREATED"
+        if (_wsl!=None):
+            slow="CREATED"
+        yield '{"DAQ":%s,"JOB":%s,"SLOW":%s }' % (daq,job,slow)
 
     @srpc( String, _returns=Iterable(String))
     def setParameters(name):
@@ -324,7 +339,7 @@ class wddService(ServiceBase):
     def PT():
         global _wsl
         if (_wsl!=None):
-            yield ' P=%f T=%f' % (_wsl.pression(),_wsl.temperature())
+            yield '{"P":%f,"T":%f}' % (_wsl.pression(),_wsl.temperature())
         else:
             yield " No slow control access"
 

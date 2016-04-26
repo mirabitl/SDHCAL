@@ -15,6 +15,7 @@ parser = argparse.ArgumentParser()
 # configure all the actions
 grp_action = parser.add_mutually_exclusive_group()
 grp_action.add_argument('--daq-create',action='store_true',help='Create the RpcDaq object to access DIf/CCC/EVB')
+grp_action.add_argument('--available',action='store_true',help='Check avilability of daq,jobcontrol and slowcontrol')
 grp_action.add_argument('--jc-create',action='store_true',help='Create the DimJobControlInterface object to control processes')
 grp_action.add_argument('--jc-kill',action='store_true',help='kill all controled processes')
 grp_action.add_argument('--jc-start',action='store_true',help='start all controled processes described in $DAQCONFIG jsonfile variable')
@@ -141,6 +142,8 @@ lcgi={}
 r_cmd=None
 if (results.daq_create):
     r_cmd='createDaq'
+elif(results.available):
+    r_cmd='available'
 elif(results.jc_create):
     r_cmd='createJobControl'
     lcgi['name']=conf.jsonfile
