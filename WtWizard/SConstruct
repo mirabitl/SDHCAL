@@ -70,7 +70,7 @@ INCLUDES=['include',"/usr/include/libxml2/","/usr/include/boost141/","/usr/inclu
 
 INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
 
-CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2"]
+CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2","-std=gnu++11"]
 
 #Library ROOT + some of XDAQ + DB 
 #Library ROOT + some of XDAQ + DB 

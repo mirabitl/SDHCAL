@@ -30,6 +30,8 @@
 #include <Wt/WPanel>
 #include <Wt/WText>
 #include <Wt/WTable>
+#include <Wt/WDialog>
+#include <Wt/WLabel>
 
 // c++0x only, for std::bind
 // #include <functional>
@@ -52,12 +54,7 @@ public:
   levbc(const Wt::WEnvironment& env);
 
 private:
-  DIFMultiClient* theClient_;
-  ShmProxy* theProxy_;
-  OracleDIFDBManager* theDBManager_;
-  RunInfo* theRunInfo_;
   uint32_t theRunNumber_;
-
 
   Wt::WLineEdit *LE_CCCHost_;
   Wt::WLineEdit *LE_DIFHosts_;
@@ -65,12 +62,19 @@ private:
   Wt::WLineEdit *LE_DBState_;
   Wt::WLineEdit *LE_ControlRegister_;
   Wt::WLineEdit *LE_Session_;
-  Wt::WCheckBox *CB_DIF_;
+  
   Wt::WSpinBox  *SB_CCCPort_;
   Wt::WSpinBox  *SB_DIFPort_;
   Wt::WSpinBox  *SB_NumberOfDIFs_;
   Wt::WSpinBox  *SB_DefaultRunNumber_;
   Wt::WLineEdit *LE_State_;
+  Wt::WTable *TB_DIFStatus_;
+  Wt::WTable *TB_TrigStatus_;
+  Wt::WLineEdit *LE_RunStatus_;
+  Wt::WLineEdit *LE_RunNumber_;
+  Wt::WLineEdit *LE_EventNumber_;
+
+  // Used widgets
   Wt::WPushButton *PB_Service_;
   Wt::WPushButton *PB_LV_;
   Wt::WPushButton *PB_Initialise_;
@@ -78,50 +82,68 @@ private:
   Wt::WPushButton *PB_Start_;
   Wt::WPushButton *PB_Stop_;
   Wt::WPushButton *PB_Destroy_;
-  Wt::WPushButton *PB_RefreshStatus_;
   Wt::WPushButton *PB_Status_;
+  Wt::WCheckBox *CB_DIF_;
+
+  Wt::WPushButton *PB_TReset_;
+  Wt::WPushButton *PB_TResume_;
+  Wt::WPushButton *PB_TPause_;
+
+  Wt::WSpinBox  *SB_FChan_;
+  Wt::WSpinBox  *SB_LChan_;
+  Wt::WSpinBox  *SB_Vol_;
   Wt::WPushButton *PB_HVStatus_;
-  Wt::WTable *TB_DIFStatus_;
-  Wt::WTable *TB_TrigStatus_;
-  Wt::WLineEdit *LE_RunStatus_;
-  Wt::WLineEdit *LE_RunNumber_;
-  Wt::WLineEdit *LE_EventNumber_;
+  Wt::WPushButton *PB_HVSet_;
+  Wt::WPushButton *PB_HVOn_;
+  Wt::WPushButton *PB_HVOff_;
+  Wt::WPushButton *PB_JCStatus_;
+  Wt::WPushButton *PB_JCStart_;
+  Wt::WPushButton *PB_JCKill_;
+  
   Wt::WContainerWidget *container_;
   Wt::WTabWidget *tabW_; 
   Wt::WText* tDaqStatus_;
   Wt::WText* tHVStatus_;
-  
+  Wt::WText* tJCStatus_;  
   std::string currentState_;
+  Json::Value jLV_;
+  Json::Value jJC_;
+  
   void Quit();
   void buildDaqForm(Wt::WPanel *wb);
   void buildHVForm(Wt::WPanel *wb);
+  void buildJCForm(Wt::WPanel *wb);
   void fillDaqStatus(Wt::WPanel *wb);
   void fillHVStatus(Wt::WPanel *wb);
+  void fillHVControl(Wt::WPanel *wb);
+  void fillJCStatus(Wt::WPanel *wb);
+  void fillJCControl(Wt::WPanel *wb);
   void ServiceButtonHandler();
   void LVButtonHandler();
-  void checkState();
-  void checkSlowControl();
   void InitialiseButtonHandler();
-  void InitialiseAction();
   void ConfigureButtonHandler();
-  void ConfigureAction();
-
   void StartButtonHandler();
-  void StartAction();
   void StopButtonHandler();
-  void StopAction();
-  void HaltButtonHandler();
-  void HaltAction();
   void DestroyButtonHandler();
-  void DestroyAction();
+  void TResetButtonHandler();
+  void TResumeButtonHandler();
+  void TPauseButtonHandler();
+  void HVSetButtonHandler();
+  void HVOnButtonHandler();
+  void HVOffButtonHandler();
 
-  void createMonitoringForm(Wt::WGroupBox *wb);
-  
-  void buildMonitoringForm(Wt::WGroupBox *wb);
   void updateMonitoringForm();
+
   void toggleButtons();
   std::string daqStatus();
   std::string hvStatus();
+  std::string jobStatus();
+
+  void checkState();
+  void checkSlowControl();
+  void checkLV();
+  void checkJobControl();
+  bool isLVOn() {return jLV_["vout"].asFloat()>1.;}
 };
 
 
@@ -153,7 +175,7 @@ std::string exec(const char* cmd) {
     return result;
 }
 levbc::levbc(const Wt::WEnvironment& env)
-  : Wt::WApplication(env),theClient_(NULL),LE_RunStatus_(NULL),TB_DIFStatus_(NULL),LE_RunNumber_(NULL),LE_EventNumber_(NULL)
+  : Wt::WApplication(env),LE_RunStatus_(NULL),TB_DIFStatus_(NULL),LE_RunNumber_(NULL),LE_EventNumber_(NULL)
 {
 
   Wt::WApplication::instance()->useStyleSheet("bootstrap/css/bootstrap.min.css");
@@ -164,6 +186,15 @@ levbc::levbc(const Wt::WEnvironment& env)
   container_->setStyleClass("bootstrap");
   tabW_ = new Wt::WTabWidget(container_);
  
+
+  Wt::WPanel *groupBoxJC = new Wt::WPanel();
+  groupBoxJC->setTitle("Job Control");
+  groupBoxJC->setCollapsible(true);
+  
+  tabW_->addTab(groupBoxJC,"Job Control");//, Wt::WTabWidget::PreLoading);
+
+  groupBoxJC->addStyleClass("centered-example");
+  buildJCForm(groupBoxJC);
 
 
 
@@ -181,7 +212,7 @@ levbc::levbc(const Wt::WEnvironment& env)
   //Wt::WGroupBox *groupBoxDaq = new Wt::WGroupBox("Daq Control");
   Wt::WPanel *groupBoxDaq = new Wt::WPanel();
   groupBoxDaq->setTitle("Daq Control");
-  groupBoxDaq->setCollapsible(true);
+  groupBoxDaq->setCollapsible(false);
   
   tabW_->addTab(groupBoxDaq,"Daq Control");//, Wt::WTabWidget::PreLoading);
 
@@ -232,6 +263,54 @@ void levbc::Quit()
   this->redirect(sh);
 
   this->quit();
+}
+
+
+std::string levbc::jobStatus()
+{
+  std::stringstream os;
+  std::string res;
+
+  //if (theClient_==NULL) return;
+  Json::Reader reader;
+  Json::Value jsta,jdev1;
+  
+
+  res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --jc-status -v");
+  //std::cout<<res<<std::endl;
+  jsta.clear();
+  bool parsingSuccessful = reader.parse(res,jsta);
+  //  std::cout<<jsta;
+  jdev1.clear();
+  parsingSuccessful = reader.parse(jsta["jobStatusResponse"]["jobStatusResult"][0].asString(),jdev1);
+  //std::cout<<jdev1;
+  const Json::Value& jdevs= jdev1;
+  //std::cout<<jdevs<<std::endl;
+  //for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
+  //  {	  //TB_DIFStatus_->elementAt(irow, 0)->addWidget();
+  //   std::cout<<(*jt);
+  //  }
+  // Header
+  os<<"<h4> JOB Status </h4>"<<std::endl;
+  os<<"<table style=\"width:100%\">";
+  os<<"<tr><th style=\"text-align:left\">PID</th><th style=\"text-align:left\">NAME</th> <th style=\"text-align:left\">HOST</th><th style=\"text-align:left\">STATUS</th><th style=\"text-align:left\">In Daq</th></tr>";
+  uint32_t irow=1;
+  for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
+    {	  //TB_DIFStatus_->elementAt(irow, 0)->addWidget();
+      //std::cout<<(*jt);
+
+      os<<"<tr>";
+      os<<"<td>"<<(*jt)["PID"].asUInt()<<"</td>";
+      os<<"<td>"<<(*jt)["NAME"].asString()<<"</td>";
+      os<<"<td>"<<(*jt)["HOST"].asString()<<"</td>";
+      os<<"<td>"<<(*jt)["STATUS"].asString()<<"</td>";
+      os<<"<td>"<<(*jt)["DAQ"].asString()<<"</td>";
+      os<<"</tr>";
+      irow++;
+    }
+  os<<"</table>"<<std::endl;
+  std::cout<<os.str();
+  return os.str();
 }
 
 
@@ -299,7 +378,6 @@ std::string levbc::hvStatus()
 
 std::string levbc::daqStatus()
 {
-  STEP;
   std::stringstream os;
   std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-state -v");
 
@@ -310,38 +388,35 @@ std::string levbc::daqStatus()
   currentState_=jsta["stateResponse"]["stateResult"][0].asString();
   os<<"<h4> State :"<<jsta["stateResponse"]["stateResult"][0].asString()<<"</h4>";
   //Event builder
-  STEP;
   os<<"<h4> Low Voltage </h4>"<<std::endl;
-  res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-lvsta -v");
+  /*res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-lvsta -v");
   jsta.clear();
   parsingSuccessful = reader.parse(res,jsta);
   Json::Value jdev1;
   std::cout<<"JSTA"<<jsta;
   parsingSuccessful = reader.parse(jsta["LVStatusResponse"]["LVStatusResult"][0].asString(),jdev1);
   std::cout<<jdev1<<jdev1.empty()<<jsta["LVStatusResponse"]["LVStatusResult"][0];
-  STEP;
-  if (jsta["LVStatusResponse"]["LVStatusResult"][0].asString().compare("null")!=0)
+  STEP;*/
+  if (!jLV_.empty())
     {
       os<<"<table style=\"width:100%\">";
       os<<"<tr><th style=\"text-align:left\">VSET</th><th style=\"text-align:left\">VOUT</th> <th style=\"text-align:left\">IOUT</th></tr>";
       
-      os<<"<tr><td>"<<jdev1["vset"].asFloat()<<"</td>";
-      os<<"<td>"<<jdev1["vout"].asFloat()<<"</td>";
-      os<<"<td>"<<jdev1["iout"].asFloat()<<"</td></tr>";
+      os<<"<tr><td>"<<jLV_["vset"].asFloat()<<"</td>";
+      os<<"<td>"<<jLV_["vout"].asFloat()<<"</td>";
+      os<<"<td>"<<jLV_["iout"].asFloat()<<"</td></tr>";
       os<<"</table>";
     }
 
-  STEP;
-  
   res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-evb -v");
   std::cout<<res<<std::endl;
   jsta.clear();
   parsingSuccessful = reader.parse(res,jsta);
+  Json::Value jdev1;
   jdev1.clear();
   parsingSuccessful = reader.parse(jsta["shmStatusResponse"]["shmStatusResult"][0].asString(),jdev1);
   std::cout<<currentState_<<currentState_.compare("INITIALISED")<<std::endl;
   std::cout<<jdev1<<std::endl;
-  STEP;
   if (parsingSuccessful && !jdev1.empty())
     {
       try {
@@ -353,7 +428,7 @@ std::string levbc::daqStatus()
 	{
 	}
     }
-  STEP;
+
   os<<"<h4> Trigger Status MDCC:</h4>"<<std::endl;
   res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --trig-status -v");
   //std::cout<<res<<std::endl;
@@ -375,7 +450,6 @@ std::string levbc::daqStatus()
       os<<"<td>"<<jdev1["mask"].asUInt()<<"</td></tr>";
       os<<"</table>";
     }
-  STEP;
   if (!CB_DIF_->isChecked()) return os.str();
   res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-status -v");
   //std::cout<<res<<std::endl;
@@ -458,30 +532,41 @@ void levbc::buildDaqForm(Wt::WPanel *wp)
   CB_DIF_ = new Wt::WCheckBox("Check DIF", wb);
   CB_DIF_->setChecked(false);
   hbFSM->addWidget(PB_Service_);  // show some text
-  hbFSM->addWidget(PB_LV_);  // show some text
+
   hbFSM->addWidget(PB_Initialise_);  // show some text
   hbFSM->addWidget(PB_Configure_);  // show some text
   hbFSM->addWidget(PB_Start_);  // show some text
   hbFSM->addWidget(PB_Stop_);  // show some text
   hbFSM->addWidget(PB_Destroy_);  // show some text
-  hbFSM->addWidget(PB_Status_);  // show some text
-  hbFSM->addWidget(CB_DIF_);  // show some text
   vbox->addLayout(hbFSM);
+
+  Wt::WHBoxLayout *hbinfo = new Wt::WHBoxLayout();
+  //  Wt::WGroupBox *groupBox = new Wt::WGroupBox();
+  // LE_State_ = new Wt::WLineEdit();                     // allow text input
+  // LE_State_->setText("Destroyed");
+  // LE_State_->disable();
+  hbinfo->addWidget(PB_LV_);  // show some text  
+  hbinfo->addWidget(PB_Status_);  // show some text
+  hbinfo->addWidget(CB_DIF_);  // show some text
+
+  PB_TReset_= new Wt::WPushButton("Reset Trigger Counter", wb);//PB_Destroy_->disable();
+  PB_TResume_= new Wt::WPushButton("Resume Trigger", wb);//PB_Destroy_->disable();
+  PB_TPause_= new Wt::WPushButton("Pause Trigger", wb);//PB_Destroy_->disable();
+  hbinfo->addWidget(PB_TReset_);  // show some text  
+  hbinfo->addWidget(PB_TResume_);  // show some text
+  hbinfo->addWidget(PB_TPause_);  // show some text
+  
+
+  vbox->addLayout(hbinfo);
+
+  
   Wt::WPanel *pDaqStatus = new Wt::WPanel();
   pDaqStatus->setTitle("Daq Status");
   pDaqStatus->setCollapsible(true);
   fillDaqStatus(pDaqStatus);
   vbox->addWidget(pDaqStatus);
   
-  // Wt::WHBoxLayout *hbinfo = new Wt::WHBoxLayout();
-  // Wt::WGroupBox *groupBox = new Wt::WGroupBox();
-  // LE_State_ = new Wt::WLineEdit();                     // allow text input
-  // LE_State_->setText("Destroyed");
-  // LE_State_->disable();
-  this->checkState();
-  // groupBox->addWidget(LE_State_);
-  // hbinfo->addWidget(groupBox);
-  // vbox->addLayout(hbinfo);
+   this->checkState();
   PB_Service_->clicked().connect(this,&levbc::ServiceButtonHandler);
   PB_LV_->clicked().connect(this,&levbc::LVButtonHandler);
   PB_Initialise_->clicked().connect(this,&levbc::InitialiseButtonHandler);
@@ -492,8 +577,73 @@ void levbc::buildDaqForm(Wt::WPanel *wp)
   PB_Destroy_->clicked().connect(this,&levbc::DestroyButtonHandler);
   PB_Status_->clicked().connect(this,&levbc::checkState);
 
+  PB_TReset_->clicked().connect(this,&levbc::TResetButtonHandler);
+  PB_TResume_->clicked().connect(this,&levbc::TResumeButtonHandler);
+  PB_TPause_->clicked().connect(this,&levbc::TPauseButtonHandler);
 
 }
+void levbc::fillHVControl(Wt::WPanel *wp)
+{
+  Wt::WContainerWidget *wb = new Wt::WContainerWidget();
+  wp->setCentralWidget(wb);
+  Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout();
+  vbox->setContentsMargins(2,2,2,2);
+  wb->setLayout(vbox);
+  //wb->resize(200,200);
+  
+  Wt::WHBoxLayout *hbFSM = new Wt::WHBoxLayout();
+  //  LE_State_ = new Wt::WLineEdit();                     // allow text input
+  // LE_State_->setText("Destroyed");
+  // LE_State_->disable();
+  // this->checkState();
+  // std::stringstream s;
+  // s<<"<h4>State:"<<currentState_<<"</h4>";
+
+  PB_HVStatus_= new Wt::WPushButton("Status", wb);//PB_Destroy_->disable();
+  hbFSM->addWidget(PB_HVStatus_);
+  hbFSM->addWidget(new Wt::WText("First Channel: "));  // show some text  
+  SB_FChan_= new Wt::WSpinBox(wb);
+  SB_FChan_->setValue(0);
+  SB_FChan_->setRange(0,55);
+  SB_FChan_->setSingleStep(1);
+  SB_FChan_->setMargin(5);
+  SB_FChan_->setLineHeight(5);
+  hbFSM->addWidget(SB_FChan_);
+  hbFSM->addWidget(new Wt::WText("Last Channel: "));  // show some text  
+  SB_LChan_= new Wt::WSpinBox(wb);
+  SB_LChan_->setValue(0);
+  SB_LChan_->setRange(0,55);
+  SB_LChan_->setSingleStep(1);
+  SB_LChan_->setMargin(5);
+  SB_LChan_->setLineHeight(5);
+
+  hbFSM->addWidget(SB_LChan_);
+  hbFSM->addWidget(new Wt::WText("Voltage: "));  // show some text  
+  SB_Vol_= new Wt::WSpinBox(wb);
+  SB_Vol_->setValue(0);
+  SB_Vol_->setRange(0,8000);
+  SB_Vol_->setSingleStep(50);
+  SB_Vol_->setMargin(5);
+  SB_Vol_->setLineHeight(5);
+
+  hbFSM->addWidget(SB_Vol_);
+
+  PB_HVSet_= new Wt::WPushButton("Set", wb);//PB_Destroy_->disable();
+  hbFSM->addWidget(PB_HVSet_);
+  PB_HVOn_= new Wt::WPushButton("On", wb);//PB_Destroy_->disable();
+  hbFSM->addWidget(PB_HVOn_);
+  PB_HVOff_= new Wt::WPushButton("Off", wb);//PB_Destroy_->disable();
+  hbFSM->addWidget(PB_HVOff_);
+
+  
+  vbox->addLayout(hbFSM);
+  
+  PB_HVStatus_->clicked().connect(this,&levbc::checkSlowControl);
+  PB_HVSet_->clicked().connect(this,&levbc::HVSetButtonHandler);
+  PB_HVOn_->clicked().connect(this,&levbc::HVOnButtonHandler);
+  PB_HVOff_->clicked().connect(this,&levbc::HVOffButtonHandler);
+}
+
 void levbc::fillHVStatus(Wt::WPanel *wp)
 {
   Wt::WContainerWidget *wb = new Wt::WContainerWidget();
@@ -527,7 +677,7 @@ void levbc::buildHVForm(Wt::WPanel *wp)
 
   //wb->resize(200,200);
 
-  Wt::WHBoxLayout *hbFSM = new Wt::WHBoxLayout();
+  //Wt::WHBoxLayout *hbFSM = new Wt::WHBoxLayout();
   STEP;
 
 
@@ -539,7 +689,7 @@ void levbc::buildHVForm(Wt::WPanel *wp)
   PB_Stop_= new Wt::WPushButton("Stop", wb);//PB_Stop_->disable();
   PB_Destroy_= new Wt::WPushButton("Destroy", wb);//PB_Destroy_->disable();
   */
-  PB_HVStatus_= new Wt::WPushButton("Status", wb);//PB_Destroy_->disable();
+  //  PB_HVStatus_= new Wt::WPushButton("Status", wb);//PB_Destroy_->disable();
   /*
   CB_DIF_ = new Wt::WCheckBox("Check DIF", wb);
   CB_DIF_->setChecked(false);
@@ -551,10 +701,19 @@ void levbc::buildHVForm(Wt::WPanel *wp)
   hbFSM->addWidget(PB_Stop_);  // show some text
   hbFSM->addWidget(PB_Destroy_);  // show some text
   */
-  hbFSM->addWidget(PB_HVStatus_);  // show some text
+  // hbFSM->addWidget(PB_HVStatus_);  // show some text
   // hbFSM->addWidget(CB_DIF_);  // show some text
-  vbox->addLayout(hbFSM);
+  // vbox->addLayout(hbFSM);
   STEP;
+  Wt::WPanel *pControl = new Wt::WPanel();
+  pControl->setTitle("HV Control");
+  pControl->setCollapsible(true);
+  STEP;
+  fillHVControl(pControl);
+  STEP;
+  vbox->addWidget(pControl);
+
+  
   Wt::WPanel *pStatus = new Wt::WPanel();
   pStatus->setTitle("Slow Control Status");
   pStatus->setCollapsible(true);
@@ -582,7 +741,7 @@ void levbc::buildHVForm(Wt::WPanel *wp)
   PB_Stop_->clicked().connect(this,&levbc::StopButtonHandler);
   PB_Destroy_->clicked().connect(this,&levbc::DestroyButtonHandler);
   */
-  PB_HVStatus_->clicked().connect(this,&levbc::checkSlowControl);
+  //PB_HVStatus_->clicked().connect(this,&levbc::checkSlowControl);
   STEP;
 
 }
@@ -590,6 +749,132 @@ void levbc::checkSlowControl()
 {
   tHVStatus_->setText(this->hvStatus());
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////
+
+
+void levbc::fillJCControl(Wt::WPanel *wp)
+{
+  Wt::WContainerWidget *wb = new Wt::WContainerWidget();
+  wp->setCentralWidget(wb);
+  Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout();
+  vbox->setContentsMargins(2,2,2,2);
+  wb->setLayout(vbox);
+  //wb->resize(200,200);
+  
+  Wt::WHBoxLayout *hbFSM = new Wt::WHBoxLayout();
+  //  LE_State_ = new Wt::WLineEdit();                     // allow text input
+  // LE_State_->setText("Destroyed");
+  // LE_State_->disable();
+  // this->checkState();
+  // std::stringstream s;
+  // s<<"<h4>State:"<<currentState_<<"</h4>";
+
+  PB_JCStatus_= new Wt::WPushButton("Status", wb);//PB_Destroy_->disable();
+  hbFSM->addWidget(PB_JCStatus_);
+  PB_JCStart_= new Wt::WPushButton("Start", wb);//PB_Destroy_->disable();
+  hbFSM->addWidget(PB_JCStart_);
+  PB_JCKill_= new Wt::WPushButton("Kill", wb);//PB_Destroy_->disable();
+  hbFSM->addWidget(PB_JCKill_);
+  
+  vbox->addLayout(hbFSM);
+  
+  PB_JCStatus_->clicked().connect(this,&levbc::checkJobControl);
+  PB_JCKill_->clicked().connect(std::bind([=] () {
+	std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --jc-kill ");
+	::sleep(1);
+        checkJobControl();
+    }));
+  PB_JCStart_->clicked().connect(std::bind([=] () {
+	std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --jc-start ");
+	::sleep(1);
+	checkJobControl();
+    }));
+  //  PB_JCStart_->clicked().connect(this,&levbc::HVSetButtonHandler);
+  // PB_JCKill_->clicked().connect(this,&levbc::HVOnButtonHandler);
+
+}
+
+void levbc::fillJCStatus(Wt::WPanel *wp)
+{
+  Wt::WContainerWidget *wb = new Wt::WContainerWidget();
+  wp->setCentralWidget(wb);
+  Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout();
+  vbox->setContentsMargins(12,12,12,12);
+  wb->setLayout(vbox);
+  //wb->resize(200,200);
+  
+  Wt::WHBoxLayout *hbFSM = new Wt::WHBoxLayout();
+  //  LE_State_ = new Wt::WLineEdit();                     // allow text input
+  // LE_State_->setText("Destroyed");
+  // LE_State_->disable();
+  // this->checkState();
+  // std::stringstream s;
+  // s<<"<h4>State:"<<currentState_<<"</h4>";
+  tJCStatus_=new Wt::WText(this->jobStatus(),Wt::XHTMLText);
+  hbFSM->addWidget(tJCStatus_);
+  
+  vbox->addLayout(hbFSM);
+}
+
+void levbc::buildJCForm(Wt::WPanel *wp)
+{
+
+  Wt::WContainerWidget *wb = new Wt::WContainerWidget();
+  wp->setCentralWidget(wb);
+  Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout();
+  vbox->setContentsMargins(12,12,12,12);
+  wb->setLayout(vbox);
+
+  Wt::WPanel *pControl = new Wt::WPanel();
+  pControl->setTitle("Job Control");
+  pControl->setCollapsible(true);
+  STEP;
+  fillJCControl(pControl);
+  vbox->addWidget(pControl);
+
+  
+  Wt::WPanel *pStatus = new Wt::WPanel();
+  pStatus->setTitle("Job Status");
+  pStatus->setCollapsible(true);
+  STEP;
+  fillJCStatus(pStatus);
+  STEP;
+  vbox->addWidget(pStatus);
+  STEP;
+  // Wt::WHBoxLayout *hbinfo = new Wt::WHBoxLayout();
+  // Wt::WGroupBox *groupBox = new Wt::WGroupBox();
+  // LE_State_ = new Wt::WLineEdit();                     // allow text input
+  // LE_State_->setText("Destroyed");
+  // LE_State_->disable();
+  //this->checkState();
+  // groupBox->addWidget(LE_State_);
+  // hbinfo->addWidget(groupBox);
+  // vbox->addLayout(hbinfo);
+  /*
+  PB_Service_->clicked().connect(this,&levbc::ServiceButtonHandler);
+  PB_LV_->clicked().connect(this,&levbc::LVButtonHandler);
+  PB_Initialise_->clicked().connect(this,&levbc::InitialiseButtonHandler);
+
+  PB_Start_->clicked().connect(this,&levbc::StartButtonHandler);
+  PB_Configure_->clicked().connect(this,&levbc::ConfigureButtonHandler);
+  PB_Stop_->clicked().connect(this,&levbc::StopButtonHandler);
+  PB_Destroy_->clicked().connect(this,&levbc::DestroyButtonHandler);
+  */
+  //PB_HVStatus_->clicked().connect(this,&levbc::checkSlowControl);
+  STEP;
+
+}
+void levbc::checkJobControl()
+{
+  tJCStatus_->setText(this->jobStatus());
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+
+
+
 void levbc::checkState()
 {
   std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-state -v");
@@ -598,13 +883,15 @@ void levbc::checkState()
   bool parsingSuccessful = reader.parse(res,jsta);
   //LE_State_->setText(jsta["stateResponse"]["stateResult"][0].asString());
   currentState_=jsta["stateResponse"]["stateResult"][0].asString();
+
+  this->checkLV();
   this->toggleButtons();
   tDaqStatus_->setText(this->daqStatus());
  
 }
 void levbc::toggleButtons()
 {
-  if (currentState_.compare("DISCOVERED")==0 || currentState_.compare("PREPARED")==0 )
+  if (currentState_.compare("DISCOVERED")==0 )
     {
       PB_Service_->enable();
       PB_Initialise_->disable();
@@ -616,7 +903,7 @@ void levbc::toggleButtons()
     }
   if (currentState_.compare("PREPARED")==0 )
     {
-      PB_Service_->disable();
+      PB_Service_->enable();
       PB_Initialise_->enable();
       PB_Configure_->disable();
       PB_Start_->disable();
@@ -654,380 +941,197 @@ void levbc::toggleButtons()
       PB_Destroy_->disable();
       
     }
+  if (isLVOn())
+    PB_LV_->setStyleClass("btn-success");
+  else
+    PB_LV_->setStyleClass("btn-danger");
+  
 }
+
+
+
 void levbc::ServiceButtonHandler()
 {
-  try {
-
     std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-setpar -v");
     res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-serv -v");
     std::cout<<" SERVICE Called "<<res<<std::endl;
     this->checkState();
-    //PB_Configure_->enable();
-  }
-  catch(...)
-    {
-      LE_State_->setText("Failure not Initialised");
-    }
+}
 
+
+/*void levbc::checkJobControl()
+{
+  std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --jc-status -v");
   
-
-
-
+  Json::Reader reader;
+  Json::Value jsta,jdev1;
+  bool parsingSuccessful = reader.parse(res,jsta);
+  parsingSuccessful = reader.parse(jsta["jobStatusResponse"]["jobStatusResult"][0].asString(),jJC_);
+  std::cout<<"JJC "<<jJC_<<std::endl;
+}
+*/
+void levbc::checkLV()
+{
+  std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-lvsta -v");
+  
+  Json::Reader reader;
+  Json::Value jsta,jdev1;
+  bool parsingSuccessful = reader.parse(res,jsta);
+  parsingSuccessful = reader.parse(jsta["LVStatusResponse"]["LVStatusResult"][0].asString(),jLV_);
+  std::cout<<"JLV "<<jLV_<<std::endl;
 }
 void levbc::LVButtonHandler()
 {
-  try {
-
-    std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-lvsta -v");
-    std::cout<<"RC" <<res<<std::endl;
-    Json::Reader reader;
-    Json::Value jsta,jdev1;
-    bool parsingSuccessful = reader.parse(res,jsta);
-    parsingSuccessful = reader.parse(jsta["LVStatusResponse"]["LVStatusResult"][0].asString(),jdev1);
-    std::cout<<"JDEV1 "<<jdev1<<std::endl;
-    if (jdev1["vout"].asFloat()<1)
-      res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-lvon -v");
-    else
-      res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-lvoff -v");
-    res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-lvsta -v");
-    parsingSuccessful = reader.parse(res,jsta);
-    parsingSuccessful = reader.parse(jsta["LVStatusResponse"]["LVStatusResult"][0].asString(),jdev1);
-    std::cout<<"JDEV1 "<<jdev1<<std::endl;
-    if (jdev1["vout"].asFloat()<1)
-      PB_LV_->setStyleClass("btn-danger");
-    else
-      PB_LV_->setStyleClass("btn-success");
-    
-    //PB_Configure_->enable();
-  }
-  catch(...)
-    {
-      LE_State_->setText("Failure not Initialised");
-    }
-
   
-
-
-
+  if (isLVOn())
+    std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-lvoff -v");
+  else
+    std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-lvon -v");
+  checkState();
 }
 
 void levbc::InitialiseButtonHandler()
 {
-  try {
     std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-init -v");
     std::cout<<" SERVICE Called "<<res<<std::endl;
     this->checkState();
     
     PB_Configure_->enable();
-  }
-  catch(...)
-    {
-      LE_State_->setText("Failure not Initialised");
-    }
-
-  PB_Initialise_->disable();
-  PB_Destroy_->enable();
-
-
-
-}
-void levbc::InitialiseAction()
-{
-
-  // Instantiate
-  theClient_ = new DIFMultiClient();
-  // Add CCC Client
-  printf("Connecting to %s port %d \n",LE_CCCHost_->text().toUTF8().c_str(),SB_CCCPort_->value());
-  theClient_->addCCC(LE_CCCHost_->text().toUTF8().c_str(),SB_CCCPort_->value());
-
-  // Use tokenizer to find all DIF hosts
-  Tokenizer difs(LE_DIFHosts_->text().toUTF8(),",");
-  //Obtaining Number Of Tokens (Remaining)
- 
-  std::vector<std::string> hostv=difs.split();
-  for (std::vector<std::string>::iterator it=hostv.begin();it!=hostv.end();it++)
-    {
-      theClient_->addClient((*it),SB_DIFPort_->value());
-      
-      printf("Connecting to %s port %d \n",(*it).c_str(),SB_DIFPort_->value());
-	     
-    }
-  //Initialisation
-  printf("1\n");
-  theClient_->Destroy();
-    printf("2\n");
-
-  theClient_->ScanDevices();
- 
-  printf("3\n");
-
-  theClient_->Initialise();
-
-
-  printf("4\n");
-
-  // DIFDB manager
-  theDBManager_= new OracleDIFDBManager("74",LE_DBState_->text().toUTF8());
-  printf("5\n");
-
-  theDBManager_->initialize();
-  printf("6\n");
-
-  theDBManager_->download();
-   printf("7\n");
-
-
-   std::cout<<"Fin de l'initialise"<<this->sessionId()<<std::endl;  
-  theRunInfo_=NULL;
+    PB_Initialise_->disable();
+    PB_Destroy_->enable();
 }
 void levbc::ConfigureButtonHandler()
 {
-  try {
-      std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-conf -v");
-    std::cout<<" SERVICE Called "<<res<<std::endl;
-    this->checkState();
-
-    PB_Start_->enable();
-  }
-  catch(...)
-    {
-      LE_State_->setText("Failure not Configured");
-    }
-
+  std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-conf -v");
+  std::cout<<" SERVICE Called "<<res<<std::endl;
+  this->checkState();
+  
+  PB_Start_->enable();
   PB_Configure_->disable();
   PB_Destroy_->enable();
-
-
-}
-void levbc::ConfigureAction()
-{
-   theProxy_->Initialise();
-  printf("5\n");
-  theProxy_->Configure();
-  std::cout<<"On appelle CCC<anager Configure"<< LE_ControlRegister_->text().toUTF8().c_str()<<std::endl;
-  uint32_t ctrlreg;sscanf((const char*) LE_ControlRegister_->text().toUTF8().c_str(),"0x%x",&ctrlreg);
-  printf("CONTROL EGISTER========================================================================> %x \n",ctrlreg);
-  theClient_->Configure(theDBManager_,ctrlreg);
-  std::cout<<"Fin du configure"<<std::endl;
- //  std::vector<std::string> v=Daq::getListOfDaqNames();
-//   for (std::vector<std::string>::iterator it=v.begin();it!=v.end();it++)
-//     std::cout<<it->c_str()<<std::endl;
-  if (theRunInfo_==NULL)
-    {
-      try {
-
-
-	std::stringstream daqname("");    
-	char dateStr [64];
-            
-	time_t tm= time(NULL);
-	strftime(dateStr,50,"LaDaqAToto_%d%m%y_%H%M%S",localtime(&tm));
-	daqname<<dateStr;
-	Daq* me=new Daq(daqname.str());
-
-	printf("la daq est creee %s\n",daqname.str().c_str());
-	me->setStatus(0);
-	printf("la daq a change de statut\n");
-	me->setXML(".daq/last.txt");
-	me->uploadToDatabase();
-	printf("Upload DOne");
-  
-	theRunInfo_=new RunInfo(0,"LaDaqAToto");
-	printf("le run est creee\n");
-	theRunInfo_->setStatus(1);
-	theRunNumber_=theRunInfo_->getRunNumber();
-      } catch (ILCException::Exception e)
-	{
-	  theRunInfo_=NULL;
-	  std::cout<<e.getMessage()<<std::endl;
-	}
-    }
-  std::cout<<" New run starting ------------------->"<<theRunNumber_<<std::endl;
 }
 void levbc::StartButtonHandler()
 {
-  try {
-    std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-start -v");
-    std::cout<<" SERVICE Called "<<res<<std::endl;
-    this->checkState();
-    PB_Stop_->enable();
-  }
-  catch(...)
-    {
-      LE_State_->setText("Failure not Running");
-    }
-
+  std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-start -v");
+  std::cout<<" SERVICE Called "<<res<<std::endl;
+  this->checkState();
+  PB_Stop_->enable();
   PB_Start_->disable();
   PB_Destroy_->enable();
+  Wt::WDialog *dialog = new Wt::WDialog("Elog Message");
 
-}
-void levbc::StartAction()
-{
-  theClient_->getCCCClient()->doStart();
-  theClient_->getCCCClient()->doStop();
-  if (theRunInfo_== NULL)
-    {
-      theRunNumber_=20000;
-    }
-  else
-    theRunInfo_->setStatus(2);
+  Wt::WLabel *label = new Wt::WLabel("Message",dialog->contents());
+  Wt::WLineEdit *edit = new Wt::WLineEdit(dialog->contents());
+  label->setBuddy(edit);
+  dialog->contents()->addStyleClass("form-group");
 
-  std::cout<<" New run starting ------------------->"<<theRunNumber_<<std::endl;
+  Wt::WPushButton *ok = new Wt::WPushButton("OK", dialog->footer());
+  ok->setDefault(true);
 
-  theProxy_->Start(theRunNumber_,LE_DataDirectory_->text().toUTF8());
-  theClient_->Start();
-  std::cout<<"Fin de l'Enable"<<std::endl;  
+  Wt::WPushButton *cancel = new Wt::WPushButton("Cancel", dialog->footer());
+  dialog->rejectWhenEscapePressed();
 
+  /*
+   * Accept the dialog
+   */
+  ok->clicked().connect(dialog,&Wt::WDialog::accept);
+
+    /*
+     * Reject the dialog
+     */
+  cancel->clicked().connect(dialog, &Wt::WDialog::reject);
+    
+    /*
+     * Process the dialog result.
+     */
+    dialog->finished().connect(std::bind([=] () {
+	if (dialog->result() == Wt::WDialog::Accepted)
+	  std::cout<<"New log message: "<<edit->text()<<std::endl;
+	else
+	  std::cout<<"No location selected."<<std::endl;
+
+	delete dialog;
+    }));
+
+    dialog->show();
 }
 void levbc::StopButtonHandler()
 {
-  try {
-    std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-stop -v");
-    std::cout<<" SERVICE Called "<<res<<std::endl;
-    this->checkState();
-
-    PB_Start_->enable();
-    PB_Stop_->disable();
-  }
-  catch(...)
-    {
-      LE_State_->setText("Failure not Stopped");
-    }
-
+  std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-stop -v");
+  std::cout<<" SERVICE Called "<<res<<std::endl;
+  this->checkState();
+  PB_Start_->enable();
+  PB_Stop_->disable();
   PB_Stop_->disable();
   PB_Destroy_->enable();
 
 }
-void levbc::StopAction()
-{
-  theClient_->Stop();
-  theProxy_->Stop();
-  if (theRunInfo_==NULL)
-    theRunNumber_++;
-  else
-    {
-      theRunInfo_->setStatus(4);
-      delete theRunInfo_;
-      theRunInfo_=new RunInfo(0,"LaDaqAToto");
-      theRunInfo_->setStatus(1);
-      theRunNumber_=theRunInfo_->getRunNumber();
-      std::cout<<" New run starting ------------------->"<<theRunNumber_<<this->bookmarkUrl()<<std::endl;
-    }
-}
-
-void levbc::HaltButtonHandler()
-{
-  try {
-    this->HaltAction();
-    LE_State_->setText("Halted");
-    PB_Start_->enable();
-    PB_Stop_->disable();
-    PB_Configure_->enable();
-  }
-  catch(...)
-    {
-      LE_State_->setText("Failure not Halted");
-    }
-
-
-  PB_Destroy_->enable();
-
-}
-void levbc::HaltAction()
-{
-  this->StopAction();
-}
 
 void levbc::DestroyButtonHandler()
 {
-  try {
-
-    std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-destroy -v");
-    std::cout<<" SERVICE Called "<<res<<std::endl;
-    this->checkState();
-
-    PB_Initialise_->enable();
-    PB_Destroy_->disable();
-  }
-  catch(...)
-    {
-      LE_State_->setText("Failure not Destroyed, Please quit");
-    }
-
-
+  std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-destroy -v");
+  std::cout<<" SERVICE Called "<<res<<std::endl;
+  this->checkState();
+  PB_Initialise_->enable();
   PB_Destroy_->disable();
-
+  PB_Destroy_->disable();
 }
 
-void levbc::DestroyAction()
+void levbc::TResetButtonHandler()
 {
-   theClient_->Destroy();
-   printf("2\n");
-   delete theClient_;
-   theClient_=NULL;
+  std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --trig-reset ");
+  this->checkState();
 }
-
-void levbc::createMonitoringForm(Wt::WGroupBox *wb)
+void levbc::TResumeButtonHandler()
 {
-  Wt::WContainerWidget *container = new Wt::WContainerWidget(wb);
-
- Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout();
-  //vbox->setContentsMargins(2,2,2,2);
- container->setLayout(vbox);
-  //wb->resize(200,200);
-  Wt::WHBoxLayout *hbRun = new Wt::WHBoxLayout();
-
-  if (LE_RunStatus_==NULL)
-    {
-      LE_RunStatus_ = new Wt::WLineEdit(wb);                     // allow text input
-      LE_RunStatus_->disable();
-      hbRun->addWidget(LE_RunStatus_);
-    }
-  if (LE_RunNumber_==NULL)
-    {
-	     
-      LE_RunNumber_ = new Wt::WLineEdit(wb);                     // allow text input
-      LE_RunNumber_->disable();
-      hbRun->addWidget(LE_RunNumber_);
-    }
-  if (LE_EventNumber_==NULL)
-    {
-      LE_EventNumber_ = new Wt::WLineEdit(wb);                     // allow text input
-      LE_EventNumber_->disable();
-      hbRun->addWidget(LE_EventNumber_);
-    }
-  PB_RefreshStatus_= new Wt::WPushButton("Refresh", wb);
-  PB_RefreshStatus_->clicked().connect(this, &levbc::updateMonitoringForm);
-  hbRun->addWidget(PB_RefreshStatus_);
-  vbox->addLayout(hbRun);
-  Wt::WHBoxLayout *hbTrig = new Wt::WHBoxLayout();
-  TB_TrigStatus_= new Wt::WTable(wb);
-  TB_TrigStatus_->setHeaderCount(1);
-  TB_TrigStatus_->setWidth("80%");
-  TB_TrigStatus_->clear();
-  TB_TrigStatus_->addStyleClass("table-bordered",true); 
-
-  hbTrig->addWidget(TB_TrigStatus_);
-  vbox->addLayout(hbTrig);
-  Wt::WHBoxLayout *hbDIF = new Wt::WHBoxLayout();
-      if (TB_DIFStatus_==NULL)
-	{
-	  printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
-	  TB_DIFStatus_= new Wt::WTable(wb);
-	  //printf("%s %d %x\n",__PRETTY_FUNCTION__,__LINE__,(uint32_t)TB_DIFStatus_);
-	  TB_DIFStatus_->setHeaderCount(1);
-	  printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
-	  TB_DIFStatus_->setWidth("80%");
-	  printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
-
-	  TB_DIFStatus_->clear();
-	  printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
-	  hbDIF->addWidget(TB_DIFStatus_);
-	}
-      vbox->addLayout(hbDIF);
-      printf("%s %d\n",__PRETTY_FUNCTION__,__LINE__);
+  std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --trig-resume ");
+  this->checkState();
 }
+void levbc::TPauseButtonHandler()
+{
+  std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --trig-pause ");
+  this->checkState();
+}
+void levbc::HVSetButtonHandler()
+{
+  for (int ich=SB_FChan_->value();ich<=SB_LChan_->value();ich++)
+    {
+      std::stringstream s;
+      s<<"cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --slc-setvol --chan="<<ich<<" --vol="<<SB_Vol_->value()<<" ";
+      std::string res=exec(s.str().c_str());
+      usleep(50000);
+    }
+
+
+  this->checkSlowControl();
+}
+void levbc::HVOnButtonHandler()
+{
+  for (int ich=SB_FChan_->value();ich<=SB_LChan_->value();ich++)
+    {
+      std::stringstream s;
+      s<<"cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --slc-hvon --chan="<<ich<<" ";
+      std::string res=exec(s.str().c_str());
+      usleep(50000);
+    }
+
+
+  this->checkSlowControl();
+}
+void levbc::HVOffButtonHandler()
+{
+  for (int ich=SB_FChan_->value();ich<=SB_LChan_->value();ich++)
+    {
+      std::stringstream s;
+      s<<"cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --slc-hvoff --chan="<<ich<<" ";
+      std::string res=exec(s.str().c_str());
+      usleep(50000);
+    }
+
+
+  this->checkSlowControl();
+}
+
 
 void levbc::updateMonitoringForm()
 {
