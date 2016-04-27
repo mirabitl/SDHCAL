@@ -64,6 +64,28 @@ class wddService(ServiceBase):
             yield 'DBState set %s (%s)' % (name,ss)
         else:
             yield 'Cannot Set DB'
+    @srpc(String, _returns=Iterable(String))
+    def downloadDB(name):
+        global _wdd
+        if (_wdd!=None):
+            if (name!=None):
+                _wdd.setDBState(name)
+            _wdd.downloadDB()
+            ss=_wdd.state()
+            yield 'DBState download  (%s)' % (ss)
+        else:
+            yield 'Cannot download DB'
+
+    @srpc( _returns=String)
+    def dbStatus():
+       global _wdd
+       if (_wjobc!=None):
+           s=_wdd.dbStatus()
+           yield s
+       else:
+           yield "No job control found" 
+
+
     @srpc( UnsignedInteger, _returns=Iterable(String))
     def setControlRegister(value):
         global _wdd

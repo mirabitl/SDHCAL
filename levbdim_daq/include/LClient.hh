@@ -24,6 +24,7 @@ public:
     _m.setValue(fastWriter.write(_msg));
     this->execute(&_m);
   }
+  inline Json::Value parameters(){ return _jpar;}
   inline Json::Value reply(){
     std::cout<<msg()->content()<<std::endl;
     std::cout<<msg()->status().asString()<<std::endl;

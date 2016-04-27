@@ -222,6 +222,7 @@ void LDaq::singleinit(LClient* d)
 void LDaq::singleregisterdb(LClient* d)
 {
   d->post("REGISTERDB");
+  //  std::cout<<"Register DB"<<d->parameters()<<std::endl;
 }
 void LDaq::singleconfigure(LClient* d)
 {
@@ -310,7 +311,8 @@ void LDaq::configure(levbdim::fsmmessage* m)
       g.create_thread(boost::bind(&LDaq::singleregisterdb, this,(*it)));
     }
   g.join_all();
-  std::cout<<this->status()<<std::endl;
+  std::cout<<"REGISTER DB DONE"<<std::endl;
+  ::sleep(2);
   //Configure them
   for (std::vector<LClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     {
@@ -320,7 +322,7 @@ void LDaq::configure(levbdim::fsmmessage* m)
       g.create_thread(boost::bind(&LDaq::singleconfigure, this,(*it)));
     }
   g.join_all();
-  std::cout<<this->status()<<std::endl;
+  std::cout<<"DIF CONFIGURE  DONE"<<std::endl;
   // Status
   Json::Value jsta= toJson(this->difstatus());
   // Configure the builder
@@ -517,6 +519,10 @@ std::string LDaq::downloadDB()
   Json::Value fromScratch;
   fromScratch.clear();
   if (_dbClient==NULL){LOG4CXX_ERROR(_logLdaq, "No DB client");return  fastWriter.write(fromScratch);}
+  _dbClient->clear();
+  _dbClient->set<std::string>("dbstate",_jparam["dbstate"].asString());
+  _dbClient->post("DELETE");
+  std::cout<<" Downloading"<<_jparam["dbstate"].asString()<<std::endl;
   _dbClient->clear();
   _dbClient->set<std::string>("dbstate",_jparam["dbstate"].asString());
   _dbClient->post("DOWNLOAD");
