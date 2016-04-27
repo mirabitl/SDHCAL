@@ -19,6 +19,7 @@ void LDbServer::newrun(levbdim::fsmmessage* m)
   rc=this->getRunFromDb();
   Json::Value r;
   r["run"]=rc;
+  r["state"]=_dbState;
   m->setAnswer(r);
 }
 

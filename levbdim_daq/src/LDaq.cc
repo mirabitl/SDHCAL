@@ -511,6 +511,17 @@ void LDaq::setParameters(std::string jsonString)
     
   }
 
+std::string LDaq::downloadDB()
+{
+  Json::FastWriter fastWriter;
+  Json::Value fromScratch;
+  fromScratch.clear();
+  if (_dbClient==NULL){LOG4CXX_ERROR(_logLdaq, "No DB client");return  fastWriter.write(fromScratch);}
+  _dbClient->clear();
+  _dbClient->set<std::string>("dbstate",_jparam["dbstate"].asString());
+  _dbClient->post("DOWNLOAD");
+  return fastWriter.write(_dbClient->reply());
+}
 void LDaq::setDBState(std::string dbs)
 {_dbstate=dbs;
   _jparam["dbstate"]=dbs;
@@ -523,6 +534,16 @@ void LDaq::setControlRegister(uint32_t reg)
   std::cout<<" Chamge Ctrlreg to "<<std::hex<<_ctrlreg<<std::dec<<std::endl;
 }
 
+std::string LDaq::dbStatus()
+{
+   Json::FastWriter fastWriter;
+  Json::Value fromScratch;
+  fromScratch["run"]=_run;
+  fromScratch["state"]=_dbstate;
+  
+  return  fastWriter.write(fromScratch);
+ 
+}
 
 std::string LDaq::builderStatus()
 {

@@ -35,6 +35,8 @@ public:
   void  LVOFF();
   void  setParameters(std::string jsonString);
   void  setDBState(std::string dbs);
+  std::string  downloadDB();
+  std::string  dbStatus();
   void  setControlRegister(uint32_t reg);
   std::string  builderStatus();
   std::string  status();
