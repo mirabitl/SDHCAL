@@ -325,6 +325,7 @@ LDIFServer::LDIFServer(std::string name)
   _fsm->addTransition("INITIALISE","SCANNED","INITIALISED",boost::bind(&LDIFServer::initialise, this,_1));
   _fsm->addTransition("REGISTERDB","INITIALISED","DBREGISTERED",boost::bind(&LDIFServer::registerdb, this,_1));
   _fsm->addTransition("REGISTERDB","DBREGISTERED","DBREGISTERED",boost::bind(&LDIFServer::registerdb, this,_1));
+  _fsm->addTransition("REGISTERDB","CONFIGURED","DBREGISTERED",boost::bind(&LDIFServer::registerdb, this,_1));
   _fsm->addTransition("CONFIGURE","DBREGISTERED","CONFIGURED",boost::bind(&LDIFServer::configure, this,_1));
   _fsm->addTransition("CONFIGURE","CONFIGURED","CONFIGURED",boost::bind(&LDIFServer::configure, this,_1));
   _fsm->addTransition("CONFIGURE","STOPPED","CONFIGURED",boost::bind(&LDIFServer::configure, this,_1));
