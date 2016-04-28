@@ -45,6 +45,8 @@ grp_action.add_argument('--trig-spilloff',action='store_true',help=' set spill n
 grp_action.add_argument('--trig-beam',action='store_true',help=' set spill nclock off with --clock=nc (20ns) ')
 grp_action.add_argument('--daq-destroy',action='store_true',help='destroy the DIF readout, back to the PREPARED state')
 grp_action.add_argument('--daq-downloaddb',action='store_true',help='download the dbsate specified in --dbstate=state')
+
+grp_action.add_argument('--daq-dbstatus',action='store_true',help='get current run and state from db')
 grp_action.add_argument('--daq-ctrlreg',action='store_true',help='set the ctrlregister specified with --ctrlreg=register')
 
 grp_action.add_argument('--slc-create',action='store_true',help='Create the DimSlowControl object to control WIENER crate and BMP sensor')
@@ -189,6 +191,8 @@ elif(results.daq_stoprun):
     r_cmd='stop'
 elif(results.daq_destroy):
     r_cmd='destroy'
+elif(results.daq_dbstatus):
+    r_cmd='dbStatus'
 elif(results.daq_downloaddb):
     r_cmd='downloadDB'
     if (results.dbstate!=None):
