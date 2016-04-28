@@ -1205,8 +1205,8 @@ void levbc::HVSetButtonHandler()
   for (int ich=SB_FChan_->value();ich<=SB_LChan_->value();ich++)
     {
       std::stringstream s;
-      s<<"cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --slc-setvol --chan="<<ich<<" --vol="<<SB_Vol_->value()<<" ";
-      std::string res=exec(s.str().c_str());
+      s<<" --slc-setvol --chan="<<ich<<" --vol="<<SB_Vol_->value()<<" ";
+      std::string res=lcexec(s.str().c_str());
       usleep(50000);
     }
 
@@ -1218,8 +1218,8 @@ void levbc::HVOnButtonHandler()
   for (int ich=SB_FChan_->value();ich<=SB_LChan_->value();ich++)
     {
       std::stringstream s;
-      s<<"cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --slc-hvon --chan="<<ich<<" ";
-      std::string res=exec(s.str().c_str());
+      s<<" --slc-hvon --chan="<<ich<<" ";
+      std::string res=lcexec(s.str().c_str());
       usleep(50000);
     }
 
@@ -1231,8 +1231,8 @@ void levbc::HVOffButtonHandler()
   for (int ich=SB_FChan_->value();ich<=SB_LChan_->value();ich++)
     {
       std::stringstream s;
-      s<<"cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --slc-hvoff --chan="<<ich<<" ";
-      std::string res=exec(s.str().c_str());
+      s<<" --slc-hvoff --chan="<<ich<<" ";
+      std::string res=lcexec(s.str().c_str());
       usleep(50000);
     }
 
