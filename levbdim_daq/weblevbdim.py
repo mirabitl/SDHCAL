@@ -41,7 +41,7 @@ class wddService(ServiceBase):
             job="CREATED"
         if (_wsl!=None):
             slow="CREATED"
-        yield '{"DAQ":%s,"JOB":%s,"SLOW":%s }' % (daq,job,slow)
+        yield '{"DAQ":"%s","JOB":"%s","SLOW":"%s" }' % (daq,job,slow)
 
     @srpc( String, _returns=Iterable(String))
     def setParameters(name):
