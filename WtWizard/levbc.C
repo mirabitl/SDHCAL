@@ -108,7 +108,8 @@ private:
   std::string currentState_;
   Json::Value jLV_;
   Json::Value jJC_;
-  
+  uint32_t currentRun_,currentEvent_,currentElog_;
+  std::string currentSessionId_;
   void Quit();
   void buildDaqForm(Wt::WPanel *wb);
   void buildHVForm(Wt::WPanel *wb);
@@ -175,13 +176,32 @@ std::string exec(const char* cmd) {
     return result;
 }
 levbc::levbc(const Wt::WEnvironment& env)
-  : Wt::WApplication(env),LE_RunStatus_(NULL),TB_DIFStatus_(NULL),LE_RunNumber_(NULL),LE_EventNumber_(NULL)
+  : Wt::WApplication(env),LE_RunStatus_(NULL),TB_DIFStatus_(NULL),LE_RunNumber_(NULL),LE_EventNumber_(NULL),currentElog_(0),currentSessionId_("")
 {
 
   Wt::WApplication::instance()->useStyleSheet("bootstrap/css/bootstrap.min.css");
   std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --available -v");
   std::cout<<"Youpi Ya "<<res<<std::endl;
-  setTitle("Standalone Data Acquisition");                               // application title
+
+
+
+  Json::Reader reader;
+  Json::Value jsta,jdev1;
+  jsta.clear();
+  bool parsingSuccessful = reader.parse(res,jsta);
+  //  std::cout<<jsta;
+  jdev1.clear();
+  parsingSuccessful = reader.parse(jsta["availableResponse"]["availableResult"][0].asString(),jdev1);
+  std::cout<<"After parse"<<jdev1<<std::endl;
+  if (jdev1["JOB"].asString().compare("NONE")==0)
+    res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --jc-cre");
+  if (jdev1["DAQ"].asString().compare("NONE")==0)
+    res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-cre");
+  if (jdev1["SLOW"].asString().compare("NONE")==0)
+    res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --slc-cre");
+
+  
+  setTitle("GRPC forever");                               // application title
   container_ = new Wt::WContainerWidget(root());
   container_->setStyleClass("bootstrap");
   tabW_ = new Wt::WTabWidget(container_);
@@ -420,6 +440,8 @@ std::string levbc::daqStatus()
   if (parsingSuccessful && !jdev1.empty())
     {
       try {
+	currentRun_=jdev1["run"].asUInt();
+	currentEvent_=jdev1["event"].asUInt();
       os<<"<h4> Event Builder:</h4>";
       os<<"<p><b>Run:</b> "<<jdev1["run"].asString()<<"</p>";
       os<<"<p><b>Event:</b> "<<jdev1["event"].asString()<<"</p>";
@@ -952,10 +974,18 @@ void levbc::toggleButtons()
 
 void levbc::ServiceButtonHandler()
 {
-    std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-setpar -v");
-    res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-serv -v");
-    std::cout<<" SERVICE Called "<<res<<std::endl;
-    this->checkState();
+  std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-state -v");
+  Json::Reader reader;
+  Json::Value jsta;
+  bool parsingSuccessful = reader.parse(res,jsta);
+  //LE_State_->setText(jsta["stateResponse"]["stateResult"][0].asString());
+  currentState_=jsta["stateResponse"]["stateResult"][0].asString();
+  if (currentState_.compare("CREATED")==0)
+    res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-discover -v");
+  res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-setpar -v");
+  res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-serv -v");
+  std::cout<<" SERVICE Called "<<res<<std::endl;
+  this->checkState();
 }
 
 
@@ -1018,11 +1048,46 @@ void levbc::StartButtonHandler()
   PB_Stop_->enable();
   PB_Start_->disable();
   PB_Destroy_->enable();
-  Wt::WDialog *dialog = new Wt::WDialog("Elog Message");
 
-  Wt::WLabel *label = new Wt::WLabel("Message",dialog->contents());
-  Wt::WLineEdit *edit = new Wt::WLineEdit(dialog->contents());
-  label->setBuddy(edit);
+  // Now fill the ELOG
+  Wt::WDialog *dialog = new Wt::WDialog("Elog Message");
+  dialog->setResizable(true);
+  res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-dbstatus -v");
+  Json::Reader reader;
+  Json::Value jsta;
+  bool parsingSuccessful = reader.parse(res,jsta);
+  Json::Value jdev1;
+  jdev1.clear();
+  parsingSuccessful = reader.parse(jsta["dbStatusResponse"]["dbStatusResult"][0].asString(),jdev1);
+  Wt::WLabel *labelrun = new Wt::WLabel("Run",dialog->contents());
+  Wt::WLineEdit *editrun = new Wt::WLineEdit(dialog->contents());editrun->setText(jdev1["run"].asString());
+  editrun->disable();
+  labelrun->setBuddy(editrun);
+  Wt::WLabel *labelstate = new Wt::WLabel("State",dialog->contents());
+  Wt::WLineEdit *editstate = new Wt::WLineEdit(dialog->contents());editstate->setText(jdev1["state"].asString());
+  labelstate->setBuddy(editstate);
+  editstate->disable();
+  Wt::WLabel *labelbeam = new Wt::WLabel("Beam",dialog->contents());
+  Wt::WLineEdit *editbeam = new Wt::WLineEdit(dialog->contents());editbeam->setText("D INDICE");
+  labelbeam->setBuddy(editbeam);
+  Wt::WLabel *labelenergy = new Wt::WLabel("Energy",dialog->contents());
+  Wt::WLineEdit *editenergy = new Wt::WLineEdit(dialog->contents());editenergy->setText("DIESEL");
+  labelenergy->setBuddy(editenergy);
+  /*  Wt::WLabel *labelgas = new Wt::WLabel("GAS",dialog->contents());
+  Wt::WLineEdit *editgas = new Wt::WLineEdit(dialog->contents());editgas->setText("PART");
+  labelgas->setBuddy(editgas);
+  Wt::WLabel *labelhv = new Wt::WLabel("HV",dialog->contents());
+  Wt::WLineEdit *edithv = new Wt::WLineEdit(dialog->contents());editenergy->setText("LOW");
+  labelhv->setBuddy(edithv);
+  */
+
+  Wt::WLabel *labelauthor = new Wt::WLabel("Author",dialog->contents());
+  Wt::WLineEdit *editauthor = new Wt::WLineEdit(dialog->contents());editauthor->setText("COCO L'ASTICOT");
+  labelauthor->setBuddy(editauthor);
+  Wt::WLabel *labelcomment = new Wt::WLabel("Comment",dialog->contents());
+  Wt::WLineEdit *editcomment = new Wt::WLineEdit(dialog->contents());editcomment->setText("Je ne mange pas de graines");
+  labelcomment->setBuddy(editcomment);
+
   dialog->contents()->addStyleClass("form-group");
 
   Wt::WPushButton *ok = new Wt::WPushButton("OK", dialog->footer());
@@ -1046,7 +1111,22 @@ void levbc::StartButtonHandler()
      */
     dialog->finished().connect(std::bind([=] () {
 	if (dialog->result() == Wt::WDialog::Accepted)
-	  std::cout<<"New log message: "<<edit->text()<<std::endl;
+	  {
+	    std::cout<<"New log message: "<<editrun->text()<<std::endl;
+	    std::cout<<"New log message: "<<editstate->text()<<std::endl;
+	    std::cout<<"New log message: "<<editbeam->text()<<std::endl;
+	    std::cout<<"New log message: "<<editenergy->text()<<std::endl;
+	    std::cout<<"New log message: "<<editauthor->text()<<std::endl;
+	    std::cout<<"New log message: "<<editcomment->text()<<std::endl;
+	    char telog[1024];
+	    memset(telog,0,1024);
+	    sprintf(telog,"/usr/bin/elog -h lyosvn.in2p3.fr -d elog -s -l  %cILC Data Square Meter%c -p 443 -u acqilc RPC_2008 -a Auteur=%c%s%c -a Detecteur=%c%s%c -a Run=%c%s%c -a Faisceau=%c%s%c -a Energie=%c%s%c -a Evenements=%c%s%c -x      %c %s %c ",0x22,0x22, 0x22,editauthor->text().toUTF8().c_str(),0x22,0x22,editstate->text().toUTF8().c_str(),0x22,0x22,editrun->text().toUTF8().c_str(),0x22, 0x22,editbeam->text().toUTF8().c_str(),0x22, 0x22,editenergy->text().toUTF8().c_str(),0x22,0x22,"started",0x22,0x22,editcomment->text().toUTF8().c_str(),0x22);
+	    std::cout<<telog<<std::endl;
+	    std::string resl=exec((const char*) telog);
+	    currentElog_=atoi(resl.substr(resl.find("ID=")+3,10).c_str());
+	    currentSessionId_=this->sessionId();
+	    
+	  }
 	else
 	  std::cout<<"No location selected."<<std::endl;
 
@@ -1060,6 +1140,14 @@ void levbc::StopButtonHandler()
   std::string res=exec("cd /home/mirabito/SDHCAL/levbdim_daq; . ./levbdimrc; ./lc.py --daq-stop -v");
   std::cout<<" SERVICE Called "<<res<<std::endl;
   this->checkState();
+  if (this->sessionId().compare(currentSessionId_)==0 && currentElog_>0)
+    {
+      char telog[511];
+      sprintf(telog,"/usr/bin/elog -h lyosvn.in2p3.fr -d elog -s -l  %cILC Data Square Meter%c -p 443 -u acqilc RPC_2008 -e %d  -a Evenements=%c%d%c ",0x22,0x22, currentElog_, 0x22,currentEvent_,0x22);
+      std::cout<<telog<<std::endl;
+      std::string resl=exec((const char*) telog);
+      currentElog_=atoi(resl.substr(resl.find("ID=")+3,10).c_str());
+    }
   PB_Start_->enable();
   PB_Stop_->disable();
   PB_Stop_->disable();
