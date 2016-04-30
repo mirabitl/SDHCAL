@@ -1,7 +1,7 @@
 #ifndef _WebDaq_h
 #define _WebDaq_h
 #include "LClient.hh"
-#include "webfsm.hh"
+#include "fsmweb.hh"
 #include <string>
 #include <vector>
 #include <json/json.h>
@@ -9,8 +9,8 @@
 class WebDaq
 {
 public:
-  WebDaq();
-  ~WebDaq(std::string name,uint32_t port);
+  WebDaq(std::string name,uint32_t port);
+  ~WebDaq();
   std::string  process(std::string command,std::string param);
   std::string  process(std::string command);
   LClient*  findFSM(DimBrowser* dbr,std::string pattern);
@@ -56,7 +56,7 @@ public:
   void forceState(std::string s){_fsm->setState(s);}
 
 private:
-  levbdim::webfsm* _fsm;
+  fsmweb* _fsm;
   LClient* _dbClient,*_zupClient,*_cccClient,*_mdccClient,*_builderClient;
   std::vector<LClient*> _DIFClients;
   std::string _strParam;

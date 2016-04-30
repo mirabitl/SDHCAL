@@ -12,7 +12,7 @@ WebDaq::WebDaq(std::string name,uint32_t port) :_builderClient(NULL),_dbClient(N
   {
     _DIFClients.clear();
     
-    _fsm=new webfsm(name);
+    _fsm=new fsmweb(name);
     
     _fsm->addState("CREATED");
     _fsm->addState("DISCOVERED");
@@ -479,13 +479,14 @@ void WebDaq::doubleSwitchZup(Mongoose::Request &request, Mongoose::JsonResponse 
     _zupClient->post("OFF");
     sleep((unsigned int) 2);
     _zupClient->post("ON");
-    sleep((unsigned int)pause);
+    sleep((unsigned int)npause);
     _zupClient->post("OFF");
     sleep((unsigned int) 2);
     _zupClient->post("ON");
-    sleep((unsigned int) pause);
+    ::sleep( npause);
     std::cout<<" LV is ON"<<std::endl;
     response["STATUS"]="DONE";
+
     response["DOUBLESWITCHZUP"]="ON";
 
   }
@@ -554,6 +555,7 @@ void WebDaq::setParameters(Mongoose::Request &request, Mongoose::JsonResponse &r
     response["zupport"]=_zupport;
     response["ctrlreg"]=_ctrlreg;
     response["STATUS"]="DONE";
+    std::cout<<"RETRUEN CODE "<<response<<std::endl;
   }
 void WebDaq::getParameters(Mongoose::Request &request, Mongoose::JsonResponse &response)//std::string jsonString)
 {
@@ -653,7 +655,7 @@ void WebDaq::resumeTrigger(Mongoose::Request &request, Mongoose::JsonResponse &r
   response["TRIGGER"]="RESUMED";
   response["STATUS"]="DONE";
 }
-}
+
 void WebDaq::pauseEcal(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   if (_mdccClient==NULL){LOG4CXX_ERROR(_logLdaq, "No MDC client");response["STATUS"]= "No MDCC client";return;}
@@ -679,7 +681,7 @@ void WebDaq::resetTriggerCounters(Mongoose::Request &request, Mongoose::JsonResp
   
 void WebDaq::triggerStatus(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
-  if (_mdccClient==NULL){LOG4CXX_ERROR(_logLdaq, "No MDC client");response["STATUS"]= "No MDCC client";return "NONE";}
+  if (_mdccClient==NULL){LOG4CXX_ERROR(_logLdaq, "No MDC client");response["STATUS"]= "No MDCC client";return;}
   _mdccClient->clear();
   _mdccClient->set<std::string>("name","STATUS");
   _mdccClient->post("CMD");
