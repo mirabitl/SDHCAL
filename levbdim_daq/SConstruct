@@ -186,6 +186,7 @@ print LIBRARY_SOURCES
 
 if (Use_Mongoose):
   LIBRARY_SOURCES.append('src/WebDaq.cc')
+  LIBRARY_SOURCES.append('src/WebSlowControl.cc')	
 
 #Shared library
 levbdimdaq=env.SharedLibrary("#lib/levbdimdaq",LIBRARY_SOURCES)
@@ -210,6 +211,8 @@ lbuildd=env.Program("bin/levbdim_build",source="src/LBuilderDaemon.cxx",LIBPATH=
 plist.append(lbuildd)
 if (Use_Mongoose):
   lwdaqd=env.Program("bin/levbdim_wdaq",source="src/WDaqDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+  plist.append(lbuildd)
+  lwslowd=env.Program("bin/levbdim_wslow",source="src/WSlowControlDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
   plist.append(lbuildd)
 
 if (Use_Oracle):
