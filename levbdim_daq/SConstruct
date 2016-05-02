@@ -153,7 +153,10 @@ if (Use_Mongoose):
   LIBRARIES.append('mongoose')
   INCLUDES.append('/usr/local/include/')
   INCLUDES.append('/usr/local/include/mongoose')
-
+  INCLUDES.append('/opt/dhcal/dimjc/include')
+  LIBRARY_PATHS.append('/opt/dhcal/dimjc/lib')
+  LIBRARIES.append('dimjc')
+ 
   
 #link flags
 LDFLAGS=["-fPIC","-dynamiclib"]
@@ -186,7 +189,8 @@ print LIBRARY_SOURCES
 
 if (Use_Mongoose):
   LIBRARY_SOURCES.append('src/WebDaq.cc')
-  LIBRARY_SOURCES.append('src/WebSlowControl.cc')	
+  LIBRARY_SOURCES.append('src/WebSlowControl.cc')
+  LIBRARY_SOURCES.append('src/WebJobControl.cc')	
 
 #Shared library
 levbdimdaq=env.SharedLibrary("#lib/levbdimdaq",LIBRARY_SOURCES)
@@ -211,9 +215,11 @@ lbuildd=env.Program("bin/levbdim_build",source="src/LBuilderDaemon.cxx",LIBPATH=
 plist.append(lbuildd)
 if (Use_Mongoose):
   lwdaqd=env.Program("bin/levbdim_wdaq",source="src/WDaqDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
-  plist.append(lbuildd)
+  plist.append(lwdaqd)
   lwslowd=env.Program("bin/levbdim_wslow",source="src/WSlowControlDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
-  plist.append(lbuildd)
+  plist.append(lwslowd)
+  lwjobd=env.Program("bin/levbdim_wjob",source="src/WJobDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+  plist.append(lwjobd)
 
 if (Use_Oracle):
   ldbd=env.Program("bin/levbdim_db",source="src/LDbDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
@@ -233,7 +239,7 @@ _levbdimdaq=env.PythonModule('_LDaq', ['LDaq.i'],LIBPATH="#lib",LIBS="levbdimdaq
 myinc=[]
 for x in Glob("#include/*.h"):
   myinc.append("include/"+x.name)
-print myinc
+print plist
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",levbdimdaq)
 env.Install(DHCAL_ROOT+"/opt/dhcal/bin",plist)
 ###env.Install("/opt/dhcal/lib",levbdimdaq)
