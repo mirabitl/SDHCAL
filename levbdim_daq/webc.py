@@ -91,10 +91,10 @@ def executeFSM(host,port,prefix,cmd,params):
        #    lq["content"][x]=y
        lq["command"]=cmd           
        lqs=urllib.urlencode(lq)
-       print lqs
+       #print lqs
        saction = '/%s/FSM?%s' % (prefix,lqs)
        myurl=myurl+saction
-       print myurl
+       #print myurl
        req=urllib2.Request(myurl)
        r1=urllib2.urlopen(req)
        return r1.read()
@@ -116,7 +116,7 @@ def executeCMD(host,port,prefix,cmd,params):
        lqs=urllib.urlencode(lq)
        saction = '/%s/CMD?%s' % (prefix,lqs)
        myurl=myurl+saction
-       print myurl
+       #print myurl
        req=urllib2.Request(myurl)
        r1=urllib2.urlopen(req)
        return r1.read()
@@ -274,37 +274,37 @@ if (results.daq_create):
 
 elif(results.available):
     r_cmd='available'
-    srd=executeCMD("lyosdhcal9",45000,"WDAQ",None,None)
+    srd=executeCMD(conf.daqhost,conf.daqport,"WDAQ",None,None)
     print ">>>>>>>>>>>>>>>> DAQ <<<<<<<<<<<<<<<<<<"
     parseReturn("state",srd)
-    srs=executeCMD("lyosdhcal9",46000,"WSLOW",None,None)
+    srs=executeCMD(conf.slowhost,conf.slowport,"WSLOW",None,None)
     print ">>>>>>>>>>>>>>>> SLOWCONTROL <<<<<<<<<<<<<<<<<<"
     parseReturn("state",srs)
-    srj=executeCMD("lyosdhcal9",47000,"WJOB",None,None)
+    srj=executeCMD(conf.jobhost,conf.jobport,"WJOB",None,None)
     print ">>>>>>>>>>>>>>>> JOB CONTROL <<<<<<<<<<<<<<<<<<"
     parseReturn("state",srj)
     exit(0)
 elif(results.jc_create):
     r_cmd='createJobControl'
     lcgi['jsonfile']=conf.jsonfile
-    sr=executeFSM("lyosdhcal9",47000,"WJOB","INITIALISE",lcgi)
+    sr=executeFSM(conf.jobhost,conf.jobport,"WJOB","INITIALISE",lcgi)
     print sr
     exit(0)
 elif(results.jc_kill):
     lcgi.clear();
-    sr=executeFSM("lyosdhcal9",47000,"WJOB","KILL",lcgi)
+    sr=executeFSM(conf.jobhost,conf.jobport,"WJOB","KILL",lcgi)
     print sr
     r_cmd='jobKillAll'
     exit(0)
 elif(results.jc_start):
     lcgi.clear();
-    sr=executeFSM("lyosdhcal9",47000,"WJOB","START",lcgi)
+    sr=executeFSM(conf.jobhost,conf.jobport,"WJOB","START",lcgi)
     print sr
     r_cmd='jobStartAll'
     exit(0)
 elif(results.jc_status):
     lcgi.clear();
-    sr=executeCMD("lyosdhcal9",47000,"WJOB","STATUS",lcgi)
+    sr=executeCMD(conf.jobhost,conf.jobport,"WJOB","STATUS",lcgi)
     r_cmd='jobStatus'
     #print "WHAHAHAHA",sr
     if (results.verbose):
@@ -315,7 +315,7 @@ elif(results.jc_status):
 elif(results.daq_state):
     r_cmd='state'
     lcgi.clear();
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ",None,None)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ",None,None)
     #print "WHAHAHAHA",sr
     if (results.verbose):
         print sr
@@ -327,21 +327,23 @@ elif(results.daq_state):
 elif(results.daq_discover):
     r_cmd='Discover'
     lcgi.clear()
-    sr=executeFSM("lyosdhcal9",45000,"WDAQ","DISCOVER",lcgi)
+    sr=executeFSM(conf.daqhost,conf.daqport,"WDAQ","DISCOVER",lcgi)
     print sr
-
+    lcgi.clear()
+    lcgi["params"]=l_par
+    srp=executeCMD(conf.daqhost,conf.daqport,"WDAQ","SETPAR",lcgi)
     exit(0)
 elif(results.daq_setparameters):
     r_cmd='setParameters'
     lcgi.clear()
     lcgi["params"]=l_par
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","SETPAR",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","SETPAR",lcgi)
     print sr
     exit(0)
 elif(results.daq_getparameters):
     r_cmd='getParameters'
     lcgi.clear()
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","GETPAR",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","GETPAR",lcgi)
     print sr
     exit(0)
 
@@ -356,24 +358,24 @@ elif(results.daq_forceState):
 elif(results.daq_services):
     r_cmd='prepareServices'
     lcgi.clear()
-    sr=executeFSM("lyosdhcal9",45000,"WDAQ","PREPARE",p_par)
+    sr=executeFSM(conf.daqhost,conf.daqport,"WDAQ","PREPARE",p_par)
     print sr
     exit(0)
 elif(results.daq_lvon):
     r_cmd='LVON'
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","LVON",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","LVON",lcgi)
     print sr
     exit(0)
 
 elif(results.daq_lvoff):
     r_cmd='LVOFF'
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","LVOFF",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","LVOFF",lcgi)
     print sr
     exit(0)
 elif(results.daq_lvstatus):
     r_cmd='LVStatus'
     lcgi.clear()
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","LVSTATUS",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","LVSTATUS",lcgi)
     #print "WHAHAHAHA",sr
     if (results.verbose):
         print sr
@@ -383,21 +385,21 @@ elif(results.daq_lvstatus):
 elif(results.daq_initialise):
     r_cmd='initialise'
     lcgi.clear()
-    sr=executeFSM("lyosdhcal9",45000,"WDAQ","INITIALISE",p_par)
+    sr=executeFSM(conf.daqhost,conf.daqport,"WDAQ","INITIALISE",p_par)
     print sr
     exit(0)
 
 elif(results.daq_configure):
     r_cmd='configure'
     lcgi.clear()
-    sr=executeFSM("lyosdhcal9",45000,"WDAQ","CONFIGURE",p_par)
+    sr=executeFSM(conf.daqhost,conf.daqport,"WDAQ","CONFIGURE",p_par)
     print sr
     exit(0)
 
 elif(results.daq_status):
     r_cmd='status'
     lcgi.clear()
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","DIFSTATUS",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","DIFSTATUS",lcgi)
     #print "WHAHAHAHA",sr
     if (results.verbose):
         print sr
@@ -407,7 +409,7 @@ elif(results.daq_status):
 elif(results.daq_evbstatus):
     r_cmd='shmStatus'
     lcgi.clear()
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","EVBSTATUS",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","EVBSTATUS",lcgi)
     #print "WHAHAHAHA",sr
     if (results.verbose):
         print sr
@@ -418,26 +420,26 @@ elif(results.daq_evbstatus):
 elif(results.daq_startrun):
     r_cmd='start'
     lcgi.clear()
-    sr=executeFSM("lyosdhcal9",45000,"WDAQ","START",p_par)
+    sr=executeFSM(conf.daqhost,conf.daqport,"WDAQ","START",p_par)
     print sr
     exit(0)
 
 elif(results.daq_stoprun):
     r_cmd='stop'
     lcgi.clear()
-    sr=executeFSM("lyosdhcal9",45000,"WDAQ","STOP",p_par)
+    sr=executeFSM(conf.daqhost,conf.daqport,"WDAQ","STOP",p_par)
     print sr
     exit(0)
 elif(results.daq_destroy):
     r_cmd='destroy'
     lcgi.clear()
-    sr=executeFSM("lyosdhcal9",45000,"WDAQ","DESTROY",p_par)
+    sr=executeFSM(conf.daqhost,conf.daqport,"WDAQ","DESTROY",p_par)
     print sr
     exit(0)
 elif(results.daq_dbstatus):
     r_cmd='dbStatus'
     lcgi.clear()
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","DBSTATUS",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","DBSTATUS",lcgi)
     #print "WHAHAHAHA",sr
     if (results.verbose):
         print sr
@@ -454,7 +456,7 @@ elif(results.daq_downloaddb):
     else:
         print 'Please specify the state --dbstate=STATE'
         exit(0)
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","DOWNLOADDB",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","DOWNLOADDB",lcgi)
     print sr
     exit(0)
 elif(results.daq_ctrlreg):
@@ -464,10 +466,14 @@ elif(results.daq_ctrlreg):
     else:
         print 'Please specify the value --ctrlreg=0xX######'
         exit(0)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","CTRLREG",lcgi)
+    print sr
+    exit(0)
+
 elif(results.trig_status):
     r_cmd='triggerStatus'
     lcgi.clear()
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","TRIGGERSTATUS",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","TRIGGERSTATUS",lcgi)
     #print "WHAHAHAHA",sr
     if (results.verbose):
         print sr
@@ -483,7 +489,7 @@ elif(results.trig_beam):
         print 'Please specify the number of clock --clock=xx'
         exit(0)
         lcgi.clear()
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","BEAMON",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","BEAMON",lcgi)
     print sr
     exit(0)
 
@@ -496,7 +502,7 @@ elif(results.trig_spillon):
         print 'Please specify the number of clock --clock=xx'
         exit(0)
         lcgi.clear()
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","SPILLON",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","SPILLON",lcgi)
     print sr
     exit(0)
 
@@ -508,41 +514,41 @@ elif(results.trig_spilloff):
         print 'Please specify the number of clock --clock=xx'
         exit(0)
         lcgi.clear()
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","SPILLON",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","SPILLON",lcgi)
     print sr
     exit(0)
 
 elif(results.ecal_pause):
     r_cmd='pauseEcal'
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","ECALPAUSE",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","ECALPAUSE",lcgi)
     print sr
     exit(0)
 
 elif(results.ecal_resume):
     r_cmd='resumeEcal'
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","ECALRESUME",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","ECALRESUME",lcgi)
     print sr
     exit(0)
 elif(results.trig_reset):
     r_cmd='resetTrigger'
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","RESETCOUNTERS",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","RESETCOUNTERS",lcgi)
     print sr
     exit(0)
 elif(results.trig_pause):
     r_cmd='pause'
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","PAUSE",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","PAUSE",lcgi)
     print sr
     exit(0)
 elif(results.trig_resume):
     r_cmd='resume'
-    sr=executeCMD("lyosdhcal9",45000,"WDAQ","RESUME",lcgi)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","RESUME",lcgi)
     print sr
     exit(0)
 elif(results.slc_create):
     r_cmd='createSlowControl'
     #lcgi['jsonfile']=conf.jsonfile
     lcgi.clear()
-    sr=executeFSM("lyosdhcal9",46000,"WSLOW","DISCOVER",lcgi)
+    sr=executeFSM(conf.slowhost,conf.slowport,"WSLOW","DISCOVER",lcgi)
     print sr
     exit(0)
 
@@ -553,20 +559,20 @@ elif(results.slc_initialisesql):
     else:
         print 'Please specify the MYSQL account --account=log/pwd@host:base'
         exit(0)
-    sr=executeFSM("lyosdhcal9",46000,"WSLOW","INITIALISE",lcgi)
+    sr=executeFSM(conf.slowhost,conf.slowport,"WSLOW","INITIALISE",lcgi)
     print sr
     
 elif(results.slc_loadreferences):
     r_cmd='loadReferences'
     lcgi.clear()
-    sr=executeCMD("lyosdhcal9",46000,"WSLOW","LOADREFERENCES",lcgi)
+    sr=executeCMD(conf.slowhost,conf.slowport,"WSLOW","LOADREFERENCES",lcgi)
     print sr
     exit(0)
 elif(results.slc_hvstatus):
     r_cmd='hvStatus'
     lcgi.clear()
     lcgi['channel']=99;
-    sr=executeCMD("lyosdhcal9",46000,"WSLOW","HVREADCHANNEL",lcgi)
+    sr=executeCMD(conf.slowhost,conf.slowport,"WSLOW","HVREADCHANNEL",lcgi)
     if (results.verbose):
         print sr
     else:
@@ -577,7 +583,7 @@ elif(results.slc_ptstatus):
     r_cmd='PT'
     lcgi.clear()
     #lcgi['channel']=99;
-    sr=executeCMD("lyosdhcal9",46000,"WSLOW","PTREAD",lcgi)
+    sr=executeCMD(conf.slowhost,conf.slowport,"WSLOW","PTREAD",lcgi)
     print sr
     exit(0)
 elif(results.slc_setperiod):
@@ -588,7 +594,7 @@ elif(results.slc_setperiod):
     else:
         print 'Please specify the period --period=second(s)'
         exit(0)
-    sr=executeCMD("lyosdhcal9",46000,"WSLOW","SETPERIOD",lcgi)
+    sr=executeCMD(conf.slowhost,conf.slowport,"WSLOW","SETPERIOD",lcgi)
     print sr
     exit(0)
 elif(results.slc_setvoltage):
@@ -609,7 +615,7 @@ elif(results.slc_setvoltage):
     else:
         print 'Please specify the voltage --voltage=V'
         exit(0)
-    sr=executeCMD("lyosdhcal9",46000,"WSLOW","SETVOLTAGE",lcgi)
+    sr=executeCMD(conf.slowhost,conf.slowport,"WSLOW","SETVOLTAGE",lcgi)
     print sr
     exit(0)
 
@@ -631,7 +637,7 @@ elif(results.slc_setcurrent):
     else:
         print 'Please specify the current limit --current=V'
         exit(0)
-    sr=executeCMD("lyosdhcal9",46000,"WSLOW","SETCURRENTLIMIT",lcgi)
+    sr=executeCMD(conf.slowhost,conf.slowport,"WSLOW","SETCURRENTLIMIT",lcgi)
     print sr
     exit(0)
     
@@ -648,7 +654,7 @@ elif(results.slc_hvon):
     else:
         print 'Please specify the channels --first=# --last=#'
         exit(0)
-    sr=executeCMD("lyosdhcal9",46000,"WSLOW","HVON",lcgi)
+    sr=executeCMD(conf.slowhost,conf.slowport,"WSLOW","HVON",lcgi)
     print sr
     exit(0)
 
@@ -665,7 +671,7 @@ elif(results.slc_hvoff):
     else:
         print 'Please specify the channels --first=# --last=#'
         exit(0)
-    sr=executeCMD("lyosdhcal9",46000,"WSLOW","HVOFF",lcgi)
+    sr=executeCMD(conf.slowhost,conf.slowport,"WSLOW","HVOFF",lcgi)
     print sr
     exit(0)
 elif(results.slc_store):
@@ -675,7 +681,7 @@ elif(results.slc_store):
     else:
         print 'Please specify the period --period=second(s)'
         exit(0)
-    sr=executeFSM("lyosdhcal9",46000,"WSLOW","STARTMONITOR",lcgi)
+    sr=executeFSM(conf.slowhost,conf.slowport,"WSLOW","STARTMONITOR",lcgi)
     print sr
     exit(0)
 elif(results.slc_check):
@@ -685,19 +691,19 @@ elif(results.slc_check):
     else:
         print 'Please specify the period --period=second(s)'
         exit(0)
-    sr=executeFSM("lyosdhcal9",46000,"WSLOW","STARTCHECK",lcgi)
+    sr=executeFSM(conf.slowhost,conf.slowport,"WSLOW","STARTCHECK",lcgi)
     print sr
     exit(0)
 
 elif(results.slc_store_stop):
     r_cmd='stopStorage'
-    sr=executeFSM("lyosdhcal9",46000,"WSLOW","STOPMONITOR",lcgi)
+    sr=executeFSM(conf.slowhost,conf.slowport,"WSLOW","STOPMONITOR",lcgi)
     print sr
     exit(0)
 
 elif(results.slc_check_stop):
     r_cmd='stopCheck'
-    sr=executeFSM("lyosdhcal9",46000,"WSLOW","STOPCHECK",lcgi)
+    sr=executeFSM(conf.slowhost,conf.slowport,"WSLOW","STOPCHECK",lcgi)
     print sr
     exit(0)
 
