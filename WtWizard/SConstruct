@@ -117,8 +117,9 @@ env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIB
 env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
 
 levbc=env.Program("levbc",source=["levbc.C","Tokenizer.cpp"])
+wlevb=env.Program("wlevb",source=["wlevb.C","Tokenizer.cpp"])
 
-Default([levbc])
+Default([levbc,wlevb])
 
 
 
