@@ -6,6 +6,7 @@
 #include <string.h>
 #include<stdio.h>
 #include "fsm.hh"
+#include "fsmweb.hh"
 #include "LDIF.hh"
 #include "DIFReadoutConstant.h"
 using namespace std;
@@ -30,6 +31,10 @@ public:
   void stop(levbdim::fsmmessage* m);
   void destroy(levbdim::fsmmessage* m);
   void status(levbdim::fsmmessage* m);
+
+  void cmdStatus(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void setThreshold(Mongoose::Request &request, Mongoose::JsonResponse &response);
+
   void prepareDevices();
   void startDIFThread(LDIF* d);
   void registerDB(std::string state);
@@ -54,7 +59,8 @@ private:
   std::map<uint32_t,FtdiDeviceInfo*> theFtdiDeviceInfoMap_;	
   std::map<uint32_t,LDIF*> theDIFMap_;
 
-  levbdim::fsm* _fsm;
+  //levbdim::fsm* _fsm;
+  fsmweb* _fsm;
   boost::thread_group g_d;
 
   DimInfo* theDBDimInfo_[255];

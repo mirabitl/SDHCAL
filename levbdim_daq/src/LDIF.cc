@@ -1,5 +1,7 @@
 #include "LDIF.hh"
 #include "ShmProxy.h"
+#include <unistd.h>
+#include <stdint.h>
 LDIF::LDIF(FtdiDeviceInfo* ftd) : _rd(NULL),_state("CREATED"),_dsStatus(NULL),_dsState(NULL),_dsData(NULL),_detid(100)
 {
   // Creation of data structure
@@ -7,6 +9,8 @@ LDIF::LDIF(FtdiDeviceInfo* ftd) : _rd(NULL),_state("CREATED"),_dsStatus(NULL),_d
   _status = new DIFStatus();
   memset(_status,0,sizeof(DIFStatus));
   _status->id=_ftd.id;
+
+   gethostname(_status->host,80);
   _dbdif = new DIFDbInfo();
   _readoutStarted=false;
   _readoutCompleted=true;
@@ -383,3 +387,38 @@ void LDIF::registration()
 }
 
 
+void LDIF::setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,SingleHardrocV2ConfigurationFrame& ConfigHR2)
+{
+  printf(" Seuil %d %d %d %x %x %x %x %x\n",B0,B1,B2,ConfigHR2[3],ConfigHR2[4],ConfigHR2[5],ConfigHR2[6],ConfigHR2[7]);
+  ConfigHR2[3]= ((B2>>2)&0xFF);
+  ConfigHR2[4]= 0;
+  ConfigHR2[4]|=((B2&0x03)<<6);
+  ConfigHR2[4]|=((B1>>4)&0x3F);
+  ConfigHR2[5]= 0;
+  ConfigHR2[5]|=((B1&0x0F)<<4);
+  ConfigHR2[5]|=((B0>>6)&0x0F);
+  ConfigHR2[6]&=0x3;
+  ConfigHR2[6]|=((B0&0x3F)<<2);
+  printf(" Apres %d %d %d %x %x %x %x %x \n",B0,B1,B2,ConfigHR2[3],ConfigHR2[4],ConfigHR2[5],ConfigHR2[6],ConfigHR2[7]);
+}
+void LDIF::setGain(uint32_t gain,SingleHardrocV2ConfigurationFrame& ConfigHR2)
+{
+ 
+  for (uint32_t ip=0;ip<64;ip++)
+    ConfigHR2[100-ip]=(gain&0xFF); // Pas |=
+}
+
+void LDIF::setThreshold(uint32_t B0,uint32_t B1,uint32_t B2)
+{
+  printf(" DIF %d \n",_dbdif->id);
+  for (int i=0;i<_dbdif->nbasic;i++)
+    {
+      printf("ASIC %d \n",i);
+      setThreshold(B0,B1,B2,_dbdif->slow[i]);
+    }
+}
+void LDIF::setGain(uint32_t gain)
+{
+  for (int i=0;i<_dbdif->nbasic;i++)
+    setGain(gain,_dbdif->slow[i]);
+}

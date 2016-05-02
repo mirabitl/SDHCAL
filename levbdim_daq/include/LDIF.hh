@@ -62,6 +62,12 @@ public:
   inline bool readoutStarted() const { return _readoutStarted;}
   inline bool running() const { return _running;}
   inline uint32_t detectorId() const {return _detid;}
+
+  //Threshold and gain
+  void setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,SingleHardrocV2ConfigurationFrame& ConfigHR2);
+  void setGain(uint32_t gain,SingleHardrocV2ConfigurationFrame& ConfigHR2);
+  void setThreshold(uint32_t B0,uint32_t B1,uint32_t B2);
+  void setGain(uint32_t gain);
 private:
   FtdiDeviceInfo _ftd;
   DIFStatus* _status;

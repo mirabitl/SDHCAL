@@ -20,6 +20,7 @@ LOG4CXX_INFO (_logLdaq, "this is a info message, after parsing configuration fil
 
 
   LDIFServer* s=new LDIFServer(s0.str());
+
   while (true)
     sleep((unsigned int) 3);
 }

@@ -85,6 +85,133 @@ void LDIFServer::initialise(levbdim::fsmmessage* m)
     }
 }
 
+
+void LDIFServer::setThreshold(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  uint32_t difid=atoi(request.get("difid","0").c_str());
+  uint32_t B0=atoi(request.get("B0","0").c_str());
+  uint32_t B1=atoi(request.get("B1","0").c_str());
+  uint32_t B2=atoi(request.get("B2","0").c_str());
+  int32_t ctrlreg1=atoi(request.get("CTRLREG","0").c_str());
+
+  Json::Value jt;
+  jt["ctrlreg"]=request.get("CTRLREG","0");
+  uint32_t ctrlreg= jt["ctrlreg"].asUInt();
+  LOG4CXX_INFO(_logLdaq," Threshold changed with "<<difid<<" ctr "<<ctrlreg<<" B0 "<<B0<<" B1 "<<B1<<" B2 "<<B2<<" et "<<request.get("CTRLREG","0").c_str()<<" "<<jt<<" "<<ctrlreg1);
+
+  if (B0==0 || B1==0 || B2==0|| ctrlreg==0)
+    {
+      LOG4CXX_ERROR(_logLdaq," Invalid parameters dif "<<difid<<" ctr "<<ctrlreg<<" B0 "<<B0<<" B1 "<<B1<<" B2 "<<B2);
+      response["STATUS"]="Invalid params ";
+      return;
+    }
+  int32_t rc=1;
+  std::map<uint32_t,LDIF*> dm=this->getDIFMap();
+  Json::Value array_slc;
+  if (difid>0 )
+    {
+      std::map<uint32_t,LDIF*>::iterator itd=dm.find(difid);
+      if (itd==dm.end())
+	{
+	  LOG4CXX_ERROR(_logLdaq," please do Scan devices first the dif  "<<difid<<"is not registered");
+
+	  response["STATUS"]="DIFID not found ";
+	  return;
+
+	}
+      itd->second->setThreshold(B0,B1,B2);
+      itd->second->configure(ctrlreg);
+      Json::Value ds;
+      ds["id"]=itd->first;
+      ds["slc"]=itd->second->status()->slc;
+      array_slc.append(ds);
+      response["STATUS"]="DONE";
+      response["DIFLIST"]=array_slc;
+      return;
+    }
+  else
+    {
+
+      for ( std::map<uint32_t,LDIF*>::iterator it=dm.begin();it!=dm.end();it++)
+	{
+	  it->second->setThreshold(B0,B1,B2);
+	  it->second->configure(ctrlreg);
+	  Json::Value ds;
+	  ds["id"]=it->first;
+	  ds["slc"]=it->second->status()->slc;
+	  array_slc.append(ds);
+
+
+	}
+      response["STATUS"]="DONE";
+      response["DIFLIST"]=array_slc;
+      return;
+    }
+}
+
+
+
+void LDIFServer::cmdStatus(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  uint32_t difid=atoi(request.get("difid","0").c_str());
+  int32_t rc=1;
+  std::map<uint32_t,LDIF*> dm=this->getDIFMap();
+  Json::Value array_slc;
+  if (difid>0 )
+    {
+      std::map<uint32_t,LDIF*>::iterator itd=dm.find(difid);
+      if (itd==dm.end())
+	{
+	  LOG4CXX_ERROR(_logLdaq," please do Scan devices first the dif  "<<difid<<"is not registered");
+	  response["STATUS"]="DIFID not found ";
+	  return;
+	}
+      
+
+      Json::Value ds;
+      ds["detid"]=itd->second->detectorId();
+      ds["state"]=itd->second->state();
+      ds["id"]=itd->second->status()->id;
+      ds["status"]=itd->second->status()->status;
+      ds["slc"]=itd->second->status()->slc;
+      ds["gtc"]=itd->second->status()->gtc;
+      ds["bcid"]=(Json::Value::UInt64)itd->second->status()->bcid;
+      ds["bytes"]=(Json::Value::UInt64)itd->second->status()->bytes;
+      ds["host"]=itd->second->status()->host;
+      array_slc.append(ds);
+      response["STATUS"]="DONE";
+      response["DIFLIST"]=array_slc;
+      return;
+    }
+  else
+    {
+
+      for ( std::map<uint32_t,LDIF*>::iterator it=dm.begin();it!=dm.end();it++)
+	{
+
+	  Json::Value ds;
+	  ds["detid"]=it->second->detectorId();
+	  ds["state"]=it->second->state();
+	  ds["id"]=it->second->status()->id;
+	  ds["status"]=it->second->status()->status;
+	  ds["slc"]=it->second->status()->slc;
+	  ds["gtc"]=it->second->status()->gtc;
+	  ds["bcid"]=(Json::Value::UInt64) it->second->status()->bcid;
+	  ds["bytes"]=(Json::Value::UInt64)it->second->status()->bytes;
+	  ds["host"]=it->second->status()->host;
+	  array_slc.append(ds);
+
+
+
+	}
+      response["STATUS"]="DONE";
+      response["DIFLIST"]=array_slc;
+
+
+      return;
+    }
+}
+
 void LDIFServer::status(levbdim::fsmmessage* m)
 {
 
@@ -309,7 +436,8 @@ void LDIFServer::destroy(levbdim::fsmmessage* m)
 LDIFServer::LDIFServer(std::string name) 
 {
 
-  _fsm=new levbdim::fsm(name);
+  //_fsm=new levbdim::fsm(name);
+  _fsm=new fsmweb(name);
 
   // Register state
   _fsm->addState("CREATED");
@@ -342,7 +470,8 @@ LDIFServer::LDIFServer(std::string name)
   _fsm->addTransition("STATUS","RUNNING","RUNNING",boost::bind(&LDIFServer::status, this,_1));
   _fsm->addTransition("STATUS","STOPPED","STOPPED",boost::bind(&LDIFServer::status, this,_1));
 
-  
+  _fsm->addCommand("STATUS",boost::bind(&LDIFServer::cmdStatus,this,_1,_2));
+  _fsm->addCommand("SETTHRESHOLD",boost::bind(&LDIFServer::setThreshold,this,_1,_2));
 
     //Start server
   std::stringstream s0;
@@ -351,6 +480,12 @@ LDIFServer::LDIFServer(std::string name)
   DimServer::start(s0.str().c_str()); 
 
   memset(theDBDimInfo_,0,255*sizeof(DimInfo*));
+  char* wp=getenv("WEBPORT");
+  if (wp!=NULL)
+    {
+      std::cout<<"Service "<<name<<" started on port "<<atoi(wp)<<std::endl;
+    _fsm->start(atoi(wp));
+    }
 }
 
 
