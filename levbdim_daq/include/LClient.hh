@@ -26,8 +26,8 @@ public:
   }
   inline Json::Value parameters(){ return _jpar;}
   inline Json::Value reply(){
-    std::cout<<msg()->content()<<std::endl;
-    std::cout<<msg()->status().asString()<<std::endl;
+    //std::cout<<msg()->content()<<std::endl;
+    //std::cout<<msg()->status().asString()<<std::endl;
 
     if (msg()->status().asString().compare("DONE")==0)
       return msg()->content()["answer"];

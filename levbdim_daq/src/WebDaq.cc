@@ -120,7 +120,7 @@ LClient* WebDaq::findFSM(DimBrowser* dbr,std::string pattern)
 }
 void WebDaq::discover(levbdim::fsmmessage* m)
 {
-  std::cout<<"doScandns"<<std::endl;
+  //std::cout<<"doScandns"<<std::endl;
   // Look for DB server
   DimBrowser* dbr=new DimBrowser(); 
   char *service, *format; 
@@ -161,6 +161,8 @@ void WebDaq::discover(levbdim::fsmmessage* m)
 }
 void WebDaq::prepare(levbdim::fsmmessage* m)
 {
+  //std::cout<<"ON RENTREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"<<std::endl;
+  m->content();
   // DB
   if (_dbClient)
     {
@@ -175,10 +177,10 @@ void WebDaq::prepare(levbdim::fsmmessage* m)
       _zupClient->set<std::string>("device",m->content()["zupdevice"].asString());
       _zupClient->set<int>("port",m->content()["zupport"].asInt());
       _zupClient->post("CONFIGURE");
-      std::cout<<"Current zup values "<<_zupClient->reply()<<std::endl;
+      //std::cout<<"Current zup values "<<_zupClient->reply()<<std::endl;
     }
   // Ccc
-  std::cout<<" CCC client "<<_cccClient<<std::endl;
+  //std::cout<<" CCC client "<<_cccClient<<std::endl;
   if (_cccClient)
     {
       _cccClient->clear();
@@ -199,7 +201,7 @@ void WebDaq::prepare(levbdim::fsmmessage* m)
       _mdccClient->clear();
       _mdccClient->set<std::string>("name","STATUS");
       _mdccClient->post("CMD");
-      std::cout<<"Current MDCC values "<<_mdccClient->reply()<<std::endl;
+      //std::cout<<"Current MDCC values "<<_mdccClient->reply()<<std::endl;
       
     }
   // Builder
@@ -226,7 +228,7 @@ std::string WebDaq::difstatus()
       for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
 	devlist.append(*jt);
     }
-  std::cout<<devlist<<std::endl;
+  //std::cout<<devlist<<std::endl;
   Json::FastWriter fastWriter;
   return fastWriter.write(devlist);
 }
@@ -302,7 +304,7 @@ void WebDaq::initialise(levbdim::fsmmessage* m)
       for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
 	devlist.append(*jt);
     }
-  std::cout<<devlist<<std::endl;
+  //std::cout<<devlist<<std::endl;
 
   // Initialise
   for (std::vector<LClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
@@ -317,13 +319,13 @@ void WebDaq::initialise(levbdim::fsmmessage* m)
 void WebDaq::configure(levbdim::fsmmessage* m)
 {
   // Configure CCC
-  std::cout<<m->content();
+  //std::cout<<m->content();
   if (_cccClient)
     {
 
       _cccClient->clear();_cccClient->set<std::string>("name","CCCRESET");_cccClient->post("CMD");
       _cccClient->clear();_cccClient->set<std::string>("name","DIFRESET");_cccClient->post("CMD");
-      std::cout<<"RESET DONE"<<std::endl;
+      //std::cout<<"RESET DONE"<<std::endl;
     }
 
   // register to the dbstate
@@ -331,7 +333,8 @@ void WebDaq::configure(levbdim::fsmmessage* m)
   for (std::vector<LClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     {
       (*it)->clear();
-      (*it)->set<std::string>("dbstate",m->content()["dbstate"].asString());
+      //(*it)->set<std::string>("dbstate",m->content()["dbstate"].asString());
+      (*it)->set<std::string>("dbstate",_jparam["dbstate"].asString());
       g.create_thread(boost::bind(&WebDaq::singleregisterdb, this,(*it)));
     }
   g.join_all();
@@ -341,7 +344,8 @@ void WebDaq::configure(levbdim::fsmmessage* m)
   for (std::vector<LClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     {
       (*it)->clear();
-      (*it)->set<uint32_t>("ctrlreg",m->content()["ctrlreg"].asUInt());
+      //(*it)->set<uint32_t>("ctrlreg",m->content()["ctrlreg"].asUInt());
+      (*it)->set<uint32_t>("ctrlreg",_jparam["ctrlreg"].asUInt());
       (*it)->set<int32_t>("difid",0);
       g.create_thread(boost::bind(&WebDaq::singleconfigure, this,(*it)));
     }
@@ -363,7 +367,7 @@ void WebDaq::configure(levbdim::fsmmessage* m)
 	  jd["sourceid"]=(*it)["id"];
 	  jsou.append(jd);
 	}
-      std::cout<<"SENDING "<<jsou<<std::endl;
+      //std::cout<<"SENDING "<<jsou<<std::endl;
       _builderClient->clear();
       _builderClient->set<Json::Value>("sources",jsou);
       _builderClient->post("CONFIGURE");
