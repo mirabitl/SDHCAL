@@ -9,6 +9,24 @@ class LClient : public levbdim::fsmClient
 public:
   LClient(std::string name) : levbdim::fsmClient(name)
   {
+    size_t ncmd=ss.find("/CMD");
+    std::string fsmname =name.substr(0,ncmd);
+    size_t npref=fsmname.find_last_of("/FSM/");
+    _subname=fsmname.substr(npref+1);
+    size_t ntype=_subname.find("-");
+    _type=_subname(0,ntype);
+    _host= subname(ntype+1);
+    if (_type.compare("DIF")==0)
+      _port=40000;
+    if (_type.compare("Ccc")==0)
+      _port=42000;
+    if (_type.compare("Mdcc")==0)
+      _port=41000;
+    if (_type.compare("Zup")==0)
+      _port=43000;
+    
+    std::cout<<"http://"<<hostname<<":"<<_port<<"/"<<_subname<<"/CMD?name=STATUS"<<std::endl;
+    
   }
   void clear()
   {
@@ -41,6 +59,10 @@ public:
 private:
   Json::Value _jpar,_msg;
   levbdim::fsmmessage _m;
+  std::string _subname;
+  std::string _type;
+  std::string _hostname;
+  uint32_t port;
 };
 
 
