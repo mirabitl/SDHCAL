@@ -53,6 +53,8 @@ WebDaq::WebDaq(std::string name,uint32_t port) :_builderClient(NULL),_dbClient(N
     _fsm->addCommand("SPILLON",boost::bind(&WebDaq::triggerSpillOn,this,_1,_2));
     _fsm->addCommand("SPILLOFF",boost::bind(&WebDaq::triggerSpillOff,this,_1,_2));
     _fsm->addCommand("BEAMON",boost::bind(&WebDaq::triggerBeam,this,_1,_2));
+    _fsm->addCommand("SETTHRESHOLD",boost::bind(&WebDaq::setThreshold,this,_1,_2));
+    _fsm->addCommand("SETGAIN",boost::bind(&WebDaq::setGain,this,_1,_2));
     
   cout<<"Building WebDaq"<<endl;
   std::stringstream s0;
@@ -151,6 +153,7 @@ void WebDaq::discover(levbdim::fsmmessage* m)
       s0.str(std::string());
       s0<<ss.substr(0,n)<<"/CMD";
       LClient* dc = new LClient(s0.str());
+      dc->post("?");
       _DIFClients.push_back(dc);
       
     } 
@@ -729,4 +732,59 @@ void WebDaq::triggerBeam(Mongoose::Request &request, Mongoose::JsonResponse &res
   response["STATUS"]="DONE";
   
   return;
+}
+
+    
+
+
+void WebDaq::setThreshold(Mongoose::Request &request, Mongoose::JsonResponse &response)//uint32_t nc)
+{
+  if (state().compare("CONFIGURED")!=0)
+    {
+      response["STATUS"]="SetThreshold cannot be called if not in CONFIGURED state";
+      return;
+    }
+  std::stringstream saction;
+  saction<<"CMD?name=SETTHRESHOLD&B0="<<request.get("B0","250");
+  saction<<"&B1="<<request.get("B1","250");
+  saction<<"&B2="<<request.get("B2","250");
+  saction<<"&CTRLREG="<<std::hex<<_jparam["ctrlreg"].asUInt();
+
+  Json::Value jlist;
+ for (std::vector<LClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+    {
+      
+      std::string rep=(*it)->postweb(saction.str());
+      Json::Value jrep;
+      jrep["diflist"]=rep;
+      jlist.append(jrep);
+    }
+ response["HOSTS"]=jlist;
+ response["STATUS"]="DONE";
+}
+
+void WebDaq::setGain(Mongoose::Request &request, Mongoose::JsonResponse &response)//uint32_t nc)
+{
+  if (state().compare("CONFIGURED")!=0)
+    {
+      response["STATUS"]="SetGAIN cannot be called if not in CONFIGURED state";
+      return;
+    }
+
+  std::stringstream saction;
+  saction<<"CMD?name=SETGAIN&GAIN="<<request.get("GAIN","128");
+  saction<<"&CTRLREG="<<std::hex<<_jparam["ctrlreg"].asUInt();
+  Json::Value jlist;
+ for (std::vector<LClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+    {
+      
+      std::string rep=(*it)->postweb(saction.str());
+      Json::Value jrep;
+      jrep["diflist"]=rep;
+      jlist.append(jrep);
+    }
+ response["HOSTS"]=jlist;
+ response["STATUS"]="DONE";
+  
+  
 }

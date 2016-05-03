@@ -51,6 +51,8 @@ public:
   void triggerSpillOn(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void triggerSpillOff(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void triggerBeam(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void setThreshold(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void setGain(Mongoose::Request &request, Mongoose::JsonResponse &response);
 
   std::string state(){return _fsm->state();}
   void forceState(std::string s){_fsm->setState(s);}
