@@ -85,6 +85,69 @@ void LDIFServer::initialise(levbdim::fsmmessage* m)
     }
 }
 
+void LDIFServer::setGain(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  uint32_t difid=atoi(request.get("difid","0").c_str());
+  uint32_t gain=atoi(request.get("gain","0").c_str());
+  uint32_t ctrlreg1;
+  sscanf(request.get("CTRLREG","0").c_str(),"%x",&ctrlreg1);
+  printf("ctrl reg = %u %x \n",ctrlreg1,ctrlreg1);
+  // uint32_t ctrlreg= jt["ctrlreg"].asUInt();
+  //printf("ctrl reg after = %d %x \n",ctrlreg,ctrlreg);
+  LOG4CXX_INFO(_logLdaq," Gain changed with "<<difid<<" ctr "<<ctrlreg1<<" gain "<<gain);
+  //response["STATUS"]="TRY";
+  //return;
+
+  if (gain==0|| ctrlreg1==0)
+    {
+      LOG4CXX_ERROR(_logLdaq," Invalid parameters dif "<<difid<<" ctr "<<ctrlreg1<<" Gain "<<gain)
+      response["STATUS"]="Invalid params ";
+      return;
+    }
+  int32_t rc=1;
+  std::map<uint32_t,LDIF*> dm=this->getDIFMap();
+  Json::Value array_slc;
+  if (difid>0 )
+    {
+      std::map<uint32_t,LDIF*>::iterator itd=dm.find(difid);
+      if (itd==dm.end())
+	{
+	  LOG4CXX_ERROR(_logLdaq," please do Scan devices first the dif  "<<difid<<"is not registered");
+
+	  response["STATUS"]="DIFID not found ";
+	  return;
+
+	}
+      itd->second->setGain(gain);
+      itd->second->configure(ctrlreg1);
+      Json::Value ds;
+      ds["id"]=itd->first;
+      ds["slc"]=itd->second->status()->slc;
+      array_slc.append(ds);
+      response["STATUS"]="DONE";
+      response["DIFLIST"]=array_slc;
+      return;
+    }
+  else
+    {
+
+      for ( std::map<uint32_t,LDIF*>::iterator it=dm.begin();it!=dm.end();it++)
+	{
+	  it->second->setGain(gain);
+	  it->second->configure(ctrlreg1);
+	  Json::Value ds;
+	  ds["id"]=it->first;
+	  ds["slc"]=it->second->status()->slc;
+	  array_slc.append(ds);
+
+
+	}
+      response["STATUS"]="DONE";
+      response["DIFLIST"]=array_slc;
+      return;
+    }
+
+}
 
 void LDIFServer::setThreshold(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
@@ -92,16 +155,22 @@ void LDIFServer::setThreshold(Mongoose::Request &request, Mongoose::JsonResponse
   uint32_t B0=atoi(request.get("B0","0").c_str());
   uint32_t B1=atoi(request.get("B1","0").c_str());
   uint32_t B2=atoi(request.get("B2","0").c_str());
-  int32_t ctrlreg1=atoi(request.get("CTRLREG","0").c_str());
+  uint32_t ctrlreg1;
+  sscanf(request.get("CTRLREG","0").c_str(),"%x",&ctrlreg1);
+  printf("ctrl reg = %u %x \n",ctrlreg1,ctrlreg1);
+  Json::Value jt;jt.clear();
 
-  Json::Value jt;
   jt["ctrlreg"]=request.get("CTRLREG","0");
-  uint32_t ctrlreg= jt["ctrlreg"].asUInt();
-  LOG4CXX_INFO(_logLdaq," Threshold changed with "<<difid<<" ctr "<<ctrlreg<<" B0 "<<B0<<" B1 "<<B1<<" B2 "<<B2<<" et "<<request.get("CTRLREG","0").c_str()<<" "<<jt<<" "<<ctrlreg1);
+  std::cout<<" Json value "<<jt<<std::endl;
+  // uint32_t ctrlreg= jt["ctrlreg"].asUInt();
+  //printf("ctrl reg after = %d %x \n",ctrlreg,ctrlreg);
+  LOG4CXX_INFO(_logLdaq," Threshold changed with "<<difid<<" ctr "<<ctrlreg1<<" B0 "<<B0<<" B1 "<<B1<<" B2 "<<B2<<" et "<<request.get("CTRLREG","0").c_str());
+  //response["STATUS"]="TRY";
+  //return;
 
-  if (B0==0 || B1==0 || B2==0|| ctrlreg==0)
+  if (B0==0 || B1==0 || B2==0|| ctrlreg1==0)
     {
-      LOG4CXX_ERROR(_logLdaq," Invalid parameters dif "<<difid<<" ctr "<<ctrlreg<<" B0 "<<B0<<" B1 "<<B1<<" B2 "<<B2);
+      LOG4CXX_ERROR(_logLdaq," Invalid parameters dif "<<difid<<" ctr "<<ctrlreg1<<" B0 "<<B0<<" B1 "<<B1<<" B2 "<<B2);
       response["STATUS"]="Invalid params ";
       return;
     }
@@ -120,7 +189,7 @@ void LDIFServer::setThreshold(Mongoose::Request &request, Mongoose::JsonResponse
 
 	}
       itd->second->setThreshold(B0,B1,B2);
-      itd->second->configure(ctrlreg);
+      itd->second->configure(ctrlreg1);
       Json::Value ds;
       ds["id"]=itd->first;
       ds["slc"]=itd->second->status()->slc;
@@ -135,7 +204,7 @@ void LDIFServer::setThreshold(Mongoose::Request &request, Mongoose::JsonResponse
       for ( std::map<uint32_t,LDIF*>::iterator it=dm.begin();it!=dm.end();it++)
 	{
 	  it->second->setThreshold(B0,B1,B2);
-	  it->second->configure(ctrlreg);
+	  it->second->configure(ctrlreg1);
 	  Json::Value ds;
 	  ds["id"]=it->first;
 	  ds["slc"]=it->second->status()->slc;
@@ -472,6 +541,7 @@ LDIFServer::LDIFServer(std::string name)
 
   _fsm->addCommand("STATUS",boost::bind(&LDIFServer::cmdStatus,this,_1,_2));
   _fsm->addCommand("SETTHRESHOLD",boost::bind(&LDIFServer::setThreshold,this,_1,_2));
+  _fsm->addCommand("SETGAIN",boost::bind(&LDIFServer::setGain,this,_1,_2));
 
     //Start server
   std::stringstream s0;

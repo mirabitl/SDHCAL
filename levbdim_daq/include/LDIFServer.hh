@@ -34,19 +34,12 @@ public:
 
   void cmdStatus(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void setThreshold(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void setGain(Mongoose::Request &request, Mongoose::JsonResponse &response);
 
   void prepareDevices();
   void startDIFThread(LDIF* d);
   void registerDB(std::string state);
   void infoHandler();
-  /*
-  void setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,SingleHardrocV2ConfigurationFrame& ConfigHR2);
-  void setGain(uint32_t gain,SingleHardrocV2ConfigurationFrame& ConfigHR2);
-  void setThreshold(uint32_t B0,uint32_t B1,uint32_t B2,DIFDbInfo& s);
-  void setGain(uint32_t gain,DIFDbInfo& s);
-  void setThreshold(uint32_t B0,uint32_t B1,uint32_t B2);
-  void setGain(uint32_t gain);
-  */
   // DimRpc interface
   std::map<uint32_t,FtdiDeviceInfo*>& getFtdiMap(){ return theFtdiDeviceInfoMap_;}
   std::map<uint32_t,LDIF*>& getDIFMap(){ return theDIFMap_;}
