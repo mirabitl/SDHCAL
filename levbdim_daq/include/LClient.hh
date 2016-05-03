@@ -9,13 +9,18 @@ class LClient : public levbdim::fsmClient
 public:
   LClient(std::string name) : levbdim::fsmClient(name)
   {
-    size_t ncmd=ss.find("/CMD");
+    size_t ncmd=name.find("/CMD");
     std::string fsmname =name.substr(0,ncmd);
-    size_t npref=fsmname.find_last_of("/FSM/");
-    _subname=fsmname.substr(npref+1);
+    //std::cout<<" FSMNAME: "<<fsmname<<std::endl;
+    size_t npref=fsmname.find("/FSM/")+5;
+    _subname=fsmname.substr(npref,fsmname.length()-npref);
+    //std::cout<<npref<<" SUBNAME: "<<_subname<<std::endl;
     size_t ntype=_subname.find("-");
-    _type=_subname(0,ntype);
-    _host= subname(ntype+1);
+    
+    _type=_subname.substr(0,ntype);
+    std::cout<<ntype<<" TYPE: "<<_type<<std::endl;
+    _host= _subname.substr(ntype+1,_subname.length()-ntype);
+    _port=0;
     if (_type.compare("DIF")==0)
       _port=40000;
     if (_type.compare("Ccc")==0)
@@ -24,8 +29,8 @@ public:
       _port=41000;
     if (_type.compare("Zup")==0)
       _port=43000;
-    
-    std::cout<<"http://"<<hostname<<":"<<_port<<"/"<<_subname<<"/CMD?name=STATUS"<<std::endl;
+    if (_port!=0)
+      std::cout<<_type<<" has webservice at http://"<<_host<<":"<<_port<<"/"<<_subname<<"/CMD?name=XXXX"<<std::endl;
     
   }
   void clear()
@@ -61,8 +66,8 @@ private:
   levbdim::fsmmessage _m;
   std::string _subname;
   std::string _type;
-  std::string _hostname;
-  uint32_t port;
+  std::string _host;
+  uint32_t _port;
 };
 
 
