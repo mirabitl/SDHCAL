@@ -33,6 +33,7 @@ public:
   void status(levbdim::fsmmessage* m);
 
   void cmdStatus(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void jobLog(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void setThreshold(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void setGain(Mongoose::Request &request, Mongoose::JsonResponse &response);
 

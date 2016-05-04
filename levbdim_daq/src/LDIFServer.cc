@@ -14,7 +14,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string.h>
-
+#include "fileTailer.hh"
 using namespace Ftdi;
 void LDIFServer::registerdb(levbdim::fsmmessage* m)
 {
@@ -219,7 +219,21 @@ void LDIFServer::setThreshold(Mongoose::Request &request, Mongoose::JsonResponse
 }
 
 
-
+void LDIFServer::jobLog(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  uint32_t nlines=atol(request.get("lines","100").c_str());
+  uint32_t pid=getpid();
+  std::stringstream s;
+  s<<"/tmp/dimjcPID"<<pid<<".log";
+  std::stringstream so;
+  fileTailer t(nlines*512);
+  char buf[nlines*512];
+  t.tail(s.str(),nlines,buf);
+  so<<buf;
+  response["STATUS"]="DONE";
+  response["FILE"]=s.str();
+  response["LINES"]=so.str();
+}
 void LDIFServer::cmdStatus(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   uint32_t difid=atoi(request.get("difid","0").c_str());
@@ -540,6 +554,7 @@ LDIFServer::LDIFServer(std::string name)
   _fsm->addTransition("STATUS","STOPPED","STOPPED",boost::bind(&LDIFServer::status, this,_1));
 
   _fsm->addCommand("STATUS",boost::bind(&LDIFServer::cmdStatus,this,_1,_2));
+  _fsm->addCommand("JOBLOG",boost::bind(&LDIFServer::jobLog,this,_1,_2));
   _fsm->addCommand("SETTHRESHOLD",boost::bind(&LDIFServer::setThreshold,this,_1,_2));
   _fsm->addCommand("SETGAIN",boost::bind(&LDIFServer::setGain,this,_1,_2));
 
