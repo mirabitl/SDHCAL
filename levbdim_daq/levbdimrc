@@ -5,7 +5,7 @@ export DAQCONFIG=config_m3_example
 export DAQCONFIGFILE=${DAQDIR}/levbdim_daq/${DAQCONFIG}.py
 # uncomment if socks is used
 #export SOCKPORT=1080
-alias runc='lc.py'
+alias runc='webc.py'
 
 
 
