@@ -72,7 +72,7 @@ def parseReturn(command,sr):
         ssj=sj["answer"]["COUNTERS"]
         print "\033[1m %10s %10s %10s %10s %12s %12s %10s %10s %10s \033[0m" % ('Spill','Busy1','Busy2','Busy3','SpillOn','SpillOff','Beam','Mask','EcalMask')
         print " %10d %10d %10d %10d  %12d %12d %12d %10d %10d " % (ssj['spill'],ssj['busy1'],ssj['busy2'],ssj['busy3'],ssj['spillon'],ssj['spilloff'],ssj['beam'],ssj['mask'],ssj['ecalmask'])
-    if (command=="difLog"):
+    if (command=="difLog" or command=="cccLog" or command=="mdccLog" or command =="zupLog"):
           
         sj=json.loads(sr)
         print  "\033[1m %s \033[0m" % sj["answer"]["FILE"]
@@ -157,6 +157,9 @@ grp_action.add_argument('--daq-getparameters',action='store_true',help='get the 
 grp_action.add_argument('--daq-forceState',action='store_true',help='force the sate name of the Daq with the --state option, ex --forceState --state=DISCOVERED')
 grp_action.add_argument('--daq-services',action='store_true',help='Triggers teh download of the DB state, the initialisation of the Zup and of the CCC according to $DAQCONFIG values (compulsary before first initialise)')
 grp_action.add_argument('--daq-diflog',action='store_true',help='dump log of the difserver with --host=host --lines=number of lines ')
+grp_action.add_argument('--daq-ccclog',action='store_true',help='dump log of the cccserver with --host=host --lines=number of lines ')
+grp_action.add_argument('--daq-mdcclog',action='store_true',help='dump log of the mdccserver with --host=host --lines=number of lines ')
+grp_action.add_argument('--daq-zuplog',action='store_true',help='dump log of the zupserver with --host=host --lines=number of lines ')
 grp_action.add_argument('--daq-lvon',action='store_true',help='put Zup LV ON')
 grp_action.add_argument('--daq-lvoff',action='store_true',help='put Zup LV OFF')
 grp_action.add_argument('--daq-lvstatus',action='store_true',help='LV status')
@@ -437,6 +440,59 @@ elif(results.daq_diflog):
         lines=results.lines
     lcgi["lines"]=lines
     sr=executeCMD(results.host,40000,"DIF-%s" % results.host,"JOBLOG",lcgi)
+    #print "WHAHAHAHA",sr
+    if (results.verbose):
+        print sr
+    else:
+        parseReturn(r_cmd,sr)
+    exit(0)
+elif(results.daq_ccclog):
+    r_cmd='cccLog'
+    lcgi.clear()
+    if (results.host==None):
+        print 'Please specify the host --host=name'
+        exit(0)
+    lines=100
+    if (results.lines!=None):
+        lines=results.lines
+    lcgi["lines"]=lines
+    sr=executeCMD(results.host,42000,"Ccc-%s" % results.host,"JOBLOG",lcgi)
+    #print "WHAHAHAHA",sr
+    if (results.verbose):
+        print sr
+    else:
+        parseReturn(r_cmd,sr)
+    exit(0)
+
+elif(results.daq_mdcclog):
+    r_cmd='mdccLog'
+    lcgi.clear()
+    if (results.host==None):
+        print 'Please specify the host --host=name'
+        exit(0)
+    lines=100
+    if (results.lines!=None):
+        lines=results.lines
+    lcgi["lines"]=lines
+    sr=executeCMD(results.host,41000,"Mdcc-%s" % results.host,"JOBLOG",lcgi)
+    #print "WHAHAHAHA",sr
+    if (results.verbose):
+        print sr
+    else:
+        parseReturn(r_cmd,sr)
+    exit(0)
+
+elif(results.daq_zuplog):
+    r_cmd='zupLog'
+    lcgi.clear()
+    if (results.host==None):
+        print 'Please specify the host --host=name'
+        exit(0)
+    lines=100
+    if (results.lines!=None):
+        lines=results.lines
+    lcgi["lines"]=lines
+    sr=executeCMD(results.host,43000,"Zup-%s" % results.host,"JOBLOG",lcgi)
     #print "WHAHAHAHA",sr
     if (results.verbose):
         print sr
