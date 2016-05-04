@@ -226,8 +226,8 @@ void LDIFServer::jobLog(Mongoose::Request &request, Mongoose::JsonResponse &resp
   std::stringstream s;
   s<<"/tmp/dimjcPID"<<pid<<".log";
   std::stringstream so;
-  fileTailer t(nlines*512);
-  char buf[nlines*512];
+  fileTailer t(1024*512);
+  char buf[1024*512];
   t.tail(s.str(),nlines,buf);
   so<<buf;
   response["STATUS"]="DONE";

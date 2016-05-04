@@ -16,7 +16,7 @@ class fileTailer
   int findTail(char *lines[][2], int nlines, char buff[], int maxbuff);
   int fileTail(FILE* s,char *lines[][2], int nlines, char buff[], int maxbuff);
   void shift(char *lines[][2], int nlines);
-  void testForRoom(char *lines[][2], int index, char *buffp);
+  bool testForRoom(char *lines[][2], int index, char *buffp);
   uint32_t _MAXBUFF;
 };  
 #endif 

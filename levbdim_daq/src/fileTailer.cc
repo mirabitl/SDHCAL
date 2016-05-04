@@ -38,7 +38,7 @@ int fileTailer::fileTail(FILE* s,char *lines[][2], int nlines, char buff[], int 
       linestart = buffp = buff;
     }
 
-    testForRoom(lines, nlines - nfound, buffp);
+    if (!testForRoom(lines, nlines - nfound, buffp)) break;
 
     *buffp++ = c;
     if (c == '\n') {
@@ -103,9 +103,11 @@ int fileTailer::findTail(char *lines[][2], int nlines, char buff[], int maxbuff)
   }
   // this is in case the input ended without a newline.
   if (c == EOF && buffp != buff && buffp[-1] != '\0') {
-    testForRoom(lines, nlines - nfound, buffp);
-    *buffp = '\0';
-    lines[nlines - 1][wrap] = linestart;
+    if (testForRoom(lines, nlines - nfound, buffp))
+      {
+	*buffp = '\0';
+	lines[nlines - 1][wrap] = linestart;
+      }
   }
 
 }
@@ -129,12 +131,13 @@ void fileTailer::shift(char *lines[][2], int nlines)
  * next character that would be placed in the buffer is pointed to by a line in
  * the lines pointer array. */
 
-void fileTailer::testForRoom(char *lines[][2], int index, char *buffp) {
+bool fileTailer::testForRoom(char *lines[][2], int index, char *buffp) {
   if (buffp == lines[index][0]
       || buffp + 1 == lines[index][0]) {
     printf("error: not enough room in buffer.\n");
-    exit(EXIT_FAILURE);
+    return false;
   }
+  return true;
 }
 
 
