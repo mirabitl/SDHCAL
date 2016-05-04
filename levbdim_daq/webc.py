@@ -72,6 +72,14 @@ def parseReturn(command,sr):
         ssj=sj["answer"]["COUNTERS"]
         print "\033[1m %10s %10s %10s %10s %12s %12s %10s %10s %10s \033[0m" % ('Spill','Busy1','Busy2','Busy3','SpillOn','SpillOff','Beam','Mask','EcalMask')
         print " %10d %10d %10d %10d  %12d %12d %12d %10d %10d " % (ssj['spill'],ssj['busy1'],ssj['busy2'],ssj['busy3'],ssj['spillon'],ssj['spilloff'],ssj['beam'],ssj['mask'],ssj['ecalmask'])
+    if (command=="difLog"):
+          
+        sj=json.loads(sr)
+        print  "\033[1m %s \033[0m" % sj["answer"]["FILE"]
+        ssj=sj["answer"]["LINES"]
+        print ssj
+        #print "\033[1m %10s %10s %10s %10s %12s %12s %10s %10s %10s \033[0m" % ('Spill','Busy1','Busy2','Busy3','SpillOn','SpillOff','Beam','Mask','EcalMask')
+        #print " %10d %10d %10d %10d  %12d %12d %12d %10d %10d " % (ssj['spill'],ssj['busy1'],ssj['busy2'],ssj['busy3'],ssj['spillon'],ssj['spilloff'],ssj['beam'],ssj['mask'],ssj['ecalmask'])
 
         
 def executeFSM(host,port,prefix,cmd,params):
@@ -148,6 +156,7 @@ grp_action.add_argument('--daq-setparameters',action='store_true',help='send the
 grp_action.add_argument('--daq-getparameters',action='store_true',help='get the paremeters described in $DAQCONFIG file to the DAQ')
 grp_action.add_argument('--daq-forceState',action='store_true',help='force the sate name of the Daq with the --state option, ex --forceState --state=DISCOVERED')
 grp_action.add_argument('--daq-services',action='store_true',help='Triggers teh download of the DB state, the initialisation of the Zup and of the CCC according to $DAQCONFIG values (compulsary before first initialise)')
+grp_action.add_argument('--daq-diflog',action='store_true',help='dump log of the difserver with --host=host --lines=number of lines ')
 grp_action.add_argument('--daq-lvon',action='store_true',help='put Zup LV ON')
 grp_action.add_argument('--daq-lvoff',action='store_true',help='put Zup LV OFF')
 grp_action.add_argument('--daq-lvstatus',action='store_true',help='LV status')
@@ -212,7 +221,8 @@ parser.add_argument('--current', action='store',type=float, default=None,dest='c
 parser.add_argument('--period', action='store',type=int, default=None,dest='period',help='set the tempo period')
 
 parser.add_argument('--clock', action='store',type=int, default=None,dest='clock',help='set the number of 20 ns clock')
-
+parser.add_argument('--lines', action='store',type=int, default=None,dest='lines',help='set the number of lines to be dump')
+parser.add_argument('--host', action='store', dest='host',default=None,help='DIF host for log')
 parser.add_argument('--account', action='store', default=None,dest='account',help='set the mysql account')
 
 parser.add_argument('-v','--verbose',action='store_true',default=False,help='set the mysql account')
@@ -410,6 +420,23 @@ elif(results.daq_evbstatus):
     r_cmd='shmStatus'
     lcgi.clear()
     sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","EVBSTATUS",lcgi)
+    #print "WHAHAHAHA",sr
+    if (results.verbose):
+        print sr
+    else:
+        parseReturn(r_cmd,sr)
+    exit(0)
+elif(results.daq_diflog):
+    r_cmd='difLog'
+    lcgi.clear()
+    if (results.host==None):
+        print 'Please specify the host --host=name'
+        exit(0)
+    lines=100
+    if (results.lines!=None):
+        lines=results.lines
+    lcgi["lines"]=lines
+    sr=executeCMD(results.host,40000,"DIF-%s" % results.host,"JOBLOG",lcgi)
     #print "WHAHAHAHA",sr
     if (results.verbose):
         print sr
