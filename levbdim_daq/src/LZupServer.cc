@@ -1,6 +1,6 @@
 
 #include "LZupServer.hh"
-
+#include "fileTailer.hh"
 
 
 
@@ -37,11 +37,26 @@ void LZupServer::read(levbdim::fsmmessage* m)
   m->setAnswer(r);
 }
 
+void LZupServer::c_joblog(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  uint32_t nlines=atol(request.get("lines","100").c_str());
+  uint32_t pid=getpid();
+  std::stringstream s;
+  s<<"/tmp/dimjcPID"<<pid<<".log";
+  std::stringstream so;
+  fileTailer t(1024*512);
+  char buf[1024*512];
+  t.tail(s.str(),nlines,buf);
+  so<<buf;
+  response["STATUS"]="DONE";
+  response["FILE"]=s.str();
+  response["LINES"]=so.str();
+}
 
 LZupServer::LZupServer(std::string name) : _zup(NULL)
 {
-  _fsm=new levbdim::fsm(name);
-  
+  //_fsm=new levbdim::fsm(name);
+  _fsm=new fsmweb(name);
 // Register state
   _fsm->addState("CREATED");
   _fsm->addState("CONFIGURED");
@@ -57,6 +72,7 @@ LZupServer::LZupServer(std::string name) : _zup(NULL)
   _fsm->addTransition("READ","OFF","OFF",boost::bind(&LZupServer::read, this,_1));
   _fsm->addTransition("READ","CONFIGURED","CONFIGURED",boost::bind(&LZupServer::read, this,_1));
 
+  _fsm->addCommand("JOBLOG",boost::bind(&LZupServer::c_joblog,this,_1,_2));
   std::stringstream s0;
   s0.str(std::string());
   s0<<"/DZUP/"<<name<<"/STATUS";
@@ -66,6 +82,12 @@ LZupServer::LZupServer(std::string name) : _zup(NULL)
   s0<<"LZupServer-"<<name;
   DimServer::start(s0.str().c_str()); 
 
+  char* wp=getenv("WEBPORT");
+  if (wp!=NULL)
+    {
+      std::cout<<"Service "<<name<<" started on port "<<atoi(wp)<<std::endl;
+    _fsm->start(atoi(wp));
+    }
 
 	
 

@@ -5,7 +5,7 @@
 
 #include <string.h>
 #include<stdio.h>
-#include "fsm.hh"
+#include "fsmweb.hh"
 #include "Zup.h"
 using namespace std;
 #include <sstream>
@@ -29,10 +29,12 @@ public:
   void Read();
   void Switch(uint32_t m);
   float* readstatus(){return _status;}
+
+  void c_joblog(Mongoose::Request &request, Mongoose::JsonResponse &response);
 private:
   float _status[3];
   DimService* _zsStatus; //State of the last register read
-  levbdim::fsm* _fsm;
+  fsmweb* _fsm;
  
   Zup* _zup;
 };

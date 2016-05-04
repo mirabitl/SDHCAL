@@ -5,7 +5,7 @@
 
 #include <string.h>
 #include<stdio.h>
-#include "fsm.hh"
+#include "fsmweb.hh"
 
 #include "MDCCReadout.h"
 
@@ -27,10 +27,24 @@ public:
   void cmd(levbdim::fsmmessage* m);
   void doOpen(std::string s);
 
-  MDCCReadout* getMDCCReadout(){  std::cout<<" get Ptr "<<_mdcc<<std::endl;
-return _mdcc;}
+  MDCCReadout* getMDCCReadout(){  //std::cout<<" get Ptr "<<_mdcc<<std::endl;
+    return _mdcc;}
+  void c_joblog(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_status(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_pause(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_resume(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_ecalpause(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_ecalresume(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_reset(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_readreg(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_writereg(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_spillon(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_spilloff(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_beamon(Mongoose::Request &request, Mongoose::JsonResponse &response);
+
 private:
-  levbdim::fsm* _fsm;
+  //levbdim::fsm* _fsm;
+  fsmweb* _fsm;
  
   MDCCReadout* _mdcc;
 };
