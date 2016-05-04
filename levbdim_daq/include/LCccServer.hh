@@ -12,7 +12,7 @@
 using namespace std;
 #include <sstream>
 #include "LdaqLogger.hh"
-#include "fsm.hh"
+#include "fsmweb.hh"
 class LCccServer 
 {
 public:
@@ -28,9 +28,19 @@ public:
   // getters
 
   CCCManager* getManager(){return _manager;}
+  // Commands
+  void pause(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void resume(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void difreset(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void cccreset(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void readreg(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void writereg(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void joblog(Mongoose::Request &request, Mongoose::JsonResponse &response);
+
 private:
   std::string _state;
-  levbdim::fsm* _fsm;
+  //levbdim::fsm* _fsm;
+  fsmweb* _fsm;
   CCCManager* _manager;
 };
 #endif

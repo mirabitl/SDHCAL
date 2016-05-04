@@ -1,7 +1,7 @@
 
 #include "LCccServer.hh"
 
-
+#include "fileTailer.hh"
 
 void LCccServer::open(levbdim::fsmmessage* m)
 {
@@ -118,16 +118,83 @@ void LCccServer::cmd(levbdim::fsmmessage* m)
 
 }
 
-
+void LCccServer::pause(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  CCCManager* ccc= this->getManager();
+  if (ccc==NULL)    {response["STATUS"]="NO Ccc created"; return;}
+  ccc->getCCCReadout()->DoSendPauseTrigger();
+  response["STATUS"]="DONE";
+}
+void LCccServer::resume(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  CCCManager* ccc= this->getManager();
+  if (ccc==NULL)    {response["STATUS"]="NO Ccc created"; return;}
+  ccc->getCCCReadout()->DoSendResumeTrigger();
+  response["STATUS"]="DONE";
+}
+void LCccServer::difreset(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  CCCManager* ccc= this->getManager();
+  if (ccc==NULL)    {response["STATUS"]="NO Ccc created"; return;}
+  ccc->getCCCReadout()->DoSendDIFReset();
+  response["STATUS"]="DONE";
+}
+void LCccServer::cccreset(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  CCCManager* ccc= this->getManager();
+  if (ccc==NULL)    {response["STATUS"]="NO Ccc created"; return;}
+  ccc->getCCCReadout()->DoSendCCCReset();
+  response["STATUS"]="DONE";
+}
  
- 
+void LCccServer::readreg(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  CCCManager* ccc= this->getManager();
+  if (ccc==NULL)    {response["STATUS"]="NO Ccc created"; return;}
+  uint32_t adr=atol(request.get("address","2").c_str());
+  uint32_t val=ccc->getCCCReadout()->DoReadRegister(adr);
+
+  response["STATUS"]="DONE";
+  response["ADDRESS"]=adr;
+  response["VALUE"]=val;
+} 
+void LCccServer::writereg(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  CCCManager* ccc= this->getManager();
+  if (ccc==NULL)    {response["STATUS"]="NO Ccc created"; return;}
+  uint32_t adr=atol(request.get("address","2").c_str());
+  uint32_t value=atol(request.get("value","1234").c_str());
+  ccc->getCCCReadout()->DoWriteRegister(adr,value);
+
+  response["STATUS"]="DONE";
+  response["ADDRESS"]=adr;
+  response["VALUE"]=value;
+} 
 
 
+
+void LCccServer::joblog(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  uint32_t nlines=atol(request.get("lines","100").c_str());
+  uint32_t pid=getpid();
+  std::stringstream s;
+  s<<"/tmp/dimjcPID"<<pid<<".log";
+  std::stringstream so;
+  fileTailer t(1024*512);
+  char buf[1024*512];
+  t.tail(s.str(),nlines,buf);
+  so<<buf;
+  response["STATUS"]="DONE";
+  response["FILE"]=s.str();
+  response["LINES"]=so.str();
+}
 
 
  LCccServer::LCccServer(std::string name) : _manager(NULL)
 {
-  _fsm=new levbdim::fsm(name);
+  //  _fsm=new levbdim::fsm(name);
+
+  _fsm=new fsmweb(name);
 
   
 // Register state
@@ -148,12 +215,27 @@ void LCccServer::cmd(levbdim::fsmmessage* m)
   _fsm->addTransition("CMD","INITIALISED","INITIALISED",boost::bind(&LCccServer::cmd, this,_1));
   _fsm->addTransition("CMD","CONFIGURED","CONFIGURED",boost::bind(&LCccServer::cmd, this,_1));
 
+
+ _fsm->addCommand("JOBLOG",boost::bind(&LCccServer::joblog,this,_1,_2));
+ _fsm->addCommand("PAUSE",boost::bind(&LCccServer::pause,this,_1,_2));
+ _fsm->addCommand("RESUME",boost::bind(&LCccServer::resume,this,_1,_2));
+ _fsm->addCommand("DIFRESET",boost::bind(&LCccServer::difreset,this,_1,_2));
+ _fsm->addCommand("CCCRESET",boost::bind(&LCccServer::cccreset,this,_1,_2));
+ _fsm->addCommand("WRITEREG",boost::bind(&LCccServer::writereg,this,_1,_2));
+ _fsm->addCommand("READREG",boost::bind(&LCccServer::readreg,this,_1,_2));
+
   
   std::stringstream s0;
   s0.str(std::string());
   s0<<"LCccServer-"<<name;
   DimServer::start(s0.str().c_str()); 
 
+  char* wp=getenv("WEBPORT");
+  if (wp!=NULL)
+    {
+      std::cout<<"Service "<<name<<" started on port "<<atoi(wp)<<std::endl;
+    _fsm->start(atoi(wp));
+    }
 
 	
 
