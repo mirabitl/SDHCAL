@@ -180,7 +180,7 @@ env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
 #LIBRARY_SOURCES=Glob("#src/*.cc")
 
 #print LIBRARY_SOURCES
-LIBRARY_SOURCES=['src/fileTailer.cc','src/LDIF.cc','src/LDIFServer.cc','src/LCccServer.cc','src/LZupServer.cc','src/LMdccServer.cc','src/LBuilder.cc','src/LDaq.cc','src/LClient.cc']
+LIBRARY_SOURCES=['src/LDIF.cc','src/LDIFServer.cc','src/LCccServer.cc','src/LZupServer.cc','src/LMdccServer.cc','src/LBuilder.cc','src/LDaq.cc','src/LClient.cc']
 
 if (Use_Oracle):
   LIBRARY_SOURCES.append('src/LDbServer.cc')
