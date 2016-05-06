@@ -43,7 +43,82 @@ using namespace  std;
 #include <json/json.h>
 //using namespace Wt;
  #define STEP printf("%s %d\n",__FUNCTION__,__LINE__)
+using namespace std;
+#include <curl/curl.h>
+//#include <curl/types.h>
+#include <curl/easy.h>
 
+struct CurlBufferStruct
+{
+  char* buffer;
+  size_t size;
+};
+ static size_t CurlCallback(void* ptr, size_t size, size_t nmemb, void* data)
+{
+  size_t realsize = size * nmemb;
+  struct CurlBufferStruct* mem = (struct CurlBufferStruct*) data;
+  mem->buffer = (char*)realloc(mem->buffer, mem->size + realsize + 1);
+ 
+  if ( mem->buffer )
+  {
+    memcpy(&(mem->buffer[mem->size]), ptr, realsize );
+    mem->size += realsize;
+    mem->buffer[ mem->size ] = 0;
+  }
+ 
+  return realsize;
+}
+ 
+ 
+//Lecture de la page web
+  char* CurlQuery(char* AddURL,char* Chaine)
+  {
+  curl_global_init(CURL_GLOBAL_ALL);
+  
+  CURL *myHandle;
+  CURLcode result;
+  struct CurlBufferStruct LectureLC;
+  LectureLC.buffer = NULL;
+  LectureLC.size = 0;
+ 
+  myHandle = curl_easy_init();
+  curl_easy_setopt(myHandle, CURLOPT_WRITEFUNCTION, CurlCallback);
+  curl_easy_setopt(myHandle, CURLOPT_WRITEDATA, (void*)&LectureLC);
+  curl_easy_setopt(myHandle, CURLOPT_URL, AddURL);
+  result = curl_easy_perform(myHandle);  //voir la doc pour une gestion minimal des erreurs
+  curl_easy_cleanup(myHandle);
+ 
+  if(result!=0) LectureLC.size=1;
+
+  strcpy(Chaine, LectureLC.buffer);  strcat(Chaine,"\0");
+  if(LectureLC.buffer) free(LectureLC.buffer);
+ 
+  return Chaine;
+  }
+
+
+string url_encode(const string &value) {
+    ostringstream escaped;
+    escaped.fill('0');
+    escaped << hex;
+
+    for (string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
+        string::value_type c = (*i);
+
+        // Keep alphanumeric and other accepted characters intact
+        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+            escaped << c;
+            continue;
+        }
+
+        // Any other characters are percent-encoded
+        escaped << uppercase;
+        escaped << '%' << setw(2) << int((unsigned char) c);
+        escaped << nouppercase;
+    }
+
+    return escaped.str();
+}
 /*
  * A simple hello world application class which demonstrates how to react
  * to events, read input, and give feed-back.
@@ -1150,6 +1225,24 @@ void wlevbc::StartButtonHandler()
 	    std::string resl=exec((const char*) telog);
 	    currentElog_=atoi(resl.substr(resl.find("ID=")+3,10).c_str());
 	    currentSessionId_=this->sessionId();
+
+	    std::stringstream s,saction;
+	    s<<"http://lyoac29:8082/SDHCALRunControl/SOR?";
+	    saction<<"run="<<editrun->text().toUTF8();
+	    saction<<"&detectorName="<<editstate->text().toUTF8();
+	    saction<<"&author="<<editauthor->text().toUTF8();
+	    saction<<"&beam="<<editbeam->text().toUTF8();
+	    saction<<"&energy="<<editenergy->text().toUTF8();
+	    saction<<"&description="<<editcomment->text().toUTF8();
+	    s<<url_encode(saction.str());
+	    std::cout<<"Web command "<<s.str()<<std::endl;
+	    char AddURL[1024];
+	    char RC[50000];  //À changer selon vos besoin
+	    memset(AddURL,0,1024);
+	    memset(RC,0,50000);
+	    strncpy(AddURL,s.str().c_str(),s.str().length());
+	    CurlQuery((char*) s.str().c_str(),RC);
+	    
 	    
 	  }
 	else
