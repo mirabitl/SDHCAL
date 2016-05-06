@@ -1227,22 +1227,17 @@ void wlevbc::StartButtonHandler()
 	    currentSessionId_=this->sessionId();
 
 	    std::stringstream s,saction;
-	    s<<"http://lyoac29:8082/SDHCALRunControl/SOR?";
-	    saction<<"run="<<editrun->text().toUTF8();
-	    saction<<"&detectorName="<<editstate->text().toUTF8();
-	    saction<<"&author="<<editauthor->text().toUTF8();
-	    saction<<"&beam="<<editbeam->text().toUTF8();
-	    saction<<"&energy="<<editenergy->text().toUTF8();
-	    saction<<"&description="<<editcomment->text().toUTF8();
-	    s<<url_encode(saction.str());
+	    s<<"curl -X POST http://lyoac29:8082/SDHCALRunControl/SOR ";
+	    saction<<" -d run="<<editrun->text().toUTF8();
+	    saction<<" -d detectorName="<<editstate->text().toUTF8();
+	    saction<<" -d author="<<editauthor->text().toUTF8();
+	    saction<<" -d beam="<<editbeam->text().toUTF8();
+	    saction<<" -d energy="<<editenergy->text().toUTF8();
+	    saction<<" -d description="<<editcomment->text().toUTF8();
+	    s<<saction;
 	    std::cout<<"Web command "<<s.str()<<std::endl;
-	    char AddURL[1024];
-	    char RC[50000];  //À changer selon vos besoin
-	    memset(AddURL,0,1024);
-	    memset(RC,0,50000);
-	    strncpy(AddURL,s.str().c_str(),s.str().length());
-	    CurlQuery((char*) s.str().c_str(),RC);
-	    
+	    std::string resm=exec(s.str().c_str());
+	    std::cout<<resm<<std::endl;
 	    
 	  }
 	else
