@@ -122,7 +122,7 @@ if (Use_LCIO):
 
 
 #LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
-LIBRARIES=['pthread',  'm', 'stdc++',boostsystem,boostthread,'SDHCALcommon','SDHCALReadout','dim','netlink','cslm','log4cxx','levbdim','curl']
+LIBRARIES=['pthread',  'm', 'stdc++',boostsystem,boostthread,'SDHCALcommon','SDHCALReadout','dim','netlink','cslm','log4cxx','levbdim','basicwriter','curl']
 
 if (Use_Oracle):
   LIBRARIES=LIBRARIES+['dl','uuid', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c','SDHCALDB']
