@@ -4,10 +4,11 @@
 #include <string>
 #include <iostream>
 #include <json/json.h>
-extern "C" {
-  char* CurlQuery(char* AddURL,char* Chaine);
-};
- 
+//extern "C" {
+//  char* CurlQuery(char* AddURL,char* Chaine);
+//};
+
+char* CurlQuery(char* AddURL,char* Chaine);
  
 
 class LClient : public levbdim::fsmClient, DimClient

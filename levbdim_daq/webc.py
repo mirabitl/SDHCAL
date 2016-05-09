@@ -131,7 +131,7 @@ def executeCMD(host,port,prefix,cmd,params):
    else:
        myurl = "http://"+host+ ":%d/%s/" % (port,prefix)
        #conn = httplib.HTTPConnection(myurl)
-       print myurl
+       #print myurl
        req=urllib2.Request(myurl)
        r1=urllib2.urlopen(req)
        return r1.read()
