@@ -4,7 +4,7 @@
    sudo apt-get install libxerces-c3.1
    sudo apt-get install libxerces-c-dev
    sudo apt-get install libaio1 pyqt4-dev-tools emacs
-
+   sudo apt-get -y install libjsoncpp-dev libmysqlclient-dev liblog4cxx10-dev  libcurl4-gnutls-dev
    #git clone https://github.com/mirabitl/SDHCAL.git
    #cd SDHCAL/
    . ubuntu_packages.list 
