@@ -152,9 +152,18 @@ grp_action.add_argument('--jc-kill',action='store_true',help='kill all controled
 grp_action.add_argument('--jc-start',action='store_true',help='start all controled processes described in $DAQCONFIG jsonfile variable')
 grp_action.add_argument('--jc-status',action='store_true',help='show the status all controled processes')
 
-grp_action.add_argument('--ljc-register',action='store_true',help='show the status all controled processes')
-grp_action.add_argument('--ljc-register-start',action='store_true',help='show the status all controled processes')
-grp_action.add_argument('--ljc-register-stop',action='store_true',help='show the status all controled processes')
+grp_action.add_argument('--ljc-register',action='store_true',help='register job  specified with --job=name in a host with --host=name  if name ids ALL , all jobs/host are considered')
+grp_action.add_argument('--ljc-initialise',action='store_true',help='initialise the LJC on host --host=name with a local file --file=name or an url file --url=name')
+grp_action.add_argument('--ljc-register-start',action='store_true',help='start registration on --host=name')
+grp_action.add_argument('--ljc-register-stop',action='store_true',help='ends registration on --host=name')
+grp_action.add_argument('--ljc-start',action='store_true',help='start processes on --host=name')
+grp_action.add_argument('--ljc-kill',action='store_true',help='kill processes on --host=name')
+grp_action.add_argument('--ljc-destroy',action='store_true',help='destroy registration on --host=name')
+grp_action.add_argument('--ljc-status',action='store_true',help='status of processes on --host=name')
+grp_action.add_argument('--ljc-kill-job',action='store_true',help='stop process with --processname=name or --pid=pid with signal --signal=X on --host=name')
+grp_action.add_argument('--ljc-restart-job',action='store_true',help='restart process with --processname=name or --pid=pid --signal=X on --host=name')
+grp_action.add_argument('--ljc-job-log',action='store_true',help='log of the process with --processname=name or --pid=pid on --host=name')
+
 
 
 grp_action.add_argument('--daq-discover',action='store_true',help='trigger a scan of the DNS othe Daq')
@@ -231,8 +240,13 @@ parser.add_argument('--period', action='store',type=int, default=None,dest='peri
 
 parser.add_argument('--clock', action='store',type=int, default=None,dest='clock',help='set the number of 20 ns clock')
 parser.add_argument('--lines', action='store',type=int, default=None,dest='lines',help='set the number of lines to be dump')
-parser.add_argument('--host', action='store', dest='host',default=None,help='DIF host for log')
-parser.add_argument('--job', action='store', dest='job',default=None,help='DIF host for log')
+parser.add_argument('--host', action='store', dest='host',default=None,help='host for job control')
+parser.add_argument('--job', action='store', dest='job',default=None,help='job name in job control')
+parser.add_argument('--processname', action='store', dest='processname',default=None,help='job name in job control')
+parser.add_argument('--file', action='store', dest='config',default=None,help='remote file name in job control initialise')
+parser.add_argument('--url', action='store', dest='url',default=None,help='remote file name in job control initialise')
+parser.add_argument('--pid', action='store', dest='pid',type=int,default=None,help='job pid in job control')
+parser.add_argument('--signal', action='store', dest='signal',type=int,default=15,help='signal to kill process in job control')
 parser.add_argument('--account', action='store', default=None,dest='account',help='set the mysql account')
 
 parser.add_argument('-v','--verbose',action='store_true',default=False,help='set the mysql account')
@@ -333,6 +347,28 @@ elif(results.jc_status):
         parseReturn(r_cmd,sr)
     exit(0)
 
+elif(results.ljc_initialise):
+    lcgi.clear();
+    if (results.host==None):
+        print 'Please specify the state --host=name'
+        exit(0)
+    if (results.config==None and results.url==None):
+        print 'Please specify the file with --file=name or --url=name'
+        exit(0)
+    if (results.config!=None):
+        lcgi['file']=results.config;
+    elif (results.url!=None):
+        lcgi['url']=results.url;
+
+    
+    #print conf.jsonfile
+    sc=json.load(open(conf.jsonfile))
+    for  x,y in sc["HOSTS"].iteritems():
+        if (x==results.host or results.host=="ALL"):
+            sr=executeFSM(x,9999,"LJC-%s" % x,"INITIALISE",lcgi)
+            
+    exit(0)
+
 elif(results.ljc_register_start):
     lcgi.clear();
     if (results.host==None):
@@ -342,7 +378,7 @@ elif(results.ljc_register_start):
     sc=json.load(open(conf.jsonfile))
     for  x,y in sc["HOSTS"].iteritems():
         if (x==results.host or results.host=="ALL"):
-            sr=executeFSM(results.host,9999,"LJC","REGISTRATION",lcgi)
+            sr=executeFSM(x,9999,"LJC-%s" % x,"REGISTRATION",lcgi)
             
     exit(0)
 elif(results.ljc_register_stop):
@@ -354,7 +390,7 @@ elif(results.ljc_register_stop):
     sc=json.load(open(conf.jsonfile))
     for  x,y in sc["HOSTS"].iteritems():
         if (x==results.host or results.host=="ALL"):
-            sr=executeFSM(results.host,9999,"LJC","ENDREGISTRATION",lcgi)
+            sr=executeFSM(x,9999,"LJC-%s" % x,"ENDREGISTRATION",lcgi)
 
     exit(0)
 
@@ -378,12 +414,119 @@ elif(results.ljc_register):
                     lcgi["processenv"]=json.dumps(z["ENV"])
                     lcgi["processbin"]=json.dumps(z["PROGRAM"])
                     #print lcgi
-                    sr=executeFSM(results.host,9999,"LJC-%s" % results.host,"REGISTERJOB",lcgi)
+                    sr=executeFSM(x,9999,"LJC-%s" % x,"REGISTERJOB",lcgi)
                     print x,z["NAME"],"==>",sr
     exit(0)
 
 
-    
+elif(results.ljc_start):
+    lcgi.clear();
+    if (results.host==None):
+        print 'Please specify the state --host=name'
+        exit(0)
+    #print conf.jsonfile
+    sc=json.load(open(conf.jsonfile))
+    for  x,y in sc["HOSTS"].iteritems():
+        if (x==results.host or results.host=="ALL"):
+            sr=executeFSM(x,9999,"LJC-%s" % x,"START",lcgi)
+            
+    exit(0)
+elif(results.ljc_kill):
+    lcgi.clear();
+    if (results.host==None):
+        print 'Please specify the state --host=name'
+        exit(0)
+    #print conf.jsonfile
+    sc=json.load(open(conf.jsonfile))
+    for  x,y in sc["HOSTS"].iteritems():
+        if (x==results.host or results.host=="ALL"):
+            sr=executeFSM(x,9999,"LJC-%s" % x,"KILL",lcgi)
+            
+    exit(0)
+elif(results.ljc_destroy):
+    lcgi.clear();
+    if (results.host==None):
+        print 'Please specify the state --host=name'
+        exit(0)
+    #print conf.jsonfile
+    sc=json.load(open(conf.jsonfile))
+    for  x,y in sc["HOSTS"].iteritems():
+        if (x==results.host or results.host=="ALL"):
+            sr=executeFSM(x,9999,"LJC-%s" % x,"DESTROY",lcgi)
+            
+    exit(0)
+elif(results.ljc_status):
+    lcgi.clear();
+    if (results.host==None):
+        print 'Please specify the state --host=name'
+        exit(0)
+    #print conf.jsonfile
+    sc=json.load(open(conf.jsonfile))
+    for  x,y in sc["HOSTS"].iteritems():
+        if (x==results.host or results.host=="ALL"):
+            sr=executeCMD(x,9999,"LJC-%s" % x,"STATUS",lcgi)
+            
+    exit(0)
+elif(results.ljc_kill_job):
+    lcgi.clear();
+    if (results.host==None):
+        print 'Please specify the state --host=name'
+        exit(0)
+    if (results.processname==None and results.pid==None):
+        print 'Please specify the process with --processname=name or --pid=id'
+        exit(0)
+    if (results.processname!=None):
+        lcgi['processname']=results.processname;
+    elif (results.pid!=None):
+        lcgi['pid']=results.pid;
+    if (results.signal!=None):
+        lcgi['signal']=results.signal;
+
+    #print conf.jsonfile
+    sc=json.load(open(conf.jsonfile))
+    for  x,y in sc["HOSTS"].iteritems():
+        if (x==results.host or results.host=="ALL"):
+            sr=executeCMD(x,9999,"LJC-%s" % x,"KILLJOB",lcgi)
+            
+    exit(0)
+elif(results.ljc_restart_job):
+    lcgi.clear();
+    if (results.host==None):
+        print 'Please specify the state --host=name'
+        exit(0)
+    if (results.processname==None and results.pid==None):
+        print 'Please specify the process with --processname=name or --pid=id'
+        exit(0)
+    if (results.processname!=None):
+        lcgi['processname']=results.processname;
+    elif (results.pid!=None):
+        lcgi['pid']=results.pid;
+    if (results.signal!=None):
+        lcgi['signal']=results.signal;
+
+    #print conf.jsonfile
+    sc=json.load(open(conf.jsonfile))
+    for  x,y in sc["HOSTS"].iteritems():
+        if (x==results.host or results.host=="ALL"):
+            sr=executeCMD(x,9999,"LJC-%s" % x,"RESTARTJOB",lcgi)
+            
+    exit(0)
+elif(results.ljc_job_log):
+    lcgi.clear();
+    if (results.host==None):
+        print 'Please specify the state --host=name'
+        exit(0)
+    if (results.processname==None and results.pid==None):
+        print 'Please specify the process with --processname=name or --pid=id'
+        exit(0)
+    if (results.processname!=None):
+        lcgi['processname']=results.processname;
+    elif (results.pid!=None):
+        lcgi['pid']=results.pid;
+    sr=executeCMD(results.host,9999,"LJC-%s" % results.host,"JOBLOG",lcgi)
+            
+    exit(0)
+
 elif(results.daq_state):
     r_cmd='state'
     lcgi.clear();
