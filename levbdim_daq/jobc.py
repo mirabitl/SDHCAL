@@ -72,7 +72,7 @@ def parseReturn(command,sr):
         ssj=sj["answer"]["COUNTERS"]
         print "\033[1m %10s %10s %10s %10s %12s %12s %10s %10s %10s \033[0m" % ('Spill','Busy1','Busy2','Busy3','SpillOn','SpillOff','Beam','Mask','EcalMask')
         print " %10d %10d %10d %10d  %12d %12d %12d %10d %10d " % (ssj['spill'],ssj['busy1'],ssj['busy2'],ssj['busy3'],ssj['spillon'],ssj['spilloff'],ssj['beam'],ssj['mask'],ssj['ecalmask'])
-    if (command=="difLog" or command=="cccLog" or command=="mdccLog" or command =="zupLog"):
+    if (command=="difLog" or command=="cccLog" or command=="mdccLog" or command =="zupLog" or command=="jobLog"):
           
         sj=json.loads(sr)
         print  "\033[1m %s \033[0m" % sj["answer"]["FILE"]
@@ -243,7 +243,7 @@ parser.add_argument('--lines', action='store',type=int, default=None,dest='lines
 parser.add_argument('--host', action='store', dest='host',default=None,help='host for job control')
 parser.add_argument('--job', action='store', dest='job',default=None,help='job name in job control')
 parser.add_argument('--processname', action='store', dest='processname',default=None,help='job name in job control')
-parser.add_argument('--file', action='store', dest='config',default=None,help='remote file name in job control initialise')
+parser.add_argument('--file', action='store', dest='configjson',default=None,help='remote file name in job control initialise')
 parser.add_argument('--url', action='store', dest='url',default=None,help='remote file name in job control initialise')
 parser.add_argument('--pid', action='store', dest='pid',type=int,default=None,help='job pid in job control')
 parser.add_argument('--signal', action='store', dest='signal',type=int,default=15,help='signal to kill process in job control')
@@ -352,10 +352,10 @@ elif(results.ljc_initialise):
     if (results.host==None):
         print 'Please specify the state --host=name'
         exit(0)
-    if (results.config==None and results.url==None):
+    if (results.configjson==None and results.url==None):
         print 'Please specify the file with --file=name or --url=name'
         exit(0)
-    if (results.config!=None):
+    if (results.configjson!=None):
         lcgi['file']=results.config;
     elif (results.url!=None):
         lcgi['url']=results.url;
@@ -366,7 +366,7 @@ elif(results.ljc_initialise):
     for  x,y in sc["HOSTS"].iteritems():
         if (x==results.host or results.host=="ALL"):
             sr=executeFSM(x,9999,"LJC-%s" % x,"INITIALISE",lcgi)
-            
+            print sr
     exit(0)
 
 elif(results.ljc_register_start):
@@ -429,7 +429,7 @@ elif(results.ljc_start):
     for  x,y in sc["HOSTS"].iteritems():
         if (x==results.host or results.host=="ALL"):
             sr=executeFSM(x,9999,"LJC-%s" % x,"START",lcgi)
-            
+            print sr
     exit(0)
 elif(results.ljc_kill):
     lcgi.clear();
@@ -441,7 +441,7 @@ elif(results.ljc_kill):
     for  x,y in sc["HOSTS"].iteritems():
         if (x==results.host or results.host=="ALL"):
             sr=executeFSM(x,9999,"LJC-%s" % x,"KILL",lcgi)
-            
+            print sr
     exit(0)
 elif(results.ljc_destroy):
     lcgi.clear();
@@ -453,7 +453,7 @@ elif(results.ljc_destroy):
     for  x,y in sc["HOSTS"].iteritems():
         if (x==results.host or results.host=="ALL"):
             sr=executeFSM(x,9999,"LJC-%s" % x,"DESTROY",lcgi)
-            
+            print sr
     exit(0)
 elif(results.ljc_status):
     lcgi.clear();
@@ -465,7 +465,7 @@ elif(results.ljc_status):
     for  x,y in sc["HOSTS"].iteritems():
         if (x==results.host or results.host=="ALL"):
             sr=executeCMD(x,9999,"LJC-%s" % x,"STATUS",lcgi)
-            
+            print sr
     exit(0)
 elif(results.ljc_kill_job):
     lcgi.clear();
@@ -523,8 +523,19 @@ elif(results.ljc_job_log):
         lcgi['processname']=results.processname;
     elif (results.pid!=None):
         lcgi['pid']=results.pid;
+    lines=100
+    if (results.lines!=None):
+        lines=results.lines
+    lcgi["lines"]=lines
+
     sr=executeCMD(results.host,9999,"LJC-%s" % results.host,"JOBLOG",lcgi)
-            
+    r_cmd='jobLog'
+    #print "WHAHAHAHA",sr
+    if (results.verbose):
+        print sr
+    else:
+        parseReturn(r_cmd,sr)
+
     exit(0)
 
 elif(results.daq_state):
