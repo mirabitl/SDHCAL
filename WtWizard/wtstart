@@ -7,7 +7,7 @@ export DAQDIR=/home/acqilc/SDHCAL
 source ${DAQDIR}/bashrc
 cd  ${DAQDIR}/WtWizard/
 export LD_LIBRARY_PATH=.:./lib:$LD_LIBRARY_PATH
-./levbc --docroot . --http-address `hostname -i` --http-port 8090 &
+./wlevb --docroot . --http-address `hostname -i` --http-port 8090 &
 
 PID=$!
 wait $PID
