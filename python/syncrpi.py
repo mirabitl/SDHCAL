@@ -76,7 +76,7 @@ elif(results.rsync):
   else:
     ld.append(results.directory)
   for y in ld:
-    r_cmd="rsync -axv /opt/dhcal/%s %%s:/opt/dhcal/%s" % (y,y)
+    r_cmd="rsync -axv /opt/dhcal/%s/ %%s:/opt/dhcal/%s/" % (y,y)
     srd=executeCMD(r_cmd,results.host)
   exit(0)
 elif(results.apt_update):
