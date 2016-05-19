@@ -16,8 +16,8 @@ def executeCMD(cmd,lhi):
     lh.append(lhi)
   for x in lh:
     s=cmd % x
-    print s
-    #os.system(s)
+    print "Executing ==>",s
+    os.system(s)
 
 
 parser = argparse.ArgumentParser()
@@ -78,6 +78,42 @@ elif(results.rsync):
   for y in ld:
     r_cmd="rsync -axv /opt/dhcal/%s %%s:/opt/dhcal/%s" % (y,y)
     srd=executeCMD(r_cmd,results.host)
+  exit(0)
+elif(results.apt_update):
+  if (results.host==None):
+    print 'Please specify the state --host=name'
+    exit(0)
+  r_cmd="ssh pi@%s 'sudo apt-get update'"
+  srd=executeCMD(r_cmd,results.host)
+  exit(0)
+elif(results.apt_upgrade):
+  if (results.host==None):
+    print 'Please specify the state --host=name'
+    exit(0)
+  r_cmd="ssh pi@%s 'sudo apt-get upgrade'"
+  srd=executeCMD(r_cmd,results.host)
+  exit(0)
+elif(results.apt_install):
+  if (results.host==None):
+    print 'Please specify the state --host=name'
+    exit(0)
+  if (results.package==None):
+    print 'Please specify the package --package=name'
+    exit(0)
+
+  r_cmd="ssh pi@%%s 'sudo apt-get -y install %s'" % results.package
+  srd=executeCMD(r_cmd,results.host)
+  exit(0)
+elif(results.process_kill):
+  if (results.host==None):
+    print 'Please specify the state --host=name'
+    exit(0)
+  if (results.process==None):
+    print 'Please specify the process --process=name'
+    exit(0)
+
+  r_cmd="ssh pi@%%s 'sudo killall -9 %s'" % results.process
+  srd=executeCMD(r_cmd,results.host)
   exit(0)
   """
   cmd ="rsync -axv /opt/dhcal/lib/ %s:/opt/dhcal/lib/" % h
