@@ -32,6 +32,7 @@ grp_action.add_argument('--apt-upgrade',action='store_true',help='run apt-get up
 grp_action.add_argument('--apt-install',action='store_true',help='run apt-get upinstall --package=name  on host --host=name')
 
 grp_action.add_argument('--process-kill',action='store_true',help='kill process named --process=name on --host=name')
+grp_action.add_argument('--clean',action='store_true',help='kill process named --process=name on --host=name')
 # Arguments
 parser.add_argument('--directory', action='store', dest='directory',default="ALL",type=str,help='/opt/dhcal/directory to be rsync')
 parser.add_argument('--host', action='store', dest='host',default="ALL",help='host name')
@@ -84,6 +85,13 @@ elif(results.apt_update):
     print 'Please specify the state --host=name'
     exit(0)
   r_cmd="ssh pi@%s 'sudo apt-get update'"
+  srd=executeCMD(r_cmd,results.host)
+  exit(0)
+elif(results.clean):
+  if (results.host==None):
+    print 'Please specify the state --host=name'
+    exit(0)
+  r_cmd="ssh pi@%s 'sudo rm /tmp/dimjcPID*.log'"
   srd=executeCMD(r_cmd,results.host)
   exit(0)
 elif(results.apt_upgrade):
