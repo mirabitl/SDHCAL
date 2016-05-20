@@ -31,6 +31,7 @@
 #include <Wt/WText>
 #include <Wt/WTable>
 #include <Wt/WDialog>
+#include <Wt/WMessageBox>
 #include <Wt/WLabel>
 
 // c++0x only, for std::bind
@@ -192,13 +193,42 @@ wlevbc::wlevbc(const Wt::WEnvironment& env)
 {
 
   Wt::WApplication::instance()->useStyleSheet("bootstrap/css/bootstrap.min.css");
-  std::string res=lcexec(" --available -v");
+  std::string res=lcexec(" --webstatus -v");
+  Json::Reader reader;
+  Json::Value jsta,jdev1;
+  //std::cout<<res<<std::endl;
+  jAvail_.clear();
+  bool parsingSuccessful = reader.parse(res,jAvail_);
+  if (jAvail_["JOB"].asString().compare("DEAD")==0 ||
+      jAvail_["SLOW"].asString().compare("DEAD")==0 ||
+      jAvail_["DAQ"].asString().compare("DEAD")==0)
+    {
+      Wt::WMessageBox *messageBox = new Wt::WMessageBox
+	("Error",
+	 "<p>Missing web services</p>"
+	 "<p>Please start it and reload the page </p>",
+	 Wt::Information, Wt::Yes);
+
+    messageBox->setModal(false);
+
+    messageBox->buttonClicked().connect(std::bind([=] () {
+	  //if (messageBox->buttonResult() == Wt::Yes)
+	  // out->setText("Reload the page after ");
+	delete messageBox;
+    }));
+
+    messageBox->show();
+    return;
+    }
   std::cout<<"Youpi Ya "<<res<<std::endl;
   //  std::cout<<jsta;
   res=lcexec(" --jc-cre");
-  res=lcexec(" --daq-cre");
-  res=lcexec(" --slc-cre");
-  
+
+  if (jAvail_["JOB"].asString().compare("RUNNING")==0)
+    {
+      res=lcexec(" --slc-cre");
+      res=lcexec(" --daq-cre");
+    }
   setTitle("GRPC forever");                               // application title
   container_ = new Wt::WContainerWidget(root());
   container_->setStyleClass("bootstrap");
@@ -623,8 +653,8 @@ void wlevbc::fillHVControl(Wt::WPanel *wp)
   // this->checkState();
   // std::stringstream s;
   // s<<"<h4>State:"<<currentState_<<"</h4>";
-  /*
-  if (jAvail_["SLOW"].asString().compare("NONE")==0)
+
+  if (jAvail_["SLOW"].asString().compare("CREATED")==0)
     {
       PB_HVCreate_= new Wt::WPushButton("Create", wb);//PB_Destroy_->disable();
       hbFSM->addWidget(PB_HVCreate_);
@@ -634,7 +664,7 @@ void wlevbc::fillHVControl(Wt::WPanel *wp)
     }));
       
     }
-    */
+    
   PB_HVStatus_= new Wt::WPushButton("Status", wb);//PB_Destroy_->disable();
   hbFSM->addWidget(PB_HVStatus_);
   hbFSM->addWidget(new Wt::WText("First Channel: "));  // show some text  
