@@ -30,7 +30,11 @@ WebSlowControl::WebSlowControl(std::string name,uint32_t port) : _storeRunning(f
   //_logger->setLevel(log4cxx::Level::getInfo());
   LOG4CXX_INFO (_logLdaq, "this is a info message, after parsing configuration file")
     _chambers.clear();
-    
+  for (int i=0;i<7;i++)
+    for (int j=0;j<8;j++)
+      {
+	_wienerInfo[i*8+j]=NULL;
+      }
   _fsm=new fsmweb(name);
  
   _fsm->addState("CREATED");
@@ -41,6 +45,7 @@ WebSlowControl::WebSlowControl(std::string name,uint32_t port) : _storeRunning(f
 
  
   _fsm->addTransition("DISCOVER","CREATED","DISCOVERED",boost::bind(&WebSlowControl::discover, this,_1));
+  _fsm->addTransition("DISCOVER","DISCOVERED","DISCOVERED",boost::bind(&WebSlowControl::discover, this,_1));
   _fsm->addTransition("INITIALISE","DISCOVERED","INITIALISED",boost::bind(&WebSlowControl::initialise, this,_1));
   _fsm->addTransition("STARTMONITOR","INITIALISED","MONITORING",boost::bind(&WebSlowControl::startMonitor, this,_1));
   _fsm->addTransition("STOPMONITOR","MONITORING","INITIALISED",boost::bind(&WebSlowControl::stopMonitor, this,_1));
@@ -116,6 +121,8 @@ void WebSlowControl::discover(levbdim::fsmmessage* m)
 	std::stringstream s0;
 	s0.str(std::string());
 	s0<<"/WIENER/MODULE"<<i<<"-CHANNEL"<<j<<"/"<<i*8+j;
+	if (_wienerInfo[i*8+j]!=NULL)
+	  delete _wienerInfo[i*8+j];
 	_wienerInfo[i*8+j]=new DimInfo(s0.str().c_str(),&_hvchannels[i*8+j],sizeof(wienerChannel),this);
       }
   m->setAnswer(jrep);

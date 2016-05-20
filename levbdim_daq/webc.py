@@ -3,6 +3,7 @@ import os
 import socks
 import socket
 import httplib, urllib,urllib2
+from urllib2 import URLError, HTTPError
 import json
 from copy import deepcopy
 
@@ -126,15 +127,27 @@ def executeCMD(host,port,prefix,cmd,params):
        myurl=myurl+saction
        #print myurl
        req=urllib2.Request(myurl)
-       r1=urllib2.urlopen(req)
-       return r1.read()
+       try:
+           r1=urllib2.urlopen(req)
+       except URLError, e:
+           p_rep={}
+           p_rep["STATE"]="DEAD"
+           return json.dumps(p_rep,sort_keys=True)
+       else:
+           return r1.read()
    else:
        myurl = "http://"+host+ ":%d/%s/" % (port,prefix)
        #conn = httplib.HTTPConnection(myurl)
        #print myurl
        req=urllib2.Request(myurl)
-       r1=urllib2.urlopen(req)
-       return r1.read()
+       try:
+           r1=urllib2.urlopen(req)
+       except URLError, e:
+           p_rep={}
+           p_rep["STATE"]="DEAD"
+           return json.dumps(p_rep,sort_keys=True)
+       else:
+           return r1.read()
     
 
 
@@ -147,6 +160,7 @@ parser = argparse.ArgumentParser()
 grp_action = parser.add_mutually_exclusive_group()
 grp_action.add_argument('--daq-create',action='store_true',help='Create the RpcDaq object to access DIf/CCC/EVB')
 grp_action.add_argument('--available',action='store_true',help='Check avilability of daq,jobcontrol and slowcontrol')
+grp_action.add_argument('--webstatus',action='store_true',help='Check avilability of daq,jobcontrol and slowcontrol')
 grp_action.add_argument('--jc-create',action='store_true',help='Create the DimJobControlInterface object to control processes')
 grp_action.add_argument('--jc-kill',action='store_true',help='kill all controled processes')
 grp_action.add_argument('--jc-start',action='store_true',help='start all controled processes described in $DAQCONFIG jsonfile variable')
@@ -285,17 +299,39 @@ if (results.daq_create):
     r_cmd='createDaq'
     exit(0)
 
+elif (results.webstatus):
+     srd=executeCMD(conf.daqhost,conf.daqport,"WDAQ",None,None)
+     srs=executeCMD(conf.slowhost,conf.slowport,"WSLOW",None,None)
+     srj=executeCMD(conf.jobhost,conf.jobport,"WJOB",None,None)
+     p_res={}
+     sjd=json.loads(srd)
+     sjs=json.loads(srs)
+     sjj=json.loads(srj)
+     p_res["DAQ"]=sjd["STATE"]
+     p_res["SLOW"]=sjs["STATE"]
+     p_res["JOB"]=sjj["STATE"]
+     print json.dumps(p_res)
+     exit(0)
 elif(results.available):
     r_cmd='available'
     srd=executeCMD(conf.daqhost,conf.daqport,"WDAQ",None,None)
-    print ">>>>>>>>>>>>>>>> DAQ <<<<<<<<<<<<<<<<<<"
-    parseReturn("state",srd)
+    if (results.verbose):
+        print srd
+    else:
+        print ">>>>>>>>>>>>>>>> DAQ <<<<<<<<<<<<<<<<<<"
+        parseReturn("state",srd)
     srs=executeCMD(conf.slowhost,conf.slowport,"WSLOW",None,None)
-    print ">>>>>>>>>>>>>>>> SLOWCONTROL <<<<<<<<<<<<<<<<<<"
-    parseReturn("state",srs)
+    if (results.verbose):
+        print srs
+    else:
+        print ">>>>>>>>>>>>>>>> SLOWCONTROL <<<<<<<<<<<<<<<<<<"
+        parseReturn("state",srs)
     srj=executeCMD(conf.jobhost,conf.jobport,"WJOB",None,None)
-    print ">>>>>>>>>>>>>>>> JOB CONTROL <<<<<<<<<<<<<<<<<<"
-    parseReturn("state",srj)
+    if (results.verbose):
+        print srj
+    else:
+        print ">>>>>>>>>>>>>>>> JOB CONTROL <<<<<<<<<<<<<<<<<<"
+        parseReturn("state",srj)
     exit(0)
 elif(results.jc_create):
     r_cmd='createJobControl'
