@@ -1,4 +1,6 @@
+
 jsonfile='/data/NAS/config/levbdim_m3_good.json'
+
 zupdevice='/dev/ttyUSB0'
 zupport=1
 dccname="DCCCCC01"
