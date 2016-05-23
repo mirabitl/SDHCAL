@@ -190,6 +190,19 @@ grp_action.add_argument('--trig-pause',action='store_true',help=' trigger soft v
 grp_action.add_argument('--trig-resume',action='store_true',help=' trigger soft veto release')
 grp_action.add_argument('--ecal-pause',action='store_true',help=' trigger soft veto')
 grp_action.add_argument('--ecal-resume',action='store_true',help=' trigger soft veto release')
+
+grp_action.add_argument('--ecal-configure',action='store_true',help='configure ECAL daq with --configfile=name')
+
+grp_action.add_argument('--ecal-state',action='store_true',help='ECAL daq state')
+
+grp_action.add_argument('--ecal-start',action='store_true',help='start ECAL daq with --run=number')
+
+grp_action.add_argument('--ecal-stop',action='store_true',help='stop ECAL daq  ')
+grp_action.add_argument('--ecal-destroy',action='store_true',help='exit  ECAL daq ')
+grp_action.add_argument('--ecal-currentspill',action='store_true',help='current spill of  ECAL daq ')
+
+
+
 grp_action.add_argument('--trig-spillon',action='store_true',help=' set spill nclock on with --clock=nc (20ns)')
 grp_action.add_argument('--trig-spilloff',action='store_true',help=' set spill nclock off with --clock=nc (20ns) ')
 grp_action.add_argument('--trig-beam',action='store_true',help=' set spill nclock off with --clock=nc (20ns) ')
@@ -241,6 +254,8 @@ parser.add_argument('--clock', action='store',type=int, default=None,dest='clock
 parser.add_argument('--lines', action='store',type=int, default=None,dest='lines',help='set the number of lines to be dump')
 parser.add_argument('--host', action='store', dest='host',default=None,help='DIF host for log')
 parser.add_argument('--account', action='store', default=None,dest='account',help='set the mysql account')
+parser.add_argument('--ecalconfig', action='store', type=str,default=None,dest='ecalconfig',help='Name of the ECAL config file')
+parser.add_argument('--run', action='store',type=int, default=None,dest='run',help='Run number set for ECAL daq')
 
 parser.add_argument('-v','--verbose',action='store_true',default=False,help='set the mysql account')
 
@@ -303,13 +318,16 @@ elif (results.webstatus):
      srd=executeCMD(conf.daqhost,conf.daqport,"WDAQ",None,None)
      srs=executeCMD(conf.slowhost,conf.slowport,"WSLOW",None,None)
      srj=executeCMD(conf.jobhost,conf.jobport,"WJOB",None,None)
+     sre=executeCMD(conf.ecalhost,conf.ecalport,"ecalWeb",None,None)
      p_res={}
      sjd=json.loads(srd)
      sjs=json.loads(srs)
      sjj=json.loads(srj)
+     sje=json.loads(sre)
      p_res["DAQ"]=sjd["STATE"]
      p_res["SLOW"]=sjs["STATE"]
      p_res["JOB"]=sjj["STATE"]
+     p_res["ECAL"]=sje["STATE"]
      print json.dumps(p_res)
      exit(0)
 elif(results.available):
@@ -365,6 +383,16 @@ elif(results.daq_state):
     r_cmd='state'
     lcgi.clear();
     sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ",None,None)
+    #print "WHAHAHAHA",sr
+    if (results.verbose):
+        print sr
+    else:
+        parseReturn(r_cmd,sr)
+    exit(0)
+elif(results.ecal_state):
+    r_cmd='ecalstate'
+    lcgi.clear();
+    sr=executeCMD(conf.ecalhost,conf.ecalport,"ecalWeb",None,None)
     #print "WHAHAHAHA",sr
     if (results.verbose):
         print sr
@@ -648,6 +676,59 @@ elif(results.ecal_resume):
     sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","ECALRESUME",lcgi)
     print sr
     exit(0)
+elif(results.ecal_configure):
+    r_cmd='ecalConfigure'
+    lcgi.clear()
+    
+    if (results.ecalconfig==None and conf.ecalconfig==None):
+        print 'Please specify the file --ecalfile=name'
+        exit(0)
+    if (results.ecalconfig!=None):
+        lcgi['configfile']=results.ecalconfig
+    else:
+        lcgi['configfile']=conf.ecalconfig
+
+    sr=executeFSM(conf.ecalhost,conf.ecalport,"ecalWeb","CONFIGURE",lcgi)
+    #if (results.verbose):
+    print sr
+    #else:
+    #    parseReturn(r_cmd,sr)
+    exit(0)
+elif(results.ecal_start):
+    r_cmd='ecalStart'
+    lcgi.clear()
+    
+    if (results.run==None):
+        print 'Please specify the run --run=xxx'
+        exit(0)
+    lcgi['run']=results.run
+
+    sr=executeFSM(conf.ecalhost,conf.ecalport,"ecalWeb","START",lcgi)
+    #if (results.verbose):
+    print sr
+    #else:
+    #    parseReturn(r_cmd,sr)
+    exit(0)
+elif(results.ecal_stop):
+    r_cmd='ecalStop'
+    lcgi.clear()
+    sr=executeFSM(conf.ecalhost,conf.ecalport,"ecalWeb","STOP",lcgi)
+    #if (results.verbose):
+    print sr
+    #else:
+    #    parseReturn(r_cmd,sr)
+    exit(0)
+elif(results.ecal_destroy):
+    r_cmd='ecalDestroy'
+    sr=executeCMD(conf.ecalhost,conf.ecalport,"ecalWeb","DESTROY",lcgi)
+    print sr
+    exit(0)
+elif(results.ecal_currentspill):
+    r_cmd='ecalCurrentSpill'
+    sr=executeCMD(conf.ecalhost,conf.ecalport,"ecalWeb","CURRENTSPILL",lcgi)
+    print sr
+    exit(0)
+    
 elif(results.trig_reset):
     r_cmd='resetTrigger'
     sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","RESETCOUNTERS",lcgi)
