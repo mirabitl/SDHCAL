@@ -118,8 +118,9 @@ env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
 
 levbc=env.Program("levbc",source=["levbc.C","Tokenizer.cpp"])
 wlevb=env.Program("wlevb",source=["wlevb.C","Tokenizer.cpp"])
+combined=env.Program("combined",source=["combined.C"])
 
-Default([levbc,wlevb])
+Default([levbc,wlevb,combined])
 
 
 
