@@ -36,6 +36,7 @@ WebDaq::WebDaq(std::string name,uint32_t port) :_builderClient(NULL),_dbClient(N
     _fsm->addCommand("DOUBLESWITCHZUP",boost::bind(&WebDaq::doubleSwitchZup,this,_1,_2));
     _fsm->addCommand("LVSTATUS",boost::bind(&WebDaq::LVStatus,this,_1,_2));
     _fsm->addCommand("LVON",boost::bind(&WebDaq::LVON,this,_1,_2));
+    _fsm->addCommand("FORCESTATE",boost::bind(&WebDaq::forceState,this,_1,_2));
     _fsm->addCommand("LVOFF",boost::bind(&WebDaq::LVOFF,this,_1,_2));
     _fsm->addCommand("SETPAR",boost::bind(&WebDaq::setParameters,this,_1,_2));
     _fsm->addCommand("GETPAR",boost::bind(&WebDaq::getParameters,this,_1,_2));
@@ -55,6 +56,7 @@ WebDaq::WebDaq(std::string name,uint32_t port) :_builderClient(NULL),_dbClient(N
     _fsm->addCommand("BEAMON",boost::bind(&WebDaq::triggerBeam,this,_1,_2));
     _fsm->addCommand("SETTHRESHOLD",boost::bind(&WebDaq::setThreshold,this,_1,_2));
     _fsm->addCommand("SETGAIN",boost::bind(&WebDaq::setGain,this,_1,_2));
+    _fsm->addCommand("REGISTERDS",boost::bind(&WebDaq::registerDataSource,this,_1,_2));
     
   cout<<"Building WebDaq"<<endl;
   std::stringstream s0;
@@ -519,6 +521,14 @@ void WebDaq::LVON(Mongoose::Request &request, Mongoose::JsonResponse &response)
      response["STATUS"]="DONE";
      response["LVON"]=_zupClient->reply();
   }
+void WebDaq::forceState(Mongoose::Request &request, Mongoose::JsonResponse &response)
+  {
+    
+    std::string states=request.get("state",_fsm->state());
+    _fsm->setState(states);
+     response["STATUS"]="DONE";
+     response["NEWSTATE"]=states;
+  }
 void WebDaq::LVOFF(Mongoose::Request &request, Mongoose::JsonResponse &response)
   {
     if (_zupClient==NULL){LOG4CXX_ERROR(_logLdaq, "No zup client");response["STATUS"]="NO Zup CLient";return;}
@@ -618,6 +628,23 @@ void WebDaq::dbStatus(Mongoose::Request &request, Mongoose::JsonResponse &respon
   response["run"]=_run;
   response["state"]=_dbstate;
   response["STATUS"]="DONE";
+}
+void WebDaq::registerDataSource(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  uint32_t detid=atoi(request.get("detid","0").c_str());
+  uint32_t sid=atoi(request.get("sourceid","0").c_str());
+  if (detid==0 || sid==0)
+    {
+      response["STATUS"]="Missing detid or sourceid";
+      return;
+    }
+  if (_dbClient==NULL){LOG4CXX_ERROR(_logLdaq, "No DB client"); response["STATUS"]="NO DB Client";return;}
+  _builderClient->clear();
+  _builderClient->set<uint32_t>("detid",detid);
+  _builderClient->set<uint32_t>("sourceid",sid);
+  _builderClient->post("REGISTERDS");
+   response["STATUS"]="DONE";
+   response["IDS"]=sid;
 }
 
 void  WebDaq::builderStatus(Mongoose::Request &request, Mongoose::JsonResponse &response)

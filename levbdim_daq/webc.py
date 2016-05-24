@@ -164,6 +164,7 @@ grp_action.add_argument('--webstatus',action='store_true',help='Check avilabilit
 grp_action.add_argument('--jc-create',action='store_true',help='Create the DimJobControlInterface object to control processes')
 grp_action.add_argument('--jc-kill',action='store_true',help='kill all controled processes')
 grp_action.add_argument('--jc-start',action='store_true',help='start all controled processes described in $DAQCONFIG jsonfile variable')
+grp_action.add_argument('--jc-restart',action='store_true',help='restart one job with --jobname=name --jobpid=pid --host=hostname')
 grp_action.add_argument('--jc-status',action='store_true',help='show the status all controled processes')
 grp_action.add_argument('--daq-discover',action='store_true',help='trigger a scan of the DNS othe Daq')
 grp_action.add_argument('--daq-setparameters',action='store_true',help='send the paremeters described in $DAQCONFIG file to the DAQ')
@@ -253,6 +254,10 @@ parser.add_argument('--period', action='store',type=int, default=None,dest='peri
 parser.add_argument('--clock', action='store',type=int, default=None,dest='clock',help='set the number of 20 ns clock')
 parser.add_argument('--lines', action='store',type=int, default=None,dest='lines',help='set the number of lines to be dump')
 parser.add_argument('--host', action='store', dest='host',default=None,help='DIF host for log')
+parser.add_argument('--jobname', action='store', dest='jobname',default=None,help='job name')
+parser.add_argument('--jobpid', action='store', type=int,dest='jobpid',default=None,help='job pid')
+
+
 parser.add_argument('--account', action='store', default=None,dest='account',help='set the mysql account')
 parser.add_argument('--ecalconfig', action='store', type=str,default=None,dest='ecalconfig',help='Name of the ECAL config file')
 parser.add_argument('--run', action='store',type=int, default=None,dest='run',help='Run number set for ECAL daq')
@@ -369,6 +374,25 @@ elif(results.jc_start):
     print sr
     r_cmd='jobStartAll'
     exit(0)
+elif(results.jc_restart):
+    lcgi.clear();
+    if (results.host==None):
+        print "set the host "
+        exit(0)
+    if (results.jobname==None):
+        print "set the jobname "
+        exit(0)
+    if (results.jobpid==None):
+        print "set the jobpid "
+        exit(0)
+    lcgi['host']=results.host
+    lcgi['job']=results.jobname
+    lcgi['pid']=results.jobpid
+    
+    sr=executeCMD(conf.jobhost,conf.jobport,"WJOB","RESTARTJOB",lcgi)
+    print sr
+    r_cmd='jobStartAll'
+    exit(0)
 elif(results.jc_status):
     lcgi.clear();
     sr=executeCMD(conf.jobhost,conf.jobport,"WJOB","STATUS",lcgi)
@@ -428,10 +452,13 @@ elif(results.daq_getparameters):
 elif(results.daq_forceState):
     r_cmd='forceState'
     if (results.fstate!=None):
-        lcgi['name']=results.fstate
+        lcgi['state']=results.fstate
     else:
         print 'Please specify the state --state=STATE'
         exit(0)
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","FORCESTATE",lcgi)
+    print sr
+    exit(0)
 elif(results.daq_services):
     r_cmd='prepareServices'
     lcgi.clear()
@@ -471,6 +498,14 @@ elif(results.daq_configure):
     lcgi.clear()
     sr=executeFSM(conf.daqhost,conf.daqport,"WDAQ","CONFIGURE",p_par)
     print sr
+    if (hasattr(conf,'ecalhost')):
+        if (hasattr(conf,'ecaldetid') and hasattr(conf,'ecalsourceid') ):
+            for x in conf.ecalsourceid:
+                lcgi.clear()
+                lcgi['detid']=conf.ecaldetid
+                lcgi['sourceid']=x
+                sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","REGISTERDS",lcgi)
+                print sr
     exit(0)
 
 elif(results.daq_status):

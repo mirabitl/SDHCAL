@@ -6,8 +6,7 @@
 #endif
 LBuilder::LBuilder(std::string name) : _evb(NULL),_writer(NULL)
 {
-  _fsm=new levbdim::fsm(name);
-
+  _fsm= new fsmweb(name); 
   // Register state
   _fsm->addState("CREATED");
   _fsm->addState("INITIALISED");
@@ -22,14 +21,37 @@ LBuilder::LBuilder(std::string name) : _evb(NULL),_writer(NULL)
   _fsm->addTransition("STATUS","CONFIGURED","CONFIGURED",boost::bind(&LBuilder::status, this,_1));
   _fsm->addTransition("STATUS","RUNNING","RUNNING",boost::bind(&LBuilder::status, this,_1));
 
+  _fsm->addTransition("REGISTERDS","CONFIGURED","CONFIGURED",boost::bind(&LBuilder::registerDataSource,this,_1));
+
   //Start server
   std::stringstream s0;
   s0.str(std::string());
   s0<<"LBuilder-"<<name;
   DimServer::start(s0.str().c_str()); 
+  char* wp=getenv("WEBPORT");
+  if (wp!=NULL)
+    {
+      std::cout<<"Service "<<name<<" started on port "<<atoi(wp)<<std::endl;
+    _fsm->start(atoi(wp));
+    }
 
 }
+void LBuilder::registerDataSource(levbdim::fsmmessage* m)
+{
 
+  uint32_t detid=m->content()["detid"].asUInt();
+  uint32_t sid=m->content()["sourceid"].asUInt();
+
+  levbdim::datasocket* ds= new levbdim::datasocket(detid,sid,0x80000);
+  ds->save2disk(_memorypath);
+  _sources.push_back(ds);
+  _evb->registerDataSource(detid,sid);
+  Json::Value response;
+  response["STATUS"]="DONE";
+  response["SOURCE"]=sid;
+  response["DETECTOR"]=detid;
+  m->setAnswer(response);
+} 
 void LBuilder::configure(levbdim::fsmmessage* m)
 {
   LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());

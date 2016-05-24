@@ -1,7 +1,7 @@
 #ifndef _LBuilder_h
 #define _LBuilder_h
 
-#include "fsm.hh"
+#include "fsmweb.hh"
 #include "datasocket.hh"
 #include "shmdriver.hh"
 #include "LdaqLogger.hh"
@@ -16,10 +16,10 @@ public:
   void halt(levbdim::fsmmessage* m);
   void destroy(levbdim::fsmmessage* m);
   void status(levbdim::fsmmessage* m);
-
+  void registerDataSource(levbdim::fsmmessage* m);
 
 private:
-  levbdim::fsm* _fsm;
+  fsmweb* _fsm;
   std::vector<levbdim::datasocket*> _sources;
   std::string _memorypath,_filepath,_proctype;
   levbdim::shmdriver* _evb;

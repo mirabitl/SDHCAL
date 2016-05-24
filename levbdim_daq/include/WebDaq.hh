@@ -31,6 +31,7 @@ public:
   void  destroy(levbdim::fsmmessage* m);
 
 
+  void forceState(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void doubleSwitchZup(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void  LVStatus(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void LVON(Mongoose::Request &request, Mongoose::JsonResponse &response);
@@ -53,6 +54,7 @@ public:
   void triggerBeam(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void setThreshold(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void setGain(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void registerDataSource(Mongoose::Request &request, Mongoose::JsonResponse &response);
 
   std::string state(){return _fsm->state();}
   void forceState(std::string s){_fsm->setState(s);}
