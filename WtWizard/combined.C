@@ -76,6 +76,7 @@ private:
   Json::Value jAvail_;
   uint32_t currentRun_,currentEvent_,currentElog_;
   std::string currentSessionId_;
+  std::string _ecalStatus;
   void Quit();
   void buildDaqForm(Wt::WPanel *wb);
   void fillDaqStatus(Wt::WPanel *wb);
@@ -138,7 +139,7 @@ std::string lcexec(std::string s)
 
 
 combined::combined(const Wt::WEnvironment& env)
-  : Wt::WApplication(env),currentElog_(0),currentSessionId_("")
+  : Wt::WApplication(env),currentElog_(0),currentSessionId_(""),_ecalStatus("UNKNOWN")
 {
 
   Wt::WApplication::instance()->useStyleSheet("bootstrap/css/bootstrap.min.css");
@@ -261,6 +262,7 @@ std::string combined::daqStatus()
   jsta.clear();
   parsingSuccessful = reader.parse(res,jsta);
   os<<"<h4> ECAL State :"<<jsta["STATE"].asString()<<"</h4>";
+  os<<"<h4> ECAL Status :"<<_ecalStatus<<"</h4>";
   //Event builder
   res=lcexec(" --daq-evb -v");
   std::cout<<res<<std::endl;
@@ -288,10 +290,12 @@ std::string combined::daqStatus()
 
   // Ecal status
   res=lcexec(" --ecal-currentspill -v");
+  jsta.clear();
+  parsingSuccessful = reader.parse(res,jsta);
   jdev1.clear();
   //parsingSuccessful = reader.parse(jsta["shmStatusResponse"]["shmStatusResult"][0].asString(),jdev1);
   jdev1=jsta["answer"];
-  os<<"<p><b>Ecal Spill:</b> "<<jdev1["CURRENTSPILL"].asString()<<"</p>";
+  os<<"<p><b>Ecal Spill:</b> "<<jdev1["CURRENTSPILL"].asUInt()<<"</p>";
   os<<"<h4> Trigger Status MDCC:</h4>"<<std::endl;
   res=lcexec(" --trig-status -v");
   //std::cout<<res<<std::endl;
@@ -554,11 +558,22 @@ void combined::ConfigureButtonHandler()
   std::cout<<" SERVICE Called "<<res<<std::endl;
   res=lcexec(" --ecal-conf -v");
   std::cout<<" SERVICE Called "<<res<<std::endl;
-
+  Json::Reader reader;
+  Json::Value jsta,jdev1;
+  jsta.clear();
+  bool parsingSuccessful = reader.parse(res,jsta);
+  jdev1.clear();
+  //parsingSuccessful = reader.parse(jsta["shmStatusResponse"]["shmStatusResult"][0].asString(),jdev1);
+  jdev1=jsta["content"]["answer"];
+  std::cout<<jsta<<std::endl;
+  std::cout<<"DEV1 "<<jdev1<<std::endl;
+  std::cout<<"DEV2 "<<jdev1["ECALSTATUS"]<<std::endl;
+  _ecalStatus=jdev1["ECALSTATUS"].asString();
+  
   this->checkState();
   
   PB_Start_->enable();
-  PB_Configure_->disable();
+  PB_Configure_->enable();
   PB_Destroy_->enable();
 }
 void combined::StartButtonHandler()
@@ -578,6 +593,14 @@ void combined::StartButtonHandler()
   std::stringstream s;
   s<<" --ecal-start --run="<<jdev1["run"].asUInt();
   res=lcexec(s.str().c_str());
+
+  jsta.clear();
+  parsingSuccessful = reader.parse(res,jsta);
+  jdev1.clear();
+  //parsingSuccessful = reader.parse(jsta["shmStatusResponse"]["shmStatusResult"][0].asString(),jdev1);
+  jdev1=jsta["content"]["answer"];
+  _ecalStatus=jdev1["ECALSTATUS"].asString();
+  
   this->checkState();
   
   PB_Stop_->enable();
