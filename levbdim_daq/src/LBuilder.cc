@@ -3,6 +3,7 @@
 #include "monitorProcessor.hh"
 #ifdef USE_LCIO
 #include "LcioShmProcessor.hh"
+#include "RootShmProcessor.hh"
 #endif
 LBuilder::LBuilder(std::string name) : _evb(NULL),_writer(NULL)
 {
@@ -122,6 +123,11 @@ void LBuilder::initialise(levbdim::fsmmessage* m)
   if (name.compare("lcio")==0)
     {
       _writer= new LcioShmProcessor(_filepath,"UNSETUP");
+      _evb->registerProcessor(_writer);
+    }
+  if (name.compare("root")==0)
+    {
+      _writer= new RootShmProcessor(_filepath,"/opt/dhcal/etc/geometry.xml");
       _evb->registerProcessor(_writer);
     }
 #endif
