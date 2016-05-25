@@ -20,6 +20,7 @@ INCLUDES.append(os.path.join(os.getenv("LCIODIR"),"include"))
 INCLUDES.append(os.path.join(os.getenv("LCIODIR"),"include","IMPL"))
 #MYSQL and sqlite
 INCLUDES.append("/opt/dhcal/levbdim/include")
+INCLUDES.append("/opt/dhcal/dim/dim")
 INCLUDES.append("/usr/include/libxml2")
 #eigen3
 INCLUDES.append("/usr/local/include/eigen3/")
@@ -99,6 +100,6 @@ LIBRARY_PATHS.append(".")
 env1 = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIESPLUG,LIBPATH=LIBRARY_PATHS)
 rawAnalysis=env1.SharedLibrary("rawAnalysis",source=['rawAnalysis.cxx'])
 trackAnalysis=env1.SharedLibrary("trackAnalysis",source=['trackAnalysis.cxx'])
-
-Default([lmreco,rawAnalysis,trackAnalysis])
+rootProcessor=env1.SharedLibrary("rootProcessor",source=['rootProcessor.cxx'])
+Default([lmreco,rawAnalysis,trackAnalysis,rootProcessor])
 env1.Install("../../opt/dhcal/lib",[lmreco,rawAnalysis,trackAnalysis])

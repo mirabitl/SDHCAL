@@ -246,13 +246,7 @@ void DHCalEventReader::clear()
 {
 
 }
-class LMGeneric: public IMPL::LCGenericObjectImpl
-{
- public:
-  LMGeneric(){;}
-  std::vector<int>& getIntVector(){return _intVec;}
 
-};
 int DHCalEventReader::parseRawEvent(int rushift)
 {
   newRunHeader_=false;

@@ -39,6 +39,14 @@
 //#include <ext/hash_map>
 #include <dlfcn.h>
 using namespace std ;
+class LMGeneric: public IMPL::LCGenericObjectImpl
+{
+ public:
+  LMGeneric(){;}
+  std::vector<int>& getIntVector(){return _intVec;}
+
+};
+
 /** 
 \mainpage
 
