@@ -230,7 +230,8 @@ void rootProcessor::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 void rootProcessor::processEvent()
 {
 
-  
+  printf("Reader %x \n",reader_);
+  printf("Event %x \n",reader_->getEvent());
 
   if (reader_->getEvent()==0) return;
     
@@ -258,7 +259,7 @@ void rootProcessor::processEvent()
 
 
   
-  //INFO_PRINT("End of CreaetRaw %d \n",rhcol->getNumberOfElements());  
+  INFO_PRINT("End of CreaetRaw %d \n",rhcol->getNumberOfElements());  
   if (rhcol->getNumberOfElements()>4E6) return;
   
   //_monitor->FillTimeAsic(rhcol);
@@ -271,7 +272,7 @@ void rootProcessor::processEvent()
     this->prepareDataSources();
 
   nAnalyzed_++;
-  //DEBUG_PRINT("Calling decodeTrigger\n");
+  INFO_PRINT("Calling decodeTrigger\n");
   // TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
   
   if (!decodeTrigger(rhcol) ) { return;}

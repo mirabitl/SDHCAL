@@ -346,7 +346,7 @@ int readOneEvent(int run,int event);
   /** 
       @param name, name of a  DHCALAnalyzer library
   */
-  void registerAnalysis(std::string name);
+  void registerAnalysis(std::string name,std::string path="./");
   
   //! Loops on all DHCALanalyzer and call processEvent()
   void analyzeEvent();

@@ -973,10 +973,10 @@ void  DHCalEventReader::registerAnalysis(DHCALAnalyzer* a)
   vProcess_.push_back(a);
 }
 
-void  DHCalEventReader::registerAnalysis(std::string name)
+void  DHCalEventReader::registerAnalysis(std::string name,std::string path)
 {
   std::stringstream s;
-  s<<"lib"<<name<<".so";
+  s<<path<<"lib"<<name<<".so";
   void* library = dlopen(s.str().c_str(), RTLD_NOW);
 
   printf("%s %x \n",dlerror(),library);

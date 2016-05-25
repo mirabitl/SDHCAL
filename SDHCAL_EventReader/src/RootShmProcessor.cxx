@@ -23,8 +23,10 @@ using namespace levbdim;
 RootShmProcessor::RootShmProcessor(std::string dir,std::string setup) : theEventNumber_(0),theRunNumber_(0),_filepath(dir),_setup(setup),_started(false)
 {
   _der = new DHCalEventReader();
-  _der->registerAnalysis("rootProcessor");
+
   _der->ParseSteering(setup);
+  _der->registerAnalysis("rootProcessor","/opt/dhcal/lib/");
+
 
 
 }
