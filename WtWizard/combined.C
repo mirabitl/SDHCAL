@@ -262,7 +262,9 @@ std::string combined::daqStatus()
   jsta.clear();
   parsingSuccessful = reader.parse(res,jsta);
   os<<"<h4> ECAL State :"<<jsta["STATE"].asString()<<"</h4>";
-  os<<"<h4> ECAL Status :"<<_ecalStatus<<"</h4>";
+  std::replace( _ecalStatus.begin(), _ecalStatus.end(), '<', ':');
+  std::replace( _ecalStatus.begin(), _ecalStatus.end(), '>', ':');
+  os<<"<h4> ECAL Status :</h4> <pre>"<<_ecalStatus<<"</pre>";
   //Event builder
   res=lcexec(" --daq-evb -v");
   std::cout<<res<<std::endl;
@@ -606,7 +608,11 @@ void combined::StartButtonHandler()
   PB_Stop_->enable();
   PB_Start_->disable();
   PB_Destroy_->enable();
-
+  res=lcexec(" --daq-dbstatus -v");
+  jsta.clear();
+  parsingSuccessful = reader.parse(res,jsta);
+  jdev1.clear();
+  jdev1=jsta["answer"];
   // Now fill the ELOG
   Wt::WDialog *dialog = new Wt::WDialog("Elog Message");
   dialog->setResizable(true);
