@@ -71,6 +71,9 @@ void RootShmProcessor::processEvent(uint32_t gtc,std::vector<levbdim::buffer*> v
       int32_t* idata=(int32_t*) cdata;
       //printf("\t writing %d bytes",idata[SHM_BUFFER_SIZE]);
       int difsize=(*iv)->size();
+      if (theEventNumber_%100==0)
+	std::cout<<idata[0]<<" "<<idata[1]<<" "<<idata[2]<<" "<<idata[3]<<" "<<difsize<<std::endl;
+
       _der->addRawOnlineRU(idata,difsize/4+1);
        
     }

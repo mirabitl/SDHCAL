@@ -414,7 +414,7 @@ int readOneEvent(int run,int event);
 
 
    void findTimeSeeds(  int32_t nhit_min,std::vector<uint32_t>& candidate);
-  void findTimeSeeds(  int32_t nasic_min);
+   void findTimeSeeds(  int32_t nasic_min,std::string colname="DHCALRawHits");
   //! <i>Internal</i> create the DHCALRawHits collection 
 //
   IMPL::LCCollectionVec* createRawCalorimeterHits(std::vector<uint32_t> seeds);

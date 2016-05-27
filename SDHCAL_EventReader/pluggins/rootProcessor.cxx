@@ -26,7 +26,7 @@ void rootProcessor::initHistograms()
   //  rootHandler_->BookTH1("/Clusters/EST1",100,0.,300.);
 }
 
-rootProcessor::rootProcessor() : nAnalyzed_(0),collectionName_("SDHCALRawHits"),theBCIDSpill_(0),theLastBCID_(0),theSpillLength_(8.),_geo(NULL)
+rootProcessor::rootProcessor() : nAnalyzed_(0),collectionName_("DHCALRawHits"),theBCIDSpill_(0),theLastBCID_(0),theSpillLength_(8.),_geo(NULL)
 {
   
   reader_=DHCalEventReader::instance();
@@ -144,14 +144,18 @@ bool rootProcessor::decodeTrigger(LCCollection* rhcol)
 	difid = hit->getCellID0()&0xFF;
     }
 
-  if (difid==0) return false;
+  if (difid==0) {
+    std::cout<<"No dif id "<<std::endl;
+    return false;
+  }
 
   //Find the parameters
+  INFO_PRINT("DIF ID %d found \n",difid);
   std::stringstream pname("");
   pname <<"DIF"<<difid<<"_Triggers";
 
   rhcol->getParameters().getIntVals(pname.str(),vTrigger);
-
+  INFO_PRINT("Vtrigger size %d found \n",vTrigger.size());
   if (vTrigger.size()==0) return false; 
 
   // Decode Large Bunch Crossing
@@ -278,13 +282,15 @@ void rootProcessor::processEvent()
   if (!decodeTrigger(rhcol) ) { return;}
   
   //if (isNewSpill_) return;
-  
+  INFO_PRINT("Calling find time seed\n");
   reader_->findTimeSeeds(_geo->cuts()["minPlans"].asUInt());
+
+  INFO_PRINT("Calling cleanMap\n");  
   std::vector<uint32_t> vseeds =this->cleanMap(_geo->cuts()["minPlans"].asUInt());
-    //std::vector<uint32_t> vseeds=reader_->getTimeSeeds();
+  //std::vector<uint32_t> vseeds=reader_->getTimeSeeds();
 
   
-  INFO_PRINT("================>  %d  Number of seeds %d \n",evt_->getEventNumber(),(int) vseeds.size());
+  INFO_PRINT("================>  %d  Number of seeds %d > %d plans \n",evt_->getEventNumber(),(int) vseeds.size(), _geo->cuts()["minPlans"].asUInt());
 
   if (vseeds.size()==0)  { return;}
    

@@ -388,7 +388,7 @@ int DHCalEventReader::parseSDHCALEvent()
   IMPL::LCCollectionVec* HitVec=this->createRawCalorimeterHits(seed);
   try{
     if (HitVec->getNumberOfElements()!=0 &&HitVec->getNumberOfElements()<200000 )
-      evt_->addCollection(HitVec,"SDHCALRawHits");
+      evt_->addCollection(HitVec,"DHCALRawHits");
     else
       delete HitVec;
   }
@@ -402,14 +402,14 @@ int DHCalEventReader::parseSDHCALEvent()
 
 
 
-void DHCalEventReader::findTimeSeeds(int32_t nasic_min)
+void DHCalEventReader::findTimeSeeds(int32_t nasic_min,std::string colname)
 {
   theTimeSeeds_.clear();
   map<uint32_t,uint32_t> tcount;
   map<uint32_t,int32_t> tedge;
   IMPL::LCCollectionVec* rhcol=NULL;
   try {
-    rhcol=(IMPL::LCCollectionVec*) evt_->getCollection("DHCALRawHits");
+    rhcol=(IMPL::LCCollectionVec*) evt_->getCollection(colname);
   }
   catch(...)
     {
