@@ -30,6 +30,7 @@ grp_action.add_argument('--rsync',action='store_true',help='rsynch /opt/dhcal di
 grp_action.add_argument('--apt-update',action='store_true',help='run apt-get update on host --host=name')
 grp_action.add_argument('--apt-upgrade',action='store_true',help='run apt-get upgrade on host --host=name')
 grp_action.add_argument('--apt-install',action='store_true',help='run apt-get upinstall --package=name  on host --host=name')
+grp_action.add_argument('--poweroff',action='store_true',help='run apt-get upinstall --package=name  on host --host=name')
 
 grp_action.add_argument('--process-kill',action='store_true',help='kill process named --process=name on --host=name')
 grp_action.add_argument('--clean',action='store_true',help='kill process named --process=name on --host=name')
@@ -110,6 +111,14 @@ elif(results.apt_install):
     exit(0)
 
   r_cmd="ssh pi@%%s 'sudo apt-get -y install %s'" % results.package
+  srd=executeCMD(r_cmd,results.host)
+  exit(0)
+elif(results.poweroff):
+  if (results.host==None):
+    print 'Please specify the state --host=name'
+    exit(0)
+
+  r_cmd="ssh pi@%s 'sudo poweroff'" 
   srd=executeCMD(r_cmd,results.host)
   exit(0)
 elif(results.process_kill):
