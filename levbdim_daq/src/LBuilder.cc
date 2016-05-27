@@ -22,7 +22,7 @@ LBuilder::LBuilder(std::string name) : _evb(NULL),_writer(NULL)
   _fsm->addTransition("STATUS","CONFIGURED","CONFIGURED",boost::bind(&LBuilder::status, this,_1));
   _fsm->addTransition("STATUS","RUNNING","RUNNING",boost::bind(&LBuilder::status, this,_1));
 
-  _fsm->addTransition("REGISTERDS","CONFIGURED","CONFIGURED",boost::bind(&LBuilder::registerDataSource,this,_1));
+  _fsm->addTransition("REGISTERDS","INITIALISED","INITIALISED",boost::bind(&LBuilder::registerDataSource,this,_1));
 
   //Start server
   std::stringstream s0;
@@ -40,6 +40,7 @@ LBuilder::LBuilder(std::string name) : _evb(NULL),_writer(NULL)
 void LBuilder::registerDataSource(levbdim::fsmmessage* m)
 {
 
+  
   uint32_t detid=m->content()["detid"].asUInt();
   uint32_t sid=m->content()["sourceid"].asUInt();
 

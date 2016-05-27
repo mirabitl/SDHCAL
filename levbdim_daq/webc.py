@@ -495,9 +495,6 @@ elif(results.daq_initialise):
 
 elif(results.daq_configure):
     r_cmd='configure'
-    lcgi.clear()
-    sr=executeFSM(conf.daqhost,conf.daqport,"WDAQ","CONFIGURE",p_par)
-    print sr
     if (hasattr(conf,'ecalhost')):
         if (hasattr(conf,'ecaldetid') and hasattr(conf,'ecalsourceid') ):
             for x in conf.ecalsourceid:
@@ -506,6 +503,10 @@ elif(results.daq_configure):
                 lcgi['sourceid']=x
                 sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","REGISTERDS",lcgi)
                 print sr
+
+    lcgi.clear()
+    sr=executeFSM(conf.daqhost,conf.daqport,"WDAQ","CONFIGURE",p_par)
+    print sr
     exit(0)
 
 elif(results.daq_status):
