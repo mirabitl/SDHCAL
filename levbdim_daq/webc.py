@@ -158,7 +158,7 @@ parser = argparse.ArgumentParser()
 
 # configure all the actions
 grp_action = parser.add_mutually_exclusive_group()
-grp_action.add_argument('--daq-create',action='store_true',help='Create the RpcDaq object to access DIf/CCC/EVB')
+# JOB Control
 grp_action.add_argument('--available',action='store_true',help='Check avilability of daq,jobcontrol and slowcontrol')
 grp_action.add_argument('--webstatus',action='store_true',help='Check avilability of daq,jobcontrol and slowcontrol')
 grp_action.add_argument('--jc-create',action='store_true',help='Create the DimJobControlInterface object to control processes')
@@ -166,6 +166,9 @@ grp_action.add_argument('--jc-kill',action='store_true',help='kill all controled
 grp_action.add_argument('--jc-start',action='store_true',help='start all controled processes described in $DAQCONFIG jsonfile variable')
 grp_action.add_argument('--jc-restart',action='store_true',help='restart one job with --jobname=name --jobpid=pid --host=hostname')
 grp_action.add_argument('--jc-status',action='store_true',help='show the status all controled processes')
+
+#DAQ
+grp_action.add_argument('--daq-create',action='store_true',help='Create the RpcDaq object to access DIf/CCC/EVB')
 grp_action.add_argument('--daq-discover',action='store_true',help='trigger a scan of the DNS othe Daq')
 grp_action.add_argument('--daq-setparameters',action='store_true',help='send the paremeters described in $DAQCONFIG file to the DAQ')
 grp_action.add_argument('--daq-getparameters',action='store_true',help='get the paremeters described in $DAQCONFIG file to the DAQ')
@@ -185,45 +188,43 @@ grp_action.add_argument('--daq-state',action='store_true',help=' display DAQ sta
 grp_action.add_argument('--daq-evbstatus',action='store_true',help=' display event builder status')
 grp_action.add_argument('--daq-startrun',action='store_true',help=' start the run')
 grp_action.add_argument('--daq-stoprun',action='store_true',help=' stop the run')
+grp_action.add_argument('--daq-destroy',action='store_true',help='destroy the DIF readout, back to the PREPARED state')
+grp_action.add_argument('--daq-downloaddb',action='store_true',help='download the dbsate specified in --dbstate=state')
+grp_action.add_argument('--daq-dbstatus',action='store_true',help='get current run and state from db')
+grp_action.add_argument('--daq-ctrlreg',action='store_true',help='set the ctrlregister specified with --ctrlreg=register')
+
+
+
+
+# TRIGGER
 grp_action.add_argument('--trig-status',action='store_true',help=' display trigger counter status')
 grp_action.add_argument('--trig-reset',action='store_true',help=' reset trigger counter')
 grp_action.add_argument('--trig-pause',action='store_true',help=' trigger soft veto')
 grp_action.add_argument('--trig-resume',action='store_true',help=' trigger soft veto release')
 grp_action.add_argument('--ecal-pause',action='store_true',help=' trigger soft veto')
 grp_action.add_argument('--ecal-resume',action='store_true',help=' trigger soft veto release')
+grp_action.add_argument('--trig-spillon',action='store_true',help=' set spill nclock on with --clock=nc (20ns)')
+grp_action.add_argument('--trig-spilloff',action='store_true',help=' set spill nclock off with --clock=nc (20ns) ')
+grp_action.add_argument('--trig-beam',action='store_true',help=' set spill nclock off with --clock=nc (20ns) ')
 
+
+# ECAL
 grp_action.add_argument('--ecal-configure',action='store_true',help='configure ECAL daq with --configfile=name')
-
 grp_action.add_argument('--ecal-state',action='store_true',help='ECAL daq state')
-
 grp_action.add_argument('--ecal-start',action='store_true',help='start ECAL daq with --run=number')
-
 grp_action.add_argument('--ecal-stop',action='store_true',help='stop ECAL daq  ')
 grp_action.add_argument('--ecal-destroy',action='store_true',help='exit  ECAL daq ')
 grp_action.add_argument('--ecal-currentspill',action='store_true',help='current spill of  ECAL daq ')
 
 
 
-grp_action.add_argument('--trig-spillon',action='store_true',help=' set spill nclock on with --clock=nc (20ns)')
-grp_action.add_argument('--trig-spilloff',action='store_true',help=' set spill nclock off with --clock=nc (20ns) ')
-grp_action.add_argument('--trig-beam',action='store_true',help=' set spill nclock off with --clock=nc (20ns) ')
-grp_action.add_argument('--daq-destroy',action='store_true',help='destroy the DIF readout, back to the PREPARED state')
-grp_action.add_argument('--daq-downloaddb',action='store_true',help='download the dbsate specified in --dbstate=state')
-
-grp_action.add_argument('--daq-dbstatus',action='store_true',help='get current run and state from db')
-grp_action.add_argument('--daq-ctrlreg',action='store_true',help='set the ctrlregister specified with --ctrlreg=register')
-
+# SLC
 grp_action.add_argument('--slc-create',action='store_true',help='Create the DimSlowControl object to control WIENER crate and BMP sensor')
-
 grp_action.add_argument('--slc-initialisesql',action='store_true',help='initiliase the mysql access specified with --account=login/pwd@host:base')
-
 grp_action.add_argument('--slc-loadreferences',action='store_true',help='load in the wiener crate chambers references voltage download from DB')
-
 grp_action.add_argument('--slc-hvstatus',action='store_true',help='display hvstatus of all channel of the wiener crate')
-
 grp_action.add_argument('--slc-ptstatus',action='store_true',help='display the P and T from the BMP183 readout')
 grp_action.add_argument('--slc-setperiod',action='store_true',help='set the readout period of Wiener and BMP with --period=second(s)')
-
 grp_action.add_argument('--slc-setvoltage',action='store_true',help='set the voltage V of channel i to k with --first=k --last=k --voltage=V')
 grp_action.add_argument('--slc-setcurrent',action='store_true',help='set the current limit I (microA) of channel i to k with --first=k --last=k --current=I')
 grp_action.add_argument('--slc-hvon',action='store_true',help='set the voltage ON  of channel i to k with --first=k --last=k ')
@@ -237,28 +238,30 @@ grp_action.add_argument('--slc-check-stop',action='store_true',help='stop the vo
 
 
 # Arguments
+# DAQ & trigger
 parser.add_argument('--config', action='store', dest='config',default=None,help='python config file')
 parser.add_argument('--socks', action='store', type=int,dest='sockport',default=None,help='use SOCKS port ')
 parser.add_argument('--dbstate', action='store', default=None,dest='dbstate',help='set the dbstate')
 parser.add_argument('--ctrlreg', action='store', default=None,dest='ctrlreg',help='set the dbstatectrreg in hexa')
 parser.add_argument('--version', action='version', version='%(prog)s 1.0')
 parser.add_argument('--state', action='store', type=str,default=None,dest='fstate',help='set the rpcdaq state')
+parser.add_argument('--clock', action='store',type=int, default=None,dest='clock',help='set the number of 20 ns clock')
+# Slow
 parser.add_argument('--channel', action='store',type=int, default=None,dest='channel',help='set the hvchannel')
 parser.add_argument('--first', action='store',type=int, default=None,dest='first',help='set the first hvchannel')
 parser.add_argument('--last', action='store',type=int, default=None,dest='last',help='set the last hvchannel')
 parser.add_argument('--voltage', action='store',type=float, default=None,dest='voltage',help='set the hv voltage')
 parser.add_argument('--current', action='store',type=float, default=None,dest='current',help='set the hv current')
-
+parser.add_argument('--account', action='store', default=None,dest='account',help='set the Slow Control mysql account')
 parser.add_argument('--period', action='store',type=int, default=None,dest='period',help='set the tempo period')
 
-parser.add_argument('--clock', action='store',type=int, default=None,dest='clock',help='set the number of 20 ns clock')
+# Job
 parser.add_argument('--lines', action='store',type=int, default=None,dest='lines',help='set the number of lines to be dump')
 parser.add_argument('--host', action='store', dest='host',default=None,help='DIF host for log')
 parser.add_argument('--jobname', action='store', dest='jobname',default=None,help='job name')
 parser.add_argument('--jobpid', action='store', type=int,dest='jobpid',default=None,help='job pid')
 
-
-parser.add_argument('--account', action='store', default=None,dest='account',help='set the mysql account')
+# ECAL
 parser.add_argument('--ecalconfig', action='store', type=str,default=None,dest='ecalconfig',help='Name of the ECAL config file')
 parser.add_argument('--run', action='store',type=int, default=None,dest='run',help='Run number set for ECAL daq')
 
@@ -320,21 +323,25 @@ if (results.daq_create):
     exit(0)
 
 elif (results.webstatus):
-     srd=executeCMD(conf.daqhost,conf.daqport,"WDAQ",None,None)
-     srs=executeCMD(conf.slowhost,conf.slowport,"WSLOW",None,None)
-     srj=executeCMD(conf.jobhost,conf.jobport,"WJOB",None,None)
-     sre=executeCMD(conf.ecalhost,conf.ecalport,"ecalWeb",None,None)
-     p_res={}
-     sjd=json.loads(srd)
-     sjs=json.loads(srs)
-     sjj=json.loads(srj)
-     sje=json.loads(sre)
-     p_res["DAQ"]=sjd["STATE"]
-     p_res["SLOW"]=sjs["STATE"]
-     p_res["JOB"]=sjj["STATE"]
-     p_res["ECAL"]=sje["STATE"]
-     print json.dumps(p_res)
-     exit(0)
+    p_res={}
+    if (hasattr(conf,'ecalhost')):
+        sre=executeCMD(conf.ecalhost,conf.ecalport,"ecalWeb",None,None)
+        sje=json.loads(sre)
+        p_res["ECAL"]=sje["STATE"]
+    else:
+        p_res["ECAL"]="DEAD"
+    srd=executeCMD(conf.daqhost,conf.daqport,"WDAQ",None,None)
+    srs=executeCMD(conf.slowhost,conf.slowport,"WSLOW",None,None)
+    srj=executeCMD(conf.jobhost,conf.jobport,"WJOB",None,None)
+    sjd=json.loads(srd)
+    sjs=json.loads(srs)
+    sjj=json.loads(srj)
+    p_res["DAQ"]=sjd["STATE"]
+    p_res["SLOW"]=sjs["STATE"]
+    p_res["JOB"]=sjj["STATE"]
+    
+    print json.dumps(p_res)
+    exit(0)
 elif(results.available):
     r_cmd='available'
     srd=executeCMD(conf.daqhost,conf.daqport,"WDAQ",None,None)
