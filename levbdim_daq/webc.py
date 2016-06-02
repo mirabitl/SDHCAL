@@ -159,8 +159,8 @@ parser = argparse.ArgumentParser()
 # configure all the actions
 grp_action = parser.add_mutually_exclusive_group()
 # JOB Control
-grp_action.add_argument('--available',action='store_true',help='Check avilability of daq,jobcontrol and slowcontrol')
-grp_action.add_argument('--webstatus',action='store_true',help='Check avilability of daq,jobcontrol and slowcontrol')
+grp_action.add_argument('--available',action='store_true',help='Check availability of daq,jobcontrol and slowcontrol')
+grp_action.add_argument('--webstatus',action='store_true',help='Check availability of daq,jobcontrol,slowcontrol and Ecal web servers')
 grp_action.add_argument('--jc-create',action='store_true',help='Create the DimJobControlInterface object to control processes')
 grp_action.add_argument('--jc-kill',action='store_true',help='kill all controled processes')
 grp_action.add_argument('--jc-start',action='store_true',help='start all controled processes described in $DAQCONFIG jsonfile variable')
@@ -168,10 +168,10 @@ grp_action.add_argument('--jc-restart',action='store_true',help='restart one job
 grp_action.add_argument('--jc-status',action='store_true',help='show the status all controled processes')
 
 #DAQ
-grp_action.add_argument('--daq-create',action='store_true',help='Create the RpcDaq object to access DIf/CCC/EVB')
-grp_action.add_argument('--daq-discover',action='store_true',help='trigger a scan of the DNS othe Daq')
-grp_action.add_argument('--daq-setparameters',action='store_true',help='send the paremeters described in $DAQCONFIG file to the DAQ')
-grp_action.add_argument('--daq-getparameters',action='store_true',help='get the paremeters described in $DAQCONFIG file to the DAQ')
+grp_action.add_argument('--daq-create',action='store_true',help='Create the Daq object to access DIf/CCC/EVB')
+grp_action.add_argument('--daq-discover',action='store_true',help='trigger a scan of the DNS of the Daq')
+grp_action.add_argument('--daq-setparameters',action='store_true',help='send the parameters described in $DAQCONFIG file to the DAQ')
+grp_action.add_argument('--daq-getparameters',action='store_true',help='get the parameters described in $DAQCONFIG file to the DAQ')
 grp_action.add_argument('--daq-forceState',action='store_true',help='force the sate name of the Daq with the --state option, ex --forceState --state=DISCOVERED')
 grp_action.add_argument('--daq-services',action='store_true',help='Triggers teh download of the DB state, the initialisation of the Zup and of the CCC according to $DAQCONFIG values (compulsary before first initialise)')
 grp_action.add_argument('--daq-diflog',action='store_true',help='dump log of the difserver with --host=host --lines=number of lines ')
@@ -180,7 +180,7 @@ grp_action.add_argument('--daq-mdcclog',action='store_true',help='dump log of th
 grp_action.add_argument('--daq-zuplog',action='store_true',help='dump log of the zupserver with --host=host --lines=number of lines ')
 grp_action.add_argument('--daq-lvon',action='store_true',help='put Zup LV ON')
 grp_action.add_argument('--daq-lvoff',action='store_true',help='put Zup LV OFF')
-grp_action.add_argument('--daq-lvstatus',action='store_true',help='LV status')
+grp_action.add_argument('--daq-lvstatus',action='store_true',help='Dump LV status')
 grp_action.add_argument('--daq-initialise',action='store_true',help=' initialise the DAQ')
 grp_action.add_argument('--daq-configure',action='store_true',help=' configure the DAQ')
 grp_action.add_argument('--daq-status',action='store_true',help=' display DAQ status of all DIF')
@@ -200,12 +200,12 @@ grp_action.add_argument('--daq-ctrlreg',action='store_true',help='set the ctrlre
 grp_action.add_argument('--trig-status',action='store_true',help=' display trigger counter status')
 grp_action.add_argument('--trig-reset',action='store_true',help=' reset trigger counter')
 grp_action.add_argument('--trig-pause',action='store_true',help=' trigger soft veto')
-grp_action.add_argument('--trig-resume',action='store_true',help=' trigger soft veto release')
-grp_action.add_argument('--ecal-pause',action='store_true',help=' trigger soft veto')
-grp_action.add_argument('--ecal-resume',action='store_true',help=' trigger soft veto release')
+grp_action.add_argument('--trig-resume',action='store_true',help=' release trigger soft veto ')
+grp_action.add_argument('--ecal-pause',action='store_true',help=' Ecal soft veto')
+grp_action.add_argument('--ecal-resume',action='store_true',help=' release Ecal soft veto')
 grp_action.add_argument('--trig-spillon',action='store_true',help=' set spill nclock on with --clock=nc (20ns)')
 grp_action.add_argument('--trig-spilloff',action='store_true',help=' set spill nclock off with --clock=nc (20ns) ')
-grp_action.add_argument('--trig-beam',action='store_true',help=' set spill nclock off with --clock=nc (20ns) ')
+grp_action.add_argument('--trig-beam',action='store_true',help=' set beam length to nclock with --clock=nc (20ns) ')
 
 
 # ECAL
@@ -225,13 +225,13 @@ grp_action.add_argument('--slc-loadreferences',action='store_true',help='load in
 grp_action.add_argument('--slc-hvstatus',action='store_true',help='display hvstatus of all channel of the wiener crate')
 grp_action.add_argument('--slc-ptstatus',action='store_true',help='display the P and T from the BMP183 readout')
 grp_action.add_argument('--slc-setperiod',action='store_true',help='set the readout period of Wiener and BMP with --period=second(s)')
-grp_action.add_argument('--slc-setvoltage',action='store_true',help='set the voltage V of channel i to k with --first=k --last=k --voltage=V')
-grp_action.add_argument('--slc-setcurrent',action='store_true',help='set the current limit I (microA) of channel i to k with --first=k --last=k --current=I')
-grp_action.add_argument('--slc-hvon',action='store_true',help='set the voltage ON  of channel i to k with --first=k --last=k ')
-grp_action.add_argument('--slc-hvoff',action='store_true',help='set the voltage OFF  of channel i to k with --first=k --last=k ')
-grp_action.add_argument('--slc-store',action='store_true',help='start the data storage in the mysql DB at period p  with --period=p ')
+grp_action.add_argument('--slc-setvoltage',action='store_true',help='set the voltage V of channel i to k with --first=i --last=k --voltage=V')
+grp_action.add_argument('--slc-setcurrent',action='store_true',help='set the current limit I (microA) of channel i to k with --first=i --last=k --current=I')
+grp_action.add_argument('--slc-hvon',action='store_true',help='set the voltage ON  of channel i to k with --first=i --last=k ')
+grp_action.add_argument('--slc-hvoff',action='store_true',help='set the voltage OFF  of channel i to k with --first=i --last=k ')
+grp_action.add_argument('--slc-store',action='store_true',help='start the data storage in the mysql DB at period p  with --period=p (s) ')
 grp_action.add_argument('--slc-store-stop',action='store_true',help='stop the data storage in the mysql DB ')
-grp_action.add_argument('--slc-check',action='store_true',help='start the voltage tuning wrt references at period p  with --period=p ')
+grp_action.add_argument('--slc-check',action='store_true',help='start the voltage tuning wrt references at period p  with --period=p (s) ')
 grp_action.add_argument('--slc-check-stop',action='store_true',help='stop the voltage tuning ')
 
 
@@ -242,9 +242,9 @@ grp_action.add_argument('--slc-check-stop',action='store_true',help='stop the vo
 parser.add_argument('--config', action='store', dest='config',default=None,help='python config file')
 parser.add_argument('--socks', action='store', type=int,dest='sockport',default=None,help='use SOCKS port ')
 parser.add_argument('--dbstate', action='store', default=None,dest='dbstate',help='set the dbstate')
-parser.add_argument('--ctrlreg', action='store', default=None,dest='ctrlreg',help='set the dbstatectrreg in hexa')
+parser.add_argument('--ctrlreg', action='store', default=None,dest='ctrlreg',help='set the Control register in hexa')
 parser.add_argument('--version', action='version', version='%(prog)s 1.0')
-parser.add_argument('--state', action='store', type=str,default=None,dest='fstate',help='set the rpcdaq state')
+parser.add_argument('--state', action='store', type=str,default=None,dest='fstate',help='set the Daq state')
 parser.add_argument('--clock', action='store',type=int, default=None,dest='clock',help='set the number of 20 ns clock')
 # Slow
 parser.add_argument('--channel', action='store',type=int, default=None,dest='channel',help='set the hvchannel')
@@ -253,11 +253,11 @@ parser.add_argument('--last', action='store',type=int, default=None,dest='last',
 parser.add_argument('--voltage', action='store',type=float, default=None,dest='voltage',help='set the hv voltage')
 parser.add_argument('--current', action='store',type=float, default=None,dest='current',help='set the hv current')
 parser.add_argument('--account', action='store', default=None,dest='account',help='set the Slow Control mysql account')
-parser.add_argument('--period', action='store',type=int, default=None,dest='period',help='set the tempo period')
+parser.add_argument('--period', action='store',type=int, default=None,dest='period',help='set the temporistaion period (s)')
 
 # Job
 parser.add_argument('--lines', action='store',type=int, default=None,dest='lines',help='set the number of lines to be dump')
-parser.add_argument('--host', action='store', dest='host',default=None,help='DIF host for log')
+parser.add_argument('--host', action='store', dest='host',default=None,help='host for log')
 parser.add_argument('--jobname', action='store', dest='jobname',default=None,help='job name')
 parser.add_argument('--jobpid', action='store', type=int,dest='jobpid',default=None,help='job pid')
 
@@ -265,7 +265,7 @@ parser.add_argument('--jobpid', action='store', type=int,dest='jobpid',default=N
 parser.add_argument('--ecalconfig', action='store', type=str,default=None,dest='ecalconfig',help='Name of the ECAL config file')
 parser.add_argument('--run', action='store',type=int, default=None,dest='run',help='Run number set for ECAL daq')
 
-parser.add_argument('-v','--verbose',action='store_true',default=False,help='set the mysql account')
+parser.add_argument('-v','--verbose',action='store_true',default=False,help='Raw Json output')
 
 results = parser.parse_args()
 
