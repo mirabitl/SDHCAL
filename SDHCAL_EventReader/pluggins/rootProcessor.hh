@@ -68,7 +68,7 @@ public:
   
   std::vector<uint32_t> cleanMap(uint32_t nchmin);
 
-  void ptime(std::string s);
+  std::string ptime(std::string s);
     
 private:
 
@@ -109,6 +109,8 @@ private:
 
   std::vector<RecoHit> _hits;
 
+  RecoHit _vhits[40000];
+  uint32_t _nvhits;
 	  
 
 

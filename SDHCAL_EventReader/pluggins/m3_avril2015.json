@@ -7,7 +7,7 @@
 	"tkExtMinPoint":40,
 	"tkChi2":0.01,
 	"edge":6.0,
-	"minPlans":4,
+	"minPlans":3,
 	"mipRate":0.6
     },
     "difs":{

@@ -459,7 +459,7 @@ void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
    ptime("combine");
    this->tagMips();
    ptime("tagmip");
-   if (_pMip>-1E-5 && _pMip<-10.6)
+   if (_pMip>-1E-5 && _pMip<10.6)
      {
        std::cout<<_hits.size()<<" hits "<<_pMipCand*100<<" % low weight "<<realClusters_.size()<<" clusters "<<_pMip*100<<" % Mip tagged"<<std::endl;
        this->drawHits();

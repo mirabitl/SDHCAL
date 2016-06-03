@@ -168,6 +168,7 @@ int DHCalEventReader::readStream(int max_record)
 //! Interface for readStream
 void DHCalEventReader::processEvent( LCEvent * evt )  
 {
+
   evt_ = (IMPL::LCEventImpl*) evt;
   // if (evt_!=0) LCTOOLS::dumpEvent( evt_ ) ;
   analyzeEvent();
@@ -178,6 +179,8 @@ void DHCalEventReader::processRunHeader( LCRunHeader* run)
 {
   runh_ =(IMPL::LCRunHeaderImpl*) run;
 }
+
+
 int DHCalEventReader::readEvent()
 {
   try{
