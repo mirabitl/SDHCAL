@@ -34,7 +34,7 @@ rootProcessor::rootProcessor() : nAnalyzed_(0),collectionName_("DHCALRawHits"),t
   rootHandler_ =DCHistogramHandler::instance();
   
   this->initialise();
-  
+  _nvhits=0;
 }
 
 
@@ -150,7 +150,7 @@ bool rootProcessor::decodeTrigger(LCCollection* rhcol)
   }
 
   //Find the parameters
-  INFO_PRINT("DIF ID %d found \n",difid);
+  DEBUG_PRINT("DIF ID %d found \n",difid);
   std::stringstream pname("");
   pname <<"DIF"<<difid<<"_Triggers";
 
@@ -179,7 +179,7 @@ bool rootProcessor::decodeTrigger(LCCollection* rhcol)
 void rootProcessor::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 {
 
-  ptime("Enter");
+  // ptime("Enter");
 
   currentTime_=seed;
   theAbsoluteTime_=theBCID_-currentTime_;
@@ -198,13 +198,16 @@ void rootProcessor::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
       return ;
    }
    
-   ptime("Init");
+
    theNplans_=this->fillVolume(seed);
-   ptime("fillVolume");
+   //std::cout<<ptime("fillVolume")<<" Hits "<<iseed->second.size()<<std::endl;
+
    if (nPlansAll_.count()<_geo->cuts()["minPlans"].asUInt()) return;
    // Et on met _hits dans ROOT
-   for (std::vector<RecoHit>::iterator ih=_hits.begin();ih!=_hits.end();ih++)
+   //  for (std::vector<RecoHit>::iterator ih=_hits.begin();ih!=_hits.end();ih++)
+   for (int i=0;i<_nvhits;i++)
      {
+       RecoHit* ih=&_vhits[i];
        std::map<uint32_t,levbdim::datasource*>::iterator ids=_sources.find(ih->dif());
        if (ids==_sources.end()) continue;
        levbdim::datasource* ds=ids->second;
@@ -231,11 +234,12 @@ void rootProcessor::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 
 }
 
+//void rootProcessor::pseed(
 void rootProcessor::processEvent()
 {
 
-  printf("Reader %x \n",reader_);
-  printf("Event %x \n",reader_->getEvent());
+  //printf("Reader %x \n",reader_);
+  //printf("Event %x \n",reader_->getEvent());
 
   if (reader_->getEvent()==0) return;
     
@@ -263,7 +267,8 @@ void rootProcessor::processEvent()
 
 
   
-  INFO_PRINT("End of CreaetRaw %d \n",rhcol->getNumberOfElements());  
+  DEBUG_PRINT("End of CreaetRaw %d \n",rhcol->getNumberOfElements());
+  std::cout<<ptime("Full Event ")<<" hits "<<rhcol->getNumberOfElements()<<std::endl;
   if (rhcol->getNumberOfElements()>4E6) return;
   
   //_monitor->FillTimeAsic(rhcol);
@@ -276,16 +281,16 @@ void rootProcessor::processEvent()
     this->prepareDataSources();
 
   nAnalyzed_++;
-  INFO_PRINT("Calling decodeTrigger\n");
+  DEBUG_PRINT("Calling decodeTrigger\n");
   // TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
   
   if (!decodeTrigger(rhcol) ) { return;}
   
   //if (isNewSpill_) return;
-  INFO_PRINT("Calling find time seed\n");
+  DEBUG_PRINT("Calling find time seed %d \n",_geo->cuts()["minPlans"].asUInt());
   reader_->findTimeSeeds(_geo->cuts()["minPlans"].asUInt());
 
-  INFO_PRINT("Calling cleanMap\n");  
+  DEBUG_PRINT("Calling cleanMap\n");  
   std::vector<uint32_t> vseeds =this->cleanMap(_geo->cuts()["minPlans"].asUInt());
   //std::vector<uint32_t> vseeds=reader_->getTimeSeeds();
 
@@ -293,15 +298,18 @@ void rootProcessor::processEvent()
   INFO_PRINT("================>  %d  Number of seeds %d > %d plans \n",evt_->getEventNumber(),(int) vseeds.size(), _geo->cuts()["minPlans"].asUInt());
 
   if (vseeds.size()==0)  { return;}
-   
   // Clear indexes for sources
+
   memset(_dsidx,0,255*sizeof(uint32_t));
-  
-  for (uint32_t is=0;is<vseeds.size();is++)
+  uint32_t ns=vseeds.size();
+  for (uint32_t is=0;is<ns;is++)
     {
       //printf("%d %d %x \n",is,vseeds[is],rhcol);
+      //printf("Element %d traité par le thread %d \n",is,omp_get_thread_num());
+
       this->processSeed(rhcol,vseeds[is]);      
     }
+
   for (int32_t i=0;i<255;i++)
     {
       if (_dsidx[i]==0) continue;
@@ -309,7 +317,7 @@ void rootProcessor::processEvent()
       
       unsigned char* cdata=(unsigned char*)  _sources[i]->buffer()->ptr();
       int32_t* idata=(int32_t*) cdata;
-      //printf("\t writing %d bytes",idata[SHM_BUFFER_SIZE]);
+      //printf("\t writing %d bytes \n",_dsidx[i]);
       int difsize= _sources[i]->buffer()->size();
       reader_->addRawOnlineRU(idata,difsize/4+1);
 
@@ -323,17 +331,18 @@ void rootProcessor::processEvent()
 #define DBG printf("%d %s\n",__LINE__,__PRETTY_FUNCTION__);
 
 
-void rootProcessor::ptime( std::string s)
+std::string rootProcessor::ptime( std::string s)
 {
-#ifdef DEBUG
-
-gettimeofday(&endT, NULL); 
-
-timersub(&endT, &startT, &diffT);
-
- printf("%s **time taken = %ld %ld\n",s.c_str(),diffT.tv_sec, diffT.tv_usec);
- gettimeofday(&startT, NULL);
-#endif
+  //#ifdef DEBUG
+  std::stringstream ss;
+  gettimeofday(&endT, NULL); 
+  
+  timersub(&endT, &startT, &diffT);
+  
+  ss<<s<<" time taken = "<<diffT.tv_sec<<":"<<diffT.tv_usec;
+  gettimeofday(&startT, NULL);
+  return ss.str();
+  //#endif
 }
 
 uint32_t rootProcessor::fillVolume(uint32_t seed)
@@ -348,6 +357,7 @@ uint32_t rootProcessor::fillVolume(uint32_t seed)
   // clean key
   //_keys.clear();
   _hits.clear();
+  _nvhits=0;
 
   //std::bitset<61> planes(0);
   nPlansAll_.reset();
@@ -366,21 +376,26 @@ uint32_t rootProcessor::fillVolume(uint32_t seed)
       difc[dif].set(asic,1);
       
     }
+  /*
   for (int i=0;i<255;i++) if (difc[i].count()>24) {
       INFO_PRINT(" DIF %d Count %d  at seed %d \n",i,difc[i].count(),seed);
       return 0;
     }
+  */
+  
   for (std::vector<IMPL::RawCalorimeterHitImpl*>::iterator ihit=iseed->second.begin();ihit!=iseed->second.end();ihit++)
     {
       IMPL::RawCalorimeterHitImpl* hit =(*ihit);
-      RecoHit h(_geo,hit);
-      nPlansAll_.set(h.plan());
-      _hits.push_back(h);
+      //RecoHit h(_geo,hit);
+      //
+      //_hits.push_back(h);
       //_keys.push_back(makekey(I,J,chid));
-
+      _vhits[_nvhits].initialise(_geo,hit);
+       nPlansAll_.set(_vhits[_nvhits].plan());
+      _nvhits++;
       ncount++;
     }
-  DEBUG_PRINT("Total number of Hit in buildVolume %d  %d => planes %d \n",ncount,seed,planes.count());
+  DEBUG_PRINT("Total number of Hit in buildVolume %d  %d => planes %d \n",ncount,seed,nPlansAll_.count());
   return nPlansAll_.count();
 }
 

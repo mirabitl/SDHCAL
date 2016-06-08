@@ -29,7 +29,7 @@ INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as con
 
 INCLUDES.append("../../SDHCAL_common/include/")
 #flags
-CPPFLAGS=commands.getoutput("$ROOTSYS/bin/root-config --cflags").split(" ") + ["-O4","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__", "-Dx86","-DDAQ_VERSION_2","-Wno-deprecated"] 
+CPPFLAGS=commands.getoutput("$ROOTSYS/bin/root-config --cflags").split(" ") + ["-O4","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__", "-Dx86","-DDAQ_VERSION_2","-Wno-deprecated","-std=c++11"] 
 if (USE_OPENCV):
 	CPPFLAGS.append(commands.getoutput("pkg-config --cflags opencv").split(" "));
 	CPPFLAGS.append("-DUSE_OPENCV")
@@ -102,4 +102,4 @@ rawAnalysis=env1.SharedLibrary("rawAnalysis",source=['rawAnalysis.cxx'])
 trackAnalysis=env1.SharedLibrary("trackAnalysis",source=['trackAnalysis.cxx'])
 rootProcessor=env1.SharedLibrary("rootProcessor",source=['rootProcessor.cxx'])
 Default([lmreco,rawAnalysis,trackAnalysis,rootProcessor])
-env1.Install("../../opt/dhcal/lib",[lmreco,rawAnalysis,trackAnalysis])
+env1.Install("../../opt/dhcal/lib",[lmreco,rawAnalysis,trackAnalysis,rootProcessor])

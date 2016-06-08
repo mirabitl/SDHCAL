@@ -46,8 +46,10 @@ public:
   uint16_t asic(){ return 0xFF & (_raw->getCellID0()&0xFF00)>>8;}
   uint16_t channel(){ return 0xFF & (_raw->getCellID0()&0x3F0000)>>16;}
   uint16_t amplitude(){return _raw->getAmplitude();}
-  uint32_t chamber(){return _geo->difGeo(this->dif())["chamber"].asUInt();}
-  uint32_t plan(){ return _geo->chamberGeo(this->chamber())["plan"].asUInt();}
+  //uint32_t chamber(){return _geo->difGeo(this->dif())["chamber"].asUInt();}
+  //uint32_t plan(){ return _geo->chamberGeo(this->chamber())["plan"].asUInt();}
+  uint32_t chamber() {return _id&0xFF;}
+  uint32_t plan(){return (_id>>8)&0xFF;}
   std::bitset<8> Tag(){return _tag;}
   void setTag(RecoHit::Type t,bool v){_tag.set(t,v);}
   bool isTagged(RecoHit::Type t){return _tag[t];}
@@ -141,6 +143,7 @@ public:
 
 private:
   jsonGeo* _geo;
+  uint32_t _id;
   IMPL::RawCalorimeterHitImpl* _raw;
   std::bitset<8> _tag;
   float _weight;
