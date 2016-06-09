@@ -22,6 +22,7 @@ WebDaq::WebDaq(std::string name,uint32_t port) :_builderClient(NULL),_dbClient(N
     _fsm->addState("RUNNING");
 
     _fsm->addTransition("DISCOVER","CREATED","DISCOVERED",boost::bind(&WebDaq::discover, this,_1));
+    _fsm->addTransition("DISCOVER","DISCOVERED","DISCOVERED",boost::bind(&WebDaq::discover, this,_1));
     _fsm->addTransition("PREPARE","DISCOVERED","PREPARED",boost::bind(&WebDaq::prepare, this,_1));
     _fsm->addTransition("PREPARE","PREPARED","PREPARED",boost::bind(&WebDaq::prepare, this,_1));
     _fsm->addTransition("INITIALISE","PREPARED","INITIALISED",boost::bind(&WebDaq::initialise, this,_1));
@@ -30,6 +31,7 @@ WebDaq::WebDaq(std::string name,uint32_t port) :_builderClient(NULL),_dbClient(N
     _fsm->addTransition("START","CONFIGURED","RUNNING",boost::bind(&WebDaq::start, this,_1));
     _fsm->addTransition("STOP","RUNNING","CONFIGURED",boost::bind(&WebDaq::stop, this,_1));
     _fsm->addTransition("DESTROY","CONFIGURED","PREPARED",boost::bind(&WebDaq::destroy, this,_1));
+    _fsm->addTransition("DESTROY","INITIALISED","PREPARED",boost::bind(&WebDaq::destroy, this,_1));
 
     // Commands
 
@@ -167,6 +169,8 @@ void WebDaq::discover(levbdim::fsmmessage* m)
 void WebDaq::prepare(levbdim::fsmmessage* m)
 {
   //std::cout<<"ON RENTREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"<<std::endl;
+  //  for (int i=0;i<100;i++)
+  printf("Clients: DB %x ZUP %x MDC %x SDCC %x \n",_dbClient,_zupClient,_mdccClient,_cccClient);
   m->content();
   // DB
   if (_dbClient)
