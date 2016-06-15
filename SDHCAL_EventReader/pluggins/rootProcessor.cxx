@@ -19,7 +19,7 @@
 #include <sys/time.h>
 #include "datasource.hh"
 #include "CaloTrans.h"
-
+#include "shmdriver.hh"
 
 void rootProcessor::initHistograms()
 {
@@ -93,7 +93,7 @@ void rootProcessor::prepareDataSources()
       exit(2);
     }
   _sources.clear();
-  //std::cout<<"On rentre dans la boucle"<<std::endl;
+  std::cout<<"On rentre dans la boucle"<<std::endl;
   for ( std::vector<std::string >::iterator it=(vnames)->begin();it!=vnames->end();it++)
     {
       if ((*it).compare("RU_XDAQ")!=0) continue;
@@ -111,9 +111,9 @@ void rootProcessor::prepareDataSources()
 	  uint32_t rusize =go->getNInt()*sizeof(int32_t);
 	  levbdim::buffer m((char*) tcbuf,0);
 	  m.setPayloadSize(rusize-3*sizeof(uint32_t)-sizeof(uint64_t));
-	  //std::cout<<" Source found "<<m.detectorId()<<" "<<m.dataSourceId()<<std::endl;
+	  std::cout<<" Source found "<<m.detectorId()<<" "<<m.dataSourceId()<<std::endl;
 	  if (m.detectorId()!=100) continue;
-	  levbdim::datasource* ds= new levbdim::datasource(101,m.dataSourceId(),0x80000);
+	  levbdim::datasource* ds= new levbdim::datasource(201,m.dataSourceId(),0x80000);
 	  _sources.insert(std::pair<uint32_t,levbdim::datasource*>(m.dataSourceId(),ds));
 	}
     }
@@ -238,8 +238,8 @@ void rootProcessor::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 void rootProcessor::processEvent()
 {
 
-  //printf("Reader %x \n",reader_);
-  //printf("Event %x \n",reader_->getEvent());
+  printf("Reader %x \n",reader_);
+  printf("Event %x \n",reader_->getEvent());
 
   if (reader_->getEvent()==0) return;
     
@@ -268,7 +268,7 @@ void rootProcessor::processEvent()
 
   
   DEBUG_PRINT("End of CreaetRaw %d \n",rhcol->getNumberOfElements());
-  std::cout<<ptime("Full Event ")<<" hits "<<rhcol->getNumberOfElements()<<std::endl;
+  //std::cout<<ptime("Full Event ")<<" hits "<<rhcol->getNumberOfElements()<<std::endl;
   if (rhcol->getNumberOfElements()>4E6) return;
   
   //_monitor->FillTimeAsic(rhcol);
@@ -313,11 +313,16 @@ void rootProcessor::processEvent()
   for (int32_t i=0;i<255;i++)
     {
       if (_dsidx[i]==0) continue;
-      _sources[i]->publish(evt_->getEventNumber(),theBCID_,_dsidx[i]);
-      
+      //_sources[i]->publish(evt_->getEventNumber(),theBCID_,_dsidx[i]);
+      _sources[i]->buffer()->setBxId(theBCID_);
+      _sources[i]->buffer()->setEventId(evt_->getEventNumber());
+      _sources[i]->buffer()->setPayloadSize(_dsidx[i]);
+
       unsigned char* cdata=(unsigned char*)  _sources[i]->buffer()->ptr();
       int32_t* idata=(int32_t*) cdata;
-      //printf("\t writing %d bytes \n",_dsidx[i]);
+      //printf("\t root processor writing %d bytes \n",_dsidx[i]);
+      levbdim::buffer* b= _sources[i]->buffer();
+      levbdim::shmdriver::store(b->detectorId(),b->dataSourceId(),b->eventId(),b->bxId(),b->ptr(),b->size(),"/dev/shm/root/");
       int difsize= _sources[i]->buffer()->size();
       reader_->addRawOnlineRU(idata,difsize/4+1);
 
