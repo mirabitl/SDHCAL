@@ -192,6 +192,9 @@ grp_action.add_argument('--daq-destroy',action='store_true',help='destroy the DI
 grp_action.add_argument('--daq-downloaddb',action='store_true',help='download the dbsate specified in --dbstate=state')
 grp_action.add_argument('--daq-dbstatus',action='store_true',help='get current run and state from db')
 grp_action.add_argument('--daq-ctrlreg',action='store_true',help='set the ctrlregister specified with --ctrlreg=register')
+grp_action.add_argument('--daq-publish-configure',action='store_true',help='configure publisher --directory=/dev/shm/root')
+grp_action.add_argument('--daq-publish-start',action='store_true',help='start publisher')
+grp_action.add_argument('--daq-publish-stop',action='store_true',help='stop publisher')
 
 
 
@@ -246,6 +249,7 @@ parser.add_argument('--ctrlreg', action='store', default=None,dest='ctrlreg',hel
 parser.add_argument('--version', action='version', version='%(prog)s 1.0')
 parser.add_argument('--state', action='store', type=str,default=None,dest='fstate',help='set the Daq state')
 parser.add_argument('--clock', action='store',type=int, default=None,dest='clock',help='set the number of 20 ns clock')
+parser.add_argument('--directory', action='store', type=str,dest='directory',default=None,help='shm publisher directory')
 # Slow
 parser.add_argument('--channel', action='store',type=int, default=None,dest='channel',help='set the hvchannel')
 parser.add_argument('--first', action='store',type=int, default=None,dest='first',help='set the first hvchannel')
@@ -260,6 +264,7 @@ parser.add_argument('--lines', action='store',type=int, default=None,dest='lines
 parser.add_argument('--host', action='store', dest='host',default=None,help='host for log')
 parser.add_argument('--jobname', action='store', dest='jobname',default=None,help='job name')
 parser.add_argument('--jobpid', action='store', type=int,dest='jobpid',default=None,help='job pid')
+
 
 # ECAL
 parser.add_argument('--ecalconfig', action='store', type=str,default=None,dest='ecalconfig',help='Name of the ECAL config file')
@@ -657,6 +662,49 @@ elif(results.daq_ctrlreg):
         print 'Please specify the value --ctrlreg=0xX######'
         exit(0)
     sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","CTRLREG",lcgi)
+    print sr
+    exit(0)
+elif(results.daq_publish_configure):
+    r_cmd='publishConfigure'
+    if (not hasattr(conf,'pubhost')):
+        print 'Please specify the publisher host in config'
+        exit(0)
+    
+    lcgi.clear()
+    if (results.directory!=None):
+        lcgi['directory']=results.directory
+    else:
+        lcgi['directory']="/dev/shm/root"
+    lcgi['detid']=101
+    sr=executeFSM(conf.pubhost,conf.pubport,"RootPublisher-%s" % conf.pubhost,"CONFIGURE",lcgi)
+    print sr
+    exit(0)
+elif(results.daq_publish_start):
+    r_cmd='publishStart'
+    if (not hasattr(conf,'pubhost')):
+        print 'Please specify the publisher host in config'
+        exit(0)
+
+    lcgi.clear()
+    if (results.run!=None):
+        lcgi['run']=results.run
+    else:
+        lcgi['run']=10000
+    sr=executeFSM(conf.pubhost,conf.pubport,"RootPublisher-%s" % conf.pubhost,"START",lcgi)
+    print sr
+    exit(0)
+elif(results.daq_publish_stop):
+    r_cmd='publishStop'
+    if (not hasattr(conf,'pubhost')):
+        print 'Please specify the publisher host in config'
+        exit(0)
+
+    lcgi.clear()
+    if (results.run!=None):
+        lcgi['run']=results.run
+    else:
+        lcgi['run']=10000
+    sr=executeFSM(conf.pubhost,conf.pubport,"RootPublisher-%s" % conf.pubhost,"STOP",lcgi)
     print sr
     exit(0)
 
