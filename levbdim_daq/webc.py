@@ -196,6 +196,9 @@ grp_action.add_argument('--daq-publish-configure',action='store_true',help='conf
 grp_action.add_argument('--daq-publish-start',action='store_true',help='start publisher')
 grp_action.add_argument('--daq-publish-stop',action='store_true',help='stop publisher')
 
+grp_action.add_argument('--daq-setgain',action='store_true',help='change the gain and reconfigure chips with --gain=xxx')
+grp_action.add_argument('--daq-setthreshold',action='store_true',help='change the threholds and reconfigure chips with --B0=xxx --B1=yyy --B2=zzz')
+
 
 
 
@@ -250,6 +253,14 @@ parser.add_argument('--version', action='version', version='%(prog)s 1.0')
 parser.add_argument('--state', action='store', type=str,default=None,dest='fstate',help='set the Daq state')
 parser.add_argument('--clock', action='store',type=int, default=None,dest='clock',help='set the number of 20 ns clock')
 parser.add_argument('--directory', action='store', type=str,dest='directory',default=None,help='shm publisher directory')
+
+parser.add_argument('--gain', action='store', type=int,default=None,dest='gain',help='set the gain for chips')
+parser.add_argument('--B0', action='store', type=int,default=None,dest='B0',help='set the B0 for chips')
+parser.add_argument('--B1', action='store', type=int,default=None,dest='B1',help='set the B1 for chips')
+parser.add_argument('--B2', action='store', type=int,default=None,dest='B2',help='set the B2 for chips')
+
+
+
 # Slow
 parser.add_argument('--channel', action='store',type=int, default=None,dest='channel',help='set the hvchannel')
 parser.add_argument('--first', action='store',type=int, default=None,dest='first',help='set the first hvchannel')
@@ -612,6 +623,38 @@ elif(results.daq_zuplog):
         parseReturn(r_cmd,sr)
     exit(0)
 
+elif(results.daq_setgain):
+    r_cmd='SETGAIN'
+    lcgi.clear()
+    if (results.gain==None):
+        print 'Please specify the gain --gain=value'
+        exit(0)
+    lcgi['GAIN']=results.gain
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","SETGAIN",lcgi)
+    print sr
+    exit(0)
+
+elif(results.daq_setthreshold):
+    r_cmd='SETTHRESHOLD'
+    lcgi.clear()
+    if (results.B0==None):
+        print 'Please specify the B0 --B0=value'
+        exit(0)
+    lcgi['B0']=results.B0
+    if (results.B1==None):
+        print 'Please specify the B1 --B1=value'
+        exit(0)
+    lcgi['B1']=results.B1
+    if (results.B2==None):
+        print 'Please specify the B2 --B2=value'
+        exit(0)
+    lcgi['B2']=results.B2
+    sr=executeCMD(conf.daqhost,conf.daqport,"WDAQ","SETTHRESHOLD",lcgi)
+    print sr
+    exit(0)
+
+
+    
 elif(results.daq_startrun):
     r_cmd='start'
     lcgi.clear()
@@ -852,7 +895,7 @@ elif(results.slc_initialisesql):
         exit(0)
     sr=executeFSM(conf.slowhost,conf.slowport,"WSLOW","INITIALISE",lcgi)
     print sr
-    
+    exit(0)
 elif(results.slc_loadreferences):
     r_cmd='loadReferences'
     lcgi.clear()
