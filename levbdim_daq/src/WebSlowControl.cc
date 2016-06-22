@@ -370,7 +370,7 @@ void WebSlowControl::destroy(levbdim::fsmmessage* m)
 }
 void WebSlowControl::initialise(levbdim::fsmmessage* m)
 {
-  std::string sdb =m->content()["dbstate"].asString();
+  std::string sdb =m->content()["account"].asString();
   
   _my= new MyInterface(sdb);
   _my->connect();

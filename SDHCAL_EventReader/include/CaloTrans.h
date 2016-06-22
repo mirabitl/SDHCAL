@@ -9,15 +9,16 @@ struct CaloTransHeader {
 };
 struct CaloTransHit
 {
+  uint64_t asic_bcid;
+  double time;
+  double energy;
+  float x,y,z;
+  uint32_t spill;
+  uint16_t adc_energy;
   uint8_t dif_id;
   uint8_t asic_id;
   uint8_t chan_id;
+  uint8_t sca;
   uint8_t map_x,map_y,map_z;
-  float x,y,z;
-  uint64_t asic_bcid;
-  uint32_t spill;
-  double time;
-  uint16_t adc_energy;
-  double energy;
 };
 #endif

@@ -77,8 +77,11 @@ void RootShmProcessor::processEvent(uint32_t gtc,std::vector<levbdim::buffer*> v
       _der->addRawOnlineRU(idata,difsize/4+1);
        
     }
+  printf("Pasring \n");
   _der->parseSDHCALEvent();
+  printf("analyzing %d \n",theEventNumber_);
   _der->analyzeEvent();
+  printf("writing %d \n",theEventNumber_);
   _der->writeEvent(false);		
    
   theEventNumber_++;

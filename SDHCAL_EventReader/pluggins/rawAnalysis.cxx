@@ -198,7 +198,7 @@ void rawAnalysis::processEvent()
   // STudy RAwCalorimeters hits
   if (_geo!=NULL && _monitor!=NULL)
     {
-      IMPL::LCCollectionVec* rhcol=(IMPL::LCCollectionVec*) reader_->getEvent()->getCollection("SDHCALRawHits");
+      IMPL::LCCollectionVec* rhcol=(IMPL::LCCollectionVec*) reader_->getEvent()->getCollection("DHCALRawHits");
       if (rhcol!=NULL)
 	{
 	  _monitor->FillTimeAsic(rhcol);

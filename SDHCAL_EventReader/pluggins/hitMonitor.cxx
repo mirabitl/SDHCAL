@@ -48,7 +48,7 @@ void hitMonitor::FillTimeAsic(IMPL::LCCollectionVec* rhcol)
   double tmin=99999999.;
   double tmax=0.;
   //	printf("%d %s\n",__LINE__,__PRETTY_FUNCTION__);
-  this->DIFStudy(rhcol);
+  //this->DIFStudy(rhcol);
   //	printf("%d %s\n",__LINE__,__PRETTY_FUNCTION__);
   //IMPL::LCCollectionVec* rhcol=(IMPL::LCCollectionVec*) evt_->getCollection(collectionName_);
   for (int i=0;i<rhcol->getNumberOfElements();i++)

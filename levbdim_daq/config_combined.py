@@ -1,5 +1,6 @@
 
-jsonfile='/data/NAS/config/levbdim_m3_good.json'
+#jsonfile='/data/NAS/config/levbdim_m3_good.json'
+jsonfile='/data/NAS/config/levbdim_m3_pub.json'
 
 zupdevice='/dev/ttyUSB0'
 zupport=1
@@ -8,21 +9,27 @@ mdccname="MDCC01"
 
 ctrlreg=0x89580000
 # 115 + petit seup
-dbstate="Dome_42chambres_Reference_v4_163"
+#dbstate="Dome_42chambres_Reference_v4_236"
+dbstate="Dome_42chambres_Reference_v4_224"
+# 163 + seuil 160 sur dif100
+# dbstate="Dome_42chambres_Reference_v4_216" 
 # Novermber 2012 state="Dome_42chambres_Reference_v4_115"
 # November 2012 + masks state="Dome_42chambres_Reference_v4_144"
-filepath="/data/NAS/February2016"
+filepath="/data/NAS/June2016"
 memorypath="/dev/shm/levbdim"
-proclist=["monitor","lcio","basicwriter"]
+#proclist=["monitor","lcio","basicwriter"]
+proclist=["monitor","root","basicwriter"]
 #proclist=[]
-daqhost='lyosdhcal9.in2p3.fr'
+daqhost='lyosdhcal9.cern.ch'
 daqport=45000
-slowhost='lyosdhcal9.in2p3.fr'
+slowhost='lyosdhcal9.cern.ch'
 slowport=46000
-jobhost='lyosdhcal9.in2p3.fr'
+jobhost='lyosdhcal9.cern.ch'
 jobport=47000
-ecalhost='lyoilcrpi57'
+ecalhost='llrcaldaq'
 ecalport=45000
 ecalconfig='/opt/calicoes/config/combined.xml'
-#ecaldetid=1100
-#ecalsourceid=[1,2,3,4,5,6]
+ecaldetid=1100
+ecalsourceid=[1,2,3,4,5,6,7,8,9]#,10]
+pubhost='lyosdhcal9'
+pubport=48000

@@ -442,12 +442,12 @@ void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
      if (nPlansAll_[i]) npf++;
    for (int i=41;i<=45;i++)
      if (nPlansAll_[i]) npl++;
-   if (npf<3) return;
+   //if (npf<3) return;
    //   std::cout<<nPlansAll_.to_string()<<std::endl;
 
    this->TagIsolated(1,48);
    ptime("Tag iso");
-   if (_pMipCand<2E-2 &&_hits.size()<25) return;
+   // if (_pMipCand<2E-2 &&_hits.size()<25) return;
    //if (_pMipCand<_geo->cuts()["mipRate"].asFloat()) return; // Muon selection
 
    
@@ -459,7 +459,7 @@ void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
    ptime("combine");
    this->tagMips();
    ptime("tagmip");
-   if (_pMip>-1E-5 && _pMip<10.6)
+   if (_pMip>-1E-5 && _pMip<-0.4)
      {
        std::cout<<_hits.size()<<" hits "<<_pMipCand*100<<" % low weight "<<realClusters_.size()<<" clusters "<<_pMip*100<<" % Mip tagged"<<std::endl;
        this->drawHits();
@@ -561,30 +561,32 @@ void trackAnalysis::processEvent()
     rhcol=(IMPL::LCCollectionVec*) evt_->getCollection(collectionName_);
 
   
-  //INFO_PRINT("End of CreaetRaw %d \n",rhcol->getNumberOfElements());  
+  DEBUG_PRINT("End of CreaetRaw %d \n",rhcol->getNumberOfElements());  
   if (rhcol->getNumberOfElements()>4E6) return;
   
-  //_monitor->FillTimeAsic(rhcol);
+  _monitor->FillTimeAsic(rhcol);
 
   //  LCTOOLS::printParameters(rhcol->parameters());
   //DEBUG_PRINT("Time Stamp %d \n",evt_->getTimeStamp());
   if (rhcol==NULL) return;
   if (rhcol->getNumberOfElements()==0) return;
-  //DEBUG_PRINT("Calling decodeTrigger\n");
+ DEBUG_PRINT("Calling decodeTrigger\n");
   // TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
   
-  if (!decodeTrigger(rhcol,spillSize_) ) { if (rhcoltransient) delete rhcol;return;}
-  
+  if (!decodeTrigger(rhcol,spillSize_) ) { if (rhcoltransient) delete rhcol;return;}  
   //if (isNewSpill_) return;
-  
+  DEBUG_PRINT("Apres decodeTrigger\n");
   if (evt_->getEventNumber()%100 ==0)
     rootHandler_->writeSQL();
   //    rootHandler_->writeXML(theMonitoringPath_);
   
-  PMAnalysis(3);
-  
-  reader_->findTimeSeeds(_geo->cuts()["minPlans"].asUInt());
-  std::vector<uint32_t> vseeds =this->cleanMap(_geo->cuts()["minPlans"].asUInt());
+  //PMAnalysis(3);
+  uint32_t npmin=_geo->cuts()["minPlans"].asUInt();
+  DEBUG_PRINT("Apres PM %d\n",npmin);
+  reader_->findTimeSeeds(npmin,"DHCALRawHits");
+  DEBUG_PRINT("Apres timeseed\n");
+  std::vector<uint32_t> vseeds =this->cleanMap(npmin);
+  DEBUG_PRINT("Apres cleanmap\n");
     //std::vector<uint32_t> vseeds=reader_->getTimeSeeds();
 
   
