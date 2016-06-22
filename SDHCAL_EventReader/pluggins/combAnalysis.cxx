@@ -1,5 +1,3 @@
-#define NX 36
-#define NY 36
 
 #include "combAnalysis.hh"
 #include "DIFUnpacker.h"
@@ -110,7 +108,55 @@ void combAnalysis::processEvent()
       std::cout<<" No se perque on se plante "<<std::endl;
       exit(2);
     }
+  uint32_t dbcid[255];
+  memset(dbcid,0,255*4);
+     for ( std::vector<std::string >::iterator it=(vnames)->begin();it!=vnames->end();it++)
+    {
+      if ((*it).compare("RU_XDAQ")!=0) continue;
+      //      std::cout<<"Collection on  ulle"<<std::endl;
+      EVENT::LCCollection* col= evt_->getCollection(*it); 
+      //std::vector<unsigned char*> vF;
+      //std::vector<unsigned char*> vL;
+      
+
+      for (int j=0;j<col->getNumberOfElements(); j++)
+	{
+	  //IMPL::LCGenericObjectImpl* go= (IMPL::LCGenericObjectImpl*) col->getElementAt(j);
+	  //if (j==0 && dropFirstRU_) continue;
+	  LMGeneric* go= (LMGeneric*) col->getElementAt(j);
+	  int* buf=&(go->getIntVector()[0]);
+
+
+
+
+	  unsigned char* tcbuf = (unsigned char*) buf;
+	  uint32_t rusize =go->getNInt()*sizeof(int32_t);
+	  levbdim::buffer m((char*) tcbuf,0);
+	  m.setPayloadSize(rusize-3*sizeof(uint32_t)-sizeof(uint64_t));
+	  //std::cout<<" Source found "<<m.detectorId()<<" "<<m.dataSourceId()<<std::endl;
+	  if (m.detectorId()!=100) continue;
+	   uint32_t idstart=DIFUnpacker::getStartOfDIF((unsigned char*) m.ptr(),m.size(),20);
+	  //std::cout<<" Start at "<<idstart<<std::endl;
+	  //bool slowcontrol; uint32_t version,hrtype,id0,iddif;
+	  //DCBufferReader::checkType(tcbuf,rusize/4,slowcontrol,version,hrtype,id0,iddif,theXdaqShift_);
+	  //printf(" Found start of Buffer at %d contains %x and %d bytes \n",idstart,tcbuf[idstart],rusize-idstart+1);
+
+	  
+	  
+
+	  unsigned char* tcdif=&tcbuf[idstart];
+	  DIFPtr* d= new DIFPtr(tcdif,rusize-idstart+1);
+	  dbcid[d->getID()]=d->getBCID();
+	}
+    }
+
+
+
   
+  std::map<uint32_t,uint32_t> mecal;
+  std::map<uint32_t,uint32_t> mecalp;
+  mecal.clear();
+  mecalp.clear();
    for ( std::vector<std::string >::iterator it=(vnames)->begin();it!=vnames->end();it++)
     {
       if ((*it).compare("RU_XDAQ")!=0) continue;
@@ -139,15 +185,113 @@ void combAnalysis::processEvent()
 	  struct CaloTransHit *ptr=(struct CaloTransHit*) m.payload();
 	  
 	  uint32_t nhit=m.payloadSize()/sizeof(struct CaloTransHit);
-	  printf("DIF %d %d has %d hits  %d %d \n",m.detectorId(),m.dataSourceId(),nhit,m.payloadSize(),sizeof(struct CaloTransHit));
+	  //printf("DIF %d %d has %d hits  %d %d \n",m.detectorId(),m.dataSourceId(),nhit,m.payloadSize(),sizeof(struct CaloTransHit));
 	  for (int i=0;i<nhit;i++)
 	    {
-	      printf("%d %f %f %f %f %f \n",ptr->asic_bcid,ptr->time,ptr->energy,ptr->x,ptr->y,ptr->z);
+	      //printf("%d %f %f %f %f %f \n",ptr->asic_bcid,ptr->time,ptr->energy,ptr->x,ptr->y,ptr->z);
+	      uint32_t ti=ptr->asic_bcid,tf=0;
+	      std::map<uint32_t,uint32_t>::iterator imf=mecal.find(ti);
+	      if (imf==mecal.end())
+		imf=mecal.find(ptr->asic_bcid-1);
+	      else
+		tf=ti;
+	      if (imf==mecal.end())
+		imf=mecal.find(ptr->asic_bcid+1);
+	      else
+		tf=ti;
+	      if (imf==mecal.end())
+		imf=mecal.find(ptr->asic_bcid-2);
+	      else
+		tf=ti;
+	      if (imf==mecal.end())
+		imf=mecal.find(ptr->asic_bcid+2);
+	      else
+		tf=ti;
+	      if (imf==mecal.end())
+		{
+		  mecal.insert(std::pair<uint32_t,uint32_t>(ptr->asic_bcid,1));
+		  mecalp.insert(std::pair<uint32_t,uint32_t>(ptr->asic_bcid,1<<m.dataSourceId()));
+		}
+	      else
+		{
+		imf->second++;
+		std::map<uint32_t,uint32_t>::iterator imfp=mecalp.find(tf);
+		imfp->second |=(1<<m.dataSourceId());
+		}    
 	      ptr++;
 	    }
 	}
     }
-   printf("%d %d =>",evt_->getRunNumber(),evt_->getEventNumber());
+   printf("%d %d =>\n",evt_->getRunNumber(),evt_->getEventNumber());
+   bool good=false;
+   for (std::map<uint32_t,uint32_t>::iterator imf=mecal.begin();imf!=mecal.end();imf++)
+     {
+       std::bitset<32> mask(mecalp[imf->first]);
+       if (mask.count()<4) continue;
+       std::cout<<mask<<std::endl;
+       printf("%d -> %d mask count %d \n",imf->first*2,imf->second,mask.count());
+       good=true;
+     }
+   if (!good) return;
+   getchar();
+    std::map<uint32_t,uint32_t> mhcal;
+  mhcal.clear();
+   for ( std::vector<std::string >::iterator it=(vnames)->begin();it!=vnames->end();it++)
+    {
+      if ((*it).compare("RU_XDAQ")!=0) continue;
+      //      std::cout<<"Collection on  ulle"<<std::endl;
+      EVENT::LCCollection* col= evt_->getCollection(*it); 
+      //std::vector<unsigned char*> vF;
+      //std::vector<unsigned char*> vL;
+      
+
+      for (int j=0;j<col->getNumberOfElements(); j++)
+	{
+	  //IMPL::LCGenericObjectImpl* go= (IMPL::LCGenericObjectImpl*) col->getElementAt(j);
+	  //if (j==0 && dropFirstRU_) continue;
+	  LMGeneric* go= (LMGeneric*) col->getElementAt(j);
+	  int* buf=&(go->getIntVector()[0]);
+
+
+
+
+	  unsigned char* tcbuf = (unsigned char*) buf;
+	  uint32_t rusize =go->getNInt()*sizeof(int32_t);
+	  levbdim::buffer m((char*) tcbuf,0);
+	  m.setPayloadSize(rusize-3*sizeof(uint32_t)-sizeof(uint64_t));
+	  //std::cout<<" Source found "<<m.detectorId()<<" "<<m.dataSourceId()<<std::endl;
+	  if (m.detectorId()!=201) continue;
+	  struct CaloTransHit *ptr=(struct CaloTransHit*) m.payload();
+	  
+	  uint32_t nhit=m.payloadSize()/sizeof(struct CaloTransHit);
+	  //printf("DIF %d %d has %d hits  %d %d \n",m.detectorId(),m.dataSourceId(),nhit,m.payloadSize(),sizeof(struct CaloTransHit));
+	  
+	  for (int i=0;i<nhit;i++)
+	    {
+	      //printf("%d %f %f %f %f %f %d\n",ptr->asic_bcid,ptr->time,ptr->energy,ptr->x,ptr->y,ptr->z,dbcid[m.dataSourceId()]);
+	      uint32_t ti =dbcid[m.dataSourceId()]-ptr->asic_bcid;
+	      std::map<uint32_t,uint32_t>::iterator imf=mhcal.find(ti);
+	      if (imf==mhcal.end())
+		imf=mhcal.find(ti-1);
+	      if (imf==mhcal.end())
+		imf=mhcal.find(ti+1);
+	      if (imf==mhcal.end())
+		imf=mhcal.find(ti-2);
+	      if (imf==mhcal.end())
+		imf=mhcal.find(ti+2);
+	      if (imf==mhcal.end())
+		mhcal.insert(std::pair<uint32_t,uint32_t>(ti,1));
+	      else
+		imf->second++;
+			     
+	      ptr++;
+	    }
+	}
+    }
+   printf("%d %d =>\n",evt_->getRunNumber(),evt_->getEventNumber());
+   for (std::map<uint32_t,uint32_t>::iterator imf=mhcal.begin();imf!=mhcal.end();imf++)
+     if (imf->second>50)
+       printf("%d -> %d (+%d) \n",imf->first,imf->second,imf->first+2490);
    getchar();
 
 }
