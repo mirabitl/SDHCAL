@@ -69,6 +69,7 @@ public:
     return os;
   }
   static void combine(std::vector<planeCluster*> pc,jsonGeo* g,std::vector<recoTrack*>& vtk);
+  static void combinePoint(std::vector<recoPoint*> pc,jsonGeo* g,  std::vector<recoTrack*> &vtk);
   void getChi2(std::vector<planeCluster*> clusters);
 
 private:

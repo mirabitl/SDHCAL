@@ -3,7 +3,7 @@
 #include <Math/DisplacementVector3D.h>
 #include <TMath.h>
 #define posError 0.5
-planeCluster::planeCluster(RecoHit *h) : valid_(true),_used(false)
+planeCluster::planeCluster(RecoHit *h) 
 {
 	hits_.clear();
 	add(h);
