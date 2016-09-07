@@ -390,7 +390,7 @@ int DHCalEventReader::parseSDHCALEvent()
   std::vector<uint32_t> seed;seed.clear();
   IMPL::LCCollectionVec* HitVec=this->createRawCalorimeterHits(seed);
   try{
-    if (HitVec->getNumberOfElements()!=0 &&HitVec->getNumberOfElements()<300000 )
+    if (HitVec->getNumberOfElements()!=0 &&HitVec->getNumberOfElements()<MAX_NUMBER_OF_HIT )
       evt_->addCollection(HitVec,"DHCALRawHits");
     else
       delete HitVec;
@@ -683,7 +683,7 @@ IMPL::LCCollectionVec* DHCalEventReader::createRawCalorimeterHits(std::vector<ui
 
 	  //	  std::cout<<"rebd "<<TTT<<" "<<hit->getCellID1()<<std::endl;
 	   RawVec->addElement(hit);
-	   if (RawVec->getNumberOfElements()>1000000) break; //too may noise
+	   if (RawVec->getNumberOfElements()>MAX_NUMBER_OF_HIT) break; //too may noise
 	}
       }
     }
