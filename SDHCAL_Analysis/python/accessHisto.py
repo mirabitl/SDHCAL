@@ -226,7 +226,7 @@ def DrawSummary(run,i):
   c.SaveAs("Summary_%d_Plan%d.bmp" % (run,i))
   c.SaveAs("Summary_%d_Plan%d.pdf" % (run,i)) 
   time.sleep(3)
-def GetEff(dirp,plan):
+def GetEff(dirp,plan,nbinc=10,nbemin=20):
   l=[]
   dirname=dirp+'/Plan%d' % plan
   extname= dirname+'/ext'
@@ -243,11 +243,27 @@ def GetEff(dirp,plan):
   
   hnear.Draw("COLZ")
   hnearm=hnear.Clone("hnearm")
-  rs=4
-  if (hext.GetEntries()<1E6):
-    hext.Rebin2D(rs,rs)
-    hnear.Rebin2D(rs,rs)
+
+  rs=2
+
+
+  nbe=0
+  nrb=0
+  while nbe<nbemin and nrb<4:
+    for i in range(1,hext.GetXaxis().GetNbins()):
+      for j in range(1,hext.GetYaxis().GetNbins()):
+        if (hext.GetBinContent(i+1,j+1)>nbinc):
+          nbe=nbe+1;
+    if (nbe<nbemin):
+      #print "rebinning"
+      hext.Rebin2D(rs,rs)
+      hnear.Rebin2D(rs,rs)
+
+      nrb=nrb+1
+      if nrb<4:
+        nbe=0
     #hmul.Rebin2D(rs,rs)
+  #print "Number of binextra",nbe
   heff = hnear.Clone("heff")
   heff.SetDirectory(0)
   heff.Divide(hnear,hext,100.,1.)
@@ -263,12 +279,12 @@ def GetEff(dirp,plan):
   hmulsum=TH1F("Summul%d" % plan ,"Multiplicity for plan %d " % plan,200,-0.1,7.1)
   st = ''
   ntk=0;
-  for i in range(2,heff.GetXaxis().GetNbins()-1):
-    for j in range(2,heff.GetYaxis().GetNbins()-1):
+  for i in range(1,heff.GetXaxis().GetNbins()):
+    for j in range(1,heff.GetYaxis().GetNbins()):
       st = st + '%f ' % heff.GetBinContent(i+1,j+1)
       ntk=ntk+hext.GetBinContent(i+1,j+1)
       # Cut a 15 change en 5
-      if (hext.GetBinContent(i+1,j+1)>25):
+      if (hext.GetBinContent(i+1,j+1)>10):
         heffsum.Fill(heff.GetBinContent(i+1,j+1))
   for i in range(2,hmulc.GetXaxis().GetNbins()-1):
     for j in range(2,hmulc.GetYaxis().GetNbins()-1):
@@ -287,6 +303,9 @@ def GetEff(dirp,plan):
   l.append(hnear1.GetEntries())
   l.append(hnear2.GetEntries())
   l.append(hmulsum.GetMean())
+  
+  l.append(" %5.2f +- %5.2f " % (l[3].GetMean(),l[3].GetRMS()/sqrt(l[3].GetEntries()+1)))
+  #print l[3].GetMean(),l[3].GetRMS()/sqrt(l[3].GetEntries())
   return l
 
 def drawEff(c,l):

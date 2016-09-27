@@ -2457,11 +2457,11 @@ uint32_t TrackAnalyzer::buildPrincipal(std::vector<RecoHit*> &vrh,std::string vd
       
       if (npext<tkExtMinPoint_) continue; // Au moins 4 plans dans l'estrapolation touches 
 
-      if (ip>1 && !tex.plane(ip-1)) continue;
-      if (ip>2 && !tex.plane(ip-2)) continue;
+      //if (ip>1 && !tex.plane(ip-1)) continue;
+      //if (ip>2 && !tex.plane(ip-2)) continue;
       
-      if (ip<lch && !tex.plane(ip+1)) continue;
-      if (ip<(lch-1) && !tex.plane(ip+2)) continue;
+      //if (ip<lch && !tex.plane(ip+1)) continue;
+      //if (ip<(lch-1) && !tex.plane(ip+2)) continue;
       
 	//if (npext<minChambersInTime_) continue;
       

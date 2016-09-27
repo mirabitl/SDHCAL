@@ -29,7 +29,7 @@ class hitMonitor
 public:
   hitMonitor(jsonGeo* g);
   void clear();
-  void FillTimeAsic(IMPL::LCCollectionVec* rhcol);
+  void FillTimeAsic(IMPL::LCCollectionVec* rhcol,bool difanalysis=false);
   void DIFStudy( IMPL::LCCollectionVec* rhcol,bool external=false);	
 
 

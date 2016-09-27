@@ -31,6 +31,7 @@
 #define DU_FRAME_DATA_SHIFT        4
 #define DU_FRAME_SIZE              20
 
+#define MAX_NUMBER_OF_HIT 4000000
 class DIFUnpacker {
 public:
   static unsigned long long GrayToBin(unsigned long long n);

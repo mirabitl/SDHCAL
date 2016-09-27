@@ -24,9 +24,24 @@
 #include "DifGeom.h"
 #include "DIFSnapShot.h"
 #include "Shower.h"
-#include "TrackInfo.h"
-#include <time.h>
 
+#include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/dir.h>  
+#include <sys/param.h>  
+#include <stdio.h>  
+#include <stdlib.h>  
+#include <unistd.h>  
+#include <string.h>
+#include <stdint.h>
+#include <fcntl.h>
+#include <iostream>
+#include <sstream>
 
 
 uint32_t count_plan(uint32_t K,bool printit=false)
@@ -75,36 +90,79 @@ TricotAnalyzer::TricotAnalyzer() :nAnalyzed_(0),theMonitoringPeriod_(0),theMonit
  //   }
  // else
  //   {
+#ifdef FIRSTTRY
+      _pltyp.insert(std::pair<uint8_t,uint8_t>(5,1));
+     _pltyp.insert(std::pair<uint8_t,uint8_t>(94,1));
+     _pltyp.insert(std::pair<uint8_t,uint8_t>(99,1));
+     _pltyp.insert(std::pair<uint8_t,uint8_t>(128,1));
+     _pltyp.insert(std::pair<uint8_t,uint8_t>(1,1));
+     _pltyp.insert(std::pair<uint8_t,uint8_t>(142,0));
+
+     _plid.insert(std::pair<uint8_t,uint8_t>(142,0));
      _plid.insert(std::pair<uint8_t,uint8_t>(5,1));
      _plid.insert(std::pair<uint8_t,uint8_t>(94,2));
      _plid.insert(std::pair<uint8_t,uint8_t>(99,3));
      _plid.insert(std::pair<uint8_t,uint8_t>(128,4));
      _plid.insert(std::pair<uint8_t,uint8_t>(1,5));
+
+     
+     _pldif.insert(std::pair<uint8_t,uint8_t>(0,142));
      _pldif.insert(std::pair<uint8_t,uint8_t>(1,5));
      _pldif.insert(std::pair<uint8_t,uint8_t>(2,94));
      _pldif.insert(std::pair<uint8_t,uint8_t>(3,99));
      _pldif.insert(std::pair<uint8_t,uint8_t>(4,128));
      _pldif.insert(std::pair<uint8_t,uint8_t>(5,1));
-     _plz.insert(std::pair<uint8_t,float>(5,10.));
-     _plz.insert(std::pair<uint8_t,float>(94,29.));
-     _plz.insert(std::pair<uint8_t,float>(99,45.));
-     _plz.insert(std::pair<uint8_t,float>(128,61.));
-     _plz.insert(std::pair<uint8_t,float>(1,77.));
+
+     _plz.insert(std::pair<uint8_t,float>(142,10.));
+     _plz.insert(std::pair<uint8_t,float>(5,29.));
+     _plz.insert(std::pair<uint8_t,float>(94,48.));
+     _plz.insert(std::pair<uint8_t,float>(99,64.));
+     _plz.insert(std::pair<uint8_t,float>(128,80.));
+     _plz.insert(std::pair<uint8_t,float>(1,96.));
+
      
      _pldx.insert(std::pair<uint8_t,float>(5,0.35));
      _pldx.insert(std::pair<uint8_t,float>(94,-0.1));
      _pldx.insert(std::pair<uint8_t,float>(99, -0.08));
      _pldx.insert(std::pair<uint8_t,float>(128,0.16));
      _pldx.insert(std::pair<uint8_t,float>(1,0.84));
+     _pldx.insert(std::pair<uint8_t,float>(142,-10.));
 
      _pldy.insert(std::pair<uint8_t,float>(5,0.35));
      _pldy.insert(std::pair<uint8_t,float>(94,-0.1));
      _pldy.insert(std::pair<uint8_t,float>(99,0.25));
      _pldy.insert(std::pair<uint8_t,float>(128,-0.09));
      _pldy.insert(std::pair<uint8_t,float>(1,0.));
+     _pldy.insert(std::pair<uint8_t,float>(142,-2.));
+
+     _plaxi.insert(std::make_pair(0,-8.0));
+     _playi.insert(std::make_pair(0,2.8));
+     _plaxa.insert(std::make_pair(0,18.0));
+     _playa.insert(std::make_pair(0,28.8));
+
+     _plaxi.insert(std::make_pair(1,0.0));
+     _playi.insert(std::make_pair(1,0.0));
+     _plaxa.insert(std::make_pair(1,18.0));
+     _playa.insert(std::make_pair(1,28.3));
+     _plaxi.insert(std::make_pair(2,0.0));
+     _playi.insert(std::make_pair(2,0.0));
+     _plaxa.insert(std::make_pair(2,18.0));
+     _playa.insert(std::make_pair(2,28.3));
+     _plaxi.insert(std::make_pair(3,0.0));
+     _playi.insert(std::make_pair(3,0.0));
+     _plaxa.insert(std::make_pair(3,18.0));
+     _playa.insert(std::make_pair(3,28.3));
+     _plaxi.insert(std::make_pair(4,0.0));
+     _playi.insert(std::make_pair(4,0.0));
+     _plaxa.insert(std::make_pair(4,18.0));
+     _playa.insert(std::make_pair(4,28.3));
+     _plaxi.insert(std::make_pair(5,0.0));
+     _playi.insert(std::make_pair(5,0.0));
+     _plaxa.insert(std::make_pair(5,9.9));
+     _playa.insert(std::make_pair(5,28.3));
      //   }
 
-
+#endif
 
 
 }
@@ -159,10 +217,25 @@ void TricotAnalyzer::processEvent()
   
   if (reader_->getEvent()==0) return;
   evt_=reader_->getEvent();
+  std::cout<<" Processing "<<evt_->getRunNumber()<<"-"<<evt_->getEventNumber()<<std::endl;
+  /*
   if (reader_->getRunHeader()!=0)
     std::cout<<reader_->getRunHeader()->getParameters().getStringVal("Setup")<<std::endl;
-  
+  */
   if (evt_->getEventNumber()<=theSkip_) return;
+  if (nAnalyzed_==0)
+    {
+      std::stringstream filename("");    
+      filename<<"./tricot_"<<evt_->getRunNumber()<<".dat";
+      _fdOut= ::open(filename.str().c_str(),O_CREAT| O_RDWR | O_NONBLOCK,S_IRWXU);
+      if (_fdOut<0)
+	{
+	  perror("No way to store to file :");
+      //std::cout<<" No way to store to file"<<std::endl;
+	  return;
+	}  
+    }
+  nAnalyzed_++;
   TH1* hacqtime=rootHandler_->GetTH1("AcquisitionTime");
 
   
@@ -173,7 +246,7 @@ void TricotAnalyzer::processEvent()
 
       hfr2=rootHandler_->BookTH2("HitFrequency",255,0.1,255.1,48,0.1,48.1);
     }
-  printf("4\n");
+  //  printf("4\n");
    reader_->parseRawEvent();
   std::vector<DIFPtr*>::iterator itb =reader_->getDIFList().begin();
   if (itb==reader_->getDIFList().end()) return;
@@ -183,16 +256,78 @@ void TricotAnalyzer::processEvent()
   if ( theStartBCID_==0) theStartBCID_=dbase->getAbsoluteBCID();
   theEventTotalTime_=0; 
  
-  std::cout<<"Event  "<<dbase->getAbsoluteBCID()<<std::endl;
+  //std::cout<<"Event  "<<dbase->getAbsoluteBCID()<<std::endl;
+  bool goodevent=false;
+  std::vector<uint32_t> gseed;
+  gseed.clear();
   
-#define DRAWPLOTN
+  this->buildFrameMap(gseed);
+  uint32_t nsg=0,nsb=0;
+  for (std::vector<uint32_t>::iterator it=gseed.begin();it!=gseed.end();it++)
+    {
+      if ( (*it)<19) nsg++;
+      if ((*it)<15) nsb++;
+    }
+  goodevent=(nsg==1) && (nsb==0);
+  if (!goodevent) return;
+
+  // Map study
+  for( std::map<uint32_t,std::vector<ptrDifFrame> >::iterator im=_FrameMap.begin(),im_next=im;im!=_FrameMap.end();im++)
+	{
+	  if (im->first>18) continue;
+	  std::bitset<16> difs;
+	  difs.reset();
+	  for (std::vector<ptrDifFrame>::iterator ih=im->second.begin();ih!=im->second.end();ih++)
+	    difs.set((uint8_t) _plid[ih->first->getID()]);
+	 
+	  std::cout<<im->first<<" "<<difs.to_string().substr(16-_plid.size(),_plid.size())<<std::endl;
+
+	  std::vector<ptrDifFrame> &v=im->second;
+	  _currentSeed=im->first;
+	  this->dumpSeed(v);
+	  //this->processOneSeed(v);
+	  
+	  if (_npBuf>=3) {
+	    this->buildPrincipal("/Track");
+	    // this->ShowTracks();
+	  }
+	  for (std::vector<ptrDifFrame>::iterator ih=im->second.begin();ih!=im->second.end();ih++)
+	    {
+	      uint32_t difid=ih->first->getID();
+	      DIFPtr* d=ih->first;
+	      //std::cout<<"\t "<<difid<<" "<<(uint32_t) _plid[difid]<<" "<<d->getFrameTimeToTrigger(ih->second)<<" "<<d->getFrameAsicHeader(ih->second)<<std::endl;
+	    }
+	  for (int i=0;i<_plid.size();i++)
+	    {
+	      theTotalCount_[i][0]++;
+	      if ((i==0) && !(difs.test(1) && difs.test(2) && difs.test(_plid.size()-1)) )
+		{
+		  //printf("%d %d %d %d \n",difs.test(i),difs.test(1), _plid.size()-1,difs.test(_plid.size()-1));
+		  continue;
+		}
+	      if (i==(_plid.size()-1) && !(difs[0] && difs[_plid.size()-3]&& difs[_plid.size()-2]))
+		  continue;
+	      
+	      if (i!=0 && i!=(_plid.size()-1) && !(difs[i-1] && difs[i+1])) continue;
+	      theTotalCount_[i][1]++;
+	      if (difs.test(i)) theTotalCount_[i][2]++;
+	    }
+	}
+  for (int i=0;i<_plid.size();i++)
+    printf("%2d %3d %6d %6d %6d %5.2f \n",i,_pldif[i],theTotalCount_[i][0],theTotalCount_[i][1],theTotalCount_[i][2],theTotalCount_[i][2]*100./theTotalCount_[i][1]);
+	  
+
+  //getchar();
+  return;
+#ifdef OLDWAYSTRIP  
+#define DRAWPLOT
 #ifdef DRAWPLOT
   if (TCPlot==NULL)
     {
       TCPlot=new TCanvas("TCPlotR","tcplotr1",1300,900);
       TCPlot->Modified();
       TCPlot->Draw();
-      TCPlot->Divide(2,3);
+      TCPlot->Divide(3,3);
     }
 
 #endif
@@ -217,11 +352,12 @@ void TricotAnalyzer::processEvent()
       DIFPtr* d = (*it);
       if (d->getID()>255) continue;
 
-      printf("DIF %d BCID %d %d frames \n",d->getID(),d->getBCID(),d->getNumberOfFrames());
+      //printf("DIF %d BCID %d %d frames \n",d->getID(),d->getBCID(),d->getNumberOfFrames());
       for (uint32_t i=0;i<d->getNumberOfFrames();i++)
       {
 	if (d->getID()<256)
 	  {
+	    //if (d->getID()==142)
 	    //printf("%d ",d->getFrameTimeToTrigger(i));
 	    int32_t idt=d->getBCID()-d->getFrameBCID(i);
 	    if (idt<0)
@@ -267,7 +403,7 @@ void TricotAnalyzer::processEvent()
 			
 	  }
       }
-      printf("\n");
+      //printf("\n");
     }
   uint32_t nseeds=0;
   std::vector<uint32_t> seedm;
@@ -312,9 +448,6 @@ void TricotAnalyzer::processEvent()
        ich++;
   
     }
-  bool goodevent=false;
-  std::vector<uint32_t> gseed;
-  gseed.clear();
 for (std::vector<uint32_t>::iterator is=seedm.begin();is!=seedm.end();is++)
  {
    std::map<uint32_t,uint32_t >::iterator ichn=chti.find((*is));
@@ -329,7 +462,7 @@ for (std::vector<uint32_t>::iterator is=seedm.begin();is!=seedm.end();is++)
 
 
  if (!goodevent) return;
- this->buildFrameMap(gseed);
+
  TH2* hplx=rootHandler_->GetTH2("/plx");
  TH2* hply=rootHandler_->GetTH2("/ply");
  if (hplx==NULL)
@@ -364,15 +497,15 @@ for (std::vector<uint32_t>::iterator is=seedm.begin();is!=seedm.end();is++)
       TH2* hpl=rootHandler_->GetTH2(s1.str());
       if (hpl==NULL)
 	{
-	  hpl=rootHandler_->BookTH2(s1.str(),40,-10.,30.,40,-10.,30.);
+	  hpl=rootHandler_->BookTH2(s1.str(),70,-10.,60.,70,-10.,70.);
 	}
-      //else
-      //	hpl->Reset();
+      else
+	hpl->Reset();
    
       std::vector<float> va_,vb_;
       va_.clear();
       vb_.clear();
-      std::vector<StripCluster*> _cl;
+      std::vector<TStripCluster*> _cl;
 
       
      // Loop on frames
@@ -456,7 +589,7 @@ for (std::vector<uint32_t>::iterator is=seedm.begin();is!=seedm.end();is++)
 	{
 	  hfratime =rootHandler_->BookTH1(s0.str()+ "/FrameTime",2000,0.,2000.);
 	  hnpd =rootHandler_->BookTH1( s0.str()+"/Npad",64,0.1,64.1);
-	  hmit=rootHandler_->BookTH2(s0.str()+"/HitMapIT",48,0.1,48.1,32,0.1,32.1);
+	  hmit=rootHandler_->BookTH2(s0.str()+"/HitMapIT",6*8,0.1,48.1,4*8,0.1,32.1);
 	}
 
       hfratime->Fill(dmin*1.);
@@ -464,7 +597,14 @@ for (std::vector<uint32_t>::iterator is=seedm.begin();is!=seedm.end();is++)
 
       if (dmin>13.5 && dmin<20.5)
 	{
-	  printf("DIF %d :",d->getID());
+	  printf("DIF %d : \n",d->getID());
+	  uint32_t difid=d->getID();
+	  uint32_t plan=_plid[difid];
+	  
+	  float zp=_plz[difid];
+	  float dxp=_pldx[difid];
+	  float dyp=_pldy[difid];
+
 	for (uint32_t i=0;i<d->getNumberOfFrames();i++)
 	  {
 
@@ -476,15 +616,34 @@ for (std::vector<uint32_t>::iterator is=seedm.begin();is!=seedm.end();is++)
 		  {
 		    if (!(d->getFrameLevel(i,j,0) || d->getFrameLevel(i,j,1))) continue;
 		    int asic=d->getFrameAsicHeader(i),channel=j+1,x=0,y=0;
-
+		    //if (d->getID()==142 && asic>=11)
+		    //  {printf("======================================================>%d %d \n",d->getID(),asic);
+		    //	asic=asic+2;}
 		    DifGeom::PadConvert(asic,channel,x,y,2);
 
+		    if (d->getID()==142 )
+		      {
+			printf("%d %d %f %d %d \n",asic,channel,zp,x,y);
+		      hpl->Fill(x*1.,y*1.);
+		      hplx->Fill(zp,x*1.);
+		      hply->Fill(zp,y*1.);
+		      
+		      plhit.set(plan);
+		      }
+		    /*
+		    _x[_npBuf]=x;
+		    _y[_npBuf]=y;
+		    _z[_npBuf]=zp;
+		    _layer[_npBuf]=plan;
+		    _npBuf++;
+		    */
 		    hmit->Fill(x*1.,y*1.,1.);
 		    npd++;
 		  }
 		hnpd->Fill(npd*1.);
 
 	      }
+	    if (d->getID()==142) goto mplot;
 	    if (d->getFrameTimeToTrigger(i)>13.5 &&  d->getFrameTimeToTrigger(i)<20.5)
 	      
 	      for (uint32_t j=0;j<64;j++)
@@ -493,11 +652,11 @@ for (std::vector<uint32_t>::iterator is=seedm.begin();is!=seedm.end();is++)
 		  int asic=d->getFrameAsicHeader(i),channel=j+1;
 		  //printf("(%d,%d,%d)-",d->getFrameTimeToTrigger(i),asic,channel);
 		  bool ap=false;
-		  for (std::vector<StripCluster*>::iterator it=_cl.begin();it!=_cl.end();it++)
+		  for (std::vector<TStripCluster*>::iterator it=_cl.begin();it!=_cl.end();it++)
 		    {ap=ap || (*it)->append(asic,channel); if (ap) break;}
 		  if (!ap)
 		    {
-		      StripCluster* sc=new StripCluster(asic,channel);
+		      TStripCluster* sc=new TStripCluster(asic,channel);
 		      _cl.push_back(sc);
 		    }
 	
@@ -505,10 +664,10 @@ for (std::vector<uint32_t>::iterator is=seedm.begin();is!=seedm.end();is++)
 	  }
 	
 	// printf("Strips hit %d \n",_cl.size());
-	// for (std::vector<StripCluster*>::iterator it=_cl.begin();it!=_cl.end();it++)
+	// for (std::vector<TStripCluster*>::iterator it=_cl.begin();it!=_cl.end();it++)
 	//   printf("(%d-%f)-",(*it)->asic(),(*it)->x());
 	// printf("\n");
-	//hpl->Reset();
+	hpl->Reset();
 	uint32_t np=0;
 	for (int i=0;i<_cl.size();i++)
 	  for(int j=i+1;j<_cl.size();j++)
@@ -521,12 +680,14 @@ for (std::vector<uint32_t>::iterator is=seedm.begin();is!=seedm.end();is++)
 		  np++;
 		}
 	    }
-
+	/*
 	uint32_t difid=d->getID();
 	uint32_t plan=_plid[difid];
+
 	float zp=_plz[difid];
 	float dxp=_pldx[difid];
 	float dyp=_pldy[difid];
+	*/
 	for (int i=0;i<_cl.size();i++)
 	  for(int j=i+1;j<_cl.size();j++)
 	    {
@@ -595,22 +756,23 @@ for (std::vector<uint32_t>::iterator is=seedm.begin();is!=seedm.end();is++)
 	//printf("\n");
 
 	}
-
+    mplot:
 #ifdef DRAWPLOT
       TCPlot->cd(_plid[d->getID()]);hpl->Draw("COLZ");ipl++;      
       TCPlot->Modified();
       TCPlot->Draw();
       TCPlot->Update();
 #endif
-      for (std::vector<StripCluster*>::iterator it=_cl.begin();it!=_cl.end();it++)
+      for (std::vector<TStripCluster*>::iterator it=_cl.begin();it!=_cl.end();it++)
 	delete (*it);
     }
   if (_npBuf>=3) this->buildPrincipal("/Track");
 #ifdef DRAWPLOT
-  if (plhit[1]&&plhit[2]&&plhit[3]&&plhit[4]&&plhit[5])
+  
+  if (1)
     {
-  TCPlot->cd(5);hplx->Draw("COLZ");
-  TCPlot->cd(6);hply->Draw("COLZ");      
+      TCPlot->cd(7);hplx->Draw("COLZ");
+      TCPlot->cd(8);hply->Draw("COLZ");      
       TCPlot->Modified();
       TCPlot->Draw();
       TCPlot->Update();
@@ -672,7 +834,7 @@ for (std::vector<uint32_t>::iterator is=seedm.begin();is!=seedm.end();is++)
   */
   //  LCTOOLS::printParameters(rhcol->parameters());
   //DEBUG_PRINT("Time Stamp %d \n",evt_->getTimeStamp());
-
+#endif
 }
 double mxmin[100];
 double mxmax[100];
@@ -682,9 +844,10 @@ double mymax[100];
 
 uint32_t TricotAnalyzer::buildPrincipal(std::string vdir)
 {
-  uint32_t tkMinPoint_=3;
-  uint32_t tkExtMinPoint_=3;
-  
+  _tk.clear();
+  uint32_t tkMinPoint_=2;
+  uint32_t tkExtMinPoint_=2;
+  uint32_t fch=0,lch=6;  
   std::stringstream st;
   st<<vdir<<"/";
   TH1* hnp0= rootHandler_->GetTH1(st.str()+"Np");
@@ -704,6 +867,25 @@ uint32_t TricotAnalyzer::buildPrincipal(std::string vdir)
 
 
     }
+  for (int ip=fch;ip<lch;ip++)
+    {
+      std::stringstream s;
+      s<<st.str()<<"Plan"<<ip<<"/";
+	      
+      TH2* hall= rootHandler_->GetTH2(s.str()+"all");
+      if (hall==NULL)
+	{
+	  hall= rootHandler_->BookTH2(s.str()+"all",100,-20.,80,100,-20.,80.);
+	}
+      for (uint32_t ic=0;ic<_npBuf;ic++)
+	{
+	  if (_layer[ic]!=ip) continue;
+	  hall->Fill(_x[ic],_y[ic]);
+	}
+    }
+  
+
+  
   hnp0->Fill(_npBuf*1.);
   if (_npBuf>8) return 0;
   ShowerParams isha;
@@ -737,7 +919,7 @@ uint32_t TricotAnalyzer::buildPrincipal(std::string vdir)
   tk0.set_ay(ay);
   tk0.set_by(by);
   //INFO_PRINT("Avant regression ");
-  double cut=3.;
+  double cut=8.;
   for (uint32_t i=0;i<_npBuf;i++)
     {
       if (abs(tk0.closestApproach(_x[i],_y[i],_z[i]))<cut)
@@ -758,57 +940,56 @@ uint32_t TricotAnalyzer::buildPrincipal(std::string vdir)
     }
   tk0.regression();
   //INFO_PRINT("Avant Second fit ");
-  TrackInfo tk;tk.clear();
-  tk.set_ax(tk0.ax());
-  tk.set_bx(tk0.bx());
-  tk.set_ay(tk0.ay());
-  tk.set_by(tk0.by());
+  TrackInfo tk;_tk.clear();
+  _tk.set_ax(tk0.ax());
+  _tk.set_bx(tk0.bx());
+  _tk.set_ay(tk0.ay());
+  _tk.set_by(tk0.by());
   cut=8.;
   for (uint32_t i=0;i<_npBuf;i++)
     {
-      if (abs(tk.closestApproach(_x[i],_y[i],_z[i]))<cut)
+      if (abs(_tk.closestApproach(_x[i],_y[i],_z[i]))<cut)
 	{
 	  // 3 hits on tag
 	  if (_layer[i]>60)
 	    printf(" bad stub %f %f %f %d \n",_x[i],_y[i],_z[i],_layer[i]);
-	  if (!tk.plane(_layer[i]))
-	    tk.add_point(_x[i],_y[i],_z[i],_layer[i]);
-	  if (tk.size()>=3)
+	  if (!_tk.plane(_layer[i]))
+	    _tk.add_point(_x[i],_y[i],_z[i],_layer[i]);
+	  if (_tk.size()>=3)
 	    {
-	      tk.regression();
-	      cut=2.;
+	      _tk.regression();
+	      cut=8.;
 	    }
 	}
       
     }
   
   //INFO_PRINT("Apres second fit \n");
-  if (tk.size()<tkMinPoint_)
+  if (_tk.size()<tkMinPoint_ || _tk.chi2x()>3 || _tk.chi2y()>3)
     {
    return 0;
     }
 
-  //if (tk.size()<minChambersInTime_) continue;
-  //if (fabs(tk.ax())<1.E-2) continue;
-  //if (fabs(tk.ax())<0.5 && fabs(tk.ay())<0.5) theNbTracks_++;
+  //if (_tk.size()<minChambersInTime_) continue;
+  //if (fabs(_tk.ax())<1.E-2) continue;
+  //if (fabs(_tk.ax())<0.5 && fabs(_tk.ay())<0.5) theNbTracks_++;
   //this->draw(tk);
   //char c;c=getchar();putchar(c); if (c=='.') exit(0);
-  uint32_t fch=int(ceil(tk.zmin()*10))/28+1;
-  uint32_t lch=int(ceil(tk.zmax()*10))/28+1;
+
   
 
   // Calcul de l'efficacite
 
   // Track info
   
-  hnp->Fill(tk.size()*1.);
+  hnp->Fill(_tk.size()*1.);
 
-  hax->Fill(tk.ax());
-  hay->Fill(tk.ay());
-  fch=1;lch=5;
+  hax->Fill(_tk.ax());
+  hay->Fill(_tk.ay());
+
   for (int ip=fch;ip<=lch;ip++)
-    if (tk.plane(ip)) hnpl->Fill(ip*1.);
-  //std::cout<<tk.planes()<<std::endl;
+    if (_tk.plane(ip)) hnpl->Fill(ip*1.);
+  //std::cout<<_tk.planes()<<std::endl;
   //getchar();
     
   for (uint32_t ip=fch;ip<=lch;ip++)
@@ -816,18 +997,19 @@ uint32_t TricotAnalyzer::buildPrincipal(std::string vdir)
       //INFO_PRINT("Plan %d studied \n",ip);
       TrackInfo tex;
 	      
-      tk.exclude_layer(ip,tex);
+      _tk.exclude_layer(ip,tex);
       
       uint32_t npext=tex.size();
       
       if (npext<tkExtMinPoint_) continue; // Au moins 4 plans dans l'estrapolation touches 
-
+      /*
       if (ip>1 && !tex.plane(ip-1)) continue;
       //if (ip>2 && !tex.plane(ip-2)) continue;
-      
+      if (ip==1 &&  !( tex.plane(ip+1) &&tex.plane(ip+2))) continue;
       if (ip<lch && !tex.plane(ip+1)) continue;
+      if (ip==lch &&  !( tex.plane(ip-1) &&tex.plane(ip-2))) continue;
       //if (ip<(lch-1) && !tex.plane(ip+2)) continue;
-      
+      */
 	//if (npext<minChambersInTime_) continue;
       
       std::stringstream s;
@@ -876,8 +1058,12 @@ uint32_t TricotAnalyzer::buildPrincipal(std::string vdir)
       xext=tex.xext(_plz[_pldif[ip]]);
       yext=tex.yext(_plz[_pldif[ip]]);
 
-      if (xext<mxmin[ip]+chamberEdge_ || xext>mxmax[ip]-chamberEdge_) continue;
-      if (yext<mymin[ip]+chamberEdge_ || yext>mymax[ip]-chamberEdge_) continue;
+      //      if (xext<mxmin[ip]+chamberEdge_ || xext>mxmax[ip]-chamberEdge_) continue;
+      //if (yext<mymin[ip]+chamberEdge_ || yext>mymax[ip]-chamberEdge_) continue;
+      if (xext<_plaxi[ip]) continue;
+      if (yext<_playi[ip]) continue;
+      if (xext>_plaxa[ip]) continue;
+      if (yext>_playa[ip]) continue;
       
       hext->Fill(xext,yext);
       //bool 
@@ -935,23 +1121,299 @@ uint32_t TricotAnalyzer::buildPrincipal(std::string vdir)
  
    return 1;
 }
-void TricotAnalyzer::processSeeds()
-{
+class hitinfo {
+public:
+  hitinfo(){_plan=0;memset(padding,0,7);}
+  float _x,_y,_z;
+  uint8_t _type,_plan,_dif,_asic,_channel;
+  uint8_t padding[7];
   
-  for ( std::map<uint32_t,std::vector<ptrDifFrame> >::iterator im=_FrameMap.begin();im!=_FrameMap.end();im++)
+};
+void TricotAnalyzer::dumpSeed(std::vector<ptrDifFrame> &vf)
+{
+  std::vector<hitinfo> vhi;
+  vhi.clear();
+   for (std::vector<ptrDifFrame>::iterator ip=vf.begin();ip!=vf.end();ip++)
     {
-      // Loop  on all frames and store per DIF
-      std::map<uint32_t,std::vector<StripCluster> > difm;
-      for (std::vector<pdf>::iterator ip=im->second.begin();ip!=im->second.end();ip++)
-	{
 	  //uint32_t idh=imfind(ip->first->getID());
+      DIFPtr* d=ip->first;
+      uint32_t iframe=ip->second;
+      //printf("DIF %d :  frame %d \n",d->getID(),iframe);
+      uint32_t difid=d->getID();
+      uint32_t plan=_plid[difid];
+      
+      float zp=_plz[difid];
+      float dxp=_pldx[difid];
+      float dyp=_pldy[difid];
+
+
+      if (_pltyp[difid]==0)
+	{
+	  for (uint32_t j=0;j<64;j++)
+	    {
+
+	      if (!(d->getFrameLevel(iframe,j,0) || d->getFrameLevel(iframe,j,1))) continue;
+	      hitinfo hi;
+	      hi._z=_plz[difid];
+	      hi._dif=difid;
+	      hi._plan=plan;
+	      hi._type=0;
+	      int asic=d->getFrameAsicHeader(iframe),channel=j,ix=0,iy=0;
+	      hi._asic=asic;
+	      hi._channel=channel;
+		    //if (d->getID()==142 && asic>=11)
+		    //  {printf("======================================================>%d %d \n",d->getID(),asic);
+		    //	asic=asic+2;}
+	      DifGeom::PadConvert(asic,channel,ix,iy,2);
+	      hi._x=ix;
+	      hi._y=iy;
+	      vhi.push_back(hi);
+	    }
+	}
+
+      if (_pltyp[difid]==1)
+	{
+	  //continue;
+	  for (uint32_t j=0;j<64;j++)
+	    {
+	      if (!(d->getFrameLevel(iframe,j,0) || d->getFrameLevel(iframe,j,1))) continue;
+	      int asic=d->getFrameAsicHeader(iframe),channel=j+1,ix=0,iy=0;
+		    //if (d->getID()==142 && asic>=11)
+		    //  {printf("======================================================>%d %d \n",d->getID(),asic);
+		    //	asic=asic+2;}
+	      
+	      // printf("DIF ID is %d \n",difid);
+	      hitinfo hi;
+	      hi._z=_plz[difid];
+	      hi._dif=difid;
+	      hi._plan=plan;
+	      hi._type=1;
+	      hi._asic=asic;
+	      hi._channel=channel;
+	      hi._x=0;
+	      hi._y=0;
+	      vhi.push_back(hi);
+	    }
+	 
 	}
     }
+   printf("%d %d %d %d\n",evt_->getRunNumber(),evt_->getEventNumber(),_currentSeed,vhi.size());
+   if (_fdOut>0)
+     {
+       uint32_t run=evt_->getRunNumber();
+       uint32_t event=evt_->getEventNumber();
+       uint32_t ns=vhi.size();
+       int ier=write(_fdOut,&run,sizeof(uint32_t));
+       ier=write(_fdOut,&event,sizeof(uint32_t));
+       ier=write(_fdOut,&_currentSeed,sizeof(uint32_t));
+       ier=write(_fdOut,&ns,sizeof(uint32_t));
+       for (int i=0;i<vhi.size();i++)
+	 {
+	 printf("%d %d %d %d %d %d %f %f %f\n",i,vhi[i]._type,vhi[i]._plan,vhi[i]._dif,vhi[i]._asic,vhi[i]._channel,vhi[i]._x,vhi[i]._y,vhi[i]._z);
+	 ier=write(_fdOut,&vhi[i],sizeof(hitinfo));
+	 }
+     }
+}
+void TricotAnalyzer::processOneSeed(std::vector<ptrDifFrame> &vf)
+{
+  
+  std::map<uint32_t,std::vector<TStripCluster> > mapTStripCluster;
+  std::map<uint32_t,std::vector<PadCluster> > mapPadCluster;
+  mapTStripCluster.clear();
+  mapPadCluster.clear();
+  for (std::vector<ptrDifFrame>::iterator ip=vf.begin();ip!=vf.end();ip++)
+    {
+	  //uint32_t idh=imfind(ip->first->getID());
+      DIFPtr* d=ip->first;
+      uint32_t iframe=ip->second;
+      //printf("DIF %d :  frame %d \n",d->getID(),iframe);
+      uint32_t difid=d->getID();
+      uint32_t plan=_plid[difid];
+      
+      float zp=_plz[difid];
+      float dxp=_pldx[difid];
+      float dyp=_pldy[difid];
+
+      
+
+      if (_pltyp[difid]==0)
+	{
+	  for (uint32_t j=0;j<64;j++)
+	    {
+	      if (!(d->getFrameLevel(iframe,j,0) || d->getFrameLevel(iframe,j,1))) continue;
+	      int asic=d->getFrameAsicHeader(iframe),channel=j,ix=0,iy=0;
+		    //if (d->getID()==142 && asic>=11)
+		    //  {printf("======================================================>%d %d \n",d->getID(),asic);
+		    //	asic=asic+2;}
+	      DifGeom::PadConvert(asic,channel,ix,iy,2);
+	      
+	      std::map<uint32_t,std::vector<PadCluster> >::iterator imp=mapPadCluster.find(difid);
+	      if (imp==mapPadCluster.end())
+		{
+		  mapPadCluster.insert(std::make_pair(difid,std::vector<PadCluster>()));
+		  imp=mapPadCluster.find(difid);
+		}
+	      
+	      std::vector<PadCluster> &vs=imp->second;
+	      //printf("%x vs size %d \n",&vs,vs.size());
+	      bool append=false;
+	      for (std::vector<PadCluster>::iterator ipc=vs.begin();ipc!=vs.end();ipc++)
+		{
+		  if (ipc->append(plan,ix,iy)) { append=true;break;}
+		}
+	      if (!append)
+		{
+		  PadCluster c(plan,ix,iy);
+		  vs.push_back(PadCluster(plan,ix,iy));
+		  //printf("after push %d %d %d \n",plan,ix,iy);
+		  //c.dump();
+		}
+	    }
+	}
+
+      if (_pltyp[difid]==1)
+	{
+	  //continue;
+	  for (uint32_t j=0;j<64;j++)
+	    {
+	      if (!(d->getFrameLevel(iframe,j,0) || d->getFrameLevel(iframe,j,1))) continue;
+	      int asic=d->getFrameAsicHeader(iframe),channel=j+1,ix=0,iy=0;
+		    //if (d->getID()==142 && asic>=11)
+		    //  {printf("======================================================>%d %d \n",d->getID(),asic);
+		    //	asic=asic+2;}
+	      
+	      // printf("DIF ID is %d \n",difid);
+	      std::map<uint32_t,std::vector<TStripCluster> >::iterator imp=mapTStripCluster.find(difid);
+	      if (imp==mapTStripCluster.end())
+		{
+		  mapTStripCluster.insert(std::make_pair(difid,std::vector<TStripCluster>()));
+		  imp=mapTStripCluster.find(difid);
+		}
+	      
+	      std::vector<TStripCluster> &vs=imp->second;
+	      // printf("%x vs size %d \n",&vs,vs.size());
+	      bool append=false;
+	      if (vs.size()!=0)
+		for (std::vector<TStripCluster>::iterator ipc=vs.begin();ipc!=vs.end();ipc++)
+		  {
+		    if (ipc->append(asic,channel)) { append=true;break;}
+		  }
+	      if (!append)
+		{
+
+		  vs.push_back(TStripCluster(asic,channel));
+		  //  printf("after push %x vs size %d \n",&vs,vs.size());
+		}
+	    }
+	 
+	}
+    }
+  INFO_PRINT("Map build \n");
+  //Bow build point
+  _npBuf=0;
+  for (  std::map<uint32_t,std::vector<TStripCluster> >::iterator imp=mapTStripCluster.begin();imp!=mapTStripCluster.end();imp++)
+    {
+      uint32_t difid=imp->first;
+      std::vector<TStripCluster>& _cl=imp->second;
+
+      uint32_t plan=_plid[difid];
+      
+      float zp=_plz[difid];
+      float dxp=_pldx[difid];
+      float dyp=_pldy[difid];	
+      for (int i=0;i<_cl.size();i++)
+	for(int j=i+1;j<_cl.size();j++)
+	  {
+	    if(_cl[i].asic()==_cl[j].asic()) continue;
+	    for(int k=j+1;k<_cl.size();k++)
+		{
+		  if(_cl[i].asic()==_cl[k].asic()) continue;
+		  if(_cl[j].asic()==_cl[k].asic()) continue;
+		  //printf("Strip cluster conjonction ; %d %d %d \n",_cl[i].asic(),_cl[j].asic(),_cl[k].asic());
+		  //printf("\t a ; %f %f %f \n",_cl[i].a(),_cl[j].a(),_cl[k].a());
+		  //printf("\t b ; %f %f %f \n",_cl[i].b(),_cl[j].b(),_cl[k].b());
+	      
+		  float x1=(_cl[j].b()-_cl[i].b())/(_cl[i].a()-_cl[j].a());
+		  float y1=_cl[i].a()*x1+_cl[i].b();
+		  float x2=(_cl[k].b()-_cl[i].b())/(_cl[i].a()-_cl[k].a());
+		  float y2=_cl[i].a()*x2+_cl[i].b();
+		  float x3=(_cl[k].b()-_cl[j].b())/(_cl[j].a()-_cl[k].a());
+		  float y3=_cl[j].a()*x3+_cl[j].b();
+		  float x=(x1+x2+x3)/3.;
+		  float y=(y1+y2+y3)/3.;
+		  if (sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))>2) continue;
+		  if (sqrt((x1-x3)*(x1-x3)+(y1-y3)*(y1-y3))>2) continue;
+		  if (sqrt((x3-x2)*(x3-x2)+(y3-y2)*(y3-y2))>2) continue;
+		  _cl[i].setUsed();
+		  _cl[j].setUsed();
+		  _cl[k].setUsed();
+		  x+=dxp;
+		  y+=dyp;
+		  //printf("(%f,%f)-",x,y);
+		  _x[_npBuf]=x;
+		  _y[_npBuf]=y;
+		  _z[_npBuf]=zp;
+		  _layer[_npBuf]=plan;
+		  _npBuf++;
+		}
+	    }
+	for (int i=0;i<_cl.size();i++)
+	  {
+	    if (_cl[i].isUsed()) continue;
+	  for(int j=i+1;j<_cl.size();j++)
+	    {
+	      if (_cl[j].isUsed()) continue;
+	      if(_cl[i].asic()==_cl[j].asic()) continue;
+	      float x=(_cl[j].b()-_cl[i].b())/(_cl[i].a()-_cl[j].a());
+	      float y=_cl[i].a()*x+_cl[i].b();
+	      _cl[i].setUsed();
+	      _cl[j].setUsed();
+	      x+=dxp;
+	      y+=dyp;
+	      _x[_npBuf]=x;
+	      _y[_npBuf]=y;
+	      _z[_npBuf]=zp;
+	      _layer[_npBuf]=plan;
+	      _npBuf++;
+	    }
+	  }
+    }
+  // pad cluster
+	//printf("\n");
+   for (  std::map<uint32_t,std::vector<PadCluster> >::iterator imp=mapPadCluster.begin();imp!=mapPadCluster.end();imp++)
+    {
+      uint32_t difid=imp->first;
+      std::vector<PadCluster>& _cl=imp->second;
+
+      uint32_t plan=_plid[difid];
+      
+      float zp=_plz[difid];
+      float dxp=_pldx[difid];
+      float dyp=_pldy[difid];
+      for (int i=0;i<_cl.size();i++)
+	{
+	  if (_cl[i].isUsed()) continue;
+	  _cl[i].setUsed();
+	  //_cl[i].dump();
+	  _x[_npBuf]=_cl[i].x()+dxp;
+	  _y[_npBuf]=_cl[i].y()+dyp;
+	  _z[_npBuf]=zp;
+	  _layer[_npBuf]=plan;
+	  _npBuf++;
+	}
+    }
+    
+   for (int i=0;i<_npBuf;i++)
+     {
+       printf("Plan %d : %f %f %f \n",_layer[i],_x[i],_y[i],_z[i]);
+     }
+   //getchar();
 }
 void TricotAnalyzer::buildFrameMap(std::vector<uint32_t> &seeds)
 {
         // Fill std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> > _FrameMap_;
   _FrameMap.clear();
+  /*
   for (std::vector<uint32_t>::iterator is=seeds.begin();is!=seeds.end();is++)
     {
       std::vector<ptrDifFrame> v;
@@ -959,6 +1421,7 @@ void TricotAnalyzer::buildFrameMap(std::vector<uint32_t> &seeds)
       std::pair<uint32_t,std::vector<ptrDifFrame> > p((*is),v);
       _FrameMap.insert(p);
     }
+  */
   std::map<uint32_t,std::vector<ptrDifFrame> >::iterator im=_FrameMap.end();
   for (std::vector<DIFPtr*>::iterator it = reader_->getDIFList().begin();it!=reader_->getDIFList().end();it++)
     {
@@ -986,6 +1449,7 @@ void TricotAnalyzer::buildFrameMap(std::vector<uint32_t> &seeds)
 	if (im!=_FrameMap.end()) {im->second.push_back(hit);continue;}
 	im=_FrameMap.find(d->getFrameTimeToTrigger(i)+2);
 	if (im!=_FrameMap.end()) {im->second.push_back(hit);continue;}
+#ifdef ENHANCED_TIME_WINDOW
 	im=_FrameMap.find(d->getFrameTimeToTrigger(i)-3);
 	if (im!=_FrameMap.end()) {im->second.push_back(hit);continue;}
 	im=_FrameMap.find(d->getFrameTimeToTrigger(i)+3);
@@ -994,6 +1458,11 @@ void TricotAnalyzer::buildFrameMap(std::vector<uint32_t> &seeds)
 	if (im!=_FrameMap.end()) {im->second.push_back(hit);continue;}
 	im=_FrameMap.find(d->getFrameTimeToTrigger(i)+4);
 	if (im!=_FrameMap.end()) {im->second.push_back(hit);continue;}
+#endif
+	std::vector<ptrDifFrame> v;
+      
+	std::pair<uint32_t,std::vector<ptrDifFrame> > p(d->getFrameTimeToTrigger(i),v);
+      _FrameMap.insert(p);
       }
     }
       seeds.clear();
@@ -1001,18 +1470,91 @@ void TricotAnalyzer::buildFrameMap(std::vector<uint32_t> &seeds)
       for( std::map<uint32_t,std::vector<ptrDifFrame> >::iterator im=_FrameMap.begin(),im_next=im;im!=_FrameMap.end();im=im_next)
 	{
 	  ++im_next;
-	  std::bitset<255> difs;
+	  std::bitset<16> difs;
 	  difs.reset();
 	  for (std::vector<ptrDifFrame>::iterator ih=im->second.begin();ih!=im->second.end();ih++)
-	    difs.set(ih->first->getID());
+	    difs.set((uint8_t) _plid[ih->first->getID()]);
 	  // if (difs.count()>=nasic_min)
 	  //   printf("seed %d ndif  %d \n",im->first,difs.count());
 	  if (difs.count()<2)
 	    _FrameMap.erase(im);
 	  else
+	    {
+	      //std::cout<<im->first<<" "<<difs.to_string()<<std::endl;
+	      /*
+	      if (im->first<20)
+		for (std::vector<ptrDifFrame>::iterator ih=im->second.begin();ih!=im->second.end();ih++)
+		  {
+		    uint32_t difid=ih->first->getID();
+		    DIFPtr* d=ih->first;
+		    std::cout<<"\t "<<difid<<" "<<(uint32_t) _plid[difid]<<" "<<d->getFrameTimeToTrigger(ih->second)<<" "<<d->getFrameAsicHeader(ih->second)<<std::endl;
+		  }
+	      */
 	    seeds.push_back(im->first);
+	    }
 	}
       //printf("%s EventMap size %d seeds %d \n",__PRETTY_FUNCTION__,_FrameMap.size(),theTimeSeeds_.size());
 
 
+}
+
+void TricotAnalyzer::ShowTracks()
+{
+  if (TCPlot==NULL)
+    {
+      TCPlot=new TCanvas("TCPlotR","tcplotr1",900,900);
+      TCPlot->Modified();
+      TCPlot->Draw();
+      TCPlot->Divide(1,2);
+    }
+
+  TH2* htx = rootHandler_->GetTH2("tx");
+  TH2* hty = rootHandler_->GetTH2("ty");
+  if (htx==NULL)
+    {
+      htx =rootHandler_->BookTH2("tx",100,0.,100.,100,-15.,85.);
+      hty =rootHandler_->BookTH2("ty",100,0.,100.,100,-15.,85.);
+
+    }
+  else
+    {
+      htx->Reset();
+      hty->Reset();
+    }
+
+  for (int i=0;i<_npBuf;i++)
+    {
+      htx->Fill(_z[i],_x[i]);
+      hty->Fill(_z[i],_y[i]);
+    }
+  TCPlot->cd(1);
+  htx->Draw("COLZ");
+  if (_tk.size())
+    {
+      printf("Chi2 ====> %f %f \n",_tk.chi2x(),_tk.chi2y());
+      TLine* l = new TLine(0.,0.*_tk.ax()+_tk.bx(),100.,100.*_tk.ax()+_tk.bx());
+      l->SetLineColor(4);
+      l->Draw("SAME");
+    }
+  TCPlot->Update();
+  TCPlot->Modified();
+
+  TCPlot->cd(2);
+  hty->Draw("COLZ");
+    if (_tk.size())
+    {
+      TLine* l = new TLine(0.,0.*_tk.ay()+_tk.by(),100.,100.*_tk.ay()+_tk.by());
+      l->SetLineColor(4);
+      l->Draw("SAME");
+    }
+
+  TCPlot->Update();
+  TCPlot->Modified();
+  TCPlot->Update();
+  TCPlot->Modified();
+
+
+  char c;c=getchar();putchar(c); if (c=='.') exit(0);;
+
+  
 }

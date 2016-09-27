@@ -18,7 +18,7 @@ void recoTrack::clear()
 void recoTrack::addPoint(ROOT::Math::XYZPoint* p)
 {
   _points.push_back(p);
-  _valid=(_points.size()>2);
+  _valid=(_points.size()>=2);
   this->regression();
 }
 

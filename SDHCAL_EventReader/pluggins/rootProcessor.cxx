@@ -222,10 +222,11 @@ void rootProcessor::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
        ct->x=ih->X();
        ct->y=ih->Y();
        ct->z=ih->Z();
-       ct->asic_bcid=theBCID_;
+       ct->asic_bcid=seed;
        ct->spill=evt_->getEventNumber();
        ct->time=theAbsoluteTime_*2E-7;
        ct->adc_energy=ih->amplitude();
+       ct->sca=0;
        _dsidx[ih->dif()]+=sizeof(struct CaloTransHit);
        
      }

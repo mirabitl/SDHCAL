@@ -412,9 +412,13 @@ bool trackAnalysis::decodeTrigger(LCCollection* rhcol, double tcut)
 void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 {
   
+  //printf("On entre %s\n",__PRETTY_FUNCTION__);
   
   ptime("Enter");
-  
+  _tcl.clear();
+  for (std::vector<planeCluster*>::iterator ic=allClusters_.begin();ic!=allClusters_.end();ic++)
+    delete (*ic);
+  allClusters_.clear();
   currentTime_=seed;
   
   theAbsoluteTime_=theBCID_-currentTime_;
@@ -431,14 +435,18 @@ void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
     INFO_PRINT("Impossible \n");
     return ;
   }
+  // Cerenkov Analysis ?
+  if (_geo->cuts()["cerenkovAnalysis"].asUInt()!=0)
+    {
+    theCerenkovTag_=this->CerenkovTagger(3,seed);
+    uint32_t tag=theCerenkovTag_;
   
-  theCerenkovTag_=this->CerenkovTagger(3,seed);
-  uint32_t tag=theCerenkovTag_;
-  //printf("%d %d \n",seed,theCerenkovTag_);
+    //printf("%d %d \n",seed,theCerenkovTag_);
+    }
   ptime("Init");
   theNplans_=this->fillVolume(seed);
   ptime("fillVolume");
-  if (_tcl.size()<1) return;
+  if (theNplans_<_geo->cuts()["minPlans"].asUInt()) return;
   
   //if (nPlansAll_.count()<_geo->cuts()["minPlans"].asUInt()) return;
   // Ask at least 3 Plans in the 5 first
@@ -449,37 +457,51 @@ void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
       if (nPlansAll_[i]) npl++;
       //if (npf<3) return;
       //   std::cout<<nPlansAll_.to_string()<<std::endl;
-      
+  if (_geo->cuts()["showerAnalysis"].asUInt()!=0)  
+    {
       this->TagIsolated(1,48);
-    ptime("Tag iso");
+      ptime("Tag iso");
   // if (_pMipCand<2E-2 &&_hits.size()<25) return;
   //if (_pMipCand<_geo->cuts()["mipRate"].asFloat()) return; // Muon selection
-  
+    }
   
   this->fillVector(seed);
-  _monitor->clusterHistos(_tcl,realClusters_,"/Clusters");
   
-  
-  
-  
-  std::vector<recoPoint*> vrc;
-  for (std::vector<TricotCluster>::iterator it=_tcl.begin();it!=_tcl.end();it++)
+  if (_geo->cuts()["clusterAnalysis"].asUInt()!=0)  
   {
-    TricotCluster& c=(*it);
-    vrc.push_back(&c);
+    _monitor->clusterHistos(_tcl,allClusters_,"/Clusters");
+    
+    if (_geo->cuts()["clusterDisplay"].asUInt()!=0)
+    {
+      this->drawCluster();
+      char c;c=getchar();putchar(c); if (c=='.') exit(0);
+    }
+    bool goodtrack=true;
+    if (_geo->cuts()["trackAlign"].asUInt()!=0)
+    {
+      this->align();
+      if ((_tcl.size()*1.0/_nStripPlanes)>1.34) goodtrack=false;
+      if ((allClusters_.size()*1.0/_nPadPlanes)>1.51) goodtrack=false;;
+    }
+  
+  if (_geo->cuts()["trackAnalysis"].asUInt()!=0 && goodtrack)  
+  {
+    
+    std::vector<recoPoint*> vrc;
+    for (std::vector<TricotCluster>::iterator it=_tcl.begin();it!=_tcl.end();it++)
+    {
+      TricotCluster& c=(*it);
+      vrc.push_back(&c);
+    }
+    for (std::vector<planeCluster*>::iterator it=allClusters_.begin();it!=allClusters_.end();it++)
+    {
+      vrc.push_back((*it));
+    }
+    
+    recoTrack::combinePoint(vrc,_geo,_vtk);
+    std::cout<<"Number of tracks :"<<_vtk.size()<<std::endl;
+    _monitor->trackHistos(_vtk,vrc,"/Principal");
   }
-  for (std::vector<planeCluster*>::iterator it=allClusters_.begin();it!=allClusters_.end();it++)
-  {
-    vrc.push_back((*it));
-  }
-  
-  recoTrack::combinePoint(vrc,_geo,_vtk);
-  std::cout<<"Number of tracks :"<<_vtk.size()<<std::endl;
-  _monitor->trackHistos(_vtk,vrc,"/Principal");
-  if (false)
-  {
-    this->drawCluster();
-    char c;c=getchar();putchar(c); if (c=='.') exit(0);
   }
   ptime("fill vector");
 #ifdef CLUSTER_ANALYSIS
@@ -488,7 +510,7 @@ void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   ptime("combine");
   this->tagMips();
   ptime("tagmip");
-  if ((_pMip>1E-5 && _pMip<0.4) || false)
+  if ((_pMip>1E-5 && _pMip<0.4) || true)
   {
     std::cout<<_hits.size()<<" hits "<<_pMipCand*100<<" % low weight "<<realClusters_.size()<<" clusters "<<_pMip*100<<" % Mip tagged"<<std::endl;
     this->drawHits();
@@ -508,8 +530,10 @@ void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
     }
     if (theNplans_<minChambersInTime_) return;
 #endif    
+    printf("Fini %s\n",__PRETTY_FUNCTION__);
     return;
     
+
 }
 
 void trackAnalysis::processEvent()
@@ -522,7 +546,7 @@ void trackAnalysis::processEvent()
   evt_=reader_->getEvent();
   //theSkip_=380;
   
-  if (evt_->getEventNumber()<=theSkip_) return;
+  if (evt_->getEventNumber()<=_geo->cuts()["firstEvent"].asUInt()) return;
   
   printf("Processing %d - %d \n",evt_->getRunNumber(),evt_->getEventNumber());
   if (evt_->getRunNumber()!=_runNumber)
@@ -554,6 +578,8 @@ void trackAnalysis::processEvent()
       exit(0);
     }
   }
+  rebuild_=true;
+  collectionName_="DHCALRawHits1";
   if (rebuild_)
   {
     
@@ -590,10 +616,11 @@ void trackAnalysis::processEvent()
     rhcol=(IMPL::LCCollectionVec*) evt_->getCollection(collectionName_);
   
   
-  DEBUG_PRINT("End of CreaetRaw %d \n",rhcol->getNumberOfElements());  
+  INFO_PRINT("ProcessEvent CreateRaw %d \n",rhcol->getNumberOfElements());  
   if (rhcol->getNumberOfElements()>4E6) return;
-  
-  _monitor->FillTimeAsic(rhcol);
+  bool difs =_geo->cuts()["difAnalysis"].asUInt()!=0 && evt_->getEventNumber()%_geo->cuts()["difAnalysis"].asUInt()==0;
+  if(_geo->cuts()["timeAnalysis"].asUInt()!=0)
+    _monitor->FillTimeAsic(rhcol,difs);
   
   //  LCTOOLS::printParameters(rhcol->parameters());
   //DEBUG_PRINT("Time Stamp %d \n",evt_->getTimeStamp());
@@ -611,8 +638,8 @@ void trackAnalysis::processEvent()
   
   //PMAnalysis(3);
   uint32_t npmin=_geo->cuts()["minPlans"].asUInt();
-  INFO_PRINT("Apres PM %d\n",npmin);
-  reader_->findTimeSeeds(npmin,"DHCALRawHits");
+  //INFO_PRINT("Apres PM %d\n",npmin);
+  reader_->findDIFSeeds(npmin,"DHCALRawHits1");
   DEBUG_PRINT("Apres timeseed\n");
   std::vector<uint32_t> vseeds =this->cleanMap(npmin);
   DEBUG_PRINT("Apres cleanmap\n");
@@ -982,35 +1009,104 @@ void trackAnalysis::drawHits()
   }
   
 }
+void trackAnalysis::align()
+{
+  nPlansAll_.reset();
+  for (std::vector<planeCluster*>::iterator ih=allClusters_.begin();ih!=allClusters_.end();ih++)
+  {
+    nPlansAll_.set((*ih)->plan());    
+  }
+  for (std::vector<TricotCluster>::iterator ih=_tcl.begin();ih!=_tcl.end();ih++)
+  {
+    nPlansAll_.set((*ih).plan());
+  }
+  _nStripPlanes=0;
+  for (int i=2;i<=6;i++)
+    if (nPlansAll_[i]) _nStripPlanes++;
+  _nPadPlanes=0;
+  for (int i=7;i<=9;i++)
+    if (nPlansAll_[i]) _nPadPlanes++;
+  
+    if (_nStripPlanes<3 || _nPadPlanes<2) return;
+    if ((_tcl.size()*1.0/_nStripPlanes)>1.34) return;
+    if ((allClusters_.size()*1.0/_nPadPlanes)>1.51) return;
+  
+  std::cout<<theAbsoluteTime_<<":"<<_tcl.size()<<" => Strips plans "<<_nStripPlanes<<" "<<nPlansAll_<<std::endl;
+  std::cout<<theAbsoluteTime_<<":"<<allClusters_.size()<<" =>pads plans "<<_nPadPlanes<<" "<<nPlansAll_<<std::endl;
+  
+  //if (allClusters_.size()<3) return;
+  //if (_tcl.size()<3) return;
+  TProfile* hxpadtric= (TProfile*)rootHandler_->GetTH1("xtricvspad");
+  TProfile* hypadtric= (TProfile*) rootHandler_->GetTH1("ytricvspad");
+  TH2* hxpadtric2= (TH2*)rootHandler_->GetTH2("xtricvspad2");
+  TH2* hypadtric2= (TH2*) rootHandler_->GetTH2("ytricvspad2");
+  if (hxpadtric==NULL)
+  {
+    
+    hxpadtric=rootHandler_->BookProfile("xtricvspad",30,-10.,40.,-40.,40.);
+    hypadtric=rootHandler_->BookProfile("ytricvspad",30,-10.,40.,-40.,40.);
+    hxpadtric2=rootHandler_->BookTH2("xtricvspad2",30,-10.,40.,30,-10.,40.);
+    hypadtric2=rootHandler_->BookTH2("ytricvspad2",30,-10.,40.,30,-10.,40.);    
+  }
+  
+    recoTrack tkpad,tktric;
+    for (std::vector<planeCluster*>::iterator ih=allClusters_.begin();ih!=allClusters_.end();ih++)
+    {
+     
+      tkpad.addPoint((*ih));
+      //printf("pads %f %f %f \n",(*ih)->Z(),(*ih)->X(),(*ih)->Y());
+   
+    }
+    for (std::vector<TricotCluster>::iterator ih=_tcl.begin();ih!=_tcl.end();ih++)
+    {
+      
+      tktric.addPoint(&(*ih));
+      //printf("strips %f %f %f \n",ih->Z(),ih->X(),ih->Y());
+   }
+   ROOT::Math::XYZPoint ppad=tkpad.extrapolate(60);
+   ROOT::Math::XYZPoint ptric=tktric.extrapolate(60);
+   
+    printf("Pads track %f %f %f \n",ppad.X(),ppad.Y(),ppad.Z());
+    printf("Tric track %f %f %f \n",ptric.X(),ptric.Y(),ptric.Z());
+    hxpadtric->Fill(ppad.X(),ptric.X());
+    hypadtric->Fill(ppad.Y(),ptric.Y());
+    hxpadtric2->Fill(ppad.X(),ptric.X());
+    hypadtric2->Fill(ppad.Y(),ptric.Y()); 
+  
+}
+
 void trackAnalysis::drawCluster()
 {
   
   TH3* hcgposi = rootHandler_->GetTH3("InstantClusterMap");
+  
   if (hcgposi==NULL)
   {
     hcgposi =rootHandler_->BookTH3("InstantClusterMap",160,-20.,140.,160,-20.,60.,160,-20.,60.);
+   
+    
   }
   else
   {
     hcgposi->Reset();
   }
- 
- 
+  
+  
   if (hcgposi!=0 )
   {
     hcgposi->Reset();
-    
     for (std::vector<planeCluster*>::iterator ih=allClusters_.begin();ih!=allClusters_.end();ih++)
     {
       hcgposi->Fill((*ih)->Z(),(*ih)->X(),(*ih)->Y());
-      printf("pads %f %f %f \n",(*ih)->Z(),(*ih)->X(),(*ih)->Y());
-   
+      //printf("pads %f %f %f \n",(*ih)->Z(),(*ih)->X(),(*ih)->Y());
+      
     }
     for (std::vector<TricotCluster>::iterator ih=_tcl.begin();ih!=_tcl.end();ih++)
     {
       hcgposi->Fill(ih->Z(),ih->X(),ih->Y());//(*ih)->Z(),(*ih)->X(),(*ih)->Y());
-      printf("strips %f %f %f \n",ih->Z(),ih->X(),ih->Y());
-   }
+      //printf("strips %f %f %f \n",ih->Z(),ih->X(),ih->Y());
+    }
+    
     if (TCHits==NULL)
     {
       TCHits=new TCanvas("TCHits","tChits1",600,600);
@@ -1029,6 +1125,7 @@ void trackAnalysis::drawCluster()
     hpx1->SetMarkerStyle(20);
     hpx1->SetMarkerColor(3);
     hpx1->Draw("P"); 
+    //hxpadtric->Draw();
     printf("ok2\n");
     TCHits->Modified();
     TCHits->Draw();
@@ -1037,6 +1134,8 @@ void trackAnalysis::drawCluster()
     hpx2->SetMarkerStyle(20);
     hpx2->SetMarkerColor(2);
     hpx2->Draw("P"); 
+    //hypadtric->Draw();
+    
     printf("ok3\n");
     
     TCHits->Modified();
@@ -1048,7 +1147,6 @@ void trackAnalysis::drawCluster()
   
 }
 
-
 #define DBG printf("%d %s\n",__LINE__,__PRETTY_FUNCTION__);
 
 
@@ -1056,7 +1154,6 @@ void trackAnalysis::clearClusters()
 {
   realClusters_.clear();
   interactionClusters_.clear();
-  
   for (std::vector<planeCluster*>::iterator ic=allClusters_.begin();ic!=allClusters_.end();ic++)
     delete (*ic);
   
@@ -1068,6 +1165,7 @@ void trackAnalysis::clearClusters()
 }
 void trackAnalysis::ptime( std::string s)
 {
+#undef DEBUG
   #ifdef DEBUG
   
   gettimeofday(&endT, NULL); 
@@ -1615,9 +1713,10 @@ uint32_t trackAnalysis::fillVolume(uint32_t seed)
   nPlansAll_.reset();
   
   uint32_t ncount=0;
+  DEBUG_PRINT("Number of hits %d \n",iseed->second.size());
+  if (iseed->second.size()>_geo->cuts()["maxSeedHits"].asUInt()) return 0;
   
-  if (iseed->second.size()>4096) return 0;
-  
+  // Found fully filled DIF
   std::bitset<64> difc[255];
   for (int i=0;i<255;i++) difc[i].set(0);
   for (std::vector<IMPL::RawCalorimeterHitImpl*>::iterator ihit=iseed->second.begin();ihit!=iseed->second.end();ihit++)
@@ -1632,6 +1731,7 @@ uint32_t trackAnalysis::fillVolume(uint32_t seed)
     INFO_PRINT(" DIF %d Count %d  at seed %d \n",i,difc[i].count(),seed);
     return 0;
   }
+  // Now fill _hits vector
   for (std::vector<IMPL::RawCalorimeterHitImpl*>::iterator ihit=iseed->second.begin();ihit!=iseed->second.end();ihit++)
   {
     IMPL::RawCalorimeterHitImpl* hit =(*ihit);
@@ -1646,91 +1746,101 @@ uint32_t trackAnalysis::fillVolume(uint32_t seed)
     
     ncount++;
   }
+  DEBUG_PRINT("Number of PAD hits %d \n",ncount);
   // Now build Strip clusters
-  std::vector<TStripCluster> vts;
-  vts.clear();
+  for (std::vector<TStripCluster*>::iterator its=_vts.begin();its!=_vts.end();its++) delete (*its);
+  _vts.clear();
   for (std::vector<IMPL::RawCalorimeterHitImpl*>::iterator ihit=iseed->second.begin();ihit!=iseed->second.end();ihit++)
   {
     IMPL::RawCalorimeterHitImpl* hit =(*ihit);
     // Check the type of the RawCalorimeterHit
+    //std::cout<<(hit->getCellID0()&0xFF)<<" _vts "<<_vts.size()<<std::endl;
+    
     if (_geo->difGeo(hit->getCellID0()&0xFF)["type"].asString().compare("TRICOT")!=0) continue;
     bool added=false;
     Json::Value dif=_geo->difGeo(hit->getCellID0()&0xFF);
     Json::Value ch=_geo->chamberGeo(dif["chamber"].asUInt());
-    
-    for (std::vector<TStripCluster>::iterator its=vts.begin();its!=vts.end();its++)
+    nPlansAll_.set(ch["plan"].asUInt());
+    //std::cout<<(hit->getCellID0()&0xFF)<<" av "<<(0xFF & (hit->getCellID0()&0xFF00)>>8)<<" "<<(0xFF & (hit->getCellID0()&0x3F0000)>>16)<<std::endl;
+    if (true)
+    for (std::vector<TStripCluster*>::iterator its=_vts.begin();its!=_vts.end();its++)
     {
-      if (its->append((hit->getCellID0()&0xFF),(0xFF & (hit->getCellID0()&0xFF00)>>8),
+      if ((*its)->append((hit->getCellID0()&0xFF),(0xFF & (hit->getCellID0()&0xFF00)>>8),
         (0xFF & (hit->getCellID0()&0x3F0000)>>16))) 
       { added=true; break;}
       
     }
+    //std::cout<<(hit->getCellID0()&0xFF)<<" "<<(0xFF & (hit->getCellID0()&0xFF00)>>8)<<" "<<(0xFF & (hit->getCellID0()&0x3F0000)>>16)<<std::endl;
     if (!added)
-      vts.push_back(TStripCluster((hit->getCellID0()&0xFF),(0xFF & (hit->getCellID0()&0xFF00)>>8),
+      _vts.push_back(new TStripCluster((hit->getCellID0()&0xFF),(0xFF & (hit->getCellID0()&0xFF00)>>8),
                                   (0xFF & (hit->getCellID0()&0x3F0000)>>16),_geo));
+    //std::cout<<(hit->getCellID0()&0xFF)<<"ap "<<(0xFF & (hit->getCellID0()&0xFF00)>>8)<<" "<<(0xFF & (hit->getCellID0()&0x3F0000)>>16)<<std::endl;
+    
       
   }
+  //printf("STrip clusters %d  %s\n",_vts.size(),__PRETTY_FUNCTION__);
+  
   // Now build TricotCluster
   _tcl.clear();
-  for (int i=0;i<vts.size();i++)
+  for (int i=0;i<_vts.size();i++)
   {
-    Json::Value dif=_geo->difGeo(vts[i].dif());
+    Json::Value dif=_geo->difGeo(_vts[i]->dif());
     Json::Value ch=_geo->chamberGeo(dif["chamber"].asUInt());
     //std::cout<<ch["plan"].asFloat()<<"Chamber Z"<<ch["z0"].asDouble()<<std::endl;
-    for(int j=i+1;j<vts.size();j++)
+    for(int j=i+1;j<_vts.size();j++)
     {
-      if(vts[i].dif()!=vts[j].dif()) continue;
-      if(vts[i].asic()==vts[j].asic()) continue;
-      for(int k=j+1;k<vts.size();k++)
+      if(_vts[i]->dif()!=_vts[j]->dif()) continue;
+      if(_vts[i]->asic()==_vts[j]->asic()) continue;
+      for(int k=j+1;k<_vts.size();k++)
       {
-        if(vts[i].dif()!=vts[k].dif()) continue;
-        if(vts[k].dif()!=vts[j].dif()) continue;
-        if(vts[i].asic()==vts[k].asic()) continue;
-        if(vts[j].asic()==vts[k].asic()) continue;
+        if(_vts[i]->dif()!=_vts[k]->dif()) continue;
+        if(_vts[k]->dif()!=_vts[j]->dif()) continue;
+        if(_vts[i]->asic()==_vts[k]->asic()) continue;
+        if(_vts[j]->asic()==_vts[k]->asic()) continue;
         
         
-        float x1=(vts[j].b()-vts[i].b())/(vts[i].a()-vts[j].a());
-        float y1=vts[i].a()*x1+vts[i].b();
-        float x2=(vts[k].b()-vts[i].b())/(vts[i].a()-vts[k].a());
-        float y2=vts[i].a()*x2+vts[i].b();
-        float x3=(vts[k].b()-vts[j].b())/(vts[j].a()-vts[k].a());
-        float y3=vts[j].a()*x3+vts[j].b();
+        float x1=(_vts[j]->b()-_vts[i]->b())/(_vts[i]->a()-_vts[j]->a());
+        float y1=_vts[i]->a()*x1+_vts[i]->b();
+        float x2=(_vts[k]->b()-_vts[i]->b())/(_vts[i]->a()-_vts[k]->a());
+        float y2=_vts[i]->a()*x2+_vts[i]->b();
+        float x3=(_vts[k]->b()-_vts[j]->b())/(_vts[j]->a()-_vts[k]->a());
+        float y3=_vts[j]->a()*x3+_vts[j]->b();
         float x=(x1+x2+x3)/3.;
         float y=(y1+y2+y3)/3.;
-        if (sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))>3) continue;
-        if (sqrt((x1-x3)*(x1-x3)+(y1-y3)*(y1-y3))>3) continue;
-        if (sqrt((x3-x2)*(x3-x2)+(y3-y2)*(y3-y2))>3) continue;
-        vts[i].setUsed();
-        vts[j].setUsed();
-        vts[k].setUsed();
-        _tcl.push_back(TricotCluster(x+ch["x0"].asDouble(),y+ch["y0"].asDouble(),ch["z0"].asDouble(),vts[i],vts[j],vts[k]));
+        if (sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))>2) continue;
+        if (sqrt((x1-x3)*(x1-x3)+(y1-y3)*(y1-y3))>2) continue;
+        if (sqrt((x3-x2)*(x3-x2)+(y3-y2)*(y3-y2))>2) continue;
+        _vts[i]->setUsed();
+        _vts[j]->setUsed();
+        _vts[k]->setUsed();
+        _tcl.push_back(TricotCluster(x+ch["x0"].asDouble(),y+ch["y0"].asDouble(),ch["z0"].asDouble(),(*_vts[i]),(*_vts[j]),(*_vts[k])));
       }
     }
   }
   // 2 lines remaining
-    for (int i=0;i<vts.size();i++)
+    for (int i=0;i<_vts.size();i++)
     {
-      Json::Value dif=_geo->difGeo(vts[i].dif());
+      Json::Value dif=_geo->difGeo(_vts[i]->dif());
       Json::Value ch=_geo->chamberGeo(dif["chamber"].asUInt());
       
-      if (vts[i].isUsed()) continue;
-      for(int j=i+1;j<vts.size();j++)
+      if (_vts[i]->isUsed()) continue;
+      for(int j=i+1;j<_vts.size();j++)
       {
-        if (vts[j].isUsed()) continue;
-        if(vts[i].dif()!=vts[j].dif()) continue;
-        if(vts[i].asic()==vts[j].asic()) continue;
-        float x=(vts[j].b()-vts[i].b())/(vts[i].a()-vts[j].a());
-        float y=vts[i].a()*x+vts[i].b();
-        vts[i].setUsed();
-        vts[j].setUsed();
-        _tcl.push_back(TricotCluster(x+ch["x0"].asDouble(),y+ch["y0"].asDouble(),ch["z0"].asDouble(),vts[i],vts[j]));
+        if (_vts[j]->isUsed()) continue;
+        if(_vts[i]->dif()!=_vts[j]->dif()) continue;
+        if(_vts[i]->asic()==_vts[j]->asic()) continue;
+        float x=(_vts[j]->b()-_vts[i]->b())/(_vts[i]->a()-_vts[j]->a());
+        float y=_vts[i]->a()*x+_vts[i]->b();
+        _vts[i]->setUsed();
+        _vts[j]->setUsed();
+        _tcl.push_back(TricotCluster(x+ch["x0"].asDouble(),y+ch["y0"].asDouble(),ch["z0"].asDouble(),(*_vts[i]),(*_vts[j])));
       }
       
     }
     //printf("\n");
     
     
-    INFO_PRINT(" Seed %d Number of strips founded %d Number of hit found %d \n",seed,vts.size(),_hits.size());
+    INFO_PRINT(" Seed %d Number of strips founded %d Number of hit found %d \n",seed,_vts.size(),_hits.size());
     
     for (std::vector<TricotCluster>::iterator itc=_tcl.begin();itc!=_tcl.end();itc++)
     {
@@ -1956,6 +2066,7 @@ std::vector<uint32_t> trackAnalysis::cleanMap(uint32_t nchmin)
       vs.push_back(iseed->first);
       
     }
+    
     
   }
   //INFO_PRINT("Number of seeds after cut %d \n",vs.size());
