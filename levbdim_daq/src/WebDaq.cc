@@ -144,6 +144,22 @@ void WebDaq::discover(levbdim::fsmmessage* m)
   _mdccClient=findFSM(dbr,"/FSM/Mdcc*/STATE" );
   _zupClient=findFSM(dbr,"/FSM/Zup*/STATE" );
   _gpioClient=findFSM(dbr,"/FSM/GPIO*/STATE" );
+    if (_gpioClient)
+    {
+      _gpioClient->clear();
+      _gpioClient->post("CONFIGURE");
+      //std::cout<<"Current zup values "<<_zupClient->reply()<<std::endl;
+       std::stringstream saction;
+       saction<<"CMD?name=VMEON";
+       std::string rep=_gpioClient->postweb(saction.str());
+       std::cout<<rep<<std::endl;
+       saction<<"CMD?name=VMEOFF";
+       rep=_gpioClient->postweb(saction.str());
+       std::cout<<rep<<std::endl;
+       saction<<"CMD?name=VMEON";
+        rep=_gpioClient->postweb(saction.str());
+       std::cout<<rep<<std::endl;
+    }
   _builderClient=findFSM(dbr,"/FSM/Builder*/STATE" ); 
   _DIFClients.clear();
   dbr->getServices("/FSM/DIF*/STATE" );
@@ -190,14 +206,7 @@ void WebDaq::prepare(levbdim::fsmmessage* m)
       //std::cout<<"Current zup values "<<_zupClient->reply()<<std::endl;
     }
    // gpio
-  if (_gpioClient)
-    {
-      _gpioClient->clear();
-      _gpioClient->set<std::string>("device",m->content()["zupdevice"].asString());
-      _gpioClient->set<int>("port",m->content()["zupport"].asInt());
-      _gpioClient->post("CONFIGURE");
-      //std::cout<<"Current zup values "<<_zupClient->reply()<<std::endl;
-    }
+
   // Ccc
   //std::cout<<" CCC client "<<_cccClient<<std::endl;
   if (_cccClient)
