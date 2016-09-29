@@ -8,7 +8,7 @@
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include "LdaqLogger.hh"
 
-WebDaq::WebDaq(std::string name,uint32_t port) :_builderClient(NULL),_dbClient(NULL),_cccClient(NULL),_mdccClient(NULL),_zupClient(NULL)
+WebDaq::WebDaq(std::string name,uint32_t port) :_builderClient(NULL),_dbClient(NULL),_cccClient(NULL),_mdccClient(NULL),_zupClient(NULL),_gpioClient(NULL)
   {
     _DIFClients.clear();
     
@@ -143,6 +143,7 @@ void WebDaq::discover(levbdim::fsmmessage* m)
   _cccClient=findFSM(dbr,"/FSM/Ccc*/STATE" );
   _mdccClient=findFSM(dbr,"/FSM/Mdcc*/STATE" );
   _zupClient=findFSM(dbr,"/FSM/Zup*/STATE" );
+  _gpioClient=findFSM(dbr,"/FSM/GPIO*/STATE" );
   _builderClient=findFSM(dbr,"/FSM/Builder*/STATE" ); 
   _DIFClients.clear();
   dbr->getServices("/FSM/DIF*/STATE" );
@@ -186,6 +187,15 @@ void WebDaq::prepare(levbdim::fsmmessage* m)
       _zupClient->set<std::string>("device",m->content()["zupdevice"].asString());
       _zupClient->set<int>("port",m->content()["zupport"].asInt());
       _zupClient->post("CONFIGURE");
+      //std::cout<<"Current zup values "<<_zupClient->reply()<<std::endl;
+    }
+   // gpio
+  if (_gpioClient)
+    {
+      _gpioClient->clear();
+      _gpioClient->set<std::string>("device",m->content()["zupdevice"].asString());
+      _gpioClient->set<int>("port",m->content()["zupport"].asInt());
+      _gpioClient->post("CONFIGURE");
       //std::cout<<"Current zup values "<<_zupClient->reply()<<std::endl;
     }
   // Ccc
@@ -474,6 +484,7 @@ WebDaq::~WebDaq()
   if (_dbClient) delete _dbClient;
   if (_cccClient) delete _cccClient;
   if (_zupClient) delete _zupClient;
+  if (_gpioClient) delete _gpioClient;
   if (_mdccClient) delete _mdccClient;
   if (_builderClient) delete _builderClient;
   for (std::vector<LClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
@@ -482,13 +493,15 @@ WebDaq::~WebDaq()
 }
 void WebDaq::doubleSwitchZup(Mongoose::Request &request, Mongoose::JsonResponse &response)
   {
-    if (_zupClient==NULL)
+    if (_zupClient==NULL && _gpioClient==NULL)
       {
-	LOG4CXX_ERROR(_logLdaq, "No zup client");
-	response["STATUS"]="NO Zup CLient";
+	LOG4CXX_ERROR(_logLdaq, "No zup or GPIO client");
+	response["STATUS"]="NO Zup/GPIO CLient";
 	return;
       }
     uint32_t npause=atoi(request.get("pause","2").c_str());
+    if (_zupClient!=NULL){
+      
     _zupClient->post("OFF");
     sleep((unsigned int) 2);
     _zupClient->post("ON");
@@ -501,7 +514,23 @@ void WebDaq::doubleSwitchZup(Mongoose::Request &request, Mongoose::JsonResponse 
     response["STATUS"]="DONE";
 
     response["DOUBLESWITCHZUP"]="ON";
+    }
+    else
+      {
+	      
+    _gpioClient->post("OFF");
+    sleep((unsigned int) 2);
+    _gpioClient->post("ON");
+    sleep((unsigned int)npause);
+    _gpioClient->post("OFF");
+    sleep((unsigned int) 2);
+    _gpioClient->post("ON");
+    ::sleep( npause);
+    std::cout<<" LV is ON"<<std::endl;
+    response["STATUS"]="DONE";
 
+    response["DOUBLESWITCHZUP"]="ON";
+      }
   }
 void  WebDaq::LVStatus(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
@@ -513,17 +542,35 @@ void  WebDaq::LVStatus(Mongoose::Request &request, Mongoose::JsonResponse &respo
       response["LVSTATUS"]=_zupClient->reply();
       return;
     }
+   if (_gpioClient)
+    {
+      Json::FastWriter fastWriter;
+      _gpioClient->post("READ");
+      response["STATUS"]="DONE";
+      response["LVSTATUS"]=_gpioClient->reply();
+      return;
+    }
   response["STATUS"]="NO Zup Client";
 
 
 }
 void WebDaq::LVON(Mongoose::Request &request, Mongoose::JsonResponse &response)
   {
-    if (_zupClient==NULL){LOG4CXX_ERROR(_logLdaq, "No zup client");response["STATUS"]="NO Zup CLient";return;}
+    if (_zupClient!=NULL){
 
     _zupClient->post("ON");
      response["STATUS"]="DONE";
      response["LVON"]=_zupClient->reply();
+     return;
+    }
+    if (_gpioClient!=NULL){
+
+    _gpioClient->post("ON");
+     response["STATUS"]="DONE";
+     response["LVON"]=_gpioClient->reply();
+     return;
+    }
+     LOG4CXX_ERROR(_logLdaq, "No zup client");response["STATUS"]="NO Zup CLient";return;
   }
 void WebDaq::forceState(Mongoose::Request &request, Mongoose::JsonResponse &response)
   {
@@ -535,10 +582,23 @@ void WebDaq::forceState(Mongoose::Request &request, Mongoose::JsonResponse &resp
   }
 void WebDaq::LVOFF(Mongoose::Request &request, Mongoose::JsonResponse &response)
   {
-    if (_zupClient==NULL){LOG4CXX_ERROR(_logLdaq, "No zup client");response["STATUS"]="NO Zup CLient";return;}
-     _zupClient->post("OFF");
+        if (_zupClient!=NULL){
+
+    _zupClient->post("OFF");
      response["STATUS"]="DONE";
-     response["LVOFF"]=_zupClient->reply();
+     response["LVON"]=_zupClient->reply();
+     return;
+    }
+    if (_gpioClient!=NULL){
+
+    _gpioClient->post("OFF");
+     response["STATUS"]="DONE";
+     response["LVON"]=_gpioClient->reply();
+     return;
+    }
+     LOG4CXX_ERROR(_logLdaq, "No zup client");response["STATUS"]="NO Zup CLient";return;
+     
+   
 
   }
 
