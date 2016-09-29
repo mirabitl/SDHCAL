@@ -98,7 +98,7 @@ Use_LCIO=(os.getenv("USE_LCIO")!=None)
 #os.environ.has_key("DIM_DNS_NODE")
 
 # includes
-INCLUDES=['include',"/usr/include/boost141/",DHCAL_ROOT+"/SDHCAL_common/include",DHCAL_ROOT+"/SDHCAL_DB/include",DHCAL_ROOT+"/SDHCAL_Readout/include","/usr/include/jsoncpp","/opt/dhcal/levbdim/include"]
+INCLUDES=['include',"/usr/include/boost141/",DHCAL_ROOT+"/SDHCAL_common/include",DHCAL_ROOT+"/SDHCAL_DB/include",DHCAL_ROOT+"/SDHCAL_Readout/include","/usr/include/jsoncpp","/opt/dhcal/levbdim/include",DHCAL_ROOT+"/SlowControl/GPIOCtrl/include"]
 INCLUDES.append("/usr/include/libxml2")
 if (Use_Dim):
   INCLUDES.append(DIM_ROOT+"/dim")
@@ -180,7 +180,7 @@ env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
 #LIBRARY_SOURCES=Glob("#src/*.cc")
 
 #print LIBRARY_SOURCES
-LIBRARY_SOURCES=['src/LDIF.cc','src/LDIFServer.cc','src/LCccServer.cc','src/LZupServer.cc','src/LMdccServer.cc','src/LBuilder.cc','src/LDaq.cc','src/LRootPublisher.cc']
+LIBRARY_SOURCES=['src/LDIF.cc','src/LDIFServer.cc','src/LCccServer.cc','src/LZupServer.cc','src/LMdccServer.cc','src/LBuilder.cc','src/LDaq.cc','src/LRootPublisher.cc','src/LGpioServer.cc']
 
 if (Use_Oracle):
   LIBRARY_SOURCES.append('src/LDbServer.cc')
@@ -222,6 +222,8 @@ if (Use_Mongoose):
   plist.append(lwslowd)
   lwjobd=env.Program("bin/levbdim_wjob",source="src/WJobDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
   plist.append(lwjobd)
+lgpiod=env.Program("bin/levbdim_gpio",source="src/LGpioDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+plist.append(lgpiod)
 
 if (Use_Oracle):
   ldbd=env.Program("bin/levbdim_db",source="src/LDbDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)

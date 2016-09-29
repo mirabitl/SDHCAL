@@ -21,6 +21,7 @@
 #include "RecoHit.hh"
 #include "planeCluster.hh"
 #include "recoTrack.hh"
+#include "TricotCluster.hh"
 
 
 class hitMonitor 
@@ -28,7 +29,7 @@ class hitMonitor
 public:
   hitMonitor(jsonGeo* g);
   void clear();
-  void FillTimeAsic(IMPL::LCCollectionVec* rhcol);
+  void FillTimeAsic(IMPL::LCCollectionVec* rhcol,bool difanalysis=false);
   void DIFStudy( IMPL::LCCollectionVec* rhcol,bool external=false);	
 
 
@@ -40,7 +41,8 @@ public:
   void setChamberEdgeCut( float i);
   void setUseTk4(bool t);
   int getEventIntegratedTime(){return  theEventIntegratedTime_;}
-  void trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCluster*> &clusters,std::string tkdir);
+  void trackHistos(std::vector<recoTrack*> &tracks,std::vector<recoPoint*> &clusters,std::string tkdir);
+  void clusterHistos(std::vector<TricotCluster> &tcl,std::vector<planeCluster*> &clusters,std::string tkdir);
 private:
 
   uint32_t theTrackIndex_,theFirstChamber_,theLastChamber_,theExtrapolationMinimumPoint_;

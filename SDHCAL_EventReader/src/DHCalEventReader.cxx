@@ -23,7 +23,7 @@ DHCalEventReader* DHCalEventReader::instance() {
 }  
 
 //static DCFrame theFrameBuffer[256*48*128];
-DHCalEventReader::DHCalEventReader() :dropFirstRU_(true),theXdaqShift_(92),currentFileName_("NONE")
+DHCalEventReader::DHCalEventReader() :dropFirstRU_(false),theXdaqShift_(92),currentFileName_("NONE")
 {
   evt_ = 0;
   runh_ = 0;
@@ -294,6 +294,33 @@ int DHCalEventReader::parseRawEvent(int rushift)
 	  //IMPL::LCGenericObjectImpl* go= (IMPL::LCGenericObjectImpl*) col->getElementAt(j);
 	  if (j==0 && dropFirstRU_) continue;
 	  LMGeneric* go= (LMGeneric*) col->getElementAt(j);
+#define LEVBDIM_FORMAT
+#ifdef LEVBDIM_FORMAT
+      int* buf=&(go->getIntVector()[0]);
+      unsigned char* tcbuf = (unsigned char*) buf;
+      uint32_t rusize =go->getNInt()*sizeof(int32_t);
+      levbdim::buffer m((char*) tcbuf,0);
+      m.setPayloadSize(rusize-3*sizeof(uint32_t)-sizeof(uint64_t));
+      //std::cout<<" Source found "<<m.detectorId()<<" "<<m.dataSourceId()<<" size "<<rusize<< std::endl;
+      // A voir si on le retablit 
+      if (m.detectorId()!=100) continue;
+      //uint32_t idstart=DIFUnpacker::getStartOfDIF(tcbuf,rusize,theXdaqShift_);
+      uint32_t idstart=DIFUnpacker::getStartOfDIF((unsigned char*) m.ptr(),m.size(),20);
+      //std::cout<<" Start at "<<idstart<<std::endl;
+      //bool slowcontrol; uint32_t version,hrtype,id0,iddif;
+      //DCBufferReader::checkType(tcbuf,rusize/4,slowcontrol,version,hrtype,id0,iddif,theXdaqShift_);
+      //printf(" Found start of Buffer at %d contains %x and %d bytes \n",idstart,tcbuf[idstart],rusize-idstart+1);
+      
+      
+      
+      
+      unsigned char* tcdif=&tcbuf[idstart];
+      DIFPtr* d= new DIFPtr(tcdif,rusize-idstart+1);
+#else      
+      
+      
+      
+      
 	  int* buf=&(go->getIntVector()[0]);
 	  unsigned char* tcbuf = (unsigned char*) buf;
 	  uint32_t rusize =go->getNInt()*sizeof(int32_t); 
@@ -311,7 +338,8 @@ int DHCalEventReader::parseRawEvent(int rushift)
 	    {
 	      //printf("%d %d \n",rusize,idstart);
 	      // d->dumpDIFInfo();
-	    }
+        }
+#endif
 	  theDIFPtrList_.push_back(d);
 	  //getchar();
 	}
@@ -390,7 +418,7 @@ int DHCalEventReader::parseSDHCALEvent()
   std::vector<uint32_t> seed;seed.clear();
   IMPL::LCCollectionVec* HitVec=this->createRawCalorimeterHits(seed);
   try{
-    if (HitVec->getNumberOfElements()!=0 &&HitVec->getNumberOfElements()<300000 )
+    if (HitVec->getNumberOfElements()!=0 &&HitVec->getNumberOfElements()<MAX_NUMBER_OF_HIT )
       evt_->addCollection(HitVec,"DHCALRawHits");
     else
       delete HitVec;
@@ -463,7 +491,7 @@ void DHCalEventReader::findTimeSeeds(int32_t nasic_min,std::string colname)
   std::vector<uint32_t> seed;
   seed.clear();
 	
-  //d::cout<<"Size =>"<<tcount.size()<<std::endl;
+  //std::cout<<" Number of preseeds Size =>"<<tcount.size()<<std::endl;
   // Tedge is convolute with +1 -1 +1 apply to tcount[i-1],tcount[i],tcount[i+1]
   for (map<uint32_t,uint32_t>::iterator it=tcount.begin();it!=tcount.end();it++)
     {
@@ -487,7 +515,7 @@ void DHCalEventReader::findTimeSeeds(int32_t nasic_min,std::string colname)
       if (it->second<-1*(nasic_min-2))
 	{
 			
-	  //std::cout<<it->first<<"====>"<<it->second<<" count="<<tcount[it->first]<<std::endl;
+	  //std::cout<<it->first<<" Good ====>"<<it->second<<" count="<<tcount[it->first]<<std::endl;
 
 	  seed.push_back(it->first);
 	  it++;
@@ -539,7 +567,7 @@ void DHCalEventReader::findTimeSeeds(int32_t nasic_min,std::string colname)
 
 		
     }
-  //td::cout<<theTimeSeeds_.size()<<" good showers "<< tedge.size()<<std::endl;
+  //std::cout<<theTimeSeeds_.size()<<" good showers "<< tedge.size()<<std::endl;
   std::sort(theTimeSeeds_.begin(),theTimeSeeds_.end(),std::greater<uint32_t>());
 
   /*  
@@ -585,13 +613,18 @@ void DHCalEventReader::findTimeSeeds(int32_t nasic_min,std::string colname)
 
       theTimeSeeds_.clear();
       // Check that at least nasic_min DIfs are hit per seed
+//       for( std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> >::iterator im=thePhysicsEventMap_.begin();im!=thePhysicsEventMap_.end();im++)
+//       {
+//         theTimeSeeds_.push_back(im->first);
+//       }
+//       return;
       for( std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> >::iterator im=thePhysicsEventMap_.begin(),im_next=im;im!=thePhysicsEventMap_.end();im=im_next)
 	{
 	  ++im_next;
 	  std::bitset<255> difs;
 	  difs.reset();
 	  for (std::vector<IMPL::RawCalorimeterHitImpl*>::iterator ih=im->second.begin();ih!=im->second.end();ih++)
-	    difs.set((*ih)->getCellID0()&0xFF);
+	    difs.set((unsigned int) (*ih)->getCellID0()&0xFF);
 	  // if (difs.count()>=nasic_min)
 	  //   printf("seed %d ndif  %d \n",im->first,difs.count());
 	  if (difs.count()<nasic_min)
@@ -620,11 +653,11 @@ IMPL::LCCollectionVec* DHCalEventReader::createRawCalorimeterHits(std::vector<ui
   chFlag.setBit(bitinfo.RCHBIT_TIME ) ;                    // timestamp
   RawVec->setFlag( chFlag.getFlag()  ) ;   
   
-
+  
   for (std::vector<DIFPtr*>::iterator it = theDIFPtrList_.begin();it!=theDIFPtrList_.end();it++)
     {
       DIFPtr* d = (*it);
-      // d->dumpDIFInfo();
+      //d->dumpDIFInfo();
      // for (uint32_t i=1;i<d->getNumberOfFrames();i++)
      // 	    {
      // 	      std::bitset<64> bs0(0);
@@ -683,7 +716,11 @@ IMPL::LCCollectionVec* DHCalEventReader::createRawCalorimeterHits(std::vector<ui
 
 	  //	  std::cout<<"rebd "<<TTT<<" "<<hit->getCellID1()<<std::endl;
 	   RawVec->addElement(hit);
-	   if (RawVec->getNumberOfElements()>1000000) break; //too may noise
+	   if (RawVec->getNumberOfElements()>MAX_NUMBER_OF_HIT) 
+       {
+         std::cout<<" Too large collection of hits=========================================>"<<RawVec->getNumberOfElements()<<std::endl;
+         break;
+       }//too may noise
 	}
       }
     }
@@ -1248,6 +1285,106 @@ void DHCalEventReader::findTimeSeeds(  int32_t nhit_min,std::vector<uint32_t>& c
 }
 
 
+
+void DHCalEventReader::findDIFSeeds(  int32_t difmin,std::string colname)
+{
+  IMPL::LCCollectionVec* rhcol=NULL;
+  try {
+    rhcol=(IMPL::LCCollectionVec*) evt_->getCollection(colname);
+  }
+  catch(...)
+  {
+    printf("No RHCOL yet \n");
+    return;
+  }
+  std::map<uint32_t,std::bitset<256> > tcount;
+ 
+  std::map<uint32_t,std::bitset<256> >::iterator im=tcount.end();
+  for (std::vector<DIFPtr*>::iterator it = theDIFPtrList_.begin();it!=theDIFPtrList_.end();it++) // Loop on DIF
+  {
+    DIFPtr* d = (*it);
+    //uint32_t chid= getChamber(d->getID());
+    // LMTest      uint32_t bc = rint(f->getBunchCrossingTime()/DCBufferReader::getDAQ_BC_Period());
+    // Loop on Frames
+    for (uint32_t ifra=0;ifra<d->getNumberOfFrames();ifra++)
+    {
+      uint32_t bc=d->getFrameTimeToTrigger(ifra);
+      
+      im=tcount.find(bc);
+      if (im!=tcount.end()) {im->second.set(d->getID());continue;}
+      im=tcount.find(bc-1);
+      if (im!=tcount.end()) {im->second.set(d->getID());continue;}
+      im=tcount.find(bc+1);
+      if (im!=tcount.end()) {im->second.set(d->getID());continue;}
+      im=tcount.find(bc-2);
+      if (im!=tcount.end()) {im->second.set(d->getID());continue;}
+      im=tcount.find(bc+2);
+      if (im!=tcount.end()) {im->second.set(d->getID());continue;}
+      im=tcount.find(bc-3);
+      if (im!=tcount.end()) {im->second.set(d->getID());continue;}
+      im=tcount.find(bc+3);
+      if (im!=tcount.end()) {im->second.set(d->getID());continue;}
+      im=tcount.find(bc-4);
+      if (im!=tcount.end()) {im->second.set(d->getID());continue;}
+      im=tcount.find(bc+4);
+      if (im!=tcount.end()) {im->second.set(d->getID());continue;}
+ 
+      std::bitset<256> v(0);
+        std::pair<uint32_t,std::bitset<256> > p(bc,v);
+        tcount.insert(p);
+       
+      }
+    }
+    
+    theTimeSeeds_.clear();
+
+    for (std::map<uint32_t,std::bitset<256> >::iterator im=tcount.begin();im!=tcount.end();im++)
+    {
+      //std::cout<<im->first<<" ->"<<im->second.count()<<std::endl;
+      if (im->second.count()>=difmin) theTimeSeeds_.push_back(im->first);
+    }
+  std::sort(theTimeSeeds_.begin(),theTimeSeeds_.end(),std::greater<uint32_t>());
+  thePhysicsEventMap_.clear();
+  for (std::vector<uint32_t>::iterator is=theTimeSeeds_.begin();is!=theTimeSeeds_.end();is++)
+  {
+    std::cout<<"Good time stamp "<<(*is)<<std::endl;
+    std::vector<IMPL::RawCalorimeterHitImpl*> v;
+    
+    std::pair<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> > p((*is),v);
+    thePhysicsEventMap_.insert(p);
+  }
+  std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> >::iterator imh=thePhysicsEventMap_.end();
+  
+  for (int i=0;i<rhcol->getNumberOfElements();i++)
+  {
+    IMPL::RawCalorimeterHitImpl* hit = (IMPL::RawCalorimeterHitImpl*) rhcol->getElementAt(i);
+    if (hit==0) continue;
+    unsigned int difid = hit->getCellID0()&0xFF;
+    
+    //std::cout<<difid<<"="<<hit->getTimeStamp()<<std::endl;
+    imh=thePhysicsEventMap_.find(hit->getTimeStamp());
+    if (imh!=thePhysicsEventMap_.end()) {imh->second.push_back(hit);continue;}
+    imh=thePhysicsEventMap_.find(hit->getTimeStamp()-1);
+    if (imh!=thePhysicsEventMap_.end()) {imh->second.push_back(hit);continue;}
+    imh=thePhysicsEventMap_.find(hit->getTimeStamp()+1);
+    if (imh!=thePhysicsEventMap_.end()) {imh->second.push_back(hit);continue;}
+    imh=thePhysicsEventMap_.find(hit->getTimeStamp()-2);
+    if (imh!=thePhysicsEventMap_.end()) {imh->second.push_back(hit);continue;}
+    imh=thePhysicsEventMap_.find(hit->getTimeStamp()+2);
+    if (imh!=thePhysicsEventMap_.end()) {imh->second.push_back(hit);continue;}
+    imh=thePhysicsEventMap_.find(hit->getTimeStamp()-3);
+    if (imh!=thePhysicsEventMap_.end()) {imh->second.push_back(hit);continue;}
+    imh=thePhysicsEventMap_.find(hit->getTimeStamp()+3);
+    if (imh!=thePhysicsEventMap_.end()) {imh->second.push_back(hit);continue;}
+    imh=thePhysicsEventMap_.find(hit->getTimeStamp()-4);
+    if (imh!=thePhysicsEventMap_.end()) {imh->second.push_back(hit);continue;}
+    imh=thePhysicsEventMap_.find(hit->getTimeStamp()+4);
+    if (imh!=thePhysicsEventMap_.end()) {imh->second.push_back(hit);continue;}
+  }
+  /*  for (std::vector<uint32_t>::iterator is=candidate.begin();is!=candidate.end();is++)
+   *      std::cout<<__PRETTY_FUNCTION__<<" Time "<< (*is)<<" gives ---> "<<tcount[(*is)]<<std::endl; */
+  return ;
+}
 
 
 

@@ -15,3 +15,5 @@ state="Dome_42chambres_Reference_v4_163"
 # November 2012 + masks state="Dome_42chambres_Reference_v4_144"
 directory="/data/NAS/October2015"
 monitor='lyosdhcal12.cern.ch'
+daqhost='lyopc252'
+daqport=8100

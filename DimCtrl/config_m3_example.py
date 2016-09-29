@@ -8,6 +8,7 @@ zupdevice='/dev/ttyUSB0'
 zupport=1
 dccname="DCCCCC01"
 mdcname="MDCC01"
+#mdcname=None
 
 register=0x89580000
 # 115 + petit seup

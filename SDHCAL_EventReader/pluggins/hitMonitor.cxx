@@ -25,7 +25,7 @@ void hitMonitor::setChamberEdgeCut( float i)
 void hitMonitor::setUseTk4(bool t)
 {useTk4_=t;};
 	
-void hitMonitor::FillTimeAsic(IMPL::LCCollectionVec* rhcol)
+void hitMonitor::FillTimeAsic(IMPL::LCCollectionVec* rhcol,bool difanalysis)
 {
   //  std::map<uint32_t,uint32_t> count;
   //count.clear();
@@ -48,9 +48,11 @@ void hitMonitor::FillTimeAsic(IMPL::LCCollectionVec* rhcol)
   double tmin=99999999.;
   double tmax=0.;
   //	printf("%d %s\n",__LINE__,__PRETTY_FUNCTION__);
-  //this->DIFStudy(rhcol);
+  if (difanalysis)
+    this->DIFStudy(rhcol);
   //	printf("%d %s\n",__LINE__,__PRETTY_FUNCTION__);
   //IMPL::LCCollectionVec* rhcol=(IMPL::LCCollectionVec*) evt_->getCollection(collectionName_);
+  std::bitset<255> dif_found(0);
   for (int i=0;i<rhcol->getNumberOfElements();i++)
     {
       IMPL::RawCalorimeterHitImpl* hit = (IMPL::RawCalorimeterHitImpl*) rhcol->getElementAt(i);
@@ -62,6 +64,7 @@ void hitMonitor::FillTimeAsic(IMPL::LCCollectionVec* rhcol)
       //hasic2->Fill(difid*1.,asicid*1);
       int channel= (hit->getCellID0()&0x3F0000)>>16;
       unsigned int bc = hit->getTimeStamp();
+      dif_found.set(difid,1);
       if (bc>5E6) continue;
 
       if (bc<tmin) tmin=bc;
@@ -80,6 +83,9 @@ void hitMonitor::FillTimeAsic(IMPL::LCCollectionVec* rhcol)
 	  theAsicCount_.insert(p);
 	}
     }
+    //printf("DIF summary \n");
+    //for (int i=0;i<256;i++)
+    //    if (dif_found[i]!=0) printf("DIF %d Found \n",i);
   //	printf("%d %s\n",__LINE__,__PRETTY_FUNCTION__);
   theIntegratedTime_+=(tmax-tmin);
   theEventIntegratedTime_=(tmax-tmin);
@@ -203,11 +209,12 @@ void hitMonitor::DIFStudy( IMPL::LCCollectionVec* rhcol,bool external)
 
 }
 
-void hitMonitor::trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCluster*> &clusters,std::string tkdir)
+void hitMonitor::trackHistos(std::vector<recoTrack*> &tracks,std::vector<recoPoint*> &clusters,std::string tkdir)
 {
   uint32_t minTkExtPoint=_geo->cuts()["tkExtMinPoint"].asUInt();
   float tkChi2=_geo->cuts()["tkChi2"].asFloat();
   float edge=_geo->cuts()["edge"].asFloat();
+  float zedge=_geo->cuts()["zedge"].asFloat();
   //std::cout << minTkExtPoint<<" "<<tkChi2<<" "<<edge<<std::endl;
   // book all chamber
   uint32_t nch=0;
@@ -273,7 +280,7 @@ void hitMonitor::trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCl
       hngood = rootHandler_->BookTH1(tkdir+"/NumberOfTracks",21,-0.1,20.9);
     }
   hngood->Fill(tracks.size()*1.);
-  if (tracks.size()==0) return;
+  if (tracks.size()!=1) return;
   for (std::vector<recoTrack*>::iterator it=tracks.begin();it!=tracks.end();it++)
     {
       // STEP;    
@@ -315,14 +322,14 @@ void hitMonitor::trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCl
       //DEBUG_PRINT("\t %d good hits found \n",tk.getList().size());
       for (std::vector<ROOT::Math::XYZPoint*>::iterator ip=ptk->points().begin();ip!=ptk->points().end();ip++)
 	{
-	  std::vector<planeCluster*>::iterator ic=std::find(clusters.begin(),clusters.end(),(planeCluster*)(*ip));
+	  std::vector<recoPoint*>::iterator ic=std::find(clusters.begin(),clusters.end(),(recoPoint*)(*ip));
 	  if (ic==clusters.end()) continue;
 	  // if (tracks.size()>1)
 	  //   DEBUG_PRINT("\t \t %f %f %f \n",tk.getList()[i].X(),tk.getList()[i].Y(),tk.getList()[i].Z());
 	  //(tk.getList())[i].Print();
-	  hnpl->Fill(1.*(*ic)->chamber());
+	  hnpl->Fill(1.*(*ic)->plan());
 	  std::stringstream namec("");
-	  namec<<tkdir+"/Plan"<<(*ic)->chamber();
+	  namec<<tkdir+"/Plan"<<(*ic)->plan();
 	  TH1* hposx = rootHandler_->GetTH1(namec.str()+"/XPos");	   
 	  TH1* hposy = rootHandler_->GetTH1(namec.str()+"/YPos");	   
 	  TH1* hpullx = rootHandler_->GetTH1(namec.str()+"/XDist");	   
@@ -332,7 +339,7 @@ void hitMonitor::trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCl
 	    {
 	      std::cout <<"Opps "<<namec.str()<<std::endl;
 	      std::cout<<"Cluster "<<(*ic)->Z()<<" "<<(*ic)->X()<<std::endl;
-	      (*ic)->Print();
+	      //(*ic)->Print();
 	      //exit(0);
 	      continue;
 	    }
@@ -343,29 +350,29 @@ void hitMonitor::trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCl
 	  ROOT::Math::XYZVector dex=pex-(*(*ip));
 	  hpullx->Fill(dex.X());
 	  hpully->Fill(dex.Y());
-	  hmult->Fill((*ic)->size());
+	  /// A revoir hmult->Fill((*ic)->size());
 	}
       //STEP;
-      if ((*it)->pchi2()<tkChi2) continue;
+      ///A revoir if ((*it)->pchi2()<tkChi2) continue;
       for (int ich=1;ich<60;ich++)
 	{
 	  Json::Value jch=_geo->chamberGeo(ich);
 	  if (jch.empty()) continue;
-	  if ((*it)->zmin()>jch["z0"].asFloat()+edge) continue;
-	  if ((*it)->zmax()<jch["z0"].asFloat()-edge) continue;
+	  if ((*it)->zmin()>jch["z0"].asFloat()+zedge) continue;
+	  if ((*it)->zmax()<jch["z0"].asFloat()-zedge) continue;
 
 	  recoTrack tkext;
 	  tkext.clear();
 	  for (std::vector<ROOT::Math::XYZPoint*>::iterator ip=(*it)->points().begin();ip!=(*it)->points().end();ip++)
 	    {
 	      if (abs((*ip)->Z()-jch["z0"].asFloat())<1E-3)
-		continue;
+            continue;
 	      else
-		tkext.addPoint((*ip));
+            tkext.addPoint((*ip));
 	    }
-	  tkext.getChi2(clusters);
+	    /// A revoir tkext.getChi2(clusters);
 	  if (tkext.size()<minTkExtPoint) continue;
-	  if (tkext.pchi2()<tkChi2) continue;
+      /// A revoir if (tkext.pchi2()<tkChi2) continue;
 	  tkext.regression();
 	  std::stringstream namec("");
 	  namec<<tkdir+"/Plan"<<ich;
@@ -383,22 +390,22 @@ void hitMonitor::trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCl
 	  TH2* hmiss= rootHandler_->GetTH2(namec.str()+"/missing");
 	  
 	  ROOT::Math::XYZPoint pex=(*it)->extrapolate(jch["z0"].asFloat());
-	  if (pex.X()<jch["x0"].asFloat()+5) continue;
-	  if (pex.X()>jch["x1"].asFloat()-5) continue;
-	  if (pex.Y()<jch["y0"].asFloat()+5) continue;
-	  if (pex.Y()>jch["y1"].asFloat()-5) continue;
+	  if (pex.X()<jch["x0"].asFloat()+edge) continue;
+	  if (pex.X()>jch["x1"].asFloat()-edge) continue;
+	  if (pex.Y()<jch["y0"].asFloat()+edge) continue;
+	  if (pex.Y()>jch["y1"].asFloat()-edge) continue;
 	  hext->Fill(pex.X(),pex.Y());
-	  std::vector<planeCluster*>::iterator icf=clusters.end();
+	  std::vector<recoPoint*>::iterator icf=clusters.end();
 	  double dist=999999.;
-	  for (std::vector<planeCluster*>::iterator ic=clusters.begin();ic!=clusters.end();ic++)
+	  for (std::vector<recoPoint*>::iterator ic=clusters.begin();ic!=clusters.end();ic++)
 	    {
 	      if (abs((*ic)->Z()-jch["z0"].asFloat())>1E-3) continue;
 	      ROOT::Math::XYZVector dex=pex-(*(*ic));
-	      if (dex.Mag2()<4.)
+	      if (dex.Mag2()<9.)
 		{
-		  hfound->Fill(pex.X(),pex.Y());
-		  float nx=(*ic)->hits().size();
-
+		  
+          /// A revoir float nx=(*ic)->hits().size();
+          float nx=1.;
 		  double errx=100./96./sqrt(12.)/sqrt(nx);
 		  double erry=100./96./sqrt(12.)/sqrt(nx);
 		  hdx->Fill(dex.X()/errx);
@@ -416,8 +423,78 @@ void hitMonitor::trackHistos(std::vector<recoTrack*> &tracks,std::vector<planeCl
 	  if (icf==clusters.end())
 	    hmiss->Fill(pex.X(),pex.Y());
 	  else
-	    hnear->Fill((*icf)->X(),(*icf)->Y());    
+      {
+	    hnear->Fill((*icf)->X(),(*icf)->Y());
+        hfound->Fill(pex.X(),pex.Y());
+      }
 	}
       //STEP;
     }
+}
+void hitMonitor::clusterHistos(std::vector<TricotCluster> &tcl,std::vector<planeCluster*> &clusters,std::string tkdir)
+{
+  uint32_t minTkExtPoint=_geo->cuts()["tkExtMinPoint"].asUInt();
+  float tkChi2=_geo->cuts()["tkChi2"].asFloat();
+  float edge=_geo->cuts()["edge"].asFloat();
+  //std::cout << minTkExtPoint<<" "<<tkChi2<<" "<<edge<<std::endl;
+  // book all chamber
+  uint32_t nch=0;
+  //STEP;
+  for (int ich=1;ich<60;ich++)
+  {
+    Json::Value jch=_geo->chamberGeo(ich);
+    if (jch.empty()) continue;
+    nch++;
+    std::stringstream namec("");
+    namec<<tkdir+"/Plan"<<ich;
+    TH1* hposx = rootHandler_->GetTH1(namec.str()+"/XPos");      
+    TH1* hposy = rootHandler_->GetTH1(namec.str()+"/YPos");      
+    TH2* hfound= rootHandler_->GetTH2(namec.str()+"/found");
+    if (hposx==0)
+    {
+      float xi=jch["x0"].asFloat()-20;
+      float xa=jch["x1"].asFloat()+20;
+      float yi=jch["y0"].asFloat()-20;   
+      float ya=jch["y1"].asFloat()+20;
+      int nx=int(xa-xi)+1+20;
+      int ny=int(ya-yi)+1+20;
+      hposx =rootHandler_->BookTH1( namec.str()+"/XPos",nx,xi,xa);
+      hposy =rootHandler_->BookTH1( namec.str()+"/YPos",ny,yi,ya);
+      hfound= rootHandler_->BookTH2(namec.str()+"/found",nx,xi,xa,ny,yi,ya);
+    }
+    
+  }
+  //STEP;
+ 
+  for (std::vector<TricotCluster>::iterator it=tcl.begin();it!=tcl.end();it++)
+  {
+    std::cout<<"tricot " <<(int) it->dif()<<" "<<it->X()<<std::endl;
+    Json::Value dif=_geo->difGeo(it->dif());
+    Json::Value ch=_geo->chamberGeo(dif["chamber"].asUInt());
+    std::stringstream namec("");
+    namec<<tkdir+"/Plan"<<ch["plan"].asUInt();
+    TH1* hposx = rootHandler_->GetTH1(namec.str()+"/XPos");      
+    TH1* hposy = rootHandler_->GetTH1(namec.str()+"/YPos");      
+    TH2* hfound= rootHandler_->GetTH2(namec.str()+"/found");
+    if (hposx==NULL) continue;
+    
+    hfound->Fill(it->X(),it->Y(),1.);
+    hposx->Fill(it->X());
+    hposy->Fill(it->Y());
+  }
+  std::cout<<" fin des strips" <<clusters.size()<<std::endl;
+  for (std::vector<planeCluster*>::iterator it=clusters.begin();it!=clusters.end();it++)
+  {
+    std::cout<<"pads " <<(*it)->plan()<<" "<<(*it)->X()<<std::endl;
+    std::stringstream namec("");
+    namec<<tkdir+"/Plan"<<(*it)->plan();
+    TH1* hposx = rootHandler_->GetTH1(namec.str()+"/XPos");      
+    TH1* hposy = rootHandler_->GetTH1(namec.str()+"/YPos");      
+    TH2* hfound= rootHandler_->GetTH2(namec.str()+"/found");
+    if (hposx==NULL) continue;
+    
+    hfound->Fill((*it)->X(),(*it)->Y(),1.);
+    hposx->Fill((*it)->X());
+    hposy->Fill((*it)->Y());
+  }
 }

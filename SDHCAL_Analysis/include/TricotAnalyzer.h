@@ -16,15 +16,32 @@
 #include "IMPL/LCGenericObjectImpl.h"
 #include "IMPL/RawCalorimeterHitImpl.h"
 #include "UTIL/CellIDDecoder.h"
-
+#include "TrackInfo.h"
 #include "UtilDefs.h"
 typedef  std::pair<DIFPtr*,uint32_t> ptrDifFrame,pdf;
 
 
-class StripCluster {
+class TStripCluster {
+ private:
+  std::vector<uint8_t> _strips;
+  uint8_t _asic;
+  double _x,_a,_b;
+  bool _used;
+
 public:
-  StripCluster(){_strips.clear();_x=0;_asic=0;_used=false;}
-  StripCluster(uint8_t asic,uint8_t i){_strips.clear();_strips.push_back(i);_x=i;_asic=asic; slope();_used=false;}
+  TStripCluster(){_strips.clear();_x=0;_asic=0;_used=false;}
+  TStripCluster(const TStripCluster& obj)
+  {
+
+    for (int i=0;i<obj.nstrips();i++)
+      {_strips.push_back(obj.strips(i));}
+    _asic= obj.asic();
+    _x=obj.x();
+    _a=obj.a();
+    _b=obj.b();
+    _used= obj.isUsed();
+    }
+  TStripCluster(uint8_t asic,uint8_t i){_strips.push_back(i);_x=i;_asic=asic; this->slope();_used=false;}
   bool append(uint8_t asic,uint8_t i)
   {
     if (asic!=_asic) return false;
@@ -67,22 +84,80 @@ public:
       }
   }	  
   std::vector<uint8_t>& strips(){return _strips;}
-  uint8_t asic(){return _asic;}
-  double x(){return _x;}
-  double a(){return _a;}
-  double b(){return _b;}
+  uint8_t nstrips() const {return _strips.size();}
+  uint8_t strips(uint8_t i) const {return _strips[i];}
+  uint8_t asic() const {return _asic;}
+  double x() const {return _x;}
+  double a() const {return _a;}
+  double b() const {return _b;}
   void setUsed(bool t=true){_used=t;}
-  bool isUsed(){return _used;}
+  bool isUsed() const {return _used;}
+};
+class PadCluster {
+public:
+  PadCluster(){_pads.clear();_plan=-1;_x=0;_y=0;_used=false;}
+  PadCluster(uint8_t plan,uint8_t x,uint8_t y){_plan=plan;_pads.push_back(std::make_pair(x,y)) ; this->calpos();_used=false;}
+  PadCluster(const PadCluster& obj)
+  {
+
+    for (int i=0;i<obj.npads();i++)
+      {_pads.push_back(std::make_pair(obj.padI(i),obj.padJ(i)));}
+    _plan= obj.plan();
+    _x=obj.x();
+    _y=obj.y();
+    _used= obj.isUsed();
+    }
+  bool append(uint8_t plan,uint8_t x,uint8_t y)
+  {
+    if (plan!=_plan) return false;
+    
+    bool ap=false;
+    for (std::vector<std::pair<uint8_t,uint8_t> >::iterator ipc=_pads.begin();ipc!=_pads.end();ipc++)
+      {
+	double distx=abs(x-(*ipc).first);
+	double disty=abs(y-(*ipc).second);
+	if (distx>disty && distx<2) ap=true;
+	if (disty>=distx && disty<2) ap=true;
+      }
+    if (ap){_pads.push_back(std::make_pair(x,y)) ; this->calpos();}
+    return ap;
+  }
+  void calpos()
+  {
+    _x=_y=0;
+    for (int i=0;i<_pads.size();i++)
+      {_x+=_pads[i].first;_y+=_pads[i].second;}
+    _x/=this->size();
+    _y/=this->size();
+  }
+  void dump()
+  {
+    printf("Position %d %f %f \n",npads(),x(),y());
+    for (int i=0;i<npads();i++)
+      {
+	printf("%d %d %d \n",i,padI(i),padJ(i)); 
+      }
+  }
+  uint32_t size() const {return _pads.size();}
+  uint32_t npads() const {return _pads.size();}
+  std::vector<std::pair<uint8_t,uint8_t> >& pads(){return _pads;}
+  uint8_t padI(uint32_t i) const {return _pads[i].first;}
+  uint8_t padJ(uint32_t i) const {return _pads[i].second;}
+  uint8_t plan() const {return _plan;}
+  double x() const {return _x;}
+  double y() const {return _y;}
+  void setUsed(bool t=true){_used=t;}
+  bool isUsed() const {return _used;}
 private:
-  std::vector<uint8_t> _strips;
-  uint8_t _asic;
-  double _x,_a,_b;
+  std::vector<std::pair<uint8_t,uint8_t> >  _pads;
+  double _x,_y;
   bool _used;
+  uint8_t _plan;
 };
 
 class TricotCluster
 {
-  TricotCluster(StripCluster* s1,StripCluster* s2,StripCluster* s3) : _s1(s1),_s2(s2),_s3(s3),_valid(false)
+  TricotCluster(TStripCluster* s1,TStripCluster* s2,TStripCluster* s3) : _s1(s1),_s2(s2),_s3(s3),_valid(false)
   {
     if (_s1->isUsed()) return;
     if (_s2->isUsed()) return;
@@ -106,7 +181,7 @@ class TricotCluster
     _s3->setUsed();
     _valid=true;
   }
-  TricotCluster(StripCluster* s1,StripCluster* s2) : _s1(s1),_s2(s2),_s3(NULL),_valid(false)
+  TricotCluster(TStripCluster* s1,TStripCluster* s2) : _s1(s1),_s2(s2),_s3(NULL),_valid(false)
   {
     if (_s1->isUsed()) return;
     if (_s2->isUsed()) return;
@@ -121,9 +196,9 @@ class TricotCluster
   }
   
 private:
-  StripCluster* _s1;
-  StripCluster* _s2;
-  StripCluster* _s3;
+  TStripCluster* _s1;
+  TStripCluster* _s2;
+  TStripCluster* _s3;
   double _x,_y;
   bool _valid;
 };
@@ -155,12 +230,14 @@ public:
 
   void buildFrameMap(std::vector<uint32_t> &seeds);
 
-  void processSeeds();
+  void processOneSeed(std::vector<ptrDifFrame> &v);
+  void dumpSeed(std::vector<ptrDifFrame> &v);
+  void ShowTracks();
 private:
 
 
   int nAnalyzed_;
-
+  int32_t _fdOut;
   DCHistogramHandler* rootHandler_;
 
 
@@ -183,19 +260,21 @@ private:
   std::string theMonitoringPath_;
 	
   unsigned long long theStartBCID_;
-  uint32_t _neff,_neff2,_neff3,_neff4,_nall;
+  uint32_t _neff,_neff2,_neff3,_neff4,_nall,_currentSeed;
   float _x[65532];
   float _y[65532];
   float _z[65532];
   uint32_t _layer[65532];
   uint32_t _npBuf;
-  std::map<uint8_t,uint8_t> _plid,_pldif;
+  std::map<uint8_t,uint8_t> _plid,_pldif,_pltyp;
   std::map<uint8_t,float> _pldx;
   std::map<uint8_t,float> _pldy;
   std::map<uint8_t,float> _plz;
 
+  std::map<uint8_t,float> _plaxi,_playi,_plaxa,_playa;
+
   std::map<uint32_t,std::vector<ptrDifFrame> > _FrameMap;
-  
+  TrackInfo _tk;
 	
 };
 #endif

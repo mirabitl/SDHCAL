@@ -1,7 +1,7 @@
 export DAQDIR=${HOME}/SDHCAL
 export PATH=${DAQDIR}/levbdim_daq:$PATH
 export PYTHONPATH=${DAQDIR}/levbdim_daq:$PYTHONPATH
-export DAQCONFIG=config_combined
+export DAQCONFIG=config_gifpp
 export DAQCONFIGFILE=${DAQDIR}/levbdim_daq/${DAQCONFIG}.py
 # uncomment if socks is used
 #export SOCKPORT=1080

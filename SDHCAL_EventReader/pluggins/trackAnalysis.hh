@@ -28,6 +28,7 @@
 #include "recoTrack.hh"
 #include "UtilDefs.h"
 
+#include "TricotCluster.hh"
 
 class trackAnalysis : public DHCALAnalyzer
 {
@@ -53,8 +54,8 @@ public:
 
   bool decodeTrigger(LCCollection* rhcol, double tcut);
   void drawHits();
-
-  
+  void drawCluster();
+  void align();
 
   void setCollectionName(std::string s){ collectionName_=s;}
   unsigned long long getExternalTriggerTime() { return (unsigned long long) long(externalTriggerTime_);}
@@ -202,7 +203,11 @@ private:
   uint32_t firstInteractionPlane_,lastInteractionPlane_;
   uint32_t _runNumber;
   jsonGeo* _geo;
+  std::vector<TStripCluster*> _vts;
+  
+  std::vector<TricotCluster> _tcl;
   std::vector<recoTrack*> _vtk;
   double _pMip,_pMipCand;
+  uint32_t _nStripPlanes,_nPadPlanes;
 };
 #endif

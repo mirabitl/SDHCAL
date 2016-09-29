@@ -412,7 +412,7 @@ int readOneEvent(int run,int event);
 
  
 
-
+  void findDIFSeeds(int32_t ndifmin,std::string colname="DHCALRawHits");
    void findTimeSeeds(  int32_t nhit_min,std::vector<uint32_t>& candidate);
    void findTimeSeeds(  int32_t nasic_min,std::string colname="DHCALRawHits");
   //! <i>Internal</i> create the DHCALRawHits collection 

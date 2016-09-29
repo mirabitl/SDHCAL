@@ -1,6 +1,8 @@
+#include <Math/Point3Dfwd.h>
 
 #include "combAnalysis.hh"
 #include "DIFUnpacker.h"
+#include <TCanvas.h>
 #include <TLine.h>
 #include <TGraphErrors.h>
 #include <TFitResult.h>
@@ -21,6 +23,12 @@
 #include "jsonGeo.hh"
 #include "buffer.hh"
 
+static TCanvas* TCPlot=NULL;
+static TCanvas* TCHits=NULL;
+static TCanvas* TCShower=NULL;
+static TCanvas* TCEdge=NULL;
+static TCanvas* TCHT=NULL;
+static TCanvas* TCCluster=NULL;
 
 combAnalysis::combAnalysis() :nAnalyzed_(0),theMonitoringPeriod_(0),theMonitoringPath_("/dev/shm/Monitoring"),theSkip_(0),draw_(false),_geo(NULL),_monitor(NULL)
 {
@@ -223,6 +231,8 @@ void combAnalysis::processEvent()
 	}
     }
    printf("%d %d =>\n",evt_->getRunNumber(),evt_->getEventNumber());
+   std::vector<uint32_t> vcand;
+   vcand.clear();
    bool good=false;
    for (std::map<uint32_t,uint32_t>::iterator imf=mecal.begin();imf!=mecal.end();imf++)
      {
@@ -230,10 +240,11 @@ void combAnalysis::processEvent()
        if (mask.count()<4) continue;
        std::cout<<mask<<std::endl;
        printf("%d -> %d mask count %d \n",imf->first*2,imf->second,mask.count());
+       vcand.push_back(imf->first*2);
        good=true;
      }
    if (!good) return;
-   getchar();
+   //getchar();
     std::map<uint32_t,uint32_t> mhcal;
   mhcal.clear();
    for ( std::vector<std::string >::iterator it=(vnames)->begin();it!=vnames->end();it++)
@@ -289,9 +300,175 @@ void combAnalysis::processEvent()
 	}
     }
    printf("%d %d =>\n",evt_->getRunNumber(),evt_->getEventNumber());
+   std::vector<uint32_t> vgood;
+   vgood.clear();
    for (std::map<uint32_t,uint32_t>::iterator imf=mhcal.begin();imf!=mhcal.end();imf++)
-     if (imf->second>50)
-       printf("%d -> %d (+%d) \n",imf->first,imf->second,imf->first+2490);
+     {
+       bool found=false;
+       for (int ic=0;ic<vcand.size();ic++)
+	 {
+	   double diff=vcand[ic]*1.-2490.-imf->first*1.;
+	   if (abs(diff)<3 ) {
+	   printf("%d %d \n",vcand[ic],(imf->first+2490));
+	   found=true;break;}
+	 }
+       //if (imf->second>50)
+       if (found)
+	 {
+	 printf("%d -> %d (+%d) \n",imf->first,imf->second,imf->first+2490);
+	 vgood.push_back(imf->first+2490);
+	 }
+     }
+   if (vgood.size()==0)
+     return;
+
+   for (uint32_t is=0;is<vgood.size();is++)
+     {
+       std::vector<ROOT::Math::XYZPoint> _epoints;
+       std::vector<ROOT::Math::XYZPoint> _hpoints;
+       printf("Seed %d \n",vgood[is]);
+       for ( std::vector<std::string >::iterator it=(vnames)->begin();it!=vnames->end();it++)
+	 {
+	   if ((*it).compare("RU_XDAQ")!=0) continue;
+	   EVENT::LCCollection* col= evt_->getCollection(*it); 
+
+
+	   for (int j=0;j<col->getNumberOfElements(); j++)
+	     {
+
+	       LMGeneric* go= (LMGeneric*) col->getElementAt(j);
+	       int* buf=&(go->getIntVector()[0]);
+
+
+
+
+	       unsigned char* tcbuf = (unsigned char*) buf;
+	       uint32_t rusize =go->getNInt()*sizeof(int32_t);
+	       levbdim::buffer m((char*) tcbuf,0);
+	       m.setPayloadSize(rusize-3*sizeof(uint32_t)-sizeof(uint64_t));
+	  //std::cout<<" Source found "<<m.detectorId()<<" "<<m.dataSourceId()<<std::endl;
+	       if (m.detectorId()==201)
+		 {
+		   struct CaloTransHit *ptr=(struct CaloTransHit*) m.payload();
+	  
+		   uint32_t nhit=m.payloadSize()/sizeof(struct CaloTransHit);
+		   //printf("DIF %d %d has %d hits  %d %d \n",m.detectorId(),m.dataSourceId(),nhit,m.payloadSize(),sizeof(struct CaloTransHit));
+	  
+		   for (int i=0;i<nhit;i++)
+		     {
+
+		       uint32_t ti =dbcid[m.dataSourceId()]-ptr->asic_bcid+2490;
+		       double tdist=ti*1-vgood[is]*1.;
+		       //printf("%d %d %f \n",ti,vgood[is],tdist);
+		       if (abs(tdist)>2 ) {ptr++;continue;}
+		       //printf("%d %f %f %f %f %f %d\n",ptr->asic_bcid,ptr->time,ptr->energy,ptr->x,ptr->y,ptr->z,ti);
+		       ROOT::Math::XYZPoint p(ptr->x,ptr->y,ptr->z);
+		       _hpoints.push_back(p);
+		       ptr++;
+		     }
+		 }
+	       if (m.detectorId()==1100)
+		 {
+		   struct CaloTransHit *ptr=(struct CaloTransHit*) m.payload();
+	  
+		   uint32_t nhit=m.payloadSize()/sizeof(struct CaloTransHit);
+		   //printf("DIF %d %d has %d hits  %d %d \n",m.detectorId(),m.dataSourceId(),nhit,m.payloadSize(),sizeof(struct CaloTransHit));
+	  
+		   for (int i=0;i<nhit;i++)
+		     {
+
+		       uint32_t ti =ptr->asic_bcid;
+		       double tdist=ti*1-vgood[is]*0.5;
+		       //printf("ecal %d %f \n",ti,tdist);
+		       if (abs(tdist)>2 ) {ptr++;continue;}
+		       //printf("%d %f %f %f %f %f %d\n",ptr->asic_bcid,ptr->time,ptr->energy,ptr->x,ptr->y,ptr->z,ti);
+		       ROOT::Math::XYZPoint p(-ptr->y/10.+81.,-ptr->x/10.+75,+ptr->z/10.-117.);
+		       _epoints.push_back(p);
+		       ptr++;
+		     }
+		 }
+	     }
+
+	   // Plots
+	   TH3* hcgposi = rootHandler_->GetTH3("InstantHitMap");
+	   TH3* hcgpose = rootHandler_->GetTH3("InstantHitMapE");
+	   if (hcgposi==NULL)
+	     {
+	       hcgposi =rootHandler_->BookTH3("InstantHitMap",330,-200.,130.,120,-10.,110.,120,-10.,110.);
+	       hcgpose =rootHandler_->BookTH3("InstantHitMapE",330,-200.,130.,120,-10.,110.,120,-10.,110.);
+	     }
+	   else
+	     {
+	       hcgposi->Reset();
+	       hcgpose->Reset();
+	     }
+	   if (hcgposi!=0 )
+	     {
+	       //hcgposi->Reset();
+      
+	       for (std::vector<ROOT::Math::XYZPoint>::iterator ih=_epoints.begin();ih!=_epoints.end();ih++)
+		 {
+		   hcgpose->Fill(ih->Z(),ih->X(),ih->Y());//(*ih)->Z(),(*ih)->X(),(*ih)->Y());
+
+		   //std::cout<<"ECAL "<<ih->Z()<<" "<<ih->X()<<" "<<ih->Y()<<std::endl;
+		 }
+	       for (std::vector<ROOT::Math::XYZPoint>::iterator ih=_hpoints.begin();ih!=_hpoints.end();ih++)
+		 {
+		   hcgposi->Fill(ih->Z(),ih->X(),ih->Y());//(*ih)->Z(),(*ih)->X(),(*ih)->Y());
+		   //std::cout<<"HCAL "<<ih->Z()<<" "<<ih->X()<<" "<<ih->Y()<<std::endl;
+		 }
+
+	       if (TCHits==NULL)
+		 {
+		   TCHits=new TCanvas("TCHits","tChits1",900,900);
+		   TCHits->Modified();
+		   TCHits->Draw();
+		   TCHits->Divide(2,2);
+		 }
+	       TCHits->cd(1);
+	       hcgposi->SetMarkerStyle(25);
+	       hcgposi->SetMarkerColor(kRed);
+	       hcgposi->Draw("P");
+	       hcgpose->SetMarkerStyle(23);
+	       hcgpose->SetMarkerColor(kBlue);
+	       hcgpose->Draw("PSAME");
+
+	        TCHits->cd(3);
+		TProfile2D* hpx=hcgposi->Project3DProfile("yx");
+		hpx->SetLineColor(kRed);
+		
+		hpx->Draw("BOX");
+		TProfile2D* epx=hcgpose->Project3DProfile("yx");
+		epx->SetLineColor(kBlue);
+		
+
+		epx->Draw("BOXSAME");
+	        TCHits->cd(4);
+		TProfile2D* hpy=hcgposi->Project3DProfile("zx");
+		hpy->SetLineColor(kRed);
+		
+		hpy->Draw("BOX");
+		TProfile2D* epy=hcgpose->Project3DProfile("zx");
+		epy->SetLineColor(kBlue);
+		
+
+		epy->Draw("BOXSAME");
+		
+	       TCHits->Modified();
+	       TCHits->Draw();
+	       TCHits->Update();
+	       std::stringstream ss("");
+	       ss<<"/tmp/Display_"<<evt_->getRunNumber()<<"_"<<evt_->getEventNumber()<<"_"<<vgood[is]<<".png";
+	       TCHits->SaveAs(ss.str().c_str());
+	     }
+	 
+	 }
+  
+
+	   
+       
+     }
+
    getchar();
 
 }
