@@ -61,7 +61,7 @@ public:
 
 private:
   fsmweb* _fsm;
-  LClient* _dbClient,*_zupClient,*_cccClient,*_mdccClient,*_builderClient;
+  LClient* _dbClient,*_zupClient,*_cccClient,*_mdccClient,*_builderClient,*_gpioClient;
   std::vector<LClient*> _DIFClients;
   std::string _strParam;
   Json::Value _jparam;
