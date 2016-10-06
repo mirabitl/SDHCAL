@@ -123,8 +123,8 @@ void LGpioServer::Read()
       return;
     }
   sleep((unsigned int) 1);
-  _status[0]=_gpio->getVMEPower();
-  _status[1]=_gpio->getDIFPower();
+  _status[0]=_gpio->getVMEPower()*12.0;
+  _status[1]=_gpio->getDIFPower()*6.0;
   _status[2]=0;
   this->publishStatus();
 }
