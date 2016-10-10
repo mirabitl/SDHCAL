@@ -10,23 +10,120 @@ void LWienerServer::configure(levbdim::fsmmessage* m)
   //uint32_t port=m->content()["port"].asInt();
   std::string ip=m->content()["ip"].asString();
   
- this->Open(device);
- // this->read(m);
- //std::cout<<"reponse=> "<<m->content()["answer"]<<std::endl;
+  this->Open(ip);
+
+  std::string sdb =m->content()["account"].asString();
+  
+  _my= new MyInterface(sdb);
+  _my->connect();
+
+  Json::Value jrep;
+  _jchambers.clear();
+  _my->executeSelect("select HVCHAN,VREF,IREF,P0,T0 FROM CHAMBERREF WHERE FIN>NOW() AND DEBUT<NOW()");
+  MYSQL_ROW row=NULL;
+  while ((row=_my->getNextRow())!=0)
+    {
+      //std::cout<<c.channel<<" "<<c.vref<<std::endl;
+      Json::Value jch;
+      jch["channel"]=atoi(row[0]);
+      jch["vref"]=atof(row[1]);
+      jch["iref"]=atof(row[2]);
+      jch["pref"]=atof(row[3]);
+      jch["tref"]=atof(row[4]);
+      _jchambers.append(jch);
+    }
+  _my->disconnect();
+  jrep["chambers"]=_jchambers;
+  m->setAnswer(jrep);
+
+  
 }
-void LWienerServer::on(levbdim::fsmmessage* m)
+
+void LWienerSnmp::doMonitoring()
+{
+  _storeRunning=true;
+  LOG4CXX_INFO(_logLdaq,"Storage thread started");
+  while (_storeRunning)
+    {
+      if (_my==NULL)
+	{
+	  sleep((unsigned int) 10);
+	  continue;
+	}
+      _bsem.lock();
+      _my->connect();
+
+      const Json::Value& chambers = _jchambers;
+      Json::Value array_keys;
+      for (Json::ValueConstIterator it = chambers.begin(); it != chambers.end(); ++it)
+	{
+	  const Json::Value& ch = *it;
+
+	  std::stringstream s0;
+	  s0.str(std::string());
+	  uint32_t i=ch["channel"].asUInt();
+	  Json::Value rch=this->Read(i);
+	  s0<<"insert into WIENERMON(HVCHAN,VSET,ISET,VOUT,IOUT) VALUES("<<ch["channel"].asUInt()<<","<<rch["vset"].asFloat()<<","<<rch["uset"].asFloat()<<","<<rch["vout"].asFloat()<<","<<rch["iout"].asFloat()<<")";
+	  LOG4CXX_DEBUG(_logLdaq,"execute "<<s0.str());
+	  _my->executeQuery(s0.str());
+
+	}
+      _my->disconnect();
+      _bsem.unlock();
+      for (int i=0;i<_storeTempo;i++)
+	if (_storeRunning)
+	  sleep((unsigned int) 1);
+    }
+  LOG4CXX_INFO(_logLdaq,"Storage thread stopped");
+}
+
+void LWienerServer::startMonitoring(levbdim::fsmmessage* m)
 {
   LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
-  this->Switch(1);
-  this->read(m);
+ 
+
+  _storeTempo =m->content()["period"].asUInt();
+  g_store.create_thread(boost::bind(&LWienerServer::doMonitoring, this));
+  Json::Value jsta;
+  jsta["action"]="MONITOR STARTED";
+  m->setAnswer(jsta);
+  
 }
-void LWienerServer::off(levbdim::fsmmessage* m)
+void LWienerServer::stopMonitoring(levbdim::fsmmessage* m)
+{
+    _storeRunning=false;
+  g_store.join_all();
+  LOG4CXX_INFO(_logLdaq,"Storage thread destroy");
+  Json::Value jsta;
+  jsta["action"]="MONITOR STOPPED";
+  m->setAnswer(jsta);
+
+}
+void LWienerServer::startAutoControl(levbdim::fsmmessage* m)
 {
   LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
-  this->Switch(0);
-  this->read(m);
+
+  _checkTempo =m->content()["period"].asUInt();
+  g_check.create_thread(boost::bind(&LWienerServer::doCheck, this));
+  Json::Value jsta;
+  jsta["action"]="HV CHECK STARTED";
+  m->setAnswer(jsta);
+  
+
 }
-void LWienerServer::read(levbdim::fsmmessage* m)
+void LWienerServer::stopAutoControl(levbdim::fsmmessage* m)
+{
+
+  _checkRunning=false;
+  g_check.join_all();
+  LOG4CXX_INFO(_logLdaq,"Check thread destroy");
+  Json::Value jsta;
+  jsta["action"]="HV CHECK STOPPED";
+  m->setAnswer(jsta);
+
+}
+
+void LWienerServer::destroy(levbdim::fsmmessage* m)
 {
   LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
   this->Read();
@@ -74,11 +171,13 @@ void LWienerServer::c_setOutputVoltageRiseRate(Mongoose::Request &request, Mongo
   uint32_t first=atol(request.get("first","0").c_str());
   uint32_t last=atol(request.get("last","0").c_str());	
   float  vset=atof(request.get("value","0.0").c_str());
+
   for (uint32_t i=first;i<=last;i++)
   {
     uint32_t imodule=i/8;
     uint32_t ichannel=i%8;
     _hv->c_setOutputVoltageRiseRate(imodule,ichannel,vset);
+
   }
   response["STATUS"]="DONE";
  
@@ -111,6 +210,20 @@ void LWienerServer::c_setOutputSwitch(Mongoose::Request &request, Mongoose::Json
   response["STATUS"]="DONE";
  
 }
+void LWienerServer::c_getStatus(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  uint32_t first=atol(request.get("first","0").c_str());
+  uint32_t last=atol(request.get("last","0").c_str());	
+ 
+  Json::Value rep;
+  for (uint32_t i=first;i<=last;i++)
+  {
+    rep.append(this->Read(i));
+  }
+  response["STATUS"]="DONE";
+  response["HVSTATUS"]=rep;
+ 
+}
 LWienerServer::LWienerServer(std::string name) : _hv(NULL)
 {
   //_fsm=new levbdim::fsm(name);
@@ -125,7 +238,7 @@ LWienerServer::LWienerServer(std::string name) : _hv(NULL)
   _fsm->addTransition("STARTMONITOR","CONFIGURED","MONITORED",boost::bind(&LWienerServer::startMonitoring, this,_1));
   _fsm->addTransition("STOPMONITOR","MONITORED","CONFIGURED",boost::bind(&LWienerServer::stopMonitoring, this,_1));
   _fsm->addTransition("STARTCONTROL","MONITORED","CONTROLED",boost::bind(&LWienerServer::startAutoControl, this,_1));
-  _fsm->addTransition("STOPCONTROL","CONTROLED","MONITORED",boost::bind(&LWienerServer::startAutoControl, this,_1));
+  _fsm->addTransition("STOPCONTROL","CONTROLED","MONITORED",boost::bind(&LWienerServer::stopAutoControl, this,_1));
   _fsm->addTransition("DESTROY","CONFIGURED","CREATED",boost::bind(&LWienerServer::destroy, this,_1));
 
 
@@ -171,36 +284,14 @@ Json::Value LWienerServer::Read(uint32_t i)
       LOG4CXX_ERROR(_logLdaq," GPIO not created ");
       return;
     }
-      uint32_t imodule=i/8;
-    uint32_t ichannel=i%8;
+  uint32_t imodule=i/8;
+  uint32_t ichannel=i%8;
   Json::Value r;	
-    r["channel"]=i;
-    r["vset"]=_hv->getOutputVoltage(imodule,ichannel);
-    r["iset"]=_hv->getOutputCurrentLimit(imodule,ichannel);
-    r["vout"]=_hv->getOutputMeasurementSenseVoltage(imodule,ichannel);
-    r["iout"]=_hv->getOutputMeasurementCurrent(imodule,ichannel);
-  _status[0]=_hv->getVMEPower()*12.0;
-  _status[1]=_hv->getDIFPower()*6.0;
-  _status[2]=0;
-  this->publishStatus();
+  r["channel"]=i;
+  r["vset"]=_hv->getOutputVoltage(imodule,ichannel);
+  r["iset"]=_hv->getOutputCurrentLimit(imodule,ichannel);
+  r["vout"]=_hv->getOutputMeasurementSenseVoltage(imodule,ichannel);
+  r["iout"]=_hv->getOutputMeasurementCurrent(imodule,ichannel);
+  r["ramp"]=_hv->getOutputVoltageRiseRate(imodule,ichannel);
 }
 
-void LWienerServer::Switch(uint32_t mode)
-{
-  if (_hv==NULL)
-    {
-      LOG4CXX_ERROR(_logLdaq," Zup not created ");
-      return;
-    }
-  if (mode==0)
-    {
-      LOG4CXX_INFO(_logLdaq,"Switching OFF "<<mode);
-      _hv->DIFOFF();
-    }
-  else
-    {
-      LOG4CXX_INFO(_logLdaq,"Switching ON "<<mode);
-      _hv->DIFON();
-    }
-  this->Read();
-}
