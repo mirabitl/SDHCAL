@@ -1,5 +1,5 @@
 
-#jsonfile='/data/NAS/config/levbdim_m3_good.json'
+# jsonfile='/data/NAS/config/levbdim_m3_good.json'
 jsonfile='/data/NAS/config/levbdim_m3_pub.json'
 
 zupdevice='/dev/ttyUSB0'
@@ -17,7 +17,7 @@ dbstate="Dome_42chambres_Reference_v4_224"
 # November 2012 + masks state="Dome_42chambres_Reference_v4_144"
 filepath="/data/NAS/June2016"
 memorypath="/dev/shm/levbdim"
-#proclist=["monitor","lcio","basicwriter"]
+# proclist=["monitor","lcio","basicwriter"]
 proclist=["monitor","root","basicwriter"]
 #proclist=[]
 daqhost='lyosdhcal9.cern.ch'
