@@ -113,11 +113,11 @@ void RawAnalyzer::processEvent()
 	  printf("Wrong Time %f %x \n",t,d->getFrameTimeToTrigger(i));
 	  continue;
 	}
-	if (dbase->getDTC()==17 && d->getFrameTimeToTrigger(i)>80385 && d->getFrameTimeToTrigger(i)<80395 )
-	  {
-	    std::cout<<d->getID()<<" "<<d->getAbsoluteBCID()<<" "<<d->getFrameTimeToTrigger(i);
-	    getchar();
-	  }
+	//if (dbase->getDTC()==17 && d->getFrameTimeToTrigger(i)>80385 && d->getFrameTimeToTrigger(i)<80395 )
+	 // {
+	   // std::cout<<d->getID()<<" "<<d->getAbsoluteBCID()<<" "<<d->getFrameTimeToTrigger(i);
+	   // getchar();
+	  //}
 	//printf("%d %d \n",d->getID(),d->getFrameAsicHeader(i));
 	if (d->getFrameAsicHeader(i)>48) continue;
 	theCount_[d->getID()-1][0]++;

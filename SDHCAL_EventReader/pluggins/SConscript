@@ -93,8 +93,8 @@ env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIB
 
 
 #Shared library
-lmreco=env.SharedLibrary("lmreco",source=['jsonGeo.cxx','RecoHit.cxx','planeCluster.cxx','hitMonitor.cxx','recoTrack.cxx'])
-LIBRARIESPLUG=["lmreco"]+LIBRARIES
+lmreco=env.SharedLibrary("lmreco",source=['jsonGeo.cxx','RecoHit.cxx','planeCluster.cxx','hitMonitor.cxx','recoTrack.cxx',"basicreader.cxx"])
+LIBRARIESPLUG=["lmreco","boost_system"]+LIBRARIES
 LIBRARY_PATHS.append(".")
 
 env1 = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIESPLUG,LIBPATH=LIBRARY_PATHS)
@@ -102,5 +102,24 @@ rawAnalysis=env1.SharedLibrary("rawAnalysis",source=['rawAnalysis.cxx'])
 combAnalysis=env1.SharedLibrary("combAnalysis",source=['combAnalysis.cxx'])
 trackAnalysis=env1.SharedLibrary("trackAnalysis",source=['trackAnalysis.cxx'])
 rootProcessor=env1.SharedLibrary("rootProcessor",source=['rootProcessor.cxx'])
-Default([lmreco,rawAnalysis,trackAnalysis,rootProcessor,combAnalysis])
+
+
+
+
+EXE_LIBPATH=LIBRARY_PATHS
+
+EXE_LIBS=LIBRARIESPLUG
+
+br=env1.Program("bin/br",source="br.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+
+
+
+
+
+Default([lmreco,rawAnalysis,trackAnalysis,rootProcessor,combAnalysis,br])
+
+
+
+
 env1.Install("../../opt/dhcal/lib",[lmreco,rawAnalysis,trackAnalysis,rootProcessor,combAnalysis])
+env1.Alias('install', ["../../opt/dhcal/lib"])

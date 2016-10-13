@@ -482,10 +482,11 @@ void hitMonitor::clusterHistos(std::vector<TricotCluster> &tcl,std::vector<plane
     hposx->Fill(it->X());
     hposy->Fill(it->Y());
   }
-  std::cout<<" fin des strips" <<clusters.size()<<std::endl;
+  
+  //std::cout<<" fin des strips  aaaa " <<clusters.size()<<std::endl;
   for (std::vector<planeCluster*>::iterator it=clusters.begin();it!=clusters.end();it++)
   {
-    std::cout<<"pads " <<(*it)->plan()<<" "<<(*it)->X()<<std::endl;
+    //std::cout<<"pads " <<(*it)->plan()<<" "<<(*it)->X()<<std::endl;
     std::stringstream namec("");
     namec<<tkdir+"/Plan"<<(*it)->plan();
     TH1* hposx = rootHandler_->GetTH1(namec.str()+"/XPos");      

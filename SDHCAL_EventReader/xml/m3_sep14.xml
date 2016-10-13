@@ -18,7 +18,7 @@
     <parameter name="LCIOInputFiles"> 
     </parameter>
     <!-- limit the number of processed records (run+evt): -->  
-    <parameter name="MaxRecordNumber" value="8000" />  
+    <parameter name="MaxRecordNumber" value="800000" />  
     <parameter name="SkipNEvents" value="600" />  
     <parameter name="SupressCheck" value="false" />  
     <!--parameter name="GearXMLFile"> gear_ldc.xml </parameter-->  

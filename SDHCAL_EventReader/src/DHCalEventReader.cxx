@@ -1347,7 +1347,7 @@ void DHCalEventReader::findDIFSeeds(  int32_t difmin,std::string colname)
   thePhysicsEventMap_.clear();
   for (std::vector<uint32_t>::iterator is=theTimeSeeds_.begin();is!=theTimeSeeds_.end();is++)
   {
-    std::cout<<"Good time stamp "<<(*is)<<std::endl;
+    //std::cout<<"Good time stamp "<<(*is)<<std::endl;
     std::vector<IMPL::RawCalorimeterHitImpl*> v;
     
     std::pair<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> > p((*is),v);
