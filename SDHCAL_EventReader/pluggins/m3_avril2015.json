@@ -2,6 +2,7 @@
     "cuts":{
 	"firstEvent":1,
 	"timeAnalysis":1,
+	"timeWindow":1,
 	"difAnalysis":0,
 	"cerenkovAnalysis":0,
 	"showerAnalysis":0,

@@ -18,6 +18,20 @@
 #include <sstream>
 #include <map>
 #include <bitset>
+#include "RecoHit.hh"
+#include "recoPoint.hh"
+#include "recoTrack.hh"
+#include "rCluster.hh"
+class framePoint : public recoPoint
+{
+public:
+  framePoint(uint32_t p) : _plan(p){;}
+   virtual double dX(){return 0.3;}
+  virtual double dY(){return 0.3;}
+  virtual uint32_t plan(){ return _plan;}
+private:
+  uint32_t _plan;
+};
 using namespace levbdim;
 basicreader::basicreader(std::string dire) : _directory(dire),_run(0),_started(false),_fdIn(-1),_totalSize(0),_event(0),_geo(NULL),_t0(2E50),_t(0),_tspill(0)
 ,_readoutTotalTime(0),_numberOfMuon(0),_numberOfShower(0)
@@ -161,19 +175,20 @@ void basicreader::read()
   _tcount.clear();
   std::map<uint32_t,std::vector<std::pair<DIFPtr*,uint32_t> > >::iterator ifm=_tframe.end();
   std::map<uint32_t,std::bitset<256> >::iterator im=_tcount.end();
+  int32_t window=_geo->cuts()["timeWindow"].asInt();
   for (std::vector<DIFPtr*>::iterator it = theDIFPtrList_.begin();it!=theDIFPtrList_.end();it++) // Loop on DIF
   {
     DIFPtr* d = (*it);
     //uint32_t chid= getChamber(d->getID());
     // LMTest      uint32_t bc = rint(f->getBunchCrossingTime()/DCBufferReader::getDAQ_BC_Period());
     uint32_t chid = _geo->difGeo(d->getID())["chamber"].asUInt();
-    uint32_t window=_geo->cuts()["timeWindow"].asUInt();
+    
     // Loop on Frames
     for (uint32_t ifra=0;ifra<d->getNumberOfFrames();ifra++)
     {
       uint32_t bc=d->getFrameTimeToTrigger(ifra);
       bool found=false;
-      for (int dt=-1*window;dt<=window;dt++)
+      for (int dt=-window;dt<=window;dt++)
 	{
 	  im=_tcount.find(bc+dt);
 	  
@@ -207,6 +222,7 @@ void basicreader::read()
     for (std::map<uint32_t,std::bitset<256> >::iterator im=_tcount.begin();im!=_tcount.end();im++)
     {
       //
+      //std::cout<<im->first<<" "<<im->second.count()<<" "<<window<<std::endl;
       if (im->first<itmin) itmin=im->first;
       if (im->first>itmax) itmax=im->first;
       if (im->second.count()>=npmin)
@@ -230,12 +246,16 @@ void basicreader::read()
 }
 void basicreader::processEvent(uint32_t iseed)
 {
-  double bestX1=0.049985, bestY1 =0.049985,bestZ1 =0.049985,bestX2 =2.63409e-05, bestY2=3.00341e-05,bestZ2=7.91877e-05,bestX3=-1.75883e-08, bestY3=-9.99385e-09,bestZ3 =-9.99385e-09;
-  
+  std::vector<recoPoint*> point;
+  //double bestX1=0.049985, bestY1 =0.049985,bestZ1 =0.049985,bestX2 =2.63409e-05, bestY2=3.00341e-05,bestZ2=7.91877e-05,bestX3=-1.75883e-08, bestY3=-9.99385e-09,bestZ3 =-9.99385e-09;
+  double bestX1=0.033; double bestY1 =0.0905167;double bestZ1 =0.136332;double bestX2 =2.69635e-05; double bestY2=9.13179e-06;double bestZ2=3.056545e-05;double bestX3=-1.7897e-08; double bestY3= 1.49317e-09;double bestZ3 =2.599392e-08;
   TH1* hnhit= _rh->GetTH1("/BR/nhit");
   TH1* hhitparasic= _rh->GetTH1("/BR/hitparasic");
   TH1* hnhitm= _rh->GetTH1("/BR/nhitmuon");
   TH1* hnhits= _rh->GetTH1("/BR/nhitshower");
+  TH1* hmsi= _rh->GetTH1("/BR/sizemuon");
+  TH1* hssi= _rh->GetTH1("/BR/sizeshower");
+
   TH2* hhitvsratio=_rh->GetTH2("/BR/hitvsratio");
   TH1* hen= _rh->GetTH1("/BR/energy");
   TProfile* hr0 = (TProfile*) _rh->GetTH1("/BR/r0");
@@ -249,8 +269,12 @@ void basicreader::processEvent(uint32_t iseed)
     hnhit=_rh->BookTH1("/BR/nhit",1000.,0.,2000.);
     hnhitm=_rh->BookTH1("/BR/nhitmuon",1000.,0.,2000.);
     hnhits=_rh->BookTH1("/BR/nhitshower",1000.,0.,2000.);
+    
+       hmsi=_rh->BookTH1("/BR/sizemuon",128.,0.1,128.1);
+       hssi=_rh->BookTH1("/BR/sizeshower",128.,0.1,128.1);
+
     hhitparasic=_rh->BookTH1("/BR/hitparasic",512.,0.,64.);
-    hhitvsratio=_rh->BookTH2("/BR/hitvsratio",1000,0.,2000,512,0.,20.);
+    hhitvsratio=_rh->BookTH2("/BR/hitvsratio",512,0.,10.,512,0.,0.5);
     hen=_rh->BookTH1("/BR/energy",500.,0.,150.);
     hr0 = _rh->BookProfile("/BR/r0",100,0.,5.,0.,5000.);
     hr1 = _rh->BookProfile("/BR/r1",100,0.,5.,0.,5000.);
@@ -265,50 +289,121 @@ void basicreader::processEvent(uint32_t iseed)
       return;
   uint32_t nshower=0,nmuon=0;	
   uint32_t nhit=0,nh0=0,nh1=0,nh2=0;
+  uint32_t np[60];memset(np,0,60*4);
   for (std::vector<std::pair<DIFPtr*,uint32_t> >::iterator itf=ifm->second.begin();itf!=ifm->second.end();itf++)
   {
     DIFPtr* d=itf->first;
     uint32_t ifra=itf->second;
     //std::cout<<hex<<(uint64_t) d<<" "<<dec<<ifra<<std::endl;
-  
+    uint32_t chid = _geo->difGeo(d->getID())["chamber"].asUInt();
+    np[chid]++;
     for (uint32_t j=0;j<64;j++)
     {
       if (!(d->getFrameLevel(ifra,j,0) || d->getFrameLevel(ifra,j,1))) continue;
       nhit++;
-      if (d->getFrameLevel(ifra,j,0)) nh1++;
-      if (d->getFrameLevel(ifra,j,1)) nh0++;
-      if (d->getFrameLevel(ifra,j,0) && d->getFrameLevel(ifra,j,1)) nh2++;
+      if (d->getFrameLevel(ifra,j,0) && d->getFrameLevel(ifra,j,1)) 
+	nh2++;
+      else
+	if (d->getFrameLevel(ifra,j,0)) 
+	  nh1++;
+	else
+	  if (d->getFrameLevel(ifra,j,1)) 
+	    nh0++;
+      
+      framePoint* p= new framePoint(chid);
+      
+      _geo->convert(d->getID(),d->getFrameAsicHeader(ifra),j,p);
+      std::stringstream s;
+      s<<"/SH/CH"<<chid;
+      TH2* hpos=_rh->GetTH2(s.str()+"/pos");
+      if (hpos==NULL)
+      {
+	hpos=_rh->BookTH2(s.str()+"/pos",120.,-10.,110.,120,-10.,110.);
+      }
+      hpos->Fill(p->X(),p->Y());
+      point.push_back(p);
     }
     //std::cout<<ifra<<" "<<nhit<<std::endl;
   }
- 
+  pcaComponents cp=RecoHit::calculateComponents(point);
+  //std::cout<<cp[3]<<" "<<cp[4]<<" "<<cp[5]<<std::endl;
   hnhit->Fill(nhit*1.);
   double hitsparasic=(nh1+nh2+nh0)*1./ifm->second.size();
+  hitsparasic=0;
+  int nplane=0;
+  for (int i=0;i<60;i++)
+  {
+    if (np[i]==0) continue;
+    hitsparasic+=np[i];
+    nplane++;
+  }
+  if (nplane>0) hitsparasic/=nplane;
   hhitparasic->Fill(hitsparasic);
-  hhitvsratio->Fill(nhit,hitsparasic);
-  if (hitsparasic>2.5 && nhit>150)
+  hhitvsratio->Fill(hitsparasic,(cp[3])/cp[5]);
+  
+  // Build clusters
+  std::vector<rCluster<recoPoint>*> clusters;
+  for (std::vector<recoPoint*>::iterator it=point.begin();it!=point.end();it++)
+  {
+    bool found=false;
+    for (std::vector<rCluster<recoPoint>*>::iterator iv=clusters.begin();iv!=clusters.end();iv++)
+      if ((*iv)->Append((*it),3.)){found=true;break;}
+    if (found) continue;
+    clusters.push_back(new rCluster<recoPoint>((*it)));
+  }
+ // std::cout<<"Clusters :"<<clusters.size()<<" Ratio "<<point.size()*1./clusters.size()<<std::endl;
+  
+  /** Track 
+   std::vector<recoTrack*> _vtk;
+
+   std::vector<recoPoint*> vrp;
+    for (std::vector<rCluster<recoPoint>*>::iterator iv=clusters.begin();iv!=clusters.end();iv++) 
+     {
+       if ((*iv)->size()<4)
+         vrp.push_back(*iv);
+       hmsi->Fill((*iv)->size()*1.);
+     }
+    recoTrack::combinePoint(vrp,_geo,_vtk);
+    std::cout<<_vtk.size()<<" tracks found "<<std::endl;
+    for (std::vector<recoTrack*>::iterator it=_vtk.begin();it!=_vtk.end();it++) delete (*it);
+    */
+  // Select shower and muons
+  if (hitsparasic>1.5 && (cp[3])/cp[5]>1E-2 &&  point.size()*1./clusters.size()>3.)
   {nshower++;_numberOfShower++;
-    hr0->Fill(_t-_tspill-iseed*2E-7,nh0);
+ 
+/** 733754 */
+  nh0=nh0+int((_t-_tspill-iseed*2E-7)*0.1);
+  nh1=nh1+int((_t-_tspill-iseed*2E-7)*2);
+  nh2=nh2+int((_t-_tspill-iseed*2E-7)*3.);
+     hr0->Fill(_t-_tspill-iseed*2E-7,nh0);
     hr1->Fill(_t-_tspill-iseed*2E-7,nh1);
     hr2->Fill(_t-_tspill-iseed*2E-7,nh2);
-
-  nh0=nh0+int((_t-_tspill-iseed*2E-7)*57.);
-  nh1=nh1+int((_t-_tspill-iseed*2E-7)*9.8);
-  nh2=nh2+int((_t-_tspill-iseed*2E-7)*3.4);
-    
      double en=(bestX1+bestX2*nhit+bestX3*nhit*nhit)*nh0;
  
   en=en+(bestY1+bestY2*nhit+bestY3*nhit*nhit)*nh1;
   en=en+(bestZ1+bestZ2*nhit+bestZ3*nhit*nhit)*nh2;
-  en=en*0.755;
+  en=en*1.;
+      for (std::vector<rCluster<recoPoint>*>::iterator iv=clusters.begin();iv!=clusters.end();iv++) 
+     {
+       hssi->Fill((*iv)->size()*1.);
+     }
+    //double en=0.057*(nh0*0.2+(1+nhit/15000.)*nh1+5*(1-nhit/15000)*nh2);
     std::cout<<" CANDIDATE seed :"<<iseed<<" -> chambers: "<<im->second.count()<<" -> frames: "<<ifm->second.size()<<" -> Hits: "<<nhit<<" -> ratio:"<<hitsparasic<<" "<<nh0<<" "<<nh1<<" "<<nh2<<" "<<en<<std::endl;
-    hnhits->Fill(nhit);
+    
+    hnhits->Fill(nh0+nh1+nh2);
     hen->Fill(en);
   }
   else
   {nmuon++;_numberOfMuon++;
     hnhitm->Fill(nhit);
+    for (std::vector<rCluster<recoPoint>*>::iterator iv=clusters.begin();iv!=clusters.end();iv++) 
+     {
+  
+       hmsi->Fill((*iv)->size()*1.);
+     }
   }
+  for (std::vector<recoPoint*>::iterator it=point.begin();it!=point.end();it++) delete (*it);
+  for (std::vector<rCluster<recoPoint>*>::iterator iv=clusters.begin();iv!=clusters.end();iv++) delete((*iv));
   //std::cout<<" CANDIDATE seed :"<<im->first<<" -> chambers: "<<im->second.count()<<" -> frames: "<<ifm->second.size()<<" -> Hits: "<<nhit<<" -> ratio:"<<hitsparasic<<std::endl;
 }
 #ifdef TESTMAINEXAMPLE
