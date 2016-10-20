@@ -1,0 +1,32 @@
+Install
+-------
+cd SDHCAL/levbdim_daq/etc/
+
+sudo cp mystartup.sh /etc/init.d/
+sudo cp dimdnsd /etc/init.d/
+ln -s /opt/dhcal/dim/linux/dns /opt/dhcal/bin/dimdns
+sudo ln -s /opt/dhcal/dimjc/etc/dimjcd /etc/init.d/
+
+sudo update-rc.d dimdnsd defaults 100
+sudo update-rc.d mystartup.sh defaults 100
+sudo update-rc.d dimjcd defaults 101
+
+
+Daq
+----
+cd SDHCAL/levbdim_daq
+scons install -j4
+scons -j4
+dhcalinstall
+
+cd SDHCAL/levbdim_daq/etc/
+cp wjobd wdaqd wslowd restart /opt/dhcal/etc/
+
+cd SDHCAL/WtWizard
+scons
+cp wtstart /opt/dhcal/bin
+cp wtstartd /opt/dhcal/etc/
+
+Starting
+--------
+/opt/dhcal/etc/restart
