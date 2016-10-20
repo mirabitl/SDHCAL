@@ -1,0 +1,9 @@
+#!/bin/bash
+sudo /opt/dhcal/etc/wjobd stop
+sudo /opt/dhcal/etc/wslowd stop
+sudo /opt/dhcal/etc/wdaqd stop
+sudo /opt/dhcal/etc/wtstartd stop
+sudo /opt/dhcal/etc/wjobd start
+sudo /opt/dhcal/etc/wslowd start
+sudo /opt/dhcal/etc/wdaqd start
+sudo /opt/dhcal/etc/wtstartd start
