@@ -14,22 +14,29 @@
 #include "DIFSlowControl.h"
 #include "jsonGeo.hh"
 #include "DCHistogramHandler.h"
-
+#include "recoPoint.hh"
 
   class basicreader
   {
   public:
     basicreader(std::string dire="/tmp");
+    void Read();
     void open(std::string name);
     void close();
     void read();
+    void draw(std::vector<recoPoint*> vp);
+
     void geometry(std::string name);
     void timeAnalysis();
     void processEvent(uint32_t seed);
     uint32_t totalSize();
     uint32_t eventNumber();
     uint32_t runNumber();
+    void addRun(uint32_t r,std::string name) { _files.push_back(std::pair<uint32_t,std::string>(r,name));}
   private:
+    std::vector<std::pair<uint32_t,std::string> > _files;
+    uint64_t _bxId;
+    uint32_t _gtc;
     double _t,_t0,_tspill;
     std::string _directory;
     uint32_t _run,_event,_totalSize;
@@ -39,7 +46,7 @@
     uint32_t _idx;
     std::vector<DIFPtr*> theDIFPtrList_;
     jsonGeo* _geo;
-    std::map<uint32_t,std::bitset<256> > _tcount;
+    std::map<uint32_t,std::bitset<64> > _tcount;
     std::map<uint32_t,std::vector<std::pair<DIFPtr*,uint32_t> > > _tframe;
     double _readoutTime,_readoutTotalTime;
     uint32_t _numberOfShower,_numberOfMuon;

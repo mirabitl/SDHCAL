@@ -13,13 +13,14 @@
 	"maxDistSeed":12.0,
         "cosSeed":0.09,
         "tkDistCut":2.0,
-        "tkMinPoint":7,
-        "tkExtMinPoint":7,
+        "tkMinPoint":4,
+        "tkExtMinPoint":4,
         "tkChi2":0.01,
         "edge":5.0,
         "zedge":10,
-        "minPlans":10,
-        "mipRate":0.1
+        "minPlans":8,
+        "mipRate":0.1,
+        "bifChamber":57
     },
     "difs":{
 	"181":{"chamber":1,"di":0.0,"dj":64.000000,"poli":1.0,"polj":1.0,"type":"HR2PAD"}, 
