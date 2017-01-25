@@ -76,7 +76,7 @@ else:
   boostthread='boost_thread-mt'
 
 #includes
-INCLUDES=['include',"/usr/include/boost141/",DHCAL_ROOT+"/SDHCAL_common/include",NetLink+"/include",NetLink+"/cslm"]
+INCLUDES=['include',"/usr/include/boost141/",DHCAL_ROOT+"/SDHCAL_common/include",NetLink+"/include",NetLink+"/cslm","/usr/include/libftdi1"]
 
 
 INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))

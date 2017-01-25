@@ -1,5 +1,6 @@
 
 #include "CCCServer.h"
+#include  <unistd.h>
 
 CCCServer::CCCServer(std::string host,uint32_t port) : NMServer(host,port)
 {

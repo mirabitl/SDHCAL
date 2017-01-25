@@ -1,0 +1,166 @@
+   # put acqilc in sudoers  
+   sudo yum install git subversion scons cmake gcc-g++ 
+   sudo apt-get install lesstif-dev
+   sudo apt-get install xerces-c-devel
+   sudo apt-get install libaio-devel pyqt4-devel emacs
+   sudo apt-get -y install jsoncpp-devel mysql-devel log4cxx-devel  curl-devel
+   #git clone https://github.com/mirabitl/SDHCAL.git
+   #cd SDHCAL/
+
+// Ok jusque la 
+#sudo apt-get -y install openssh-server
+sudo apt-get -y install java java-devel
+
+
+sudo apt-get -y install boost-devel
+#sudo apt-get -y install libboost-system-dev
+#sudo apt-get -y install libboost-filesystem-dev
+#sudo apt-get -y install libboost-thread-dev
+#sudo apt-get -y install swig
+#sudo apt-get -y install python-dev
+sudo apt-get -y install libftdi-devel libftdi-c++-devel
+
+sudo apt-get -y install uuid-devel libdbi-devel
+sudo apt-get -y install libxml2-devel
+
+sudo apt-get -y install sqlite-devel
+#sudo apt-get -y install libmysqld-dev
+#sudo apt-get -y install libmotif-dev
+#sudo apt-get -y install libmotif4
+#sudo apt-get -y install git dpkg-dev make g++ gcc binutils libx11-dev libxpm-dev libxft-dev libxext-dev
+#sudo apt-get -y install gfortran libssl-dev libpcre3-dev         xlibmesa-glu-dev libglew1.5-dev libftgl-dev         libmysqlclient-dev libfftw3-dev cfitsio-dev         graphviz-dev libavahi-compat-libdnssd-dev         libldap2-dev python-dev libxml2-dev libkrb5-dev         libgsl0-dev libqt4-dev cmake
+
+
+   . ubuntu_packages.list 
+   sudo mkdir /opt/dhcal
+   sudo chmod 777 /opt/dhcal
+   cd /opt/dhcal
+   wget http://root.cern.ch/download/root_v5.34.26.source.tar.gz
+   tar zxvf root_v5.34.26.source.tar.gz 
+   cd root 
+   ./configure --enable-python --enable-roofit
+   make -j 4
+   mkdir -p /opt/dhcal/etc
+   mkdir -p /opt/dhcal/bin
+   mkdir -p /opt/dhcal/lib
+   cd
+   cp SDHCAL/bashrc /opt/dhcal/etc/
+   echo "source /opt/dhcal/etc/bashrc" >> .bashrc
+   cat .bashrc
+   . .bashrc   mkdir -p /opt/dhcal/etc
+   mkdir -p /opt/dhcal/bin
+   mkdir -p /opt/dhcal/lib
+   cd
+   cp SDHCAL/bashrc /opt/dhcal/etc/
+   echo "source /opt/dhcal/etc/bashrc" >> .bashrc
+   cat .bashrc
+   . .bashrc
+   cd /opt/dhcal;tar zxvf $HOME/SDHCAL/DimDaq/extras/dimrpi.tgz;cd -
+   cd /opt/dhcal/dim/
+   export OS=Linux
+   . setup.sh 
+   make clean
+   rm linux/libdim.*
+   make -j 4
+   make -j 4
+   cd -
+   cd /opt/dhcal/
+   svn co svn://svn.freehep.org/lcio/tags/v02-00 lcio/v02-00
+   cd lcio/v02-00
+   mkdir build
+   cd build
+   cmake ..
+   make install
+
+
+# DB installation
+   cd /opt/dhcal/
+   svn co https://lyosvn.in2p3.fr/repository/ilc/src/online/database/ILCConfDB
+   cd ILCConfDB/
+   source setEnv.sh 
+   cd src
+#Change python to 2.7  and -Wl,--nos-as-needed
+   vi Makefile 
+   make -j 8
+
+   cd -
+   sudo cp lib64/libclntsh.so.11.1 /usr/lib64/libclntsh.so
+   sudo cp lib64/libnnz11.so /usr/lib64/libnnz11.so
+   sudo cp lib64/libocci.so.11.1 /usr/lib64/libocci.so
+   sudo cp lib64/libociei.so /usr/lib64/libociei.so
+   sudo cp lib64/libociicus.so /usr/lib64/libociicus.so
+   sudo cp lib64/libocijdbc11.so /usr/lib64/libocijdbc11.so
+   sudo cp lib64/libclntsh.so.11.1 /usr/lib64/libclntsh.so
+   sudo cp lib64/libnnz11.so /usr/lib64/libnnz11.so
+   sudo cp lib64/libocci.so.11.1 /usr/lib64/libocci.so
+   sudo cp lib64/libociicus.so /usr/lib64/libociicus.so
+   sudo cp lib64/libocijdbc11.so /usr/lib64/libocijdbc11.so
+   sudo cp lib64/libilcconfdb.so.0.1 /usr/lib64/libilcconfdb.so
+#   Installation des headers oracle
+   sudo cp include/*.h /usr/include/
+#   #Installation de la librairie ilcconfdb
+   sudo cp lib64/libilcconfdb.so.0.1 /usr/lib64/libilcconfdb.so
+#   #Installation des headers ilcconfdb
+   sudo mkdir /usr/include/ILCConfDB
+   sudo mkdir /usr/include/ILCConfDB/Exceptions
+   sudo mkdir /usr/include/ILCConfDB/configObjects
+   sudo mkdir /usr/include/ILCConfDB/daq
+   sudo mkdir /usr/include/ILCConfDB/db
+   sudo cp src/*.h /usr/include/ILCConfDB/
+   sudo cp src/Exceptions/*.h /usr/include/ILCConfDB/Exceptions/
+   sudo cp src/daq/*.h /usr/include/ILCConfDB/daq/
+   sudo cp src/configObjects/*.h /usr/include/ILCConfDB/configObjects/
+   sudo cp src/db/*.h /usr/include/ILCConfDB/db/
+   cd src
+   make ../lib64/_ilcconfdb.so
+   sudo cp swig/ilcconfdb.py /usr/lib/python2.7/site-packages/
+   sudo cp ../lib64/_ilcconfdb.so /usr/lib/python2.7/site-packages/
+
+
+
+# DB installation
+#   cd /opt/dhcal/
+#   svn co https://lyosvn.in2p3.fr/repository/ilc/src/online/database/ILCConfDB
+#   cd ILCConfDB/
+#   source setEnv.sh 
+#   cd src
+# Change python to 2.7  and -Wl,--nos-as-needed
+#   vi Makefile 
+#   make -j 8
+#
+#   cd -
+#   sudo cp lib64/libclntsh.so.11.1 /usr/lib/libclntsh.so
+#   sudo cp lib64/libnnz11.so /usr/lib/libnnz11.so
+#   sudo cp lib64/libocci.so.11.1 /usr/lib/libocci.so
+#   sudo cp lib64/libociei.so /usr/lib/libociei.so
+#   sudo cp lib64/libociicus.so /usr/lib/libociicus.so
+#   sudo cp lib64/libocijdbc11.so /usr/lib/libocijdbc11.so
+#   sudo cp lib64/libclntsh.so.11.1 /usr/lib/libclntsh.so
+#   sudo cp lib64/libnnz11.so /usr/lib/libnnz11.so
+#   sudo cp lib64/libocci.so.11.1 /usr/lib/libocci.so
+#   sudo cp lib64/libociicus.so /usr/lib/libociicus.so
+#   sudo cp lib64/libocijdbc11.so /usr/lib/libocijdbc11.so
+#   sudo cp lib64/libilcconfdb.so.0.1 /usr/lib/libilcconfdb.so
+#   #Installation des headers oracle
+#   sudo cp include/*.h /usr/include/
+#   #Installation de la librairie ilcconfdb
+#   sudo cp lib64/libilcconfdb.so.0.1 /usr/lib/libilcconfdb.so
+#   #Installation des headers ilcconfdb
+#   sudo mkdir /usr/include/ILCConfDB
+#   sudo mkdir /usr/include/ILCConfDB/Exceptions
+#   sudo mkdir /usr/include/ILCConfDB/configObjects
+#   sudo mkdir /usr/include/ILCConfDB/daq
+#   sudo mkdir /usr/include/ILCConfDB/db
+#   sudo cp src/*.h /usr/include/ILCConfDB/
+#   sudo cp src/Exceptions/*.h /usr/include/ILCConfDB/Exceptions/
+#   sudo cp src/daq/*.h /usr/include/ILCConfDB/daq/
+#   sudo cp src/configObjects/*.h /usr/include/ILCConfDB/configObjects/
+#   sudo cp src/db/*.h /usr/include/ILCConfDB/db/
+#   cd src
+#   make ../lib64/_ilcconfdb.so
+#   sudo cp swig/ilcconfdb.py /usr/lib/python2.7/dist-packages/
+#   sudo cp ../lib64/_ilcconfdb.so /usr/lib/python2.7/dist-packages/
+
+
+#   cd ${HOME}/SDHCAL
+#   . compile

@@ -1,5 +1,6 @@
 #include "DIFReadout.h"
 #include "FtdiUsbDriver.h"
+#include <unistd.h>
 
 /* Main program de readout */
 DIFReadout::DIFReadout (std::string name,uint32_t productid) : FtdiDIFDriver ((char*) name.c_str(),productid),theName_(name),theAsicType_(2),theNumberOfAsics_(48),theControlRegister_(0x80181B00),	theCurrentSLCStatus_(0),

@@ -90,7 +90,7 @@ LIBRARIES=['pthread',  'm', 'stdc++','log4cxx','mysqlclient',boostsystem,boostth
 
 #Library path XDAQ,DHCAL and ROOT + Python
 if (Bit64):
-	LIBRARY_PATHS=["/usr/lib64","/usr/local/lib","/usr/lib64/boost141"]
+	LIBRARY_PATHS=["/usr/lib64","/usr/local/lib","/usr/lib64/boost141","/usr/lib64/mysql"]
 else:
   LIBRARY_PATHS=["/usr/lib","/usr/local/lib","/usr/lib/boost141"]
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")

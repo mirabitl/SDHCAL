@@ -14,6 +14,7 @@
 #include <sstream>
 #include <algorithm>
 #include <stdlib.h>
+#include <unistd.h>
 
 CCCManager::CCCManager(std::string CCCName,std::string CCCType) 
 {
