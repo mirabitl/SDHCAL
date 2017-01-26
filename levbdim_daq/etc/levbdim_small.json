@@ -3,46 +3,60 @@
     "HOSTS" :
     {
 
-        "alicetof":[
-            {
-            "NAME":"WRITER",
-                "ARGS" : ["-d /data/NAS/oyonax"],
-            "ENV" : [
-                "DIM_DNS_NODE=alicetof",
-                "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/levbdim/lib:/opt/dhcal/lib:/opt/dhcal/root/lib:/opt/dhcal/dim/linux:/opt/dhcal/lcio/v02-00/lib/:$LD_LIBRARY_PATH"
-            ],
-            "PROGRAM" : "/opt/dhcal/bin/levbdim_build"
-            },
-            {
-            "NAME":"DBSERVER",
-            "ARGS" : [],
-            "ENV" : [
-                "DIM_DNS_NODE=alicetof",
-                "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/levbdim/lib:/opt/dhcal/lib:/opt/dhcal/root/lib::/opt/dhcal/lcio/v02-00/lib/:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH",
-                "CONFDB=ILC/fFQeV52rQy@(DESCRIPTION_LIST=(LOAD_BALANCE=off)(FAILOVER=on)(DESCRIPTION=(CONNECT_TIMEOUT=5)(TRANSPORT_CONNECT_TIMEOUT=3)(RETRY_COUNT=3)(ADDRESS_LIST=(LOAD_BALANCE=on)(ADDRESS=(PROTOCOL=TCP)(HOST=ccscanovo.in2p3.fr)(PORT=1521)))(CONNECT_DATA=(SERVICE_NAME=calice.in2p3.fr)))(DESCRIPTION=(CONNECT_TIMEOUT=5)(TRANSPORT_CONNECT_TIMEOUT=3)(RETRY_COUNT=3)(ADDRESS_LIST=(LOAD_BALANCE=on)(ADDRESS=(PROTOCOL=TCP)(HOST=ccscanodgvo.in2p3.fr)(PORT=1521)))(CONNECT_DATA=(SERVICE_NAME=calice.in2p3.fr))))"
-            ],
-            "PROGRAM" : "/opt/dhcal/bin/levbdim_db"
-            },
-            {
-                "NAME":"CCCSERVER",
-                "ARGS" : [],
+	"lyosdhcal9":[
+	    {
+	    "NAME":"WRITER",
+		"ARGS" : ["-d /data/NAS/oyonax"],
+	    "ENV" : [
+		"DIM_DNS_NODE=lyosdhcal9",
+		"LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/levbdim/lib:/opt/dhcal/lib:/opt/dhcal/root/lib:/opt/dhcal/dim/linux:/opt/dhcal/lcio/v02-00/lib/:$LD_LIBRARY_PATH"
+	    ],
+	    "PROGRAM" : "/opt/dhcal/bin/levbdim_build"
+	    },
+	    {
+	    "NAME":"DBSERVER",
+	    "ARGS" : [],
+	    "ENV" : [
+		"DIM_DNS_NODE=lyosdhcal9",
+		"LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/levbdim/lib:/opt/dhcal/lib:/opt/dhcal/root/lib::/opt/dhcal/lcio/v02-00/lib/:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH",
+		"CONFDB=ILC/fFQeV52rQy@(DESCRIPTION_LIST=(LOAD_BALANCE=off)(FAILOVER=on)(DESCRIPTION=(CONNECT_TIMEOUT=5)(TRANSPORT_CONNECT_TIMEOUT=3)(RETRY_COUNT=3)(ADDRESS_LIST=(LOAD_BALANCE=on)(ADDRESS=(PROTOCOL=TCP)(HOST=ccscanovo.in2p3.fr)(PORT=1521)))(CONNECT_DATA=(SERVICE_NAME=calice.in2p3.fr)))(DESCRIPTION=(CONNECT_TIMEOUT=5)(TRANSPORT_CONNECT_TIMEOUT=3)(RETRY_COUNT=3)(ADDRESS_LIST=(LOAD_BALANCE=on)(ADDRESS=(PROTOCOL=TCP)(HOST=ccscanodgvo.in2p3.fr)(PORT=1521)))(CONNECT_DATA=(SERVICE_NAME=calice.in2p3.fr))))"
+	    ],
+	    "PROGRAM" : "/opt/dhcal/bin/levbdim_db"
+	    }
+		      ],
+
+	"lyoilcrpi18":[
+
+	    {
+		"NAME":"CCCSERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/levbdim/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH","WEBPORT=42000"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/levbdim_ccc"
+	    },
+	    {
+		"NAME":"DIFSERVER",
+		"ARGS" : [],
+		"ENV" : [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal9",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/levbdim/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH","WEBPORT=40000"
+		],
+		"PROGRAM" : "/opt/dhcal/bin/levbdim_dif"
+	    },
+	    {
+                "NAME":"ZUPSERVER",
+                "ARGS" : ["-d /dev/ttyUSB0","-a 1" ],
                 "ENV" : [
                     "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-                    "DIM_DNS_NODE=alicetof",
-                    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/levbdim/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH","WEBPORT=42000"
+                    "DIM_DNS_NODE=lyosdhcal9",
+                    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/levbdim/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH","WEBPORT=43000"
                 ],
-                "PROGRAM" : "/opt/dhcal/bin/levbdim_ccc"
-            },
-            {
-                "NAME":"DIFSERVER",
-                "ARGS" : [],
-                "ENV" : [
-                    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-                    "DIM_DNS_NODE=alicetof",
-                    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/levbdim/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:$LD_LIBRARY_PATH","WEBPORT=40000"
-                ],
-                "PROGRAM" : "/opt/dhcal/bin/levbdim_dif"
+                "PROGRAM" : "/opt/dhcal/bin/levbdim_zup"
             }
-        ]
+	]
     }
 }
