@@ -8,17 +8,13 @@ sudo apt-get install git
 
 git clone https://github.com/mirabitl/SDHCAL.git
 
-cd SDHCAl
-
-source  wheezy_install
-
-#if DB is needed (lyosvn password needed)
-
-source dbinstall 
-
-# Then installation of DAQ code 
 cd SDHCAL
-./install
+
+#if DB is needed (lyosvn password needed) edit the file and uncommend the line
+
+source  jessie_install
+
+
 
 
 arm:
@@ -26,11 +22,7 @@ arm:
 
 Just skip the DB installation (Oracle driver not supported)
 
-Remarks:
---------
 
-For DIM daq configuration, configuration and daemon must be copied from 
-SDHCAL/DimCtrl/etc and modified according to your setup
 
 
 Contact: laurent.mirabito@gmail.com
