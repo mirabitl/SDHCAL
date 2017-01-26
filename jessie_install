@@ -76,7 +76,10 @@
    sudo cp mystartup.sh /etc/init.d/
    sudo cp dimdnsd /etc/init.d/
    ln -s /opt/dhcal/dim/linux/dns /opt/dhcal/bin/dimdns
-   sudo ln -s /opt/dhcal/dimjc/etc/dimjcd /etc/init.d/
+   sed 's/lyoac26/'`hostname`'/g' /opt/dhcal/dimjc/etc/dimjcd > /tmp/dimjcd
+   sudo mv /tmp/dimjcd /etc/init.d/
+   sudo chmod +x /etc/init.d/dimjcd
+   #sudo ln -s /opt/dhcal/dimjc/etc/dimjcd /etc/init.d/
 
    sudo update-rc.d dimdnsd defaults 100
    sudo update-rc.d mystartup.sh defaults 100
@@ -104,3 +107,7 @@
    sudo mv /tmp/difdim.cfg /etc/
    sed 's/134.158.139.150/'`hostname`'/g' ./script/Log4cxxConfig.xml  > /tmp/Log4cxxConfig.xml
    sudo mv /tmp/Log4cxxConfig.xml /etc/
+
+   # last message
+   echo "Installation completed"
+   echo "Please change /etc/host to suppress 127.0.0.1 line if needed"
