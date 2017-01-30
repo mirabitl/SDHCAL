@@ -36,24 +36,31 @@ ser.write("*idn?\r\n")      # write a string
 print ser.readline()
 
 ser.write(':sour:volt:mode fix\r\n')
+ser.write(':sour:volt:RANGE max\r\n')
+#ser.write(':sense:volt:PROT 1000\r\n')
 ser.write(':form:elem?\r\n')
 print ser.readline()
 ser.write(':route:term rear\r\n')
+ser.write(':conf:curr\r\n')
 ser.write(':outp on\r\n')
+ser.write(':sour:volt %f\r\n' % 0)
+
+time.sleep(5)
 
 lti=time.localtime()
 fl=open("%s_%d_%d_%d_%d_%d.txt" % (fname,lti.tm_year,lti.tm_mon,lti.tm_mday,lti.tm_hour,lti.tm_min),"w")
 
 T0=0
 #NS=60
-for v in range(90,1091,100):
+for v in range(10,1091,100):
     ser.write(':sour:volt %f\r\n' % v)
-    time.sleep(1)
+    time.sleep(5)
     V_MEAN=0
     I_MEAN=0
     R_MEAN=0
     RHO_MEAN=0
     for i in range(0,NS):
+
         ser.write(':read?\r\n')
         vread=ser.readline().split(',')
         VM=float(vread[0])
@@ -63,7 +70,7 @@ for v in range(90,1091,100):
             T0=T-1;
         RM=VM/IM
         RHO=RM*surf/thick
-        print "%d,%g,%g,%g,%g,%f\n" % (i,VM,IM,RM,RHO,T-T0)
+        print "%d V %g I %g R %g RHO %g T %f\n" % (i,VM,IM,RM,RHO,T-T0)
         fl.write("%d,%g,%g,%g,%g,%f\n" % (i,VM,IM,RM,RHO,T-T0))
         fl.flush()
         V_MEAN=V_MEAN+VM/(NS*1.)
@@ -71,7 +78,7 @@ for v in range(90,1091,100):
         R_MEAN=R_MEAN+RM/(NS*1.)
         RHO_MEAN=RHO_MEAN+RHO/(NS*1.)        
         time.sleep(1)
-    print "%d,%g,%g,%g,%g,%f\n" % (NS,V_MEAN,I_MEAN,R_MEAN,RHO_MEAN,0)
+    print "Meas %d V=%g I=%g R=%g Rho=%g \n" % (NS,V_MEAN,I_MEAN,R_MEAN,RHO_MEAN)
     fl.write("%d,%g,%g,%g,%g,%f\n" % (NS,V_MEAN,I_MEAN,R_MEAN,RHO_MEAN,0))
     fl.flush()
 

@@ -16,13 +16,16 @@ c1 = TCanvas( 'c1', 'A Simple Graph Example', 200, 10, 1200, 600 )
 
 c1.SetGrid()
 
-con = mdb.connect('localhost', 'acqilc', 'RPC_2008', 'GIFPP2015');
+# con = mdb.connect('localhost', 'acqilc', 'RPC_2008', 'GIFPP2015');
+con = mdb.connect('lyosdhcal12', 'acqilc', 'RPC_2008', 'SLOWFEB2016');
 cur=con.cursor();
 
 #cur.execute('SELECT  ID,P,T,UNIX_TIMESTAMP(heure),heure FROM PT ORDER BY ID DESC  WHERE ID> 12000')
 #cur.execute('SELECT  ID,P,T,UNIX_TIMESTAMP(heure),heure FROM PT WHERE heure>"2015-05-15 00:00:00" ORDER BY ID DESC LIMIT 16000')
 #cur.execute('SELECT  ID,P,T,UNIX_TIMESTAMP(heure),heure FROM PT WHERE now()-heure<432000')
-cur.execute('select VMON,IMON,UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(HEURE) from HVMON WHERE  HVCHANNEL=%d AND VMON>1000 AND VMON<8000 AND UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(HEURE)< %d*3600 ORDER BY IDX  DESC ' % (chamber,njours))
+#cur.execute('select VMON,IMON,UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(HEURE) from HVMON WHERE  HVCHANNEL=%d AND VMON>1000 AND VMON<8000 AND UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(HEURE)< %d*3600 ORDER BY IDX  DESC ' % (chamber,njours))
+
+cur.execute('select VOUT,IOUT,UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(TIS) from WIENERMON WHERE  HVCHAN=%d AND VOUT<-1000 AND UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(TIS)< %d*3600 ORDER BY IDX  DESC ' % (chamber,njours))
 
 rows = cur.fetchall()
 n = len(rows)

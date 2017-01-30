@@ -12,7 +12,7 @@ c1 = TCanvas( 'c1', 'A Simple Graph Example', 200, 10, 1200, 600 )
 
 c1.SetGrid()
 
-con = mdb.connect('localhost', 'acqilc', 'RPC_2008', 'SLOWAVRIL2015');
+con = mdb.connect('lyosdhcal12', 'acqilc', 'RPC_2008', 'SLOWAVRIL2015');
 cur=con.cursor();
 
 #cur.execute('SELECT  ID,P,T,UNIX_TIMESTAMP(heure),heure FROM PT ORDER BY ID DESC  WHERE ID> 12000')
