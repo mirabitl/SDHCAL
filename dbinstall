@@ -1,11 +1,12 @@
 # DB installation
    cd /opt/dhcal/
-   svn co https://lyosvn.in2p3.fr/repository/ilc/src/online/database/ILCConfDB
+   tar zxvf ${HOME}/SDHCAL/script/ILCConfDb.tgz
+   #svn co https://lyosvn.in2p3.fr/repository/ilc/src/online/database/ILCConfDB
    cd ILCConfDB/
    source setEnv.sh 
    cd src
 #Change python to 2.7  and -Wl,--nos-as-needed
-   vi Makefile 
+   #vi Makefile 
    make -j 8
 
    cd -
