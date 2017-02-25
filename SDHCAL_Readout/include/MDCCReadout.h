@@ -40,6 +40,14 @@ public:
   uint32_t version();
   uint32_t id();
 
+  void calibOn();
+  void calibOff();
+  void reloadCalibCount();
+  uint32_t calibCount();
+  void setCalibCount(uint32_t nc);
+
+
+  
 private : 
   FtdiUsbDriver* _driver;
   std::string _name;

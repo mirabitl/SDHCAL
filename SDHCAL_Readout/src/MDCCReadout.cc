@@ -69,6 +69,18 @@ void MDCCReadout::maskTrigger(){this->writeRegister(0x2,0x1);}
 void MDCCReadout::unmaskTrigger(){this->writeRegister(0x2,0x0);}
 void MDCCReadout::maskEcal(){this->writeRegister(0x10,0x1);}
 void MDCCReadout::unmaskEcal(){this->writeRegister(0x10,0x0);}
+void MDCCReadout::calibOn(){this->writeRegister(0xB,0x2);}
+void MDCCReadout::calibOff(){this->writeRegister(0xB,0x0);}
+void MDCCReadout::reloadCalibCount(){
+  
+  this->writeRegister(0xB,0x4);
+  usleep(2);
+  this->writeRegister(0xB,0x0);
+  this->calibOn();
+}
+uint32_t MDCCReadout::calibCount(){return this->readRegister(0xD);}
+void MDCCReadout::setCalibCount(uint32_t nc){this->writeRegister(0xD,nc);}
+
 void MDCCReadout::resetCounter(){this->writeRegister(0x4,0x1);this->writeRegister(0x4,0x0);}
 uint32_t MDCCReadout::readRegister(uint32_t adr)
 {
