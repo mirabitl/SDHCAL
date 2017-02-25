@@ -136,6 +136,51 @@ void LMdccServer::c_ecalresume(Mongoose::Request &request, Mongoose::JsonRespons
   _mdcc->unmaskEcal();
   response["STATUS"]="DONE";
 }
+void LMdccServer::c_calibon(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  if (_mdcc==NULL)
+    {
+       LOG4CXX_ERROR(_logLdaq,"Please open MDC01 first");
+       response["STATUS"]="Please open MDC01 first";
+       return;
+    }
+  _mdcc->calibOn();
+  response["STATUS"]="DONE";
+}
+void LMdccServer::c_caliboff(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  if (_mdcc==NULL)
+    {
+       LOG4CXX_ERROR(_logLdaq,"Please open MDC01 first");
+       response["STATUS"]="Please open MDC01 first";
+       return;
+    }
+  _mdcc->calibOff();
+  response["STATUS"]="DONE";
+}
+void LMdccServer::c_reloadcalib(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  if (_mdcc==NULL)
+    {
+       LOG4CXX_ERROR(_logLdaq,"Please open MDC01 first");
+       response["STATUS"]="Please open MDC01 first";
+       return;
+    }
+  _mdcc->reloadCalibCount();
+  response["STATUS"]="DONE";
+}
+
+void LMdccServer::c_setcalibcount(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+
+  if (_mdcc==NULL)    {response["STATUS"]="NO Mdcc created"; return;}
+  uint32_t nc=atol(request.get("nclock","5000000").c_str());
+  _mdcc->setCalibCount(nc);
+
+  response["STATUS"]="DONE";
+  response["NCLOCK"]=nc;
+
+} 
 
 void LMdccServer::c_reset(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
@@ -221,6 +266,7 @@ void LMdccServer::c_status(Mongoose::Request &request, Mongoose::JsonResponse &r
   rc["spilloff"]=_mdcc->spillOff();
   rc["ecalmask"]=_mdcc->ecalmask();
   rc["beam"]=_mdcc->beam();
+  rc["calib"]=_mdcc->calibCount();
   response["COUNTERS"]=rc;
   response["STATUS"]="DONE";
 
@@ -353,6 +399,14 @@ LMdccServer::LMdccServer(std::string name) : _mdcc(NULL)
  _fsm->addCommand("SPILLOFF",boost::bind(&LMdccServer::c_spilloff,this,_1,_2));
  _fsm->addCommand("BEAMON",boost::bind(&LMdccServer::c_beamon,this,_1,_2));
 
+
+ _fsm->addCommand("CALIBON",boost::bind(&LMdccServer::c_calibon,this,_1,_2));
+ _fsm->addCommand("CALIBOFF",boost::bind(&LMdccServer::c_caliboff,this,_1,_2));
+ _fsm->addCommand("RELOADCALIB",boost::bind(&LMdccServer::c_reloadcalib,this,_1,_2));
+  _fsm->addCommand("SETCALIBCOUNT",boost::bind(&LMdccServer::c_setcalibcount,this,_1,_2));
+
+
+ 
   std::stringstream s0;
   s0.str(std::string());
   s0<<"LMdccServer-"<<name;

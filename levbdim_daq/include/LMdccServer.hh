@@ -41,7 +41,10 @@ public:
   void c_spillon(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void c_spilloff(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void c_beamon(Mongoose::Request &request, Mongoose::JsonResponse &response);
-
+  void c_setcalibcount(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_reloadcalib(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_calibon(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_caliboff(Mongoose::Request &request, Mongoose::JsonResponse &response);
 private:
   //levbdim::fsm* _fsm;
   fsmweb* _fsm;
