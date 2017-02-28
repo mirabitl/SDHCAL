@@ -135,7 +135,22 @@ void HVCaenInterface::SetVoltage(uint32_t channel,float v0)
   int32_t ret=CAENHV_SetChParam(theHandle_,slot,ParName, ChNum, ChList,param);
   //printf("CAENHV_SetChParam: %s (num. %d)\n\n", CAENHV_GetError(theHandle_), ret);
 }
+void HVCaenInterface::SetVoltageRampUp(uint32_t channel,float v0)
+{
+  char ParName[16];
+  sprintf(ParName,"%s","RUp");
+  float param[1];
+  param[0] = v0;
 
+  uint16_t slot=channel/6;
+  uint16_t ChNum=1,ChList[1];
+  ChList[0]=channel%6;
+
+
+  //printf("%d %d %d %f \n",channel,slot,ChList[0],v0);
+  int32_t ret=CAENHV_SetChParam(theHandle_,slot,ParName, ChNum, ChList,param);
+  //printf("CAENHV_SetChParam: %s (num. %d)\n\n", CAENHV_GetError(theHandle_), ret);
+}
 float HVCaenInterface::GetCurrentSet(uint32_t channel)
 {
   char ParName[16];
@@ -150,6 +165,21 @@ float HVCaenInterface::GetCurrentSet(uint32_t channel)
   int32_t ret=CAENHV_GetChParam(theHandle_,slot,ParName, ChNum, ChList,param);
   //printf("CAENHV_GetChParam: %s (num. %d)\n %f\n", CAENHV_GetError(theHandle_), ret,param[0]) ;
   return param[0];
+}
+std::string HVCaenInterface::GetName(uint32_t channel)
+{
+  char ParName[16];
+  sprintf(ParName,"%s","Name");
+  char param[1][MAX_CH_NAME];
+  
+
+  uint16_t slot=channel/6;
+  uint16_t ChNum=1,ChList[1];
+  ChList[0]=channel%6;
+
+  int32_t ret=  CAENHV_GetChName(theHandle_,slot,ChNum, ChList,param); 
+  //printf("CAENHV_GetChParam: %s (num. %d)\n %f\n", CAENHV_GetError(theHandle_), ret,param[0]) ;
+  return std::string(param[0]);
 }
 float HVCaenInterface::GetVoltageSet(uint32_t channel)
 {
@@ -194,6 +224,21 @@ float HVCaenInterface::GetVoltageRead(uint32_t channel)
 
   int32_t ret=CAENHV_GetChParam(theHandle_,slot,ParName, ChNum, ChList,param);
   //printf("CAENHV_GetChParam: %s (num. %d)\n\n", CAENHV_GetError(theHandle_), ret) ;
+  return param[0];
+}
+float HVCaenInterface::GetVoltageRampUp(uint32_t channel)
+{
+  char ParName[16];
+  sprintf(ParName,"%s","RUp");
+  float param[1];
+  
+
+  uint16_t slot=channel/6;
+  uint16_t ChNum=1,ChList[1];
+  ChList[0]=channel%6;
+
+  int32_t ret=CAENHV_GetChParam(theHandle_,slot,ParName, ChNum, ChList,param);
+  printf("CAENHV_GetChParam: %s (num. %d)\n\n", CAENHV_GetError(theHandle_), ret) ;
   return param[0];
 }
 uint32_t HVCaenInterface::GetStatus(uint32_t channel)

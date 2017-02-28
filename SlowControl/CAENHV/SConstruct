@@ -86,10 +86,15 @@ else:
   boostthread='boost_thread-mt'
 
 Use_Dim=True
+Use_Mysql=False
 #os.environ.has_key("DIM_DNS_NODE")
+Use_Oracle=os.path.exists("/usr/include/ILCConfDB")
+Use_Oracle=False
+Use_Mongoose=os.path.exists("/usr/local/include/mongoose")
+Use_LCIO=(os.getenv("USE_LCIO")!=None)
 
 # includes
-INCLUDES=['include',"/usr/include/boost141/"]
+INCLUDES=['include',"/usr/include/boost141/","/usr/local/lib","/usr/include/jsoncpp","/opt/dhcal/levbdim/include"]
 
 if (Use_Dim):
   INCLUDES.append(DIM_ROOT+"/dim")
@@ -98,7 +103,17 @@ if (Use_Dim):
 INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
 
 INCLUDES.append(DHCAL_ROOT+"/SDHCAL_common/include/")
-INCLUDES.append(DHCAL_ROOT+"/SlowControl/DB/include/")
+INCLUDES.append(DHCAL_ROOT+"/SDHCAL_Readout/include/")
+INCLUDES.append(DHCAL_ROOT+"/levbdim_daq/include/")
+
+if (Use_Oracle):
+  INCLUDES.append("/usr/include/ILCConfDB")
+
+if (Use_LCIO):
+  INCLUDES.append(os.path.join(os.getenv("LCIODIR"),"include"))
+  INCLUDES.append(os.path.join(os.getenv("LCIODIR"),"include","IMPL"))
+  INCLUDES.append(DHCAL_ROOT+"/SDHCAL_EventReader/include")
+
 
 
 
@@ -106,19 +121,23 @@ CPPFLAGS=["-pthread","-O2","-DUNIX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN_
 
 #Library ROOT + some of XDAQ + DB 
 #MYSQL
-MY_LIBS=[lib[2:] for lib in filter(lambda x: (x[:2]=="-l"), commands.getoutput("mysql_config --libs").split(" "))]
-MY_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getoutput("mysql_config --libs").split(" "))]
+if (Use_Mysql):
+  MY_LIBS=[lib[2:] for lib in filter(lambda x: (x[:2]=="-l"), commands.getoutput("mysql_config --libs").split(" "))]
+  MY_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getoutput("mysql_config --libs").split(" "))]
 
-#LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp' ]
-LIBRARIES=MY_LIBS+['pthread',  'm', 'stdc++',boostsystem,boostthread,'dim','netlink','cslm',"SDHCALcommon","SlowDB","caenhvwrapper"]
-
-
+  #LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp' ]
+  LIBRARIES=MY_LIBS+['pthread',  'm', 'stdc++',boostsystem,boostthread,'dim','netlink','cslm',"SDHCALcommon","caenhvwrapper",'log4cxx','levbdim','basicwriter','curl']
+else:
+  LIBRARIES=['pthread',  'm', 'stdc++',boostsystem,boostthread,'dim','netlink','cslm',"SDHCALcommon","caenhvwrapper",'log4cxx','levbdim','basicwriter','curl']
 
 #Library path XDAQ,DHCAL and ROOT + Python
 if (Bit64):
-	LIBRARY_PATHS=MY_LIBPATH+["/usr/lib64","/usr/local/lib","/opt/dhcal/dim/linux",DHCAL_ROOT+"/opt/dhcal/lib"]
+  if (Use_Mysql):
+    LIBRARY_PATHS=MY_LIBPATH+["/usr/lib64","/usr/local/lib","/opt/dhcal/dim/linux",DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/lib"]
+  else:
+    LIBRARY_PATHS=["/usr/lib64","/usr/local/lib","/opt/dhcal/dim/linux",DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/lib"]
 else:
-  LIBRARY_PATHS=MY_LIBPATH+["/usr/lib","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib","/home/pi/wiringPi/wiringPi"]
+  LIBRARY_PATHS=MY_LIBPATH+["/usr/lib","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib","/home/pi/wiringPi/wiringPi","/opt/dhcal/lib"]
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
 
 if Use_Dim:
@@ -128,6 +147,11 @@ if Use_Dim:
 #   INCLUDES.append("/opt/xdaq/include/dim")
 #   LIBRARIES.append("dim")
 #   
+if (Use_Mongoose):
+  LIBRARY_PATHS.append('/usr/local/lib')
+  LIBRARIES.append('mongoose')
+  INCLUDES.append('/usr/local/include/')
+  INCLUDES.append('/usr/local/include/mongoose')
 
 
 #link flags
@@ -149,19 +173,19 @@ env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
 
 
 # Library source
-LIBRARY_SOURCES=Glob("#src/*.cc")
-
+#LIBRARY_SOURCES=Glob("#src/*.cc")
+LIBRARY_SOURCES=['src/HVCaenInterface.cc','src/LCaenServer.cc']
 #Shared library
-InterfaceCAENHV=env.SharedLibrary("#lib/InterfaceCAENHV",LIBRARY_SOURCES)
+InterfaceCAENHV=env.SharedLibrary("#lib/CaenServer",LIBRARY_SOURCES)
 
 
 #Daemon 
 EXE_LIBPATH=LIBRARY_PATHS
 EXE_LIBPATH.append("#lib")
 EXE_LIBS=LIBRARIES
-EXE_LIBS.append("InterfaceCAENHV")
-dcaenhv=env.Program("bin/dimcaenhv",source="src/dcaenhv.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
-hvc=env.Program("bin/hvc",source="src/hvcaen.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+EXE_LIBS.append("CaenServer")
+#dcaenhv=env.Program("bin/dimcaenhv",source="src/dcaenhv.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+hvc=env.Program("bin/levbdim_caen",source="src/CaenDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
 #Python module
 #_InterfaceCAENHV=env.PythonModule('_LInterfaceCAENHV', ['LInterfaceCAENHV.i'],LIBPATH="#lib",LIBS="InterfaceCAENHV")
@@ -171,7 +195,7 @@ for x in Glob("#include/*.h"):
   myinc.append("include/"+x.name)
 print myinc
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",InterfaceCAENHV)
-env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[hvc,dcaenhv])
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[hvc])
 ###env.Install("/opt/dhcal/lib",InterfaceCAENHV)
 
 env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib",DHCAL_ROOT+"/opt/dhcal/bin"])

@@ -15,10 +15,13 @@ class HVCaenInterface: public HVInterface
   virtual void SetOff(uint32_t channel);
   virtual void SetCurrent(uint32_t channel,float imax);
   virtual void SetVoltage(uint32_t channel,float v0);
+  virtual void SetVoltageRampUp(uint32_t channel,float v0);
   virtual float GetCurrentSet(uint32_t channel);
   virtual float GetVoltageSet(uint32_t channel);
   virtual float GetCurrentRead(uint32_t channel);
   virtual float GetVoltageRead(uint32_t channel);
+  virtual float GetVoltageRampUp(uint32_t channel);
+  virtual std::string GetName(uint32_t channel);
   virtual uint32_t GetStatus(uint32_t channel);
   bool isConnected(){ return connected_;}
  private:
