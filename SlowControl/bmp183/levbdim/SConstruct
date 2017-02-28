@@ -1,0 +1,208 @@
+import sys,os,commands
+import  os
+import re
+import sys
+
+
+
+def SWIGSharedLibrary(env, library, sources, **args):
+  swigre = re.compile('(.*).i')
+  if env.WhereIs('swig') is None:
+    sourcesbis = []
+    for source in sources:
+      cName = swigre.sub(r'\1_wrap.c', source)
+      cppName = swigre.sub(r'\1_wrap.cc', source)
+      if os.path.exists(cName):
+        sourcesbis.append(cName)
+      elif os.path.exists(cppName):
+        sourcesbis.append(cppName)
+      else:
+        sourcesbis.append(source)
+  else:
+    sourcesbis = sources
+ 
+  if 'SWIGFLAGS' in args:
+    args['SWIGFLAGS'] += ['-python']
+  else:
+    args['SWIGFLAGS'] = ['-python'] + env['SWIGFLAGS']
+  args['SHLIBPREFIX']=""
+  if sys.version >= '2.5':
+    args['SHLIBSUFFIX']=".so"
+ 
+  cat=env.SharedLibrary(library, sourcesbis, **args)
+  return cat
+ 
+
+
+# environment
+#import xdaq
+#print xdaq.INCLUDES
+#print xdaq.LIBRARY_PATHS
+#print xdaq.LIBRARIES
+
+#print "----------------------------------------------"
+Decider('MD5-timestamp')
+XDAQ_ROOT="/opt/xdaq"
+DIM_ROOT="/opt/dhcal/dim"
+DHCAL_ROOT=os.path.abspath("../../..")
+
+fres=os.popen('uname -r')
+kl=fres.readline().split(".")
+
+platform="UBUNTU"
+if (kl[len(kl)-1][0:3] == 'el5'):
+    platform="SLC5"
+
+if (kl[len(kl)-2][0:3] == 'el6'):
+    platform="SLC6"
+print kl[len(kl)-2][0:3]
+fres=os.popen('uname -p')
+kp=fres.readline()
+osv=kp[0:len(kp)-1]
+
+print platform,osv
+
+Bit64=False
+Bit64=os.uname()[4]=='x86_64'
+
+NetLink=DHCAL_ROOT+"/netLink"
+if ( not os.path.exists(NetLink)):
+  NetLink=os.getenv("HOME")+"/netLink"
+kl=os.uname()[2].split(".")
+platform="UBUNTU"
+if (kl[len(kl)-1][0:3] == 'el5'):
+    platform="SLC5"
+
+if (kl[len(kl)-2][0:3] == 'el6'):
+    platform="SLC6"
+
+Arm=os.uname()[4]=='armv7l'
+
+if Arm or platform=="UBUNTU":
+  boostsystem='boost_system'
+  boostthread='boost_thread'
+else:
+  boostsystem='boost_system-mt'
+  boostthread='boost_thread-mt'
+
+Use_Dim=True
+Use_Mysql=False
+#os.environ.has_key("DIM_DNS_NODE")
+Use_Oracle=os.path.exists("/usr/include/ILCConfDB")
+Use_Oracle=False
+Use_Mongoose=os.path.exists("/usr/local/include/mongoose")
+Use_LCIO=(os.getenv("USE_LCIO")!=None)
+
+# includes
+INCLUDES=['include',"../include","/usr/include/boost141/","/usr/local/lib","/usr/include/jsoncpp","/opt/dhcal/levbdim/include"]
+
+if (Use_Dim):
+  INCLUDES.append(DIM_ROOT+"/dim")
+  if (platform=="SLC5"):
+    INCLUDES.append("/opt/xdaq/include/dim")
+INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
+
+INCLUDES.append(DHCAL_ROOT+"/SDHCAL_common/include/")
+INCLUDES.append(DHCAL_ROOT+"/SDHCAL_Readout/include/")
+INCLUDES.append(DHCAL_ROOT+"/levbdim_daq/include/")
+
+if (Use_Oracle):
+  INCLUDES.append("/usr/include/ILCConfDB")
+
+if (Use_LCIO):
+  INCLUDES.append(os.path.join(os.getenv("LCIODIR"),"include"))
+  INCLUDES.append(os.path.join(os.getenv("LCIODIR"),"include","IMPL"))
+  INCLUDES.append(DHCAL_ROOT+"/SDHCAL_EventReader/include")
+
+
+
+
+CPPFLAGS=["-pthread","-O2","-DUNIX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2"]
+
+#Library ROOT + some of XDAQ + DB 
+#MYSQL
+if (Use_Mysql):
+  MY_LIBS=[lib[2:] for lib in filter(lambda x: (x[:2]=="-l"), commands.getoutput("mysql_config --libs").split(" "))]
+  MY_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getoutput("mysql_config --libs").split(" "))]
+
+  #LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp' ]
+  LIBRARIES=MY_LIBS+['pthread',  'm', 'stdc++',boostsystem,boostthread,'dim','netlink','cslm',"SDHCALcommon",'log4cxx','levbdim','basicwriter','curl']
+else:
+  LIBRARIES=['pthread',  'm', 'stdc++',boostsystem,boostthread,'dim','netlink','cslm',"SDHCALcommon",'log4cxx','levbdim','wiringPi','basicwriter','curl']
+
+#Library path XDAQ,DHCAL and ROOT + Python
+if (Bit64):
+  if (Use_Mysql):
+    LIBRARY_PATHS=MY_LIBPATH+["/usr/lib64","/usr/local/lib","/opt/dhcal/dim/linux",DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/lib"]
+  else:
+    LIBRARY_PATHS=["/usr/lib64","/usr/local/lib","/opt/dhcal/dim/linux",DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/lib"]
+else:
+  if (Use_Mysql):
+    LIBRARY_PATHS=MY_LIBPATH+["/usr/lib","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib","/home/pi/wiringPi/wiringPi","/opt/dhcal/lib"]
+  else:
+    LIBRARY_PATHS=["/usr/lib","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib","/home/pi/wiringPi/wiringPi","/opt/dhcal/lib"]
+  
+LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
+
+if Use_Dim:
+   CPPFLAGS.append("-DUSE_DIM")
+   if (platform=="SLC5"):
+     LIBRARY_PATHS.append("/opt/xdaq/lib")
+#   INCLUDES.append("/opt/xdaq/include/dim")
+#   LIBRARIES.append("dim")
+#   
+if (Use_Mongoose):
+  LIBRARY_PATHS.append('/usr/local/lib')
+  LIBRARIES.append('mongoose')
+  INCLUDES.append('/usr/local/include/')
+  INCLUDES.append('/usr/local/include/mongoose')
+
+
+#link flags
+LDFLAGS=["-fPIC","-dynamiclib"]
+
+# SWIG
+SWIGSF=["-c++","-classic"]
+
+for i in INCLUDES:
+    SWIGSF.append("-I"+i)
+print SWIGSF
+
+# Create the Environment
+env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS,SWIGFLAGS=SWIGSF)
+
+#print "CC is:",env.subst('$CPPPATH')
+
+env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
+
+
+# Library source
+#LIBRARY_SOURCES=Glob("#src/*.cc")
+LIBRARY_SOURCES=['../src/BMP183.cc','src/LBmp183Server.cc']
+#Shared library
+InterfaceBMP183=env.SharedLibrary("#lib/Bmp183Server",LIBRARY_SOURCES)
+
+
+#Daemon 
+EXE_LIBPATH=LIBRARY_PATHS
+EXE_LIBPATH.append("#lib")
+EXE_LIBS=LIBRARIES
+EXE_LIBS.append("Bmp183Server")
+#dcaenhv=env.Program("bin/dimcaenhv",source="src/dcaenhv.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+hvc=env.Program("bin/levbdim_caen",source="src/Bmp183Daemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+
+#Python module
+#_InterfaceBMP183=env.PythonModule('_LInterfaceBMP183', ['LInterfaceBMP183.i'],LIBPATH="#lib",LIBS="InterfaceBMP183")
+
+myinc=[]
+for x in Glob("#include/*.h"):
+  myinc.append("include/"+x.name)
+print myinc
+env.Install(DHCAL_ROOT+"/opt/dhcal/lib",InterfaceBMP183)
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",[hvc])
+###env.Install("/opt/dhcal/lib",InterfaceBMP183)
+
+env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib",DHCAL_ROOT+"/opt/dhcal/bin"])
+
+
+
