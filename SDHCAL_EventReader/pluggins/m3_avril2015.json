@@ -2,7 +2,7 @@
     "cuts":{
 	"firstEvent":1,
 	"timeAnalysis":1,
-	"timeWindow":1,
+	"timeWindow":2,
 	"difAnalysis":0,
 	"cerenkovAnalysis":0,
 	"showerAnalysis":0,
@@ -12,7 +12,7 @@
 	"maxSeedHits":8192,
 	"maxDistSeed":12.0,
         "cosSeed":0.09,
-        "tkDistCut":2.0,
+        "tkDistCut":3.0,
         "tkMinPoint":4,
         "tkExtMinPoint":4,
         "tkChi2":0.01,

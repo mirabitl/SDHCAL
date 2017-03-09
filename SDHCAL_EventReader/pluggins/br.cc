@@ -119,7 +119,11 @@ bs.addRun(733759,"/data/srv02/RAID6/Oct2016/SMM_111016_151355_733759.dat");
 acqilc@lyosdhcal9:~$ 
 
    */
-  /* State 1 pC seuil 1 */
+  /* June 2016 5 pC  Inutilisables .... too high rate*/
+  bs.addRun(732792,"/data/srv02/RAID6/June2016/SMM_170616_010640_732792.dat");
+  /* State 1 pC seuil 1
+  bs.addRun(733696,"/data/srv02/RAID6/Oct2016/SMM_091016_184359_733696.dat");
+
  bs.addRun(733660,"/data/srv02/RAID6/Oct2016/SMM_081016_035811_733660.dat");
 bs.addRun(733660,"/data/srv02/RAID6/Oct2016/SMM_081016_054542_733660.dat");
 bs.addRun(733665,"/data/srv02/RAID6/Oct2016/SMM_081016_082718_733665.dat");
@@ -133,8 +137,8 @@ bs.addRun(733689,"/data/srv02/RAID6/Oct2016/SMM_091016_140032_733689.dat");
 
 bs.addRun(733693,"/data/srv02/RAID6/Oct2016/SMM_091016_164335_733693.dat");
 bs.addRun(733693,"/data/srv02/RAID6/Oct2016/SMM_091016_182544_733693.dat");
-bs.addRun(733696,"/data/srv02/RAID6/Oct2016/SMM_091016_184359_733696.dat");
 bs.addRun(733696,"/data/srv02/RAID6/Oct2016/SMM_091016_202828_733696.dat");
+  */
   /* State 2012 224 et 6.9
   bs.addRun(733754,"/data/srv02/RAID6/Oct2016/SMM_111016_084258_733754.dat");
 

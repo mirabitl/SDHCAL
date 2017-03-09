@@ -187,6 +187,9 @@ void basicreader::read()
   // Filling frame and selecting events
   _tframe.clear();
   _tcount.clear();
+  for (std::vector<recoTrack*>::iterator it=_vtk.begin();it!=_vtk.end();it++) delete (*it);
+
+  _vtk.clear();
   std::map<uint32_t,std::vector<std::pair<DIFPtr*,uint32_t> > >::iterator ifm=_tframe.end();
   std::map<uint32_t,std::bitset<64> >::iterator im=_tcount.end();
   int32_t window=_geo->cuts()["timeWindow"].asInt();
@@ -418,14 +421,24 @@ par[8]= -1.723E-07;// 1.379E-08
  // std::cout<<"Clusters :"<<clusters.size()<<" Ratio "<<point.size()*1./clusters.size()<<std::endl;
   
   /** Track */
-   std::vector<recoTrack*> _vtk;
+   
 
    std::vector<recoPoint*> vrp;
    float zmin=1E20,zmax=-1E20;
    
     for (std::vector<rCluster<recoPoint>*>::iterator iv=clusters.begin();iv!=clusters.end();iv++) 
      {
-       if ((*iv)->size()<5)
+       uint32_t nv=0;
+       for (std::vector<rCluster<recoPoint>*>::iterator jv=clusters.begin();jv!=clusters.end();jv++) 
+       {
+	 if ((*iv)==(*jv)) continue;
+	 ROOT::Math::XYZVector d1=(*(*iv))-(*(*jv));
+	 if (d1.Mag2()>100) continue;
+	 nv++;				    
+       }
+       
+       //std::cout<<"Size "<<(*iv)->size()<<" vois "<<nv<<std::endl; 
+       if ((*iv)->size()<3 || ((*iv)->size()<5 && nv<5) )
          vrp.push_back(*iv);
        //hmsi->Fill((*iv)->size()*1.);
        else
@@ -437,7 +450,7 @@ par[8]= -1.723E-07;// 1.379E-08
     recoTrack::combinePoint(vrp,_geo,_vtk);
     //std::cout<<_vtk.size()<<" tracks found "<<std::endl;
     uint32_t ntk=_vtk.size();
-    for (std::vector<recoTrack*>::iterator it=_vtk.begin();it!=_vtk.end();it++) delete (*it);
+    
     
     bool bif=false;
     if (chbif>0)
@@ -456,7 +469,7 @@ par[8]= -1.723E-07;// 1.379E-08
     bif=bif || (chbif==0);
     
     // if (bif)
-	//this->draw(point);
+    //	this->draw(point);
   // Select shower and muons
    if (hitsparasic>1.5 && (cp[3])/cp[5]>1E-2 &&  point.size()*1./clusters.size()>3. && nbad<5 && bx>50 && bx< 70 && by>45 && by<60 && ntk>0 && zmin>2 && zmax<130.)
   {nshower++;_numberOfShower++;
@@ -501,6 +514,7 @@ par[8]= -1.723E-07;// 1.379E-08
     hnhits->Fill(nh0+nh1+nh2);
     hen->Fill(fe);
     if (bif) henb->Fill(fe);
+    //this->draw(point);
 
  
   }
@@ -512,9 +526,10 @@ par[8]= -1.723E-07;// 1.379E-08
   
        hmsi->Fill((*iv)->size()*1.);
      }
-     if (ntk>0)
-     this->draw(point);
+    //if (ntk==0 && point.size()>30)
+    //  this->draw(point);
   }
+
   for (std::vector<recoPoint*>::iterator it=point.begin();it!=point.end();it++) delete (*it);
   for (std::vector<rCluster<recoPoint>*>::iterator iv=clusters.begin();iv!=clusters.end();iv++) delete((*iv));
   //std::cout<<" CANDIDATE seed :"<<im->first<<" -> chambers: "<<im->second.count()<<" -> frames: "<<ifm->second.size()<<" -> Hits: "<<nhit<<" -> ratio:"<<hitsparasic<<std::endl;
@@ -549,13 +564,41 @@ void basicreader::draw(std::vector<recoPoint*> vp)
     }
   TCHits->cd(1);
   hzx->Draw("COLZ");
+#define drawtk
+#ifdef drawtk
+  std::vector<TLine*> vl;
+  for (std::vector<recoTrack*>::iterator itk=_vtk.begin();itk!=_vtk.end();itk++)
+  {
+    ROOT::Math::XYZPoint pmin=(*itk)->extrapolate((*itk)->zmin());
+      ROOT::Math::XYZPoint pmax=(*itk)->extrapolate((*itk)->zmax());
+
+  TLine* l = new TLine(pmin.Z(),pmin.X(),pmax.Z(),pmax.X());
+    l->SetLineColor(2);
+    l->Draw("SAME");
+    vl.push_back(l);
+    std::cout<<pmin.X()<<" "<<pmax.X()<<std::endl;
+  }
+#endif
   TCHits->Modified();
   TCHits->cd(2);
   hzy->Draw("COLZ");
+  for (std::vector<recoTrack*>::iterator itk=_vtk.begin();itk!=_vtk.end();itk++)
+  {
+    ROOT::Math::XYZPoint pmin=(*itk)->extrapolate((*itk)->zmin());
+      ROOT::Math::XYZPoint pmax=(*itk)->extrapolate((*itk)->zmax());
+
+  TLine* l = new TLine(pmin.Z(),pmin.Y(),pmax.Z(),pmax.Y());
+    l->SetLineColor(2);
+    l->Draw("SAME");
+    vl.push_back(l);
+    std::cout<<pmin.X()<<" "<<pmax.X()<<std::endl;
+  }
   TCHits->Modified();
   TCHits->Draw();
   TCHits->Update();
   getchar();
+  for (std::vector<TLine*>::iterator il=vl.begin();il!=vl.end();il++) delete (*il);
+  std::cout<<"fini "<<std::endl;
 }
 
 

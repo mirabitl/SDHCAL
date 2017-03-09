@@ -101,6 +101,7 @@ env1 = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LI
 rawAnalysis=env1.SharedLibrary("rawAnalysis",source=['rawAnalysis.cxx'])
 combAnalysis=env1.SharedLibrary("combAnalysis",source=['combAnalysis.cxx'])
 trackAnalysis=env1.SharedLibrary("trackAnalysis",source=['trackAnalysis.cxx'])
+brAnalysis=env1.SharedLibrary("brAnalysis",source=['brAnalysis.cxx'])
 rootProcessor=env1.SharedLibrary("rootProcessor",source=['rootProcessor.cxx'])
 
 
@@ -116,7 +117,7 @@ br=env1.Program("bin/br",source="br.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
 
 
-Default([lmreco,rawAnalysis,trackAnalysis,rootProcessor,combAnalysis,br])
+Default([lmreco,rawAnalysis,trackAnalysis,rootProcessor,combAnalysis,br,brAnalysis])
 
 
 

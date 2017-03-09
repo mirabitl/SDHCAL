@@ -57,8 +57,8 @@ public:
   TStripCluster strips(uint8_t i) const {return _strips[i];}
 
   uint8_t dif() const {return strips(0).dif();}
-  virtual double dX(){return 2.;};
-  virtual double dY(){return 2.;}
+  virtual double dX(){return 0.1;};
+  virtual double dY(){return 0.1;}
   virtual uint32_t plan(){ 
       //std::cout<<"ID first strip "<<std::hex<<strips(0).id()<<std::dec<<std::endl;
       

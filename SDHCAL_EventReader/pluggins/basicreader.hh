@@ -15,6 +15,7 @@
 #include "jsonGeo.hh"
 #include "DCHistogramHandler.h"
 #include "recoPoint.hh"
+#include "recoTrack.hh"
 
   class basicreader
   {
@@ -51,5 +52,6 @@
     double _readoutTime,_readoutTotalTime;
     uint32_t _numberOfShower,_numberOfMuon;
     DCHistogramHandler* _rh;
+    std::vector<recoTrack*> _vtk;
   };
 #endif

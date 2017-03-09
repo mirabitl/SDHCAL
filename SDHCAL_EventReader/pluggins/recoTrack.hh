@@ -37,6 +37,8 @@ public:
   TLine* linex();
   TLine* liney();
   void clear();
+  //double cap(recoTrack& t);
+  void cap(recoTrack& t,double &d, ROOT::Math::XYZPoint &p1, ROOT::Math::XYZPoint &p2);
   void clean(float cut);
   void addPoint(ROOT::Math::XYZPoint* p);
   void remove(ROOT::Math::XYZPoint* p);
@@ -70,7 +72,9 @@ public:
   }
   static void combine(std::vector<planeCluster*> pc,jsonGeo* g,std::vector<recoTrack*>& vtk);
   static void combinePoint(std::vector<recoPoint*> pc,jsonGeo* g,  std::vector<recoTrack*> &vtk);
+  static void combinePoint1(std::vector<recoPoint*> pc,jsonGeo* g,  std::vector<recoTrack*> &vtk);
   void getChi2(std::vector<planeCluster*> clusters);
+  void getChi2(std::vector<recoPoint*> clusters);
 
 private:
   bool _valid;

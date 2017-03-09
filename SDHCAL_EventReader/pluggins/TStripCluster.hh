@@ -43,7 +43,7 @@ public:
     bool ap=false;
     //std::cout<<"append " <<_strips.size()<<std::endl;
     for (uint16_t j=0;j<_strips.size();j++)
-      if (abs(i-_strips[j])<2.1){ap=true;break;}
+      if (abs(i-_strips[j])<3.1){ap=true;break;}
       if (!ap) return false;
       _strips.push_back(i);
     

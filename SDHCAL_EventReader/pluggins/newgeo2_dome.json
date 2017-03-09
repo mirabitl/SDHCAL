@@ -2,6 +2,7 @@
     "cuts":{
     "firstEvent":1,
     "timeAnalysis":1,
+    "timeWindow":2,
     "difAnalysis":20,
     "cerenkovAnalysis":0,
     "showerAnalysis":0,
@@ -12,14 +13,21 @@
     "maxSeedHits":8192,
 	"maxDistSeed":158.0,
 	"cosSeed":0.293,
-	"tkDistCut":2.0,
+	"tkDistCut":4.0,
+	"tkDzMax":50.,
 	"tkMinPoint":3,
 	"tkExtMinPoint":3,
 	"tkChi2":0.01,
 	"edge":5.0,
 	"zedge":20,
 	"minPlans":3,
-	"mipRate":0.1
+	"mipRate":0.1,
+        "bifChamber":57,
+	"xBeamMin": 0.0,
+	"xBeamMax": 111.0,
+	"yBeamMin": 0.0,
+	"yBeamMax": 111.0,
+	"daqType":"LEVBDIM"
     },
     "difs":{
 	"128":{"chamber":9,"di":0.0,"dj":0.000000,"poli":1.0,"polj":1.0,"type":"TRICOT"}, 

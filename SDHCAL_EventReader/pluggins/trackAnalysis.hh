@@ -17,7 +17,7 @@
 #include "IMPL/RawCalorimeterHitImpl.h"
 #include "UTIL/CellIDDecoder.h"
 #include "jsonGeo.hh"
-
+#include "eventInfo.hh"
 #include "TFile.h"
 
 #include <vector>
@@ -103,7 +103,7 @@ public:
     }
   };
   void ptime(std::string s);
-    
+  void debora(std::vector<recoPoint*> v);
 private:
 
 
@@ -209,5 +209,6 @@ private:
   std::vector<recoTrack*> _vtk;
   double _pMip,_pMipCand;
   uint32_t _nStripPlanes,_nPadPlanes;
+  eventInfo _info;
 };
 #endif

@@ -308,7 +308,7 @@ void DCHistogramHandler::writeHistograms(std::string name)
 #include "TSQLFile.h"
 #include <iostream>
 #include <fstream>
-void DCHistogramHandler::writeSQL()
+void DCHistogramHandler::writeSQL(std::string name)
 {
   /*
   const char* dbname = "mysql://lyosdhcal11.in2p3.fr:3306/monitoring";
@@ -319,7 +319,7 @@ void DCHistogramHandler::writeSQL()
   TSQLFile* f = new TSQLFile(dbname, "recreate", username, userpass);
   // Write with standard I/O functions
   */
-  TFile* f = new TFile("/dev/shm/LMonitoring.root","RECREATE","RAW DATA");
+  TFile* f = new TFile(name.c_str(),"RECREATE","RAW DATA");
   f->cd();
 
  

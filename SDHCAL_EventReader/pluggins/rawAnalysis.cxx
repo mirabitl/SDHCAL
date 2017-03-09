@@ -94,7 +94,7 @@ void rawAnalysis::processEvent()
       hfr2=rootHandler_->BookTH2("HitFrequency",255,0.1,255.1,48,0.1,48.1);
     }
   printf("4\n");
-   reader_->parseRawEvent();
+   reader_->parseLevbdimEvent();
   std::vector<DIFPtr*>::iterator itb =reader_->getDIFList().begin();
   if (itb==reader_->getDIFList().end()) return;
 				      

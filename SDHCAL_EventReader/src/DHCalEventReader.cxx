@@ -294,33 +294,6 @@ int DHCalEventReader::parseRawEvent(int rushift)
 	  //IMPL::LCGenericObjectImpl* go= (IMPL::LCGenericObjectImpl*) col->getElementAt(j);
 	  if (j==0 && dropFirstRU_) continue;
 	  LMGeneric* go= (LMGeneric*) col->getElementAt(j);
-#define LEVBDIM_FORMAT
-#ifdef LEVBDIM_FORMAT
-      int* buf=&(go->getIntVector()[0]);
-      unsigned char* tcbuf = (unsigned char*) buf;
-      uint32_t rusize =go->getNInt()*sizeof(int32_t);
-      levbdim::buffer m((char*) tcbuf,0);
-      m.setPayloadSize(rusize-3*sizeof(uint32_t)-sizeof(uint64_t));
-      //std::cout<<" Source found "<<m.detectorId()<<" "<<m.dataSourceId()<<" size "<<rusize<< std::endl;
-      // A voir si on le retablit 
-      if (m.detectorId()!=100) continue;
-      //uint32_t idstart=DIFUnpacker::getStartOfDIF(tcbuf,rusize,theXdaqShift_);
-      uint32_t idstart=DIFUnpacker::getStartOfDIF((unsigned char*) m.ptr(),m.size(),20);
-      //std::cout<<" Start at "<<idstart<<std::endl;
-      //bool slowcontrol; uint32_t version,hrtype,id0,iddif;
-      //DCBufferReader::checkType(tcbuf,rusize/4,slowcontrol,version,hrtype,id0,iddif,theXdaqShift_);
-      //printf(" Found start of Buffer at %d contains %x and %d bytes \n",idstart,tcbuf[idstart],rusize-idstart+1);
-      
-      
-      
-      
-      unsigned char* tcdif=&tcbuf[idstart];
-      DIFPtr* d= new DIFPtr(tcdif,rusize-idstart+1);
-#else      
-      
-      
-      
-      
 	  int* buf=&(go->getIntVector()[0]);
 	  unsigned char* tcbuf = (unsigned char*) buf;
 	  uint32_t rusize =go->getNInt()*sizeof(int32_t); 
@@ -339,13 +312,86 @@ int DHCalEventReader::parseRawEvent(int rushift)
 	      //printf("%d %d \n",rusize,idstart);
 	      // d->dumpDIFInfo();
         }
-#endif
+
 	  theDIFPtrList_.push_back(d);
 	  //getchar();
 	}
     }
       return 0;
 }
+
+
+int DHCalEventReader::parseLevbdimEvent()
+{
+  newRunHeader_=false;
+  if (evt_ == 0) { std::string s =" no event found";throw s+__PRETTY_FUNCTION__;}
+  this->clear();
+ 
+  std::vector<std::string >* vnames;
+  try {
+    vnames= (std::vector<std::string >*)evt_->getCollectionNames();
+  }
+  catch (IOException& e) {
+    std::cout << e.what() << std::endl ;
+    std::string s=e.what();s+=__PRETTY_FUNCTION__;
+    throw s;
+  }
+  catch (...)
+    {
+      std::cout<<" No se perque on se plante "<<std::endl;
+      exit(2);
+    }
+  //std::cout<<"On rentre dans la boucle"<<std::endl;
+  if (evt_->getEventNumber()%100 == 0)
+    printf("Event %d Good Frame %d  6 bytes less %d  Bytes more %d Empty frames %d \n",evt_->getEventNumber(),nGood_,nBad_,nBadTwo_,nZero_);
+  // Clear previous event
+  for (uint32_t i=0;i<theDIFPtrList_.size();i++) 
+    {	
+      //theDIFPtrList_[i]->dumpDIFInfo();
+      delete theDIFPtrList_[i];
+    }
+  theDIFPtrList_.clear();
+  for ( std::vector<std::string >::iterator it=(vnames)->begin();it!=vnames->end();it++)
+    {
+      if ((*it).compare("RU_XDAQ")!=0) continue;
+      //      std::cout<<"Collection on  ulle"<<std::endl;
+      EVENT::LCCollection* col= evt_->getCollection(*it); 
+      //std::vector<unsigned char*> vF;
+      //std::vector<unsigned char*> vL;
+      
+
+      for (int j=0;j<col->getNumberOfElements(); j++)
+	{
+	  //IMPL::LCGenericObjectImpl* go= (IMPL::LCGenericObjectImpl*) col->getElementAt(j);
+	  if (j==0 && dropFirstRU_) continue;
+	  LMGeneric* go= (LMGeneric*) col->getElementAt(j);
+	  int* buf=&(go->getIntVector()[0]);
+	  unsigned char* tcbuf = (unsigned char*) buf;
+	  uint32_t rusize =go->getNInt()*sizeof(int32_t);
+	  levbdim::buffer m((char*) tcbuf,0);
+	  m.setPayloadSize(rusize-3*sizeof(uint32_t)-sizeof(uint64_t));
+	  //std::cout<<" Source found "<<m.detectorId()<<" "<<m.dataSourceId()<<" size "<<rusize<< std::endl;
+	  // A voir si on le retablit 
+	  if (m.detectorId()!=100) continue;
+	  //uint32_t idstart=DIFUnpacker::getStartOfDIF(tcbuf,rusize,theXdaqShift_);
+	  uint32_t idstart=DIFUnpacker::getStartOfDIF((unsigned char*) m.ptr(),m.size(),20);
+	  //std::cout<<" Start at "<<idstart<<std::endl;
+	  //bool slowcontrol; uint32_t version,hrtype,id0,iddif;
+	  //DCBufferReader::checkType(tcbuf,rusize/4,slowcontrol,version,hrtype,id0,iddif,theXdaqShift_);
+	  //printf(" Found start of Buffer at %d contains %x and %d bytes \n",idstart,tcbuf[idstart],rusize-idstart+1);
+      
+      
+      
+      
+	  unsigned char* tcdif=&tcbuf[idstart];
+	  DIFPtr* d= new DIFPtr(tcdif,rusize-idstart+1);
+	  theDIFPtrList_.push_back(d);
+	  //getchar();
+	}
+    }
+  return 0;
+}
+
 
 int DHCalEventReader::parseSDHCALEvent()
 {
