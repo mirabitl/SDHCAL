@@ -200,6 +200,7 @@ levbdimdaq=env.SharedLibrary("#lib/levbdimdaq",LIBRARY_SOURCES)
 #Daemon 
 EXE_LIBPATH=LIBRARY_PATHS
 EXE_LIBPATH.append("#lib")
+EXE_LIBPATH.append("/opt/dhcal/lib")
 EXE_LIBS=LIBRARIES
 EXE_LIBS.append("levbdimdaq")
 plist=[]
@@ -238,7 +239,7 @@ if (Use_Oracle):
 #dzups=env.Program("bin/dimzup",source="src/dzup.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
 #Python module
-_levbdimdaq=env.PythonModule('_LDaq', ['LDaq.i'],LIBPATH="#lib",LIBS="levbdimdaq")
+_levbdimdaq=env.PythonModule('_LDaq', ['LDaq.i'],LIBPATH=EXE_LIBPATH,LIBS="levbdimdaq")
 
 myinc=[]
 for x in Glob("#include/*.h"):
