@@ -430,6 +430,12 @@ int readOneEvent(int run,int event);
   void setDropFirstRU(bool t){dropFirstRU_=t;}
   std::map<std::string,MarlinParameter>& getMarlinParameterMap(){return  theMarlinParameterMap_;}
   void setXdaqShift(unsigned int s){theXdaqShift_=s;}
+  void setCerenkovDifId(int id){m_cerenkovDifId=id;}
+  void setCerenkovOutDifId(int id){m_cerenkovOutDifId=id;}
+  void setCerenkovOutAsicId(int id){m_cerenkovOutAsicId=id;}
+  void setCerenkovOutTimeDelay(int td){m_cerenkovOutTimeDelay=td;}
+
+
   //void addFile(std::string s) {filenames_.push_back(s);}
 
   void addFile(std::string s) {filenames_.push_back(s);}
