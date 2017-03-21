@@ -12,6 +12,12 @@ tkExtChi2Cut=0.00000000000001;
 tkDistCut=2.;  
 tkExtDistCut=4.;
 
+cerenkovDifId=3
+cerenkovOutDifId=3
+cerenkovAsicId=3
+cerenkovOutAsicId=3
+cerenkovOutTimeDelay=6
+
 #
 #filePath="/data/NAS/Results/PS_04_2012/DHCAL_%d_I%d_0.slcio"
 #filePath="/data/NAS/BeamTest2012Compressed/DHCAL_%d_I%d_%d.slcio"

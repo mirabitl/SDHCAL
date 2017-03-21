@@ -40,6 +40,10 @@ dher.ParseSteering(config.marlin)
 dher.setXdaqShift(24);
 a=dr.FilterAnalyzer( dher,rootHandler);
 
+dher.setCerenkovDifId(config.cerenkovDifId);
+dher.setCerenkovOutDifId(config.cerenkovOutDifId);
+dher.setCerenkovOutAsicId(config.cerenkovOutAsicId);
+dher.setCerenkovOutTimeDelay(config.cerenkovOutTimeDelay);
 
 
 a.setRebuild(config.rebuild)
