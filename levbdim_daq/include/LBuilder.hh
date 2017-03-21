@@ -1,12 +1,12 @@
 #ifndef _LBuilder_h
 #define _LBuilder_h
 
-#include "fsmweb.hh"
+#include "baseApplication.hh"
 #include "datasocket.hh"
 #include "shmdriver.hh"
 #include "LdaqLogger.hh"
 
-class LBuilder {
+class LBuilder : public levbdim::baseApplication {
 public:
   LBuilder(std::string name);
   void initialise(levbdim::fsmmessage* m);

@@ -8,13 +8,13 @@
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include "LdaqLogger.hh"
 
-WebDaq::WebDaq(std::string name,uint32_t port) :_builderClient(NULL),_dbClient(NULL),_cccClient(NULL),_mdccClient(NULL),_zupClient(NULL),_gpioClient(NULL)
+WebDaq::WebDaq(std::string name,uint32_t port) : levbdim::baseApplication(name),_builderClient(NULL),_dbClient(NULL),_cccClient(NULL),_mdccClient(NULL),_zupClient(NULL),_gpioClient(NULL)
   {
     _DIFClients.clear();
     
-    _fsm=new fsmweb(name);
+    _fsm=this->fsm();
     
-    _fsm->addState("CREATED");
+    
     _fsm->addState("DISCOVERED");
     _fsm->addState("PREPARED");
     _fsm->addState("INITIALISED");

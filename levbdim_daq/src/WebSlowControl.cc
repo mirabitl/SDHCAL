@@ -23,7 +23,7 @@ using namespace log4cxx::helpers;
 
 
 
-WebSlowControl::WebSlowControl(std::string name,uint32_t port) : _storeRunning(false),_checkRunning(false),_my(NULL)
+WebSlowControl::WebSlowControl(std::string name,uint32_t port) : levbdim::baseApplication(name),_storeRunning(false),_checkRunning(false),_my(NULL)
 {
   printf("parsing the config file \n");
   DOMConfigurator::configure("/etc/Log4cxxConfig.xml");
@@ -35,9 +35,8 @@ WebSlowControl::WebSlowControl(std::string name,uint32_t port) : _storeRunning(f
       {
 	_wienerInfo[i*8+j]=NULL;
       }
-  _fsm=new fsmweb(name);
+  _fsm=this->fsm();
  
-  _fsm->addState("CREATED");
   _fsm->addState("DISCOVERED");
   _fsm->addState("INITIALISED");
   _fsm->addState("MONITORING");

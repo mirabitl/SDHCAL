@@ -356,18 +356,17 @@ void LMdccServer::cmd(levbdim::fsmmessage* m)
 
 
 
-LMdccServer::LMdccServer(std::string name) : _mdcc(NULL)
+LMdccServer::LMdccServer(std::string name) : levbdim::baseApplication(name),_mdcc(NULL)
 {
 
   
  
 
   //_fsm=new levbdim::fsm(name);
-  _fsm=new fsmweb(name);
+  _fsm=this->fsm();
 
   
 // Register state
-  _fsm->addState("CREATED");
   _fsm->addState("PAUSED");
   _fsm->addState("RUNNING");
 

@@ -1,6 +1,6 @@
 #ifndef _WebSlowControl_h
 #define _WebSlowControl_h
-#include "fsmweb.hh"
+#include "baseApplication.hh"
 #include <string>
 #include <vector>
 #include <json/json.h>
@@ -48,7 +48,7 @@ public:
   float t0;
 };
 
-class WebSlowControl : public DimClient
+class WebSlowControl : public DimClient,levbdim::baseApplication
 {
 public:
   WebSlowControl(std::string name,uint32_t port);

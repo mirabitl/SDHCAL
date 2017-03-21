@@ -516,14 +516,13 @@ void LDIFServer::destroy(levbdim::fsmmessage* m)
 
 
 
-LDIFServer::LDIFServer(std::string name) 
+LDIFServer::LDIFServer(std::string name)  : levbdim::baseApplication(name)
 {
 
   //_fsm=new levbdim::fsm(name);
-  _fsm=new fsmweb(name);
+  _fsm=this->fsm();
 
   // Register state
-  _fsm->addState("CREATED");
   _fsm->addState("SCANNED");
   _fsm->addState("INITIALISED");
   _fsm->addState("DBREGISTERED");

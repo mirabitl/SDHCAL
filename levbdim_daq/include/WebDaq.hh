@@ -1,12 +1,12 @@
 #ifndef _WebDaq_h
 #define _WebDaq_h
 #include "LClient.hh"
-#include "fsmweb.hh"
+#include "baseApplication.hh"
 #include <string>
 #include <vector>
 #include <json/json.h>
 
-class WebDaq
+class WebDaq : public levbdim::baseApplication
 {
 public:
   WebDaq(std::string name,uint32_t port);

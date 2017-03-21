@@ -5,7 +5,7 @@
 
 #include <string.h>
 #include<stdio.h>
-#include "fsmweb.hh"
+#include "baseApplication.hh"
 #include "wienersnmp.hh"
 using namespace std;
 #include <sstream>
@@ -19,7 +19,7 @@ struct
   float iout;
   char  status[64];
 } hvchannel;
-class LWienerServer
+class LWienerServer : public levbdim::baseApplication
 {
 public:
   LWienerServer(std::string name);

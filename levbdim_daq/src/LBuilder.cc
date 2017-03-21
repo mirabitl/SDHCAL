@@ -5,11 +5,12 @@
 #include "LcioShmProcessor.hh"
 #include "RootShmProcessor.hh"
 #endif
-LBuilder::LBuilder(std::string name) : _evb(NULL),_writer(NULL)
+LBuilder::LBuilder(std::string name) : levbdim::baseApplication(name),_evb(NULL),_writer(NULL)
 {
-  _fsm= new fsmweb(name); 
+  //_fsm= new fsmweb(name); 
+  _fsm=this->fsm();
   // Register state
-  _fsm->addState("CREATED");
+  //_fsm->addState("CREATED");
   _fsm->addState("INITIALISED");
   _fsm->addState("CONFIGURED");
   _fsm->addState("RUNNING");

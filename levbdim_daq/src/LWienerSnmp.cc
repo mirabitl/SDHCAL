@@ -224,12 +224,12 @@ void LWienerServer::c_getStatus(Mongoose::Request &request, Mongoose::JsonRespon
   response["HVSTATUS"]=rep;
  
 }
-LWienerServer::LWienerServer(std::string name) : _hv(NULL)
+LWienerServer::LWienerServer(std::string name) : levbdim::baseApplication(name),_hv(NULL)
 {
   //_fsm=new levbdim::fsm(name);
-  _fsm=new fsmweb(name);
+  _fsm=this->fsm();
 // Register state
-  _fsm->addState("CREATED");
+
   _fsm->addState("CONFIGURED");
   _fsm->addState("MONITORED");
   _fsm->addState("CONTROLED");

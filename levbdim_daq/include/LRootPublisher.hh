@@ -5,7 +5,7 @@
 
 #include <string.h>
 #include<stdio.h>
-#include "fsmweb.hh"
+#include "baseApplication.hh"
 
 #include "datasource.hh"
 #include "shmdriver.hh"
@@ -19,7 +19,7 @@ using namespace std;
 
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 
-class LRootPublisher
+class LRootPublisher : public levbdim::baseApplication
 {
 public:
   LRootPublisher(std::string name);

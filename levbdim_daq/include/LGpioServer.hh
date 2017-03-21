@@ -5,13 +5,13 @@
 
 #include <string.h>
 #include<stdio.h>
-#include "fsmweb.hh"
+#include "baseApplication.hh"
 #include "GPIO.h"
 using namespace std;
 #include <sstream>
 #include "LdaqLogger.hh"
 
-class LGpioServer
+class LGpioServer : public levbdim::baseApplication
 {
 public:
   LGpioServer(std::string name);

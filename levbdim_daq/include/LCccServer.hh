@@ -12,8 +12,8 @@
 using namespace std;
 #include <sstream>
 #include "LdaqLogger.hh"
-#include "fsmweb.hh"
-class LCccServer 
+#include "baseApplication.hh"
+class LCccServer : public levbdim::baseApplication
 {
 public:
   LCccServer(std::string name);

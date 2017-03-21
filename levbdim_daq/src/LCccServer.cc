@@ -190,15 +190,14 @@ void LCccServer::joblog(Mongoose::Request &request, Mongoose::JsonResponse &resp
 }
 
 
- LCccServer::LCccServer(std::string name) : _manager(NULL)
+ LCccServer::LCccServer(std::string name) : levbdim::baseApplication(name),_manager(NULL)
 {
   //  _fsm=new levbdim::fsm(name);
 
-  _fsm=new fsmweb(name);
+  _fsm=this->fsm();
 
   
 // Register state
-  _fsm->addState("CREATED");
   _fsm->addState("CONFIGURED");
   _fsm->addState("ON");
   _fsm->addState("OFF");

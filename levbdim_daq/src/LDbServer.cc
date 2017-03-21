@@ -27,11 +27,10 @@ void LDbServer::newrun(levbdim::fsmmessage* m)
 
 
 
-LDbServer::LDbServer(std::string name)
+LDbServer::LDbServer(std::string name) : levbdim::baseApplication(name)
 {
-  _fsm=new levbdim::fsm(name);
+  _fsm=this->fsm();
 // Register state
-  _fsm->addState("CREATED");
   _fsm->addState("DOWNLOAD");
   _fsm->addState("DELETED");
 
@@ -59,6 +58,13 @@ LDbServer::LDbServer(std::string name)
   memset(_difInfos,0,255*sizeof(DIFDbInfo));
   memset(_difServices,0,255*sizeof(DimService*));
 	
+  char* wp=getenv("WEBPORT");
+  if (wp!=NULL)
+  {
+    std::cout<<"Service "<<name<<" started on port "<<atoi(wp)<<std::endl;
+    _fsm->start(atoi(wp));
+  }
+  
 
 }
 void LDbServer::doDelete()

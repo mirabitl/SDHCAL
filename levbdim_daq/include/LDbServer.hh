@@ -5,14 +5,14 @@
 
 #include <string.h>
 #include<stdio.h>
-#include "fsm.hh"
+#include "baseApplication.hh"
 #include "OracleDIFDBManager.h"
 #include "DIFReadoutConstant.h"
 #include "LdaqLogger.hh"
 using namespace std;
 #include <sstream>
 
-class LDbServer
+class LDbServer : public levbdim::baseApplication
 {
 public:
   LDbServer(std::string name);
@@ -25,7 +25,7 @@ public:
   uint32_t getRunFromDb();
 
 private:
-  levbdim::fsm* _fsm;
+  fsmweb* _fsm;
 
   int32_t runFromDb_;
   RunInfo* theRunInfo_;

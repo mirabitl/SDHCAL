@@ -65,12 +65,11 @@ void LGpioServer::c_vmeoff(Mongoose::Request &request, Mongoose::JsonResponse &r
   response["STATUS"]="DONE";
 }
 
-LGpioServer::LGpioServer(std::string name) : _gpio(NULL)
+LGpioServer::LGpioServer(std::string name) : levbdim::baseApplication(name),_gpio(NULL)
 {
   //_fsm=new levbdim::fsm(name);
-  _fsm=new fsmweb(name);
+  _fsm=this->fsm();
 // Register state
-  _fsm->addState("CREATED");
   _fsm->addState("CONFIGURED");
   _fsm->addState("ON");
   _fsm->addState("OFF");

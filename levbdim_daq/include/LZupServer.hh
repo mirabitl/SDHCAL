@@ -6,12 +6,13 @@
 #include <string.h>
 #include<stdio.h>
 #include "fsmweb.hh"
+#include "baseApplication.hh"
 #include "Zup.h"
 using namespace std;
 #include <sstream>
 #include "LdaqLogger.hh"
 
-class LZupServer
+class LZupServer : public levbdim::baseApplication
 {
 public:
   LZupServer(std::string name);

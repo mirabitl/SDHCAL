@@ -53,12 +53,13 @@ void LZupServer::c_joblog(Mongoose::Request &request, Mongoose::JsonResponse &re
   response["LINES"]=so.str();
 }
 
-LZupServer::LZupServer(std::string name) : _zup(NULL)
+LZupServer::LZupServer(std::string name) : levbdim::baseApplication(name),_zup(NULL)
 {
   //_fsm=new levbdim::fsm(name);
-  _fsm=new fsmweb(name);
+  //_fsm=new fsmweb(name);
+  _fsm=this->fsm();
 // Register state
-  _fsm->addState("CREATED");
+  //_fsm->addState("CREATED");
   _fsm->addState("CONFIGURED");
   _fsm->addState("ON");
   _fsm->addState("OFF");

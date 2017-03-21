@@ -5,7 +5,7 @@
 
 #include <string.h>
 #include<stdio.h>
-#include "fsmweb.hh"
+#include "baseApplication.hh"
 
 #include "MDCCReadout.h"
 
@@ -13,7 +13,7 @@ using namespace std;
 #include <sstream>
 #include "LdaqLogger.hh"
 
-class LMdccServer
+class LMdccServer : public levbdim::baseApplication
 {
 public:
   LMdccServer(std::string name);

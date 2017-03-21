@@ -1,9 +1,8 @@
 #include "LRootPublisher.hh"
-LRootPublisher::LRootPublisher(std::string name) : _directory("/dev/shm/root"),_detid(101),_running(false)
+LRootPublisher::LRootPublisher(std::string name) : levbdim::baseApplication(name),_directory("/dev/shm/root"),_detid(101),_running(false)
 {
-  _fsm= new fsmweb(name); 
+  _fsm= this->fsm();
   // Register state
-  _fsm->addState("CREATED");
   _fsm->addState("CONFIGURED");
   _fsm->addState("RUNNING");
   _fsm->addTransition("CONFIGURE","CREATED","CONFIGURED",boost::bind(&LRootPublisher::configure, this,_1));

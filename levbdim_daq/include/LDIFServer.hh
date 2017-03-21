@@ -5,8 +5,7 @@
 
 #include <string.h>
 #include<stdio.h>
-#include "fsm.hh"
-#include "fsmweb.hh"
+#include "baseApplication.hh"
 #include "LDIF.hh"
 #include "DIFReadoutConstant.h"
 using namespace std;
@@ -18,7 +17,7 @@ using namespace std;
 #include <boost/bind.hpp>
 #include "LdaqLogger.hh"
 
-class LDIFServer  : public DimClient
+class LDIFServer  : public DimClient,levbdim::baseApplication
 {
   
 public:
