@@ -93,6 +93,8 @@ ROOT_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getout
   
 Use_Dim=True
 Use_Oracle=os.path.exists("/usr/include/ILCConfDB")
+if Arm:
+  Use_Oracle=False
 Use_Mongoose=os.path.exists("/usr/local/include/mongoose")
 Use_LCIO=(os.getenv("USE_LCIO")!=None)
 #os.environ.has_key("DIM_DNS_NODE")
