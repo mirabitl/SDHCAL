@@ -153,7 +153,27 @@ uint32_t LDbServer::getRunFromDb()
 	theRunInfo_=new RunInfo(0,"LaDaqAToto");
 	printf("le run est creee\n");
 	theRunInfo_->setStatus(1);
-	runFromDb_=theRunInfo_->getRunNumber();
+	uint32_t ntry=0;
+      getrun:
+	try {
+	  ntry++;
+	  runFromDb_=theRunInfo_->getRunNumber();
+	}
+	catch (ILCException::Exception e)
+	  {
+	    if (ntry<2) {
+	      ::sleep(2);
+	      goto getrun;
+	    }
+	    else
+	      {
+		LOG4CXX_ERROR(_logLdaq,"Cannot get run number "<<e.getMessage());
+		theRunInfo_=NULL;
+		std::cout<<e.getMessage()<<std::endl;
+		return 0;
+
+	      }
+	  }
       } catch (ILCException::Exception e)
 	{
 	  LOG4CXX_ERROR(_logLdaq,"Cannot get run number "<<e.getMessage());
@@ -168,7 +188,29 @@ uint32_t LDbServer::getRunFromDb()
       delete theRunInfo_;
       theRunInfo_=new RunInfo(0,"LaDaqAToto");
       theRunInfo_->setStatus(1);
-      runFromDb_=theRunInfo_->getRunNumber();
+      uint32_t ntry=0;
+    getrun1:
+	try {
+	  ntry++;
+	  runFromDb_=theRunInfo_->getRunNumber();
+	}
+	catch (ILCException::Exception e)
+	  {
+	    if (ntry<2) {
+	      ::sleep(2);
+	      goto getrun1;
+	    }
+	    else
+	      {
+		LOG4CXX_ERROR(_logLdaq,"Cannot get run number "<<e.getMessage());
+		theRunInfo_=NULL;
+		std::cout<<e.getMessage()<<std::endl;
+		return 0;
+
+	      }
+	  }
+
+	//runFromDb_=theRunInfo_->getRunNumber();
       
     }
   _runService->updateService();
