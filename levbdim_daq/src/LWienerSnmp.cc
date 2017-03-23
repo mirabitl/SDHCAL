@@ -8,13 +8,27 @@ void LWienerServer::configure(levbdim::fsmmessage* m)
 {
   LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
   //uint32_t port=m->content()["port"].asInt();
-  std::string ip=m->content()["ip"].asString();
-  
+
+  std::string ip;
+  if (m->content().isMember("ip"))
+    { 
+      ip=m->content()["ip"].asString();
+      this->parameters()["ip"]=m->content()["ip"];
+    }
+  else
+    ip=this->parameters()["ip"].asString();
   this->Open(ip);
 
-  std::string sdb =m->content()["account"].asString();
-  
-  _my= new MyInterface(sdb);
+  //std::string sdb =m->content()["account"].asString();
+  std::string account;
+  if (m->content().isMember("account"))
+    { 
+      account=m->content()["account"].asString();
+      this->parameters()["account"]=m->content()["account"];
+    }
+  else
+    account=this->parameters()["account"].asString();
+  _my= new MyInterface(account);
   _my->connect();
 
   Json::Value jrep;

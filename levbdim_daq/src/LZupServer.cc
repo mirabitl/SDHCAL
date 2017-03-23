@@ -7,9 +7,22 @@
 void LZupServer::configure(levbdim::fsmmessage* m)
 {
   LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
-  uint32_t port=m->content()["port"].asInt();
-  std::string device=m->content()["device"].asString();
-  
+  uint32_t port;
+  std::string device;
+  if (m->content().isMember("device"))
+    { 
+      device=m->content()["device"].asString();
+      this->parameters()["device"]=m->content()["device"];
+    }
+  else
+    device=this->parameters()["device"].asString();
+if (m->content().isMember("port"))
+    { 
+      port=m->content()["port"].asInt();
+      this->parameters()["port"]=m->content()["port"];
+    }
+  else
+    port=this->parameters()["port"].asInt();
  this->Open(device,port);
  this->read(m);
  std::cout<<"reponse=> "<<m->content()["answer"]<<std::endl;

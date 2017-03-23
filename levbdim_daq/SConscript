@@ -117,7 +117,7 @@ if (Use_LCIO):
   INCLUDES.append(DHCAL_ROOT+"/SDHCAL_EventReader/include")
 
   
-CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2"]
+CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2","-std=c++11"]
 if (Use_LCIO):
   CPPFLAGS.append("-DUSE_LCIO")
 #Library ROOT + some of XDAQ + DB 
@@ -190,6 +190,7 @@ print LIBRARY_SOURCES
 
 
 if (Use_Mongoose):
+  LIBRARY_SOURCES.append('src/FullDaq.cc')
   LIBRARY_SOURCES.append('src/WebDaq.cc')
   LIBRARY_SOURCES.append('src/WebSlowControl.cc')
   LIBRARY_SOURCES.append('src/WebJobControl.cc')	
@@ -221,6 +222,8 @@ plist.append(lrpubd)
 if (Use_Mongoose):
   lwdaqd=env.Program("bin/levbdim_wdaq",source="src/WDaqDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
   plist.append(lwdaqd)
+  lfdaqd=env.Program("bin/levbdim_fdaq",source="src/FDaqDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+  plist.append(lfdaqd)
   lwslowd=env.Program("bin/levbdim_wslow",source="src/WSlowControlDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
   plist.append(lwslowd)
   lwjobd=env.Program("bin/levbdim_wjob",source="src/WJobDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)

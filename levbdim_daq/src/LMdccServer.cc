@@ -5,7 +5,16 @@
 void LMdccServer::open(levbdim::fsmmessage* m)
 {
   LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
-  std::string device=m->content()["device"].asString();
+
+  std::string device;
+  if (m->content().isMember("device"))
+    { 
+      device=m->content()["device"].asString();
+      this->parameters()["device"]=m->content()["device"];
+    }
+  else
+    device=this->parameters()["device"].asString();
+
   doOpen(device);
   //_mdcc->maskTrigger();
   //_mdcc->resetCounter();

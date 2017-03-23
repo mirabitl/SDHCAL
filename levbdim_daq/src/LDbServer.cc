@@ -4,7 +4,14 @@
 void LDbServer::download(levbdim::fsmmessage* m)
 {
   LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
-  std::string dbstate=m->content()["dbstate"].asString();
+  std::string dbstate;
+  if (m->content().isMember("dbstate"))
+    { 
+      dbstate=m->content()["dbstate"].asString();
+      this->parameters()["dbstate"]=m->content()["dbstate"];
+    }
+  else
+    dbstate=this->parameters()["dbstate"].asString();
   doDownload(dbstate);
 }
 void LDbServer::destroy(levbdim::fsmmessage* m)

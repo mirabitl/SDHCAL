@@ -93,8 +93,24 @@ void LBuilder::initialise(levbdim::fsmmessage* m)
   if (_evb!=NULL)
     delete _evb;
 
-  _memorypath = m->content()["memorypath"].asString();
+   Json::Value jc=m->content();
+   if (jc.isMember("memorypath"))
+     {
+       _memorypath = m->content()["memorypath"].asString();
+       this->parameters()["memorypath"]=jc["memorypath"];
+     }
+   else
+     _memorypath=this->parameters()["memorypath"].asString();
+   
   _filepath = m->content()["filepath"].asString();
+  if (jc.isMember("filepath"))
+     {
+       _filepath = m->content()["filepath"].asString();
+       this->parameters()["filepath"]=jc["filepath"];
+     }
+   else
+     _filepath=this->parameters()["filepath"].asString();
+   
   _proctype= m->content()["proctype"].asString();
   // Now create the builder
 
@@ -103,9 +119,17 @@ void LBuilder::initialise(levbdim::fsmmessage* m)
   _evb->cleanShm();
 
 
-   Json::Value jc=m->content();
-  const Json::Value& jsources = jc["proclist"];
-  for (Json::ValueConstIterator it = jsources.begin(); it != jsources.end(); ++it)
+  
+  Json::Value jsources;
+  if (jc.isMember("proclist"))
+    {
+      jsources= jc["proclist"];
+      this->parameters()["proclist"]=jsources;
+    }
+  else
+    jsources=this->parameters()["proclist"];
+  const Json::Value& cjsources=jsources;
+  for (Json::ValueConstIterator it = cjsources.begin(); it != cjsources.end(); ++it)
     {
       const Json::Value& source = *it;
       std::string name=source.asString();
