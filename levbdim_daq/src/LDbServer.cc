@@ -100,6 +100,7 @@ void LDbServer::doDownload(std::string state)
     }
   LOG4CXX_WARN(_logLdaq," Donwloading "<<_dbState);
   theDBManager_->download();
+  theDBManager_->dumpToTree("/sev/shm/DB",_dbState);
   std::map<uint32_t,unsigned char*> dbm=theDBManager_->getAsicKeyMap();
 
   for (std::map<uint32_t,unsigned char*>::iterator idb=dbm.begin();idb!=dbm.end();idb++)

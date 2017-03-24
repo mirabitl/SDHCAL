@@ -161,9 +161,9 @@ void FullDaq::prepare(levbdim::fsmmessage* m)
   if (_dbClient)
     {
       
-      if (this->parameters().isMember("dbstate"))
+      if (this->parameters().isMember("db"))
 	{
-	  _dbClient->sendTransition("DOWNLOAD",this->parameters());
+	  _dbClient->sendTransition("DOWNLOAD",this->parameters()["db"]);
 	}
       else
 	_dbClient->sendTransition("DOWNLOAD");
@@ -257,12 +257,12 @@ void FullDaq::singleinit(fsmwebClient* d)
 void FullDaq::singleregisterdb(fsmwebClient* d)
 {
   
-  d->sendTransition("REGISTERDB",this->parameters());
+  d->sendTransition("REGISTERDB",this->parameters()["db"]);
   //  std::cout<<"Register DB"<<d->parameters()<<std::endl;
 }
 void FullDaq::singleconfigure(fsmwebClient* d)
 {
-  Json::Value jc=this->parameters();
+  Json::Value jc=this->parameters()["db"];
   jc["difid"]=0;
   d->sendTransition("CONFIGURE",jc);
 }
@@ -600,12 +600,12 @@ void FullDaq::downloadDB(Mongoose::Request &request, Mongoose::JsonResponse &res
   fromScratch.clear();
   if (_dbClient==NULL){LOG4CXX_ERROR(_logLdaq, "No DB client"); response["STATUS"]="NO DB Client";return;}
   _dbstate=statereq;
-  this->parameters()["dbstate"]=statereq;
+  this->parameters()["db"]["dbstate"]=statereq;
 
-  _dbClient->sendTransition("DELETE",this->parameters());
-  std::cout<<" Downloading"<<this->parameters()["dbstate"].asString()<<std::endl;
+  _dbClient->sendTransition("DELETE",this->parameters()["db"]);
+  std::cout<<" Downloading"<<this->parameters()["db"]["dbstate"].asString()<<std::endl;
   
-  _dbClient->sendTransition("DOWNLOAD",this->parameters());
+  _dbClient->sendTransition("DOWNLOAD",this->parameters()["db"]);
    response["STATUS"]="DONE";
    response["DOWNLOADBD"]=_dbstate;
 }
