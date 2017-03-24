@@ -264,6 +264,7 @@ void FullDaq::singleconfigure(fsmwebClient* d)
 {
   Json::Value jc=this->parameters()["db"];
   jc["difid"]=0;
+  jc["ctrlreg"]=this->parameters()["ctrlreg"];
   d->sendTransition("CONFIGURE",jc);
 }
 void FullDaq::singlestart(fsmwebClient* d)
