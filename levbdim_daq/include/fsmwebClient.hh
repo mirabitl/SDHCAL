@@ -7,7 +7,31 @@
 #include <stdint.h>
 using namespace std;
 //char* CurlQuery(char* AddURL,char* Chaine);
+char rfc3986[256] = {0};
+char html5[256] = {0};
 
+void url_encoder_rfc_tables_init(){
+
+  int i;
+
+  for (i = 0; i < 256; i++){
+
+    rfc3986[i] = isalnum( i) || i == '~' || i == '-' || i == '.' || i == '_' ? i : 0;
+    html5[i] = isalnum( i) || i == '*' || i == '-' || i == '.' || i == '_' ? i : (i == ' ') ? '+' : 0;
+  }
+}
+
+char *url_encode( char *table, unsigned char *s, char *enc){
+
+  for (; *s; s++){
+
+    if (table[*s]) sprintf( enc, "%c", table[*s]);
+    else sprintf( enc, "%%%02X", *s);
+    while (*++enc);
+  }
+
+  return( enc);
+}
 size_t FCurlWrite_CallbackFunc_StdString(void *contents, size_t size, size_t nmemb, std::string *s){
   size_t newLength = size*nmemb;
   size_t oldLength = s->size();
@@ -22,7 +46,25 @@ size_t FCurlWrite_CallbackFunc_StdString(void *contents, size_t size, size_t nme
   std::copy((char*)contents,(char*)contents+newLength,s->begin()+oldLength);
   return size*nmemb;
 }
-
+std::string escapeJsonString(const std::string& input) {
+  std::ostringstream ss;
+  for (auto iter = input.cbegin(); iter != input.cend(); iter++) {
+    //C++98/03:
+    //for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
+    switch (*iter) {
+    case '\\': ss << "\\\\"; break;
+    case '"': ss << "\\\""; break;
+    case '/': ss << "\\/"; break;
+    case '\b': ss << "\\b"; break;
+    case '\f': ss << "\\f"; break;
+    case '\n': ss << "\\n"; break;
+    case '\r': ss << "\\r"; break;
+    case '\t': ss << "\\t"; break;
+    default: ss << *iter; break;
+    }
+  }
+  return ss.str();
+}
 
 class fsmwebClient
 {
@@ -51,13 +93,15 @@ public:
     curl = curl_easy_init();
     std::string s;
     if(curl) {
-      curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+      curl_easy_setopt(curl, CURLOPT_URL,url.c_str());
       /* enable all supported built-in compressions */
-      curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
+      //curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
       /*Do not output result to stdout but to a local string object*/
       curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, FCurlWrite_CallbackFunc_StdString);
       curl_easy_setopt(curl, CURLOPT_WRITEDATA, &s);
-
+      //      curl_easy_setopt(ch, CURLOPT_CUSTOMREQUEST, "POST");
+      // curl_easy_setopt(ch, CURLOPT_POSTFIELDS, json_object_to_json_string(json));
+      
       /* Perform the request, res will get the return code */ 
       res = curl_easy_perform(curl);
       /* Check for errors */
@@ -76,15 +120,40 @@ public:
     return s;
 
   }
-  std::string sendTransition(std::string name,Json::Value content=Json::Value::null)
+  std::string sendTransition(std::string name,Json::Value cnt=Json::Value::null)
   {
-     std::stringstream s;
-     s<<_url<<"FSM?command="<<name;
-     if (content!=Json::Value::null)
-       s<<"&content="<<content.asString();
+    Json::Value content=cnt;
+    //    printf("On envoie %s %s\n",name.c_str(),_url.c_str());
+     std::stringstream ss;
+     ss<<_url<<"FSM?command="<<name;
+     std::cout<<content<<std::endl;
+     // printf("1 Sending %s \n",ss.str().c_str());
+     
+     if (!content.isNull())
+       {
+	 //printf("content non null\n");
+	 Json::FastWriter fastWriter;
+	 //ss<<"&content="<<escapeJsonString(fastWriter.write(content));
+	 std::string sc=fastWriter.write(content);
+	 char out[4096];
+	 url_encoder_rfc_tables_init();
+
+	 url_encode( html5,(unsigned char*) sc.c_str(),out);
+	 ss<<"&content="<<out;
+	 //	 printf("2 Sending %s \n",ss.str().c_str());
+       }
      else
-       s<<"&content={}";
-    std::string rc=curlQuery((char*) s.str().c_str());
+       {
+	 printf("content  null\n");
+	 ss<<"&content={}";
+	 // printf("3 Sending %s \n",ss.str().c_str());
+       }
+     //std::cout<<"4 sending "<<ss.str()<<std::endl;
+     printf("Sending %s \n",ss.str().c_str());
+     //     return "none";
+   
+    std::string rc=curlQuery((char*) ss.str().c_str());
+    printf("return %s \n",rc.c_str());
     Json::Reader reader;
     Json::Value jsta;
     bool parsingSuccessful = reader.parse(rc,jsta);

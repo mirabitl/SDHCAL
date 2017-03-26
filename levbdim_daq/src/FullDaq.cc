@@ -8,8 +8,9 @@
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include "LdaqLogger.hh"
 
-FullDaq::FullDaq(std::string name) : levbdim::baseApplication(name),_builderClient(NULL),_dbClient(NULL),_cccClient(NULL),_mdccClient(NULL),_zupClient(NULL),_gpioClient(NULL)
+FullDaq::FullDaq(std::string name) : levbdim::baseApplication(name)
   {
+    _builderClient=0;_dbClient=0;_cccClient=0;_mdccClient=0;_zupClient=0;_gpioClient=0;
     _DIFClients.clear();
     
     _fsm=this->fsm();
@@ -84,13 +85,16 @@ FullDaq::FullDaq(std::string name) : levbdim::baseApplication(name),_builderClie
 void FullDaq::discover(levbdim::fsmmessage* m)
 {
   _DIFClients.clear();
-  const Json::Value& cjsources=this->configuration()["HOSTS"];
+  Json::Value cjs=this->configuration()["HOSTS"];
+  std::cout<<cjs<<std::endl;
   std::vector<std::string> lhosts=this->configuration()["HOSTS"].getMemberNames();
   // Loop on hosts
   for (auto host:lhosts)
     {
+      //std::cout<<" Host "<<host<<" found"<<std::endl;
       // Loop on processes
-      const Json::Value& cjsources=this->configuration()["HOSTS"][host];
+      const Json::Value cjsources=this->configuration()["HOSTS"][host];
+      //std::cout<<cjsources<<std::endl;
       for (Json::ValueConstIterator it = cjsources.begin(); it != cjsources.end(); ++it)
 	{
 	  const Json::Value& process = *it;
@@ -101,6 +105,8 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 	  for (Json::ValueConstIterator iev = cenv.begin(); iev != cenv.end(); ++iev)
 	    {
 	      std::string envp=(*iev).asString();
+	      //      std::cout<<"Env found "<<envp.substr(0,7)<<std::endl;
+	      //std::cout<<"Env found "<<envp.substr(8,envp.length()-7)<<std::endl;
 	      if (envp.substr(0,7).compare("WEBPORT")==0)
 		{
 		  port=atol(envp.substr(8,envp.length()-7).c_str());
@@ -112,26 +118,32 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 	  if (p_name.compare("WRITER")==0)
 	    {
 	      _builderClient= new fsmwebClient(host,port);
+	      printf("Builder client %x \n",_builderClient);
 	    }
 	  if (p_name.compare("DBSERVER")==0)
 	    {
 	      _dbClient= new fsmwebClient(host,port);
+	      printf("DB client %x \n",_dbClient);
 	    }
 	  if (p_name.compare("CCCSERVER")==0)
 	    {
 	      _cccClient= new fsmwebClient(host,port);
+	      printf("CCC client %x \n",_cccClient);
 	    }
 	  if (p_name.compare("MDCCSERVER")==0)
 	    {
 	      _mdccClient= new fsmwebClient(host,port);
+	      printf("MDCC client %x \n",_mdccClient);
 	    }
 	  if (p_name.compare("ZUPSERVER")==0)
 	    {
 	      _zupClient= new fsmwebClient(host,port);
+	      printf("ZUP client %x \n",_zupClient);
 	    }
 	  if (p_name.compare("GPIOSERVER")==0)
 	    {
 	      _gpioClient= new fsmwebClient(host,port);
+	      printf("Gpio client %x \n",_gpioClient);
 	      _gpioClient->sendTransition("CONFIGURE");
 	      _gpioClient->sendCommand("VMEON");
 	      _gpioClient->sendCommand("VMEOFF");
@@ -141,6 +153,7 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 	   if (p_name.compare("DIFSERVER")==0)
 	    {
 	      fsmwebClient* dc= new fsmwebClient(host,port);
+	      printf("DIF client %x \n",dc);
 	      _DIFClients.push_back(dc);
 	    }
 	  
@@ -148,21 +161,24 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 
     }
   
-  
+  printf("Clients: DB %x ZUP %x MDC %x SDCC %x \n",_dbClient,_zupClient,_mdccClient,_cccClient);
 
 }
 void FullDaq::prepare(levbdim::fsmmessage* m)
 {
-  //std::cout<<"ON RENTREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"<<std::endl;
+  std::cout<<"ON RENTREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"<<std::endl;
   //  for (int i=0;i<100;i++)
-  printf("Clients: DB %x ZUP %x MDC %x SDCC %x \n",_dbClient,_zupClient,_mdccClient,_cccClient);
-  m->content();
+   printf("Clients: DB %x ZUP %x MDC %x SDCC %x \n",_dbClient,_zupClient,_mdccClient,_cccClient);
+
   // DB
-  if (_dbClient)
+  if (_dbClient!=0)
     {
-      
+      printf("DB Config %x\n",_dbClient);
       if (this->parameters().isMember("db"))
 	{
+	  std::cout<<this->parameters()<<std::endl;
+	  std::cout<<this->parameters()["db"]<<std::endl;
+	  
 	  _dbClient->sendTransition("DOWNLOAD",this->parameters()["db"]);
 	}
       else
@@ -171,6 +187,7 @@ void FullDaq::prepare(levbdim::fsmmessage* m)
   // Zup
   if (_zupClient)
     {
+      printf("ZUP Config\n");
        if (this->parameters().isMember("zup"))
 	{
 	  _zupClient->sendTransition("CONFIGURE",this->parameters()["zup"]);
@@ -185,7 +202,7 @@ void FullDaq::prepare(levbdim::fsmmessage* m)
   //std::cout<<" CCC client "<<_cccClient<<std::endl;
   if (_cccClient)
     {
-
+      printf("DCC Config\n");
       if (this->parameters().isMember("ccc"))
 	{
 	  _cccClient->sendTransition("OPEN",this->parameters()["ccc"]);
@@ -199,7 +216,7 @@ void FullDaq::prepare(levbdim::fsmmessage* m)
   // Mdc
   if (_mdccClient)
     {
-
+      printf("MDCC Config\n");
       if (this->parameters().isMember("mdcc"))
 	{
 	  _mdccClient->sendTransition("OPEN",this->parameters()["mdcc"]);
@@ -214,6 +231,7 @@ void FullDaq::prepare(levbdim::fsmmessage* m)
   // Builder
   if (_builderClient)
     {
+      printf("Buider Config\n");
       if (this->parameters().isMember("builder"))
 	{
 	  _builderClient->sendTransition("INITIALISE",this->parameters()["builder"]);
