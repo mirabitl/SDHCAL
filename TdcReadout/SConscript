@@ -201,7 +201,8 @@ EXE_LIBS=LIBRARIES
 EXE_LIBS.append("levbdimtdc")
 plist=[]
 
-#rpcz=env.Program("bin/dimrpc_zup",source="src/rpczup.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+tdcd=env.Program("bin/levbdim_tdc",source="src/TdcDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+plist.append(tdcd)
 #rpcc=env.Program("bin/dimrpc_ccc",source="src/rpcccc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 #rpmd=env.Program("bin/dimrpc_mdc",source="src/rpcmdc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 #dds=env.Program("bin/dimdif",source="src/dss.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
@@ -214,7 +215,7 @@ for x in Glob("#include/*.hh"):
   myinc.append("include/"+x.name)
 #print plist
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",levbdimtdc)
-#env.Install(DHCAL_ROOT+"/opt/dhcal/bin",plist)
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",plist)
 ###env.Install("/opt/dhcal/lib",levbdimdaq)
 ###env.Install("/opt/dhcal/include/readout",myinc)
 
