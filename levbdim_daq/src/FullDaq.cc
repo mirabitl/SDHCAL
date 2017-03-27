@@ -156,6 +156,13 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 	      printf("DIF client %x \n",dc);
 	      _DIFClients.push_back(dc);
 	    }
+	   if (p_name.compare("TDCSERVER")==0)
+	    {
+	      fsmwebClient* tdc= new fsmwebClient(host,port);
+	      printf("TDC client %x \n",tdc);
+	      _tdcClients.push_back(tdc);
+	    }
+	   
 	  
 	}
 
@@ -344,6 +351,13 @@ void FullDaq::initialise(levbdim::fsmmessage* m)
   g.join_all();
   
 
+
+  // Initialise TDC
+  for (auto tdc:_tdcClients)
+    {
+      tdc->sendTransition("INITIALISE");
+    }
+  
   // Fill status
   m->setAnswer(toJson(this->difstatus()));
 }
@@ -392,6 +406,24 @@ void FullDaq::configure(levbdim::fsmmessage* m)
 	  jd["sourceid"]=(*it)["id"];
 	  jsou.append(jd);
 	}
+      //
+      // Configure and Checking tdc
+      for (auto tdc:_tdcClients)
+	{
+	  tdc->sendTransition("CONFIGURE");
+	  tdc->sendCommand("DIFLIST");
+	  if (tdc->answer()["DIFLIST"].asString().compare("DIFLIST")!=0)
+	    {
+	     const Json::Value& jdevs=tdc->answer()["DIFLIST"];
+	     for (Json::ValueConstIterator it = jdevs.begin(); it != jdevs.end(); ++it)
+	       {
+		 Json::Value jd;
+		 jd["detid"]=(*it)["detid"];
+		 jd["sourceid"]=(*it)["sourceid"];
+		 jsou.append(jd);
+	       } 
+	    }
+	}
       //std::cout<<"SENDING "<<jsou<<std::endl;
       Json::Value jl;
       jl["sources"]=jsou;
@@ -426,6 +458,14 @@ void FullDaq::start(levbdim::fsmmessage* m)
       jl["run"]=_run;
       _builderClient->sendTransition("START",jl);
     }
+   // Start TDC
+   for (auto tdc:_tdcClients)
+	{
+	  Json::Value jl;
+	  jl["run"]=_run;
+	  jl["type"]=0;
+	  tdc->sendTransition("START",jl);
+	}
   //Start the CCC
    if (_cccClient)
      {
@@ -461,7 +501,12 @@ void FullDaq::stop(levbdim::fsmmessage* m)
       g.create_thread(boost::bind(&FullDaq::singlestop, this,(*it)));
     }
   g.join_all();
-
+  // Stop TDC
+   for (auto tdc:_tdcClients)
+	{
+	  tdc->sendTransition("STOP");
+	}
+  
   ::sleep(1);
   // Stop the builder
    if (_builderClient)
@@ -479,7 +524,12 @@ void FullDaq::destroy(levbdim::fsmmessage* m)
       Json::Value jl;
       jl["difid"]=0;
       (*it)->sendTransition("DESTROY",jl);
-    } 
+    }
+  // Tdc
+  for (auto tdc:_tdcClients)
+    {
+      tdc->sendTransition("DESTROY");
+    }
   
 }
 
@@ -493,7 +543,15 @@ FullDaq::~FullDaq()
   if (_builderClient) delete _builderClient;
   for (std::vector<fsmwebClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     delete (*it);
+  
   _DIFClients.clear();
+  for (auto tdc:_tdcClients)
+    {
+      delete tdc;
+
+    }
+  _tdcClients.clear();
+  
 }
 void FullDaq::doubleSwitchZup(Mongoose::Request &request, Mongoose::JsonResponse &response)
   {
