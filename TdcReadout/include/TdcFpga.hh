@@ -1,0 +1,54 @@
+#ifndef _TDCFPGA_HH
+#define _TDCFPGA_HH
+#include "datasource.hh"
+#define MAX_EVENT_SIZE 65535
+
+#include <iostream>
+#include <list>
+#include <vector>
+#include <stdint.h>
+using namespace std;
+
+class TdcChannel
+{
+public:
+  TdcChannel(uint8_t*  b) :_fr(b),_used(false) {;}
+  inline uint8_t channel() {return  (_fr[0]&0XFF);}
+  inline uint8_t length(){return 8;}
+  inline uint64_t coarse(){return ((uint64_t)_fr[6])|((uint64_t)_fr[5]<<8)|((uint64_t)_fr[4]<<16)|((uint64_t)_fr[3]<<24);}
+  inline uint8_t fine(){return _fr[7];}
+  #ifdef BCIDFROMCOARSE
+  inline uint16_t bcid(){return (uint16_t) (coarse()*2.5/200);}
+  #else
+  inline uint16_t bcid(){return (_fr[2]|(_fr[1]<<8));}
+  #endif
+  inline double tdcTime(){ return (coarse()*2.5+fine()*0.009765625);}
+  inline uint8_t* frame(){ return _fr;}
+  inline bool used(){return _used;}
+  inline void setUsed(bool t){_used=t;}
+private:
+  uint8_t* _fr;
+  bool _used;
+};
+
+class TdcFpga
+{
+public:
+  TdcFpga(uint32_t m,uint32_t adr);
+  virtual void processEventTdc();
+  inline void setStorage(std::string sdir) {_sdir=sdir;}
+  void addChannels(uint8_t* buf,uint32_t sizeb);
+private:
+  uint32_t _mezzanine,_adr,_startIdx;
+  uint8_t _buf[0x100000];
+  vector<TdcChannel> _channels;
+  uint64_t _abcid;
+  uint32_t _gtc,_lastGtc,_event,_detid,_id;
+  uint32_t _nBuffers;
+  levbdim::datasource* _dsData;
+  std::string _sdir;
+
+};
+
+
+#endif

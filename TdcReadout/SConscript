@@ -1,0 +1,224 @@
+import sys,os,commands
+import  os
+import re
+import sys
+
+def SWIGSharedLibrary(env, library, sources, **args):
+  swigre = re.compile('(.*).i')
+  if env.WhereIs('swig') is None:
+    sourcesbis = []
+    for source in sources:
+      cName = swigre.sub(r'\1_wrap.c', source)
+      cppName = swigre.sub(r'\1_wrap.cc', source)
+      if os.path.exists(cName):
+        sourcesbis.append(cName)
+      elif os.path.exists(cppName):
+        sourcesbis.append(cppName)
+      else:
+        sourcesbis.append(source)
+  else:
+    sourcesbis = sources
+ 
+  if 'SWIGFLAGS' in args:
+    args['SWIGFLAGS'] += ['-python']
+  else:
+    args['SWIGFLAGS'] = ['-python'] + env['SWIGFLAGS']
+  args['SHLIBPREFIX']=""
+  if sys.version >= '2.5':
+    args['SHLIBSUFFIX']=".pyd"
+ 
+  cat=env.SharedLibrary(library, sourcesbis, **args)
+  return cat
+ 
+
+
+# environment
+#import xdaq
+#print xdaq.INCLUDES
+#print xdaq.LIBRARY_PATHS
+#print xdaq.LIBRARIES
+
+#print "----------------------------------------------"
+Decider('MD5-timestamp')
+XDAQ_ROOT="/opt/xdaq"
+DIM_ROOT="/usr/local/dim"
+DHCAL_ROOT=os.path.abspath("..")
+
+fres=os.popen('uname -r')
+kl=fres.readline().split(".")
+
+platform="UBUNTU"
+if (kl[len(kl)-1][0:3] == 'el5'):
+    platform="SLC5"
+
+if (kl[len(kl)-2][0:3] == 'el6'):
+    platform="SLC6"
+print kl[len(kl)-2][0:3]
+fres=os.popen('uname -p')
+kp=fres.readline()
+osv=kp[0:len(kp)-1]
+
+print platform,osv
+
+Bit64=False
+Bit64=os.uname()[4]=='x86_64'
+
+NetLink=DHCAL_ROOT+"/netLink"
+if ( not os.path.exists(NetLink)):
+  NetLink=os.getenv("HOME")+"/netLink"
+kl=os.uname()[2].split(".")
+platform="UBUNTU"
+if (kl[len(kl)-1][0:3] == 'el5'):
+    platform="SLC5"
+
+if (kl[len(kl)-2][0:3] == 'el6'):
+    platform="SLC6"
+
+Arm=os.uname()[4]=='armv7l'
+
+if Arm or platform=="UBUNTU":
+  boostsystem='boost_system'
+  boostthread='boost_thread'
+else:
+  boostsystem='boost_system-mt'
+  boostthread='boost_thread-mt'
+
+#Library ROOT + some of XDAQ + DB 
+ROOT_LIBS=[lib[2:] for lib in filter(lambda x: (x[:2]=="-l"), commands.getoutput("$ROOTSYS/bin/root-config --libs --ldflags --glibs").split(" "))
+]
+ROOT_LIBS.append('XMLIO')
+ROOT_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getoutput("$ROOTSYS/bin/root-config --libs ").split(" "))]
+
+
+  
+Use_Dim=True
+Use_Oracle=os.path.exists("/usr/include/ILCConfDB")
+if Arm:
+  Use_Oracle=False
+Use_Mongoose=os.path.exists("/usr/local/include/mongoose")
+Use_LCIO=(os.getenv("USE_LCIO")!=None)
+#os.environ.has_key("DIM_DNS_NODE")
+
+# includes
+INCLUDES=['include',"/usr/include/boost141/",DHCAL_ROOT+"/SDHCAL_common/include",DHCAL_ROOT+"/SDHCAL_DB/include",DHCAL_ROOT+"/SDHCAL_Readout/include","/usr/include/jsoncpp","/opt/dhcal/levbdim/include",DHCAL_ROOT+"/SlowControl/GPIOCtrl/include"]
+INCLUDES.append("/usr/include/libxml2")
+if (Use_Dim):
+  INCLUDES.append(DIM_ROOT+"/dim")
+  if (platform=="SLC5"):
+    INCLUDES.append("/opt/xdaq/include/dim")
+INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
+
+if (Use_Oracle):
+  INCLUDES.append("/usr/include/ILCConfDB")
+
+if (Use_LCIO):
+  INCLUDES.append(os.path.join(os.getenv("LCIODIR"),"include"))
+  INCLUDES.append(os.path.join(os.getenv("LCIODIR"),"include","IMPL"))
+  INCLUDES.append(DHCAL_ROOT+"/SDHCAL_EventReader/include")
+
+INCLUDES.append(NetLink+"/include")
+  
+CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2","-std=c++11"]
+if (Use_LCIO):
+  CPPFLAGS.append("-DUSE_LCIO")
+#Library ROOT + some of XDAQ + DB 
+
+
+#LIBRARIES=['pthread', 'toolbox', 'xcept', 'config', 'log4cplus', 'asyncresolv', 'uuid', 'm', 'DHCDBUtils', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi', 'ftd2xx', 'stdc++','DHCEvent','ftdi','ftdipp']
+LIBRARIES=['pthread',  'm', 'stdc++',boostsystem,boostthread,'SDHCALcommon','SDHCALReadout','dim','netlink','cslm','log4cxx','levbdim','basicwriter','curl']
+
+if (Use_Oracle):
+  LIBRARIES=LIBRARIES+['dl','uuid', 'occi', 'clntsh', 'nnz11', 'ilcconfdb', 'dbi','xerces-c','SDHCALDB']
+
+if (Use_LCIO):
+  LIBRARIES=LIBRARIES+ROOT_LIBS+['SDHCALEventReader','lcio','sio']
+
+#Library path XDAQ,DHCAL and ROOT + Python
+if (Bit64):
+  LIBRARY_PATHS=["/usr/lib64","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/levbdim/lib"]
+else:
+  LIBRARY_PATHS=["/usr/lib","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/levbdim/lib"]
+LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
+
+if Use_Dim:
+   CPPFLAGS.append("-DUSE_DIM")
+   if (platform=="SLC5"):
+     LIBRARY_PATHS.append("/opt/xdaq/lib")
+#   INCLUDES.append("/opt/xdaq/include/dim")
+#   LIBRARIES.append("dim")
+#   
+if (Use_LCIO):
+  LIBRARY_PATHS.append(os.path.join(os.getenv("LCIODIR"),"lib"))
+  LIBRARY_PATHS=ROOT_LIBPATH+LIBRARY_PATHS
+
+if (Use_Mongoose):
+  LIBRARY_PATHS.append('/usr/local/lib')
+  LIBRARIES.append('mongoose')
+  INCLUDES.append('/usr/local/include/')
+  INCLUDES.append('/usr/local/include/mongoose')
+  INCLUDES.append('/opt/dhcal/dimjc/include')
+  LIBRARY_PATHS.append('/opt/dhcal/dimjc/lib')
+  LIBRARIES.append('dimjc')
+ 
+  
+#link flags
+LDFLAGS=["-fPIC","-dynamiclib"]
+
+# SWIG
+SWIGSF=["-c++","-classic"]
+
+for i in INCLUDES:
+    SWIGSF.append("-I"+i)
+print SWIGSF
+
+# Create the Environment
+env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS,SWIGFLAGS=SWIGSF)
+
+#print "CC is:",env.subst('$CPPPATH')
+
+env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
+
+
+# Library source
+#LIBRARY_SOURCES=Glob("#src/*.cc")
+
+#print LIBRARY_SOURCES
+LIBRARY_SOURCES=['src/TdcFpga.cxx','src/MessageHandler.cxx','src/TdcMessageHandler.cxx','src/TdcManager.cxx']
+
+print LIBRARY_SOURCES
+
+
+#Shared library
+levbdimtdc=env.SharedLibrary("#lib/levbdimtdc",LIBRARY_SOURCES)
+
+
+
+#Daemon 
+EXE_LIBPATH=LIBRARY_PATHS
+EXE_LIBPATH.append("#lib")
+EXE_LIBPATH.append("/opt/dhcal/lib")
+EXE_LIBS=LIBRARIES
+EXE_LIBS.append("levbdimtdc")
+plist=[]
+
+#rpcz=env.Program("bin/dimrpc_zup",source="src/rpczup.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+#rpcc=env.Program("bin/dimrpc_ccc",source="src/rpcccc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+#rpmd=env.Program("bin/dimrpc_mdc",source="src/rpcmdc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+#dds=env.Program("bin/dimdif",source="src/dss.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+#dds=env.Program("bin/dimdif",source="src/dss.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+#dcs=env.Program("bin/dimccc",source="src/dcc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+#dzups=env.Program("bin/dimzup",source="src/dzup.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+
+myinc=[]
+for x in Glob("#include/*.hh"):
+  myinc.append("include/"+x.name)
+#print plist
+env.Install(DHCAL_ROOT+"/opt/dhcal/lib",levbdimtdc)
+#env.Install(DHCAL_ROOT+"/opt/dhcal/bin",plist)
+###env.Install("/opt/dhcal/lib",levbdimdaq)
+###env.Install("/opt/dhcal/include/readout",myinc)
+
+env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib",DHCAL_ROOT+"/opt/dhcal/bin"])
+
+
+
