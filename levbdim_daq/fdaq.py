@@ -103,7 +103,7 @@ def executeFSM(host,port,prefix,cmd,params):
        #print lqs
        saction = '/%s/FSM?%s' % (prefix,lqs)
        myurl=myurl+saction
-       print myurl
+       #print myurl
        req=urllib2.Request(myurl)
        r1=urllib2.urlopen(req)
        return r1.read()
@@ -175,15 +175,15 @@ class fdaqClient:
               
               for e in p["ENV"]:
                   if (e.split("=")[0]=="WEBPORT"):
-                      port=e.split("=")[1]
+                      port=int(e.split("=")[1])
               if (p["NAME"]=="FDAQ"):
                   self.daqhost=x
                   self.daqport=port
                   if ("PARAMETER" in p):
-                      self.daq_par=p["PARAMETER"]
+                      self.daq_par.update(p["PARAMETER"])
                       if ("s_ctrlreg" in self.daq_par):
                           self.daq_par["ctrlreg"]=int(self.daq_par["s_ctrlreg"],16)
-                      
+              
               if (p["NAME"]=="WSLOW"):
                   self.slowhost=x
                   self.slowport=port
@@ -203,9 +203,10 @@ class fdaqClient:
                   if ("PARAMETER" in p):
                       self.daq_par["mdcc"]=p["PARAMETER"]
                       
-      print self.daqhost,self.daqport,self.daq_par
-      print self.slowhost,self.slowport
-            
+      #print self.daqhost,self.daqport,self.daq_par
+      #print self.slowhost,self.slowport
+
+      
   def parseConfig(self):
     dm=os.getenv("DAQURL","NONE")
     if (dm!="NONE"):
@@ -232,42 +233,37 @@ class fdaqClient:
         if (self.daq_file!=None):
             lcgi["file"]=self.daq_file
     for x,y in self.p_conf["HOSTS"].iteritems():
-        for p in y:
-            print x,p["NAME"]," process found"
-            sr=executeFSM(x,9999,"LJC-%s" % x,"INITIALISE",lcgi)
-            print sr
+        #print x,"  found"
+        sr=executeFSM(x,9999,"LJC-%s" % x,"INITIALISE",lcgi)
+        print sr
             
   def jc_start(self):
     lcgi={}
     for x,y in self.p_conf["HOSTS"].iteritems():
-        for p in y:
-            print x,p["NAME"]," process found"
-            sr=executeFSM(x,9999,"LJC-%s" % x,"START",lcgi)
-            print sr
+        #print x,"  found"
+        sr=executeFSM(x,9999,"LJC-%s" % x,"START",lcgi)
+        print sr
 
   def jc_kill(self):
     lcgi={}
     for x,y in self.p_conf["HOSTS"].iteritems():
-        for p in y:
-            print x,p["NAME"]," process found"
-            sr=executeFSM(x,9999,"LJC-%s" % x,"KILL",lcgi)
-            print sr
+        #print x," found"
+        sr=executeFSM(x,9999,"LJC-%s" % x,"KILL",lcgi)
+        print sr
             
   def jc_destroy(self):
     lcgi={}
     for x,y in self.p_conf["HOSTS"].iteritems():
-        for p in y:
-            print x,p["NAME"]," process found"
-            sr=executeFSM(x,9999,"LJC-%s" % x,"DESTROY",lcgi)
-            print sr
+        # print x," found"
+        sr=executeFSM(x,9999,"LJC-%s" % x,"DESTROY",lcgi)
+        print sr
 
   def jc_status(self):
     lcgi={}
     for x,y in self.p_conf["HOSTS"].iteritems():
-        for p in y:
-            print x,p["NAME"]," process found"
-            sr=executeCMD(x,9999,"LJC-%s" % x,"STATUS",lcgi)
-            print sr
+        #print x," found"
+        sr=executeCMD(x,9999,"LJC-%s" % x,"STATUS",lcgi)
+        print sr
             
   def jc_restart(self,host,jobname,jobpid):
     lcgi={}
@@ -289,20 +285,23 @@ class fdaqClient:
               port=0
               for e in p["ENV"]:
                   if (e.split("=")[0]=="WEBPORT"):
-                      port=e.split("=")[1]
+                      port=int(e.split("=")[1])
               if (port==0):
                   continue
               p_rep={}
-              req=urllib2.Request("http://%s:%d/" % (x,port))
+              surl="http://%s:%d/" % (x,port)
+              req=urllib2.Request(surl)
               try:
                   r1=urllib2.urlopen(req)
                   p_rep=json.loads(r1.read())
               except URLError, e:
+                  print surl,e
                   p_rep={}
+              print x,port,p["NAME"],p_rep
               if ("STATE" in p_rep):
                   if (p_rep["STATE"]=="VOID"):
                       sr=executeFSM(x,port,p_rep["PREFIX"],"CREATE",lcgi)
-                      print sr
+                      #print sr
                       
   def daq_discover(self):
       lcgi={}
@@ -310,7 +309,9 @@ class fdaqClient:
       print sr
       
   def daq_setparameters(self):
-      lcgi=self.daq_par
+      lcgi={}
+      lcgi["PARAMETER"]=json.dumps(self.daq_par,sort_keys=True)
+      
       sr=executeCMD(self.daqhost,self.daqport,"FDAQ","SETPARAM",lcgi)
       print sr
       
@@ -329,7 +330,7 @@ class fdaqClient:
       sr=executeCMD(self.daqhost,self.daqport,"FDAQ","FORCESTATE",lcgi)
       print sr
       
-  def daq_services(self,name):
+  def daq_services(self):
 
       lcgi={}
       sr=executeFSM(self.daqhost,self.daqport,"FDAQ","PREPARE",lcgi)
@@ -360,12 +361,12 @@ class fdaqClient:
       sr=executeFSM(self.daqhost,self.daqport,"FDAQ","CONFIGURE",lcgi)
       print sr
 
-  def daq_startrun(self):
+  def daq_start(self):
       lcgi={}
       sr=executeFSM(self.daqhost,self.daqport,"FDAQ","START",lcgi)
       print sr
 
-  def daq_stoprun(self):
+  def daq_stop(self):
       lcgi={}
       sr=executeFSM(self.daqhost,self.daqport,"FDAQ","STOP",lcgi)
       print sr
@@ -485,6 +486,7 @@ grp_action.add_argument('--available',action='store_true',help='Check availabili
 grp_action.add_argument('--webstatus',action='store_true',help='Check availability of daq,jobcontrol,slowcontrol and Ecal web servers')
 grp_action.add_argument('--jc-create',action='store_true',help='Create the DimJobControlInterface object to control processes')
 grp_action.add_argument('--jc-kill',action='store_true',help='kill all controled processes')
+grp_action.add_argument('--jc-destroy',action='store_true',help='de-initialise ljc controller')
 grp_action.add_argument('--jc-start',action='store_true',help='start all controled processes described in $DAQCONFIG jsonfile variable')
 grp_action.add_argument('--jc-restart',action='store_true',help='restart one job with --jobname=name --jobpid=pid --host=hostname')
 grp_action.add_argument('--jc-status',action='store_true',help='show the status all controled processes')
@@ -684,6 +686,11 @@ elif(results.jc_start):
    
     r_cmd='jobStartAll'
     fdc.jc_start()
+    exit(0)
+elif(results.jc_destroy):
+   
+    r_cmd='jobDestroy'
+    fdc.jc_destroy()
     exit(0)
 elif(results.jc_restart):
     lcgi.clear();
