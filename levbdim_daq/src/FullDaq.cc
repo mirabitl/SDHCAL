@@ -86,7 +86,7 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 {
   _DIFClients.clear();
   Json::Value cjs=this->configuration()["HOSTS"];
-  std::cout<<cjs<<std::endl;
+  //  std::cout<<cjs<<std::endl;
   std::vector<std::string> lhosts=this->configuration()["HOSTS"].getMemberNames();
   // Loop on hosts
   for (auto host:lhosts)
@@ -166,7 +166,7 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 }
 void FullDaq::prepare(levbdim::fsmmessage* m)
 {
-  std::cout<<"ON RENTREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"<<std::endl;
+  //std::cout<<"ON RENTREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"<<std::endl;
   //  for (int i=0;i<100;i++)
    printf("Clients: DB %x ZUP %x MDC %x SDCC %x \n",_dbClient,_zupClient,_mdccClient,_cccClient);
 
@@ -176,8 +176,8 @@ void FullDaq::prepare(levbdim::fsmmessage* m)
       printf("DB Config %x\n",_dbClient);
       if (this->parameters().isMember("db"))
 	{
-	  std::cout<<this->parameters()<<std::endl;
-	  std::cout<<this->parameters()["db"]<<std::endl;
+	  //std::cout<<this->parameters()<<std::endl;
+	  //std::cout<<this->parameters()["db"]<<std::endl;
 	  
 	  _dbClient->sendTransition("DOWNLOAD",this->parameters()["db"]);
 	}
@@ -366,7 +366,7 @@ void FullDaq::configure(levbdim::fsmmessage* m)
       g.create_thread(boost::bind(&FullDaq::singleregisterdb, this,(*it)));
     }
   g.join_all();
-  std::cout<<"REGISTER DB DONE"<<std::endl;
+  //std::cout<<"REGISTER DB DONE"<<std::endl;
   ::sleep(2);
   //Configure them
   for (std::vector<fsmwebClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
@@ -375,7 +375,7 @@ void FullDaq::configure(levbdim::fsmmessage* m)
       g.create_thread(boost::bind(&FullDaq::singleconfigure, this,(*it)));
     }
   g.join_all();
-  std::cout<<"DIF CONFIGURE  DONE"<<std::endl;
+  //std::cout<<"DIF CONFIGURE  DONE"<<std::endl;
   // Status
   Json::Value jsta= toJson(this->difstatus());
   // Configure the builder
@@ -406,7 +406,9 @@ void FullDaq::start(levbdim::fsmmessage* m)
    if (_dbClient)
     {
       _dbClient->sendTransition("NEWRUN");
+      //std::cout<<_dbClient->answer();
       _run=_dbClient->answer()["run"].asInt();
+      //  std::cout<<" new run "<<_run<<std::endl;
     }
    // Start the DIFs
   boost::thread_group g;
@@ -422,7 +424,7 @@ void FullDaq::start(levbdim::fsmmessage* m)
     {
       Json::Value jl;
       jl["run"]=_run;
-      _builderClient->sendTransition("START");
+      _builderClient->sendTransition("START",jl);
     }
   //Start the CCC
    if (_cccClient)
