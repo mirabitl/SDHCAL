@@ -264,8 +264,10 @@ class ScStorage:
             self.setVoltage(self.chref.channel,vexpected)
             self.ReadChannel(self.chref.channel)
             self.hvchannel[chref.channel].dump()
-        if (deltav>=200):
+        if (deltav>=200 && vout>=5000):
             self.logc.warning("checkChannel %d : Vout %f Veffective %f Vref %f , the expected value %f cannot be set automatically P %f %f T %f %f " % (chref.channel,vout,veffective,chref.vref,vexpected,pm,chref.p0,tm,chref.t0))
+         if (deltav>=200 && vout<500):
+            self.logc.warning("checkChannel %d : Vout %f the channel is OFF" % (chref.channel,vout)
         return
     def checkSetup(self):
         if (self.account==None):
@@ -284,6 +286,8 @@ class ScStorage:
     def startChecking(self,period):
         self.timer=perpetualTimer(period,self.checkSetup)
         self.timer.start()
+        self.logc.info(" Check timer started")
     def stopChecking(self):
         if (self.timer !=None):
             self.timer.cancel()
+            self.logc.info(" Check timer stopped")

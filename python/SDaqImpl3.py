@@ -9,7 +9,59 @@ from ROOT import *
 import time
 import json
 import mc
+"""
+from pydim import *
+from threading import *
+e=Event()
 
+class PyRpcCommand(DimRpc):
+    def __init__(self,iv,name='/EUDAQ/COMMAND'):
+        DimRpc.__init__(self,name,'C','C')
+        self.cmd=''
+        self.iv=iv
+        
+    def rpcHandler(self):
+        self.cmd=self.getData()
+        while (self.iv.action):
+            time.sleep(1)
+        print "I received a remote call ",self.cmd
+        if (self.cmd=="SCANDNS"):
+            self.iv.action=True
+            self.iv.daq_.DiscoverDNS()
+            self.iv.action=False
+            self.setData(self.cmd+"DONE")
+            return
+
+        if (self.cmd=="DOWNLOAD"):
+            self.iv.PBDownloadDB().animateClick()
+            self.setData(self.cmd+"DONE")
+            return
+        if (self.cmd=="INITIALISE"):
+            self.iv.PBInitialise().animateClick()
+            self.setData(self.cmd+"DONE")
+            return
+        if (self.cmd=="CONFIGURE"):
+            self.iv.PBConfigure().animateClick()
+            self.setData(self.cmd+"DONE")
+            return
+        if (self.cmd=="START"):
+            self.iv.PBStart().animateClick()
+            self.setData(self.cmd+"DONE")
+            return
+        if (self.cmd=="STOP"):
+            self.iv.PBStop().animateClick()
+            self.setData(self.cmd+"DONE")
+            return
+        if (self.cmd=="DESTROY"):
+            self.iv.PBDestroy().animateClick()
+            self.setData(self.cmd+"DONE")
+            return
+        
+    def run(self):
+        dis_start_serving('EUDAQ-CTRL')
+        while not e.isSet():
+            time.sleep(1)
+"""
 class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow): 
     def __init__(self, parent=None):
         super(ImageViewer, self).__init__(parent)
@@ -20,7 +72,12 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
         self.canvas =None
         self.connectActions()
         self.job_selected_row_=None
-
+        self.action=False
+        """
+        self.rpccmd=PyRpcCommand(self)
+        self.thrcmd=Thread(target=self.rpccmd.run)
+        self.thrcmd.start()
+        """
     def CreateDaq(self):
         print "On y est"
         name=str(self.LEconfig.text().toAscii())
@@ -181,6 +238,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
     def DiscoverDNS(self):
         self.daq_.DiscoverDNS()
         self.PBInitialise.setEnabled(True)
+        self.action=False
     def DownloadDB(self):
         self.daq_.DownloadDB()
     def InitialiseWriter(self):
@@ -207,6 +265,7 @@ class ImageViewer(QtGui.QMainWindow, DaqUI3.Ui_MainWindow):
 
 
     def Quit(self):
+        #e.set();
         exit(0)
     def RestartHost(self):
         if self.daq_!=None:

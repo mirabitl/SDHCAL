@@ -95,7 +95,7 @@ start:
 	ftdi_read_data_set_chunksize (&theFtdi,65535);
 	if (theProduct_==0x6014) ftdi_set_bitmode(&theFtdi,0,0);
 	ftdi_usb_purge_buffers(&theFtdi);
-	timeOut=100;
+	timeOut=10;
 	// Register tests
 
        //  for (uint32_t i=0;i<1;i++)
@@ -140,12 +140,13 @@ void FtdiUsbDriver::checkReadWrite(uint32_t start,uint32_t count)   throw (Local
 	  printf("Writing %x ",ireg);
 	  ret=UsbRegisterWrite2(2,ireg);
 	  printf(" rc= %d ===>",ret);
+	  usleep(100);
 	}
       if (ireg==start+count-1)
 	{
 	  ret=UsbRegisterRead(2,&regctrl);
 	  printf(" Reading %x %x rc= %d \n",regctrl,ireg,ret);
-
+	  usleep(100);
 	  if (regctrl!=ireg)
 	    {
 	      printf(" Error Reading  \n");
@@ -257,7 +258,7 @@ throw( LocalHardwareException )
 		if (ret==0) 
 		{
 			ntry++;
-			usleep(1);
+			usleep(100);
 		}
 		if (ret>0) {tbytesread+=ret;ntry=1;}
 		if (ntry>timeOut) break;
