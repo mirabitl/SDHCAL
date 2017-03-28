@@ -28,6 +28,7 @@ public:
   void destroy(levbdim::fsmmessage* m);
   void c_joblog(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void c_status(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_diflist(Mongoose::Request &request, Mongoose::JsonResponse &response);
   
   void parseConfig(std::string name);
   void writeRamAvm();

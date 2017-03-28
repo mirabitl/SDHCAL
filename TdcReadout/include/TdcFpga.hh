@@ -38,6 +38,8 @@ public:
   virtual void processEventTdc();
   inline void setStorage(std::string sdir) {_sdir=sdir;}
   void addChannels(uint8_t* buf,uint32_t sizeb);
+  uint32_t detectorId(){return _detid;}
+  uint32_t difId(){return _id;}
 private:
   uint32_t _mezzanine,_adr,_startIdx;
   uint8_t _buf[0x100000];

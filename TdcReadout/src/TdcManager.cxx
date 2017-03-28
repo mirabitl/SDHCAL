@@ -47,6 +47,7 @@ TdcManager::TdcManager(std::string name) : levbdim::baseApplication(name), _grou
   
   //_fsm->addCommand("JOBLOG",boost::bind(&TdcManager::c_joblog,this,_1,_2));
   _fsm->addCommand("STATUS",boost::bind(&TdcManager::c_status,this,_1,_2));
+  _fsm->addCommand("DIFLIST",boost::bind(&TdcManager::c_diflist,this,_1,_2));
   
   
   
@@ -81,7 +82,22 @@ void TdcManager::c_status(Mongoose::Request &request, Mongoose::JsonResponse &re
       ss<<boost::format("EVENT%lx") % idr->first; 
       response[ss.str()]=idr->second;
     }
-  
+}
+void TdcManager::c_diflist(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  response["STATUS"]="DONE";
+  response["DIFLIST"]="EMPTY";
+  if (_msh==NULL) return;
+  Json::Value jl;
+  for (uint32_t i=0;i<2;i++)
+    {
+      if (_msh->tdc(i)==NULL) continue;
+      Json::Value jt;
+      jt["detid"]=_msh->tdc(i)->detectorId();
+      jt["sourceid"]=_msh->tdc(i)->difId();
+      jl.append(jt);
+    }
+  response["DIFLIST"]=jl;
 }
 void TdcManager::initialise(levbdim::fsmmessage* m)
 {
