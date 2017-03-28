@@ -444,6 +444,12 @@ int readOneEvent(int run,int event);
   std::vector<uint32_t>& getTimeSeeds(){return theTimeSeeds_;}
   std::vector<DIFPtr*>& getDIFList(){return  theDIFPtrList_;}
   void correctGeometry();
+
+  void setCerenkovDifId(int id){m_cerenkovDifId=id;}
+  void setCerenkovOutDifId(int id){m_cerenkovOutDifId=id;}
+  void setCerenkovOutAsicId(int id){m_cerenkovOutAsicId=id;}
+  void setCerenkovOutTimeDelay(int td){m_cerenkovOutTimeDelay=td;}
+
  private:
   LCReader* lcReader_; /// LCIO Reader
   //  LCSplitWriter* lcWriter_; /// LCIO Writer
