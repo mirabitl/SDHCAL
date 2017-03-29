@@ -735,7 +735,7 @@ IMPL::LCCollectionVec* DHCalEventReader::createRawCalorimeterHits(std::vector<ui
 	  unsigned long int ID0;
     
     bitset<6> Channel(j);		
-    unsigned short    difId     = d->getId();
+    unsigned short    difId     = d->getID();
     unsigned short    asicId    = d->getFrameAsicHeader(i);
     int               chanId    = Channel.to_ulong();
     unsigned long int frameTime = d->getFrameBCID(i);
@@ -745,21 +745,21 @@ IMPL::LCCollectionVec* DHCalEventReader::createRawCalorimeterHits(std::vector<ui
       difId = m_cerenkovOutDifId; // If BIF had a non standard ID (like in 2014)
       if (asicId != m_cerenkovOutAsicId) // feature when two signals are plugged in the BIF
       {
-        std::cout << " BIF: Dif/Asic/Chan/TimeToTrigger/bcid: " 
-        << difId << "/" << asicId << "/" << chanId << "/" << timeStamp << "/" << frameTime
+        std::cout << " BIF: Dif/Asic/Chanbcid: " 
+        << difId << "/" << asicId << "/" << chanId << "/" << "/" << frameTime
         << std::endl;
         
         asicId = m_cerenkovOutAsicId;
         
-        std::cout << " NEWBIF: Dif/Asic/Chan/TimeToTrigger/bcid: " 
-        << difId << "/" << asicId << "/" << chanId << "/" << timeStamp << "/" << frameTime
+        std::cout << " NEWBIF: Dif/Asic/Chan/bcid: " 
+        << difId << "/" << asicId << "/" << chanId << "/" << "/" << frameTime
         << std::endl;
       }
     }
     
     ID0=(unsigned long int)(difId & 0xFF);			//8 firsts bits: DIF Id
     ID0+=(unsigned long int)((asicId<<8)&0xFF00);	//8 next bits:   Asic Id
-    ID0+=(unsigned long int)(chanId<<16)&0x3F0000);				//6 next bits:   Asic's Channel
+    ID0+=(unsigned long int)((chanId<<16)&0x3F0000);				//6 next bits:   Asic's Channel
     unsigned long BarrelEndcapModule=0;  //(40 barrel + 24 endcap) modules to be coded here  0 for testbeam (over 6 bits)
     ID0+=(unsigned long int)((BarrelEndcapModule<<22)&0xFC00000);	
     unsigned long int ID1 = frameTime;
