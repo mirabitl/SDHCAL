@@ -1,0 +1,18 @@
+#Scons files
+*.sconsign.dblite
+*.o
+*.os
+*_wrap.cc
+
+#tmp files
+*~
+\#*\#
+.\#*
+*.so
+*/bin/
+*/lib/
+opt/
+
+#python
+*.pyc
+*.pyd
