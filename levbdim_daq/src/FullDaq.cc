@@ -217,7 +217,7 @@ void FullDaq::prepare(levbdim::fsmmessage* m)
        else
 	 _cccClient->sendTransition("OPEN");
 
-      
+      if (_cccClient->answer()!=Json::Value::null)
       _cccClient->sendTransition("INITIALISE");
     }
   // Mdc

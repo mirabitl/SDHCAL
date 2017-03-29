@@ -153,12 +153,15 @@ public:
      //     return "none";
    
     std::string rc=curlQuery((char*) ss.str().c_str());
-    printf("return %s \n",rc.c_str());
+    printf("return %s %s \n",ss.str().c_str(),rc.c_str());
     Json::Reader reader;
     Json::Value jsta;
     bool parsingSuccessful = reader.parse(rc,jsta);
     if (parsingSuccessful)
-      _answer=jsta["content"]["answer"];
+      if (jsta["content"].isMember("answer"))
+	_answer=jsta["content"]["answer"];
+      else
+	_answer=Json::Value::null;
     else
       _answer=Json::Value::null;
     return rc;
