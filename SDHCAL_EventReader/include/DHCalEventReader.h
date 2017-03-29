@@ -493,6 +493,10 @@ int readOneEvent(int run,int event);
   
   std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> > thePhysicsEventMap_;
 
+  int m_cerenkovDifId;
+  int m_cerenkovOutDifId;
+  int m_cerenkovOutAsicId;
+  int m_cerenkovOutTimeDelay;
 };
 
 #endif
