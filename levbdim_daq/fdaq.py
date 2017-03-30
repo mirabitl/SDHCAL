@@ -287,6 +287,8 @@ class fdaqClient:
               lcgi["file"]=self.daq_file
       for x,y in self.p_conf["HOSTS"].iteritems():
           for p in y:
+              if (p["NAME"] != "FDAQ"):
+                  continue;
               print x,p["NAME"]," process found"
               port=0
               for e in p["ENV"]:

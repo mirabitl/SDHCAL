@@ -76,11 +76,20 @@ FullDaq::FullDaq(std::string name) : levbdim::baseApplication(name)
     _fsm->start(atoi(wp));
     }
 
- 
+  _jConfigContent=Json::Value::null;
+  
   }
 
 
-
+void  FullDaq::userCreate(levbdim::fsmmessage* m)
+{
+  // Stored the configuration file used
+    if (m->content().isMember("url"))
+       _jConfigContent["url"]=m->content()["url"];
+    else
+      if (m->content().isMember("file"))
+	_jConfigContent["file"]=m->content()["file"];
+}
 
 void FullDaq::discover(levbdim::fsmmessage* m)
 {
@@ -118,32 +127,72 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 	  if (p_name.compare("WRITER")==0)
 	    {
 	      _builderClient= new fsmwebClient(host,port);
-	      printf("Builder client %x \n",_builderClient);
+	      std::string state=_builderClient->queryState();
+	      printf("Builder client %x  %s \n",_builderClient,state.c_str());
+	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
+		{
+		  _builderClient->sendTransition("CREATE",_jConfigContent);
+		}
 	    }
 	  if (p_name.compare("DBSERVER")==0)
 	    {
 	      _dbClient= new fsmwebClient(host,port);
-	      printf("DB client %x \n",_dbClient);
+	      std::string state=_dbClient->queryState();
+	      printf("DB client %x  %s \n",_dbClient,state.c_str());
+	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
+		{
+		  _dbClient->sendTransition("CREATE",_jConfigContent);
+		}
+
+	      //printf("DB client %x \n",_dbClient);
 	    }
 	  if (p_name.compare("CCCSERVER")==0)
 	    {
 	      _cccClient= new fsmwebClient(host,port);
-	      printf("CCC client %x \n",_cccClient);
+	      std::string state=_cccClient->queryState();
+	      printf("Ccc client %x  %s \n",_cccClient,state.c_str());
+	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
+		{
+		  _cccClient->sendTransition("CREATE",_jConfigContent);
+		}
+
+	      //printf("CCC client %x \n",_cccClient);
 	    }
 	  if (p_name.compare("MDCCSERVER")==0)
 	    {
 	      _mdccClient= new fsmwebClient(host,port);
-	      printf("MDCC client %x \n",_mdccClient);
+	      std::string state=_mdccClient->queryState();
+	      printf("Mdcc client %x  %s \n",_mdccClient,state.c_str());
+	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
+		{
+		  _mdccClient->sendTransition("CREATE",_jConfigContent);
+		}
+
+	      //printf("MDCC client %x \n",_mdccClient);
 	    }
 	  if (p_name.compare("ZUPSERVER")==0)
 	    {
 	      _zupClient= new fsmwebClient(host,port);
-	      printf("ZUP client %x \n",_zupClient);
+	      std::string state=_zupClient->queryState();
+	      printf("ZUP client %x  %s \n",_zupClient,state.c_str());
+	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
+		{
+		  _zupClient->sendTransition("CREATE",_jConfigContent);
+		}
+
+	      //printf("ZUP client %x \n",_zupClient);
 	    }
 	  if (p_name.compare("GPIOSERVER")==0)
 	    {
 	      _gpioClient= new fsmwebClient(host,port);
-	      printf("Gpio client %x \n",_gpioClient);
+	      std::string state=_gpioClient->queryState();
+	      printf("GPIO client %x  %s \n",_gpioClient,state.c_str());
+	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
+		{
+		  _gpioClient->sendTransition("CREATE",_jConfigContent);
+		}
+
+	      //printf("Gpio client %x \n",_gpioClient);
 	      _gpioClient->sendTransition("CONFIGURE");
 	      _gpioClient->sendCommand("VMEON");
 	      _gpioClient->sendCommand("VMEOFF");
@@ -153,13 +202,27 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 	   if (p_name.compare("DIFSERVER")==0)
 	    {
 	      fsmwebClient* dc= new fsmwebClient(host,port);
-	      printf("DIF client %x \n",dc);
+	      //printf("DIF client %x \n",dc);
+	      std::string state=dc->queryState();
+	      printf("DIF client %x  %s \n",dc,state.c_str());
+	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
+		{
+		  dc->sendTransition("CREATE",_jConfigContent);
+		}
+
 	      _DIFClients.push_back(dc);
 	    }
 	   if (p_name.compare("TDCSERVER")==0)
 	    {
 	      fsmwebClient* tdc= new fsmwebClient(host,port);
-	      printf("TDC client %x \n",tdc);
+	      //printf("TDC client %x \n",tdc);
+	      std::string state=tdc->queryState();
+	      printf("TDC client %x  %s \n",tdc,state.c_str());
+	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
+		{
+		  tdc->sendTransition("CREATE",_jConfigContent);
+		}
+
 	      _tdcClients.push_back(tdc);
 	    }
 	   
@@ -217,7 +280,7 @@ void FullDaq::prepare(levbdim::fsmmessage* m)
        else
 	 _cccClient->sendTransition("OPEN");
 
-      if (_cccClient->answer()!=Json::Value::null)
+      //if (_cccClient->answer()!=Json::Value::null)
       _cccClient->sendTransition("INITIALISE");
     }
   // Mdc

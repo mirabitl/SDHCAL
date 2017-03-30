@@ -56,7 +56,8 @@ public:
 
   std::string state(){return _fsm->state();}
   void forceState(std::string s){_fsm->setState(s);}
-
+  // Virtual from baseAPplication
+  virtual void  userCreate(levbdim::fsmmessage* m);
 private:
   fsmweb* _fsm;
   fsmwebClient* _dbClient,*_zupClient,*_cccClient,*_mdccClient,*_builderClient,*_gpioClient;
@@ -65,5 +66,6 @@ private:
  
   std::string _dbstate;
   uint32_t _ctrlreg,_run;
+  Json::Value _jConfigContent;
 };
 #endif
