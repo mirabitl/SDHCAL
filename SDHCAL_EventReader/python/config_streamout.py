@@ -7,4 +7,4 @@ minChambersInTime=5;
 filePath="/data/NAS/Results/DHCAL_%d_I%d_%d.slcio"
 fileOut="/home/mirabito/DHCAL_%d_SO_O.slcio"
 nevent=0
-xdaqShit=92;
+xdaqShift=92;

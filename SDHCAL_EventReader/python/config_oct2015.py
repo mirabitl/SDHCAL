@@ -12,7 +12,7 @@ tkExtChi2Cut=0.00000000000001;
 tkDistCut=2.;  
 tkExtDistCut=4.;
 
-xdaqShit=24;
+xdaqShift=24;
 cerenkovDifId=3
 cerenkovOutDifId=3
 cerenkovAsicId=1

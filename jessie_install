@@ -6,7 +6,7 @@
    export DHCALDIR="/opt/dhcal"
    export SDHCALDIR="${HOME}/SDHCAL"
 
-   sudo mkdir ${DHCALDIR}
+   sudo mkdir -p ${DHCALDIR}
    sudo chmod 777 ${DHCALDIR}
    cd ${DHCALDIR}
    wget http://root.cern.ch/download/root_v5.34.26.source.tar.gz
