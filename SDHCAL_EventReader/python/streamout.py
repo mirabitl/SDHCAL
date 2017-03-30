@@ -37,7 +37,7 @@ rootHandler=dr.DCHistogramHandler()
 
 
 dher.ParseSteering(config.marlin)
-dher.setXdaqShift(92);
+dher.setXdaqShift(config.xdaqShift);
 a=dr.FilterAnalyzer( dher,rootHandler);
 
 dher.setCerenkovDifId(config.cerenkovDifId);
