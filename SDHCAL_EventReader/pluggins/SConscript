@@ -19,8 +19,8 @@ INCLUDES=['.','../include',"/usr/include","/usr/local/include","/usr/local/cuda/
 INCLUDES.append(os.path.join(os.getenv("LCIODIR"),"include"))
 INCLUDES.append(os.path.join(os.getenv("LCIODIR"),"include","IMPL"))
 #MYSQL and sqlite
-INCLUDES.append("/opt/dhcal/levbdim/include")
-INCLUDES.append("/opt/dhcal/dim/dim")
+INCLUDES.append(os.path.join(os.getenv("LEVBDIMDIR"),"include"))
+INCLUDES.append(os.path.join(os.getenv("DIMDIR"),"dim"))
 INCLUDES.append("/usr/include/libxml2")
 #eigen3
 INCLUDES.append("/usr/local/include/eigen3/")
@@ -70,7 +70,9 @@ if (USE_OPENCV):
 
 
 #Library path XDAQ,DHCAL and ROOT + Python
-LIBRARY_PATHS=ROOT_LIBPATH+MY_LIBPATH+["/usr/lib","/usr/local/lib","/opt/dhcal/levbdim/lib","/opt/dhcal/dim/linux","../lib"]
+LIBRARY_PATHS=ROOT_LIBPATH+MY_LIBPATH+["/usr/lib","/usr/local/lib","../lib"]
+LIBRARY_PATHS.append(os.path.join(os.getenv("LEVBDIMDIR"),"lib"))
+LIBRARY_PATHS.append(os.path.join(os.getenv("DIMDIR"),"linux"))
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
 LIBRARY_PATHS.append(os.path.join(os.getenv("LCIODIR"),"lib"))
 
