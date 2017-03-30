@@ -260,10 +260,16 @@ class fdaqClient:
 
   def jc_status(self):
     lcgi={}
+
     for x,y in self.p_conf["HOSTS"].iteritems():
-        #print x," found"
+        print "HOST ",x
         sr=executeCMD(x,9999,"LJC-%s" % x,"STATUS",lcgi)
-        print sr
+        sj=json.loads(sr)
+        ssj=sj["answer"]["JOBS"]
+        print "\033[1m %6s %15s %25s %20s \033[0m" % ('PID','NAME','HOST','STATUS')
+        for x in ssj:
+            print "%6d %15s %25s %20s" % (x['PID'],x['NAME'],x['HOST'],x['STATUS'])
+        
             
   def jc_restart(self,host,jobname,jobpid):
     lcgi={}
@@ -302,7 +308,37 @@ class fdaqClient:
                   if (p_rep["STATE"]=="VOID"):
                       sr=executeFSM(x,port,p_rep["PREFIX"],"CREATE",lcgi)
                       #print sr
-                      
+  def daq_list(self):
+      lcgi={}
+      if (self.daq_url!=None):
+          lcgi["url"]=self.daq_url
+      else:
+          if (self.daq_file!=None):
+              lcgi["file"]=self.daq_file
+      for x,y in self.p_conf["HOSTS"].iteritems():
+          print "HOST ",x
+          print "\033[1m %12s %12s %8s %8s %20s \033[0m" % ('NAME','INSTANCE','PORT','PID','STATE')
+
+          for p in y:
+              #print x,p["NAME"]," process found"
+              port=0
+              for e in p["ENV"]:
+                  if (e.split("=")[0]=="WEBPORT"):
+                      port=int(e.split("=")[1])
+              if (port==0):
+                  continue
+              p_rep={}
+              surl="http://%s:%d/" % (x,port)
+              req=urllib2.Request(surl)
+              try:
+                  r1=urllib2.urlopen(req)
+                  p_rep=json.loads(r1.read())
+                  print "%12s %12s %8d %8d %20s" % (p["NAME"],p_rep["PREFIX"],port,p_rep["PID"],p_rep["STATE"])
+              except URLError, e:
+                  print surl,e
+                  p_rep={}
+              
+              
   def daq_discover(self):
       lcgi={}
       sr=executeFSM(self.daqhost,self.daqport,"FDAQ","DISCOVER",lcgi)
@@ -379,17 +415,17 @@ class fdaqClient:
   def daq_status(self):
       lcgi={}
       sr=executeCMD(self.daqhost,self.daqport,"FDAQ","DIFSTATUS",lcgi)
-      print sr 
+      return sr
       
   def daq_evbstatus(self):
       lcgi={}
       sr=executeCMD(self.daqhost,self.daqport,"FDAQ","EVBSTATUS",lcgi)
-      print sr    
+      return sr    
       
   def daq_dbstatus(self):
       lcgi={}
       sr=executeCMD(self.daqhost,self.daqport,"FDAQ","DBSTATUS",lcgi)
-      print sr    
+      return sr    
       
   def daq_state(self):
       p_rep={}
@@ -655,6 +691,7 @@ elif (results.webstatus):
     exit(0)
 elif(results.available):
     r_cmd='available'
+    fdc.daq_list()
     #srd=executeCMD(conf.daqhost,conf.daqport,"WDAQ",None,None)
     #if (results.verbose):
         #print srd
@@ -707,13 +744,7 @@ elif(results.jc_restart):
     r_cmd='jobReStart'
     exit(0)
 elif(results.jc_status):
-    fdc.jc_status()
-    r_cmd='jobStatus'
-    #print "WHAHAHAHA",sr
-    #if (results.verbose):
-        #print sr
-    #else:
-        #parseReturn(r_cmd,sr)
+    sr=fdc.jc_status()
     exit(0)
 elif(results.daq_state):
     r_cmd='state'
@@ -787,19 +818,19 @@ elif(results.daq_configure):
 
 elif(results.daq_status):
     r_cmd='status'
-    fdc.daq_status()
-    #if (results.verbose):
-        #print sr
-    #else:
-        #parseReturn(r_cmd,sr)
+    sr=fdc.daq_status()
+    if (results.verbose):
+        print sr
+    else:
+        parseReturn(r_cmd,sr)
     exit(0)
 elif(results.daq_evbstatus):
     r_cmd='shmStatus'
-    fdc.daq_evbstatus()
-    #if (results.verbose):
-        #print sr
-    #else:
-        #parseReturn(r_cmd,sr)
+    sr=fdc.daq_evbstatus()
+    if (results.verbose):
+        print sr
+    else:
+        parseReturn(r_cmd,sr)
     exit(0)
 elif(results.daq_setgain):
     r_cmd='SETGAIN'
@@ -838,11 +869,11 @@ elif(results.daq_destroy):
     exit(0)
 elif(results.daq_dbstatus):
     r_cmd='dbStatus'
-    fdc.daq_dbstatus()
-    #if (results.verbose):
-        #print sr
-    #else:
-        #parseReturn(r_cmd,sr)
+    sr=fdc.daq_dbstatus()
+    if (results.verbose):
+        print sr
+    else:
+        parseReturn(r_cmd,sr)
     exit(0)
 
 elif(results.daq_downloaddb):

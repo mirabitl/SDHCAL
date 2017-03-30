@@ -68,6 +68,7 @@ void LCaenServer::c_setOutputVoltage(Mongoose::Request &request, Mongoose::JsonR
     _hv->SetVoltage(i,vset);
   }
   response["STATUS"]="DONE";
+  _hv->Disconnect();
  
 }
 
@@ -83,8 +84,16 @@ void LCaenServer::c_setOutputVoltageRiseRate(Mongoose::Request &request, Mongoos
       return;
     }
  
-  response["STATUS"]="NOTIMPLEMENTED";
- 
+
+  if (!_hv->isConnected()) _hv->Connect();
+  for (uint32_t i=first;i<=last;i++)
+    {
+   
+    _hv->SetVoltageRampUp(i,vset);
+  }
+  response["STATUS"]="DONE";
+
+  _hv->Disconnect();
 }
 void LCaenServer::c_setCurrentLimit(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
@@ -103,7 +112,7 @@ void LCaenServer::c_setCurrentLimit(Mongoose::Request &request, Mongoose::JsonRe
     _hv->SetCurrent(i,vset);
   }
   response["STATUS"]="DONE";
- 
+  _hv->Disconnect();
 }
 void LCaenServer::c_setOutputSwitch(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
@@ -125,6 +134,7 @@ void LCaenServer::c_setOutputSwitch(Mongoose::Request &request, Mongoose::JsonRe
     else
       _hv->SetOff(i);
   }
+  _hv->Disconnect();
   response["STATUS"]="DONE";
  
 }
@@ -221,6 +231,7 @@ Json::Value LCaenServer::Read(uint32_t i)
   r["iout"]=_hv->GetCurrentRead(i);
   r["status"]=_hv->GetStatus(i);
   r["ramp"]=_hv->GetVoltageRampUp(i);
+  _hv->Disconnect();
   return r;
 }
 

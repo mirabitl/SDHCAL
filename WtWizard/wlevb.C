@@ -1181,7 +1181,7 @@ void wlevbc::StartButtonHandler()
 	    currentSessionId_=this->sessionId();
 	    // Publish SOR to monitoring
 	    std::stringstream s,saction;
-	    s<<"curl -X POST http://lyoac29:8082/SDHCALRunControl/SOR ";
+	    s<<"curl -X POST http://lyosdhcal12:8082/SDHCALRunControl/SOR ";
 	    saction<<" -d run="<<editrun->text().toUTF8();
 	    saction<<" -d detectorName=\""<<editstate->text().toUTF8()<<"\"";
 	    saction<<" -d author=\""<<editauthor->text().toUTF8()<<"\"";
@@ -1217,7 +1217,7 @@ void wlevbc::StopButtonHandler()
     }
   // Publish EOR anywayto monitoring
   std::stringstream s,saction;
-  s<<"curl -X POST http://lyoac29:8082/SDHCALRunControl/EOR ";
+  s<<"curl -X POST http://lyosdhcal12:8082/SDHCALRunControl/EOR ";
   saction<<" -d events="<<currentEvent_;
   s<<saction.str();
   std::cout<<"Web command "<<s.str()<<std::endl;

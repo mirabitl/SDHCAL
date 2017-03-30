@@ -5,7 +5,7 @@ import os
 import subprocess
 
 #IP = "128.141.61.46"
-IP="lyoilchv01.ipnl"
+IP="lyoilchv01"
 #192.168.0.2"
 
 MODULE_0 = 0

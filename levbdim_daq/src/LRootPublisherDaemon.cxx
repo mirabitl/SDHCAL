@@ -13,11 +13,13 @@ printf("parsing the config file \n");
 DOMConfigurator::configure("/etc/Log4cxxConfig.xml");
 //_logger->setLevel(log4cxx::Level::getInfo());
 LOG4CXX_INFO (_logLdaq, "this is a info message, after parsing configuration file")
-  std::stringstream s0;
-  char hname[80];
-  gethostname(hname,80);
-  s0<<"RootPublisher-"<<hname;
 
+  std::stringstream s0;
+  uint32_t instance=0;
+  char* wp=getenv("INSTANCE");
+  if (wp!=NULL)      instance=atoi(wp);
+  s0<<"RootPublisher-"<<instance;
+  std::cout<<"Starting  "<<s0.str()<<std::endl;
 
   LRootPublisher* s=new LRootPublisher(s0.str());
   while (true)

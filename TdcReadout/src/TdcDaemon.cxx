@@ -1,4 +1,4 @@
-#include "LMdccServer.hh"
+#include "TdcManager.hh"
 #include <unistd.h>
 #include <stdint.h>
 #include <log4cxx/logger.h>
@@ -10,18 +10,19 @@ using namespace log4cxx::helpers;
 int main()
 {
 printf("parsing the config file \n");
-DOMConfigurator::configure("/etc/Log4cxxConfig.xml");
+//DOMConfigurator::configure("/etc/Log4cxxConfig.xml");
 //_logger->setLevel(log4cxx::Level::getInfo());
-LOG4CXX_INFO (_logLdaq, "this is a info message, after parsing configuration file")
+//LOG4CXX_INFO (_logLdaq, "this is a info message, after parsing configuration file")
   std::stringstream s0;
   uint32_t instance=0;
   char* wp=getenv("INSTANCE");
   if (wp!=NULL)      instance=atoi(wp);
-  s0<<"Mdcc-"<<instance;
+  s0<<"TDC-"<<instance;
   std::cout<<"Starting  "<<s0.str()<<std::endl;
 
 
-  LMdccServer* s=new LMdccServer(s0.str());
+  TdcManager* s=new TdcManager(s0.str());
+
   while (true)
     sleep((unsigned int) 3);
 }

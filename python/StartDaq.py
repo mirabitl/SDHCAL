@@ -145,8 +145,8 @@ class StartDaq:
        if (self.jobControl_!=None):
           self.jobControl_.status()
           time.sleep(2)
-          self.jobControl_.List()
-          print self.jobControl_.processStatusList()
+          self.jobControl_.list()
+          print "I got ",self.jobControl_.processStatusList()
           return self.jobControl_.processStatusList()
        else:
           return None

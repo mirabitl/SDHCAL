@@ -278,6 +278,13 @@ class OracleAccess:
                    print e.getMessage()
                print a.getInt('DIF_ID'),a.getInt('HEADER'),a.getInt("ENABLED")
 
+    def SetMask(self,list,idif=0,iasic=0):
+        m=0xFFFFFFFFFFFFFFFF
+        for i in list:
+            m=m &~(1<<i);
+        sm="0x%lx" % m
+        self.ChangeMask(sm,sm,sm,idif,iasic)
+        
     def ChangeMask(self,M0,M1,M2,idif=0,iasic=0):
         """
         Set the mask 0,1,2 to M0,M1,M2 on DIF idif and ASIC iasic
@@ -554,7 +561,27 @@ class OracleAccess:
         self.dccs.append(theDcc)
         print "\t DCC added",theDcc.getString("LDA_ADDRESS"),theDcc.getInt("LDA_CHANNEL")
 
- 
+    def addAsic(self,dif_num,header,gain=128,AsicType=2):
+        """
+        Add a new DIF and load asics conf from file if any
+        dif_num = DIF ID
+        nb_asic = Number of ASICs
+        gain = default ASIC (HR2) gain (128)
+        lda_address = LDA MAC address (ff:ff:ff:ff:ff:ff)
+        lda_channel = LDA Channel (0)
+        dcc_channel = DCC Channel (0)
+        AsicType = Type of ASIC (2)
+        xmlfile = XML list of ASICs (None)
+        """
+        print "force ASIC"
+       
+        
+        if (AsicType == 2):
+            theHr2=self.initAsic(dif_num,header,gain)
+            self.asiclist.append(theHr2)
+            self.asicConf.add(theHr2) 
+
+
     def addDIF(self,dif_num,nb_asic,gain=128,lda_address="ff:ff:ff:ff:ff:ff",lda_channel=0,dcc_channel=0,AsicType=2,xmlfile=None):
         """
         Add a new DIF and load asics conf from file if any

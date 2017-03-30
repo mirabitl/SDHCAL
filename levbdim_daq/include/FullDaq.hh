@@ -61,6 +61,7 @@ private:
   fsmweb* _fsm;
   fsmwebClient* _dbClient,*_zupClient,*_cccClient,*_mdccClient,*_builderClient,*_gpioClient;
   std::vector<fsmwebClient*> _DIFClients;
+    std::vector<fsmwebClient*> _tdcClients;
  
   std::string _dbstate;
   uint32_t _ctrlreg,_run;
