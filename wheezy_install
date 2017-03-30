@@ -8,7 +8,7 @@
    #git clone https://github.com/mirabitl/SDHCAL.git
    #cd SDHCAL/
    export SDHCALDIR="${HOME}/SDHCAL"
-   export DHCALDIR="\opt\dhcal"
+   export DHCALDIR="/opt/dhcal"
 
    . ubuntu_packages.list 
    sudo mkdir ${DHCALDIR}
