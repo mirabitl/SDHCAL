@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <iostream>
 #include <sstream>
 #include <arpa/inet.h>
@@ -30,7 +31,7 @@ DbCache::DbCache(std::string name) : levbdim::baseApplication(name), _mode("NONE
 
   _fsm->addState("CONFIGURED");
   
-  _fsm->addTransition("CONFIGURED","CREATED","CONFIGURED",boost::bind(&DbCache::configure, this,_1));
+  _fsm->addTransition("CONFIGURE","CREATED","CONFIGURED",boost::bind(&DbCache::configure, this,_1));
   _fsm->addTransition("CONFIGURE","CONFIGURED","CONFIGURED",boost::bind(&DbCache::configure, this,_1));
   _fsm->addTransition("DESTROY","CONFIGURED","CREATED",boost::bind(&DbCache::destroy, this,_1));
 
@@ -65,7 +66,7 @@ DbCache::DbCache(std::string name) : levbdim::baseApplication(name), _mode("NONE
   }
   catch(...)
     {
-      LOG4CXX_FATAL(_logOracle,"Cannot initialise Oracle");
+      LOG4CXX_FATAL(_logDbCache,"Cannot initialise Oracle");
       return;
     }
 
@@ -99,7 +100,10 @@ void DbCache::configure(levbdim::fsmmessage* m)
   ///LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
   std::cout<<m->command()<<std::endl<<m->content()<<std::endl;
   if (_state!=NULL) delete _state;
-
+#ifndef NO_DB
+  Setup* theOracleSetup_=NULL;
+#endif
+  
   if (m->content().isMember("mode"))
     {
       this->parameters()["mode"]=m->content()["mode"];
@@ -110,12 +114,13 @@ void DbCache::configure(levbdim::fsmmessage* m)
     }
  if (m->content().isMember("state"))
     {
+      LOG4CXX_ERROR(_logDbCache,"Changing DB state");
       this->parameters()["state"]=m->content()["state"];
     }
 
   if (!this->parameters().isMember("mode"))
     {
-      LOG4CXX_FATAL(_logOracle,"No access mode specified");
+      LOG4CXX_FATAL(_logDbCache,"No access mode specified");
       Json::Value jerr="No access mode specified";
       m->setAnswer(jerr);
       return;
@@ -124,7 +129,7 @@ void DbCache::configure(levbdim::fsmmessage* m)
   _mode=this->parameters()["mode"].asString();
   if (!this->parameters().isMember("path"))
     {
-      LOG4CXX_FATAL(_logOracle,"No write path specified");
+      LOG4CXX_FATAL(_logDbCache,"No write path specified");
       Json::Value jerr="No write path specified";
       m->setAnswer(jerr);
       return;
@@ -133,30 +138,31 @@ void DbCache::configure(levbdim::fsmmessage* m)
   _path=this->parameters()["path"].asString();
   if (!this->parameters().isMember("state"))
     {
-      LOG4CXX_FATAL(_logOracle,"No state or file specified");
+      LOG4CXX_FATAL(_logDbCache,"No state or file specified");
       Json::Value jerr="No state or file specified";
       m->setAnswer(jerr);
       return;
       
     }
   _stateName=this->parameters()["state"].asString();
+  LOG4CXX_INFO(_logDbCache,"Selected state name "<<_stateName);
   if (_mode.compare("DB")==0)
     {
 #ifndef NO_DB
-      Setup* theOracleSetup_;
+
       try {
        theOracleSetup_=Setup::getSetup(_stateName); 
        std::cout<<"On initialise Oracle "<<(long)theOracleSetup_<< std::endl;
-       LOG4CXX_INFO(_logOracle,"Downloading "<<_stateName);
+       LOG4CXX_INFO(_logDbCache,"Downloading "<<_stateName);
        
      }
      catch(...)
        {
-         LOG4CXX_FATAL(_logOracle,"Setup initialisation failed");
+         LOG4CXX_FATAL(_logDbCache,"Setup initialisation failed");
        }
       _state=theOracleSetup_->getStates()[0];
 #else
-      LOG4CXX_FATAL(_logOracle,"No Oracle DB access compiled");
+      LOG4CXX_FATAL(_logDbCache,"No Oracle DB access compiled");
       Json::Value jerr="No Oracle DB access compiled";
       m->setAnswer(jerr);
       return;
@@ -171,7 +177,7 @@ void DbCache::configure(levbdim::fsmmessage* m)
 	}
       catch (ILCException::Exception e)
 	{
-	  LOG4CXX_ERROR(_logOracle," Error in Web access"<<e.getMessage());
+	  LOG4CXX_ERROR(_logDbCache," Error in Web access"<<e.getMessage());
 	  Json::Value jerr=e.getMessage();
 	  m->setAnswer(jerr);
 	  return;
@@ -183,11 +189,15 @@ void DbCache::configure(levbdim::fsmmessage* m)
       
       try
 	{
-	  _state = State::createStateFromXML_NODB(_stateName,_stateName);
+	  std::string fullname=_stateName;
+	  std::string basen(basename((char*)_stateName.c_str()));
+	  size_t lastindex = basen.find_last_of("."); 
+	  _stateName = basen.substr(0, lastindex);
+	  _state = State::createStateFromXML_NODB(_stateName,fullname);
 	}
       catch (ILCException::Exception e)
 	{
-	  LOG4CXX_ERROR(_logOracle," Error in File access"<<e.getMessage());
+	  LOG4CXX_ERROR(_logDbCache," Error in File access"<<e.getMessage());
 	  Json::Value jerr=e.getMessage();
 	  m->setAnswer(jerr);
 	  return;
@@ -199,6 +209,20 @@ void DbCache::configure(levbdim::fsmmessage* m)
   oi.dumpToTree(_path,_stateName);
   Json::Value jerr=_stateName;
   m->setAnswer(jerr);
+
+
+#ifndef NO_DB
+  if (theOracleSetup_!=NULL)
+    {
+      delete  theOracleSetup_;
+      _state=NULL;
+    }
+#else
+  if (_state!=NULL)
+    delete _state;
+  _state=NULL;
+#endif
+
   return;
   
 }
