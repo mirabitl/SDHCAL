@@ -43,6 +43,7 @@ Decider('MD5-timestamp')
 
 
 Use_Oracle=os.path.exists("/usr/include/ILCConfDB")
+Use_Mongoose=os.path.exists("/usr/local/include/mongoose")
 
 if (not Use_Oracle):
   print "ILCConfDB must be installed"
@@ -77,9 +78,7 @@ else:
 # includes
 INCLUDES=['include',"/usr/include/ILCConfDB",\
 	os.path.join(DHCAL_ROOT,"SDHCAL_common","include"),\
-	os.path.join(DHCAL_ROOT,"netLink","include"),\
-	os.path.join(DHCAL_ROOT,"netLink","cslm"),\
-	os.path.join(DHCAL_ROOT,"DBUtils","python","Cpp")]
+	  os.path.join(DHCAL_ROOT,"DBUtils","python","Cpp"),"/usr/local/dim/dim","/opt/dhcal/levbdim/include"]
 
 if (platform=="SLC5"):
     INCLUDES.append('/usr/include/boost141')
@@ -87,6 +86,7 @@ if (platform=="SLC5"):
 
 #MYSQL and sqlite
 INCLUDES.append("/usr/include/libxml2")
+INCLUDES.append("/usr/include/jsoncpp")
 INCLUDES.append("/data/ilcsoft/lcio/v01-51/include")
 
 INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
@@ -96,14 +96,13 @@ CPPFLAGS=commands.getoutput("$ROOTSYS/bin/root-config --cflags").split(" ") + ["
 MY_LIBS=[lib[2:] for lib in filter(lambda x: (x[:2]=="-l"), commands.getoutput("mysql_config --libs").split(" "))]
 MY_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getoutput("mysql_config --libs").split(" "))]
 #Library ROOT + some of XDAQ + DB 
-LIBRARIES=MY_LIBS+['pthread', 'uuid', 'm', 'ilcconfdb', 'dbi','xerces-c',  'stdc++','log4cxx','cslm','netlink',boostsystem,boostthread,'dl','sqlite3']
+LIBRARIES=MY_LIBS+['pthread', 'uuid', 'm', 'ilcconfdb', 'dbi','xerces-c',  'stdc++','log4cxx',boostsystem,boostthread,'dl','sqlite3','dim','levbdim','mongoclient','jsoncpp']
 
 if (not Arm):
   LIBRARIES.append('occi')
   LIBRARIES.append('clntsh')
   LIBRARIES.append('nnz11')
 
-  
 
 #Library path XDAQ,DHCAL and ROOT + Python
 if ( platform=="SLC5" and osv=="x86_64"):
@@ -112,11 +111,19 @@ else:
     if ( platform=="SLC5"):
         LIBRARY_PATHS=MY_LIBPATH+["/opt/xdaq/lib","/usr/lib/boost141","/usr/lib","/usr/local/lib"]
     else:
-        LIBRARY_PATHS=MY_LIBPATH+["/usr/lib","/usr/local/lib"]
+        LIBRARY_PATHS=MY_LIBPATH+["/usr/lib","/usr/local/lib","/usr/local/dim/linux","/opt/dhcal/levbdim/lib"]
 
 #Library path XDAQ,DHCAL and ROOT + Python
 LIBRARY_PATHS.append([os.path.join(XDAQ_ROOT,"lib"),os.path.join(DHCAL_ROOT,"opt","dhcal","lib"),os.path.join(os.environ["ROOTSYS"],"lib")])
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
+
+if (Use_Mongoose):
+  LIBRARY_PATHS.append('/usr/local/lib')
+  LIBRARIES.append('mongoose')
+  INCLUDES.append('/usr/local/include/')
+  INCLUDES.append('/usr/local/include/mongoose')
+
+  
 
 #link flags
 LDFLAGS=["-fPIC","-dynamiclib"]
@@ -159,6 +166,8 @@ EXE_LIBS=LIBRARIES
 EXE_LIBS.append("ConfigurationDb")
 testdb=env.Program("bin/testdb",source="src/testdb.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
+dbcd=env.Program("bin/levbdim_dbc",source="src/DbCacheDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+
 
 #Test Program
 #EXE_LIBPATH=LIBRARY_PATHS
@@ -167,10 +176,9 @@ testdb=env.Program("bin/testdb",source="src/testdb.cxx",LIBPATH=EXE_LIBPATH,LIBS
 #EXE_LIBS.append("SDHCALDB")
 #TMAIN=env.Program("bin/main",source="src/main.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
-Default([ConfigDb,testdb])
+Default([ConfigDb,testdb,dbcd])
 env.Install(DHCAL_ROOT+"/opt/dhcal/lib",ConfigDb)
-###env.Install("/opt/dhcal/lib",SDHCALDB)
-#env.Install(DHCAL_ROOT+"/opt/dhcal/bin",dsdb)
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",dbcd)
 env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib",DHCAL_ROOT+"/opt/dhcal/bin"])
 
 
