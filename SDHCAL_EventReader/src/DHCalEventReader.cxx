@@ -23,7 +23,7 @@ DHCalEventReader* DHCalEventReader::instance() {
 }  
 
 //static DCFrame theFrameBuffer[256*48*128];
-DHCalEventReader::DHCalEventReader() :dropFirstRU_(false),theXdaqShift_(92),currentFileName_("NONE")
+DHCalEventReader::DHCalEventReader() :dropFirstRU_(false),theXdaqShift_(92),currentFileName_("NONE"),m_cerenkovDifId(3),m_cerenkovOutDifId(3),m_cerenkovOutAsicId(1),m_cerenkovOutTimeDelay(6)
 {
   evt_ = 0;
   runh_ = 0;
