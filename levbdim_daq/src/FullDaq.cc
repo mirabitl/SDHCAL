@@ -477,9 +477,16 @@ void FullDaq::configure(levbdim::fsmmessage* m)
 	  //
 	  std::cout<<"sending command DIFLIST \n";
 	  tdc->sendCommand("DIFLIST");
-	  if (tdc->answer()["answer"].isMember("DIFLIST"))
+	  if (!tdc->answer().empty())
 	    {
-	     const Json::Value& jdevs=tdc->answer()["answer"]["DIFLIST"];
+	      //std::cout<<"ANSWER "<<tdc->answer()<<std::endl;
+	      Json::Value rep=Json::Value::null;
+	      if ( tdc->answer().isMember("answer"))
+		   rep=tdc->answer()["answer"];
+	  if (rep.isMember("DIFLIST"))
+	    {
+	      //std::cout<<rep["DIFLIST"]<<"\n";
+	     const Json::Value& jdevs=rep["DIFLIST"];
 	     for (Json::ValueConstIterator it = jdevs.begin(); it != jdevs.end(); ++it)
 	       {
 		 Json::Value jd;
@@ -488,6 +495,9 @@ void FullDaq::configure(levbdim::fsmmessage* m)
 		 jsou.append(jd);
 	       } 
 	    }
+	    }
+	  else
+	    std::cout<<"No answer from DIFLIST!!!!"<<std::endl;
 	}
       std::cout<<"SENDING "<<jsou<<std::endl;
       Json::Value jl;

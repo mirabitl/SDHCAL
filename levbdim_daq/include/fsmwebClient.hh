@@ -184,13 +184,18 @@ public:
      s<<_url<<"CMD?name="<<name;
      if (params.length()>2)
        s<<params;
+     //std::cout<<"SC Sending "<<s<<std::endl;
      std::string rc=curlQuery((char*) s.str().c_str());
+     //std::cout<<"SC received "<<rc<<std::endl;
      Json::Reader reader;
      Json::Value jsta;
      bool parsingSuccessful = reader.parse(rc,jsta);
      if (parsingSuccessful)
+       {
+	 //std::cout<<"SC parsing sucess"<<jsta<<std::endl;
        _answer=jsta;
-     else
+       }
+       else 
        _answer=Json::Value::null;
     return rc;
 

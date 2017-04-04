@@ -949,7 +949,7 @@ elif(results.trig_reset):
     exit(0)
 elif(results.trig_pause):
     r_cmd='pause'
-    ffdc.trig_pause()
+    fdc.trig_pause()
     exit(0)
 elif(results.trig_resume):
     r_cmd='resume'
