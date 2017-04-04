@@ -118,7 +118,7 @@ void MDCCHandler::reloadCalibCount(){
 uint32_t MDCCHandler::ecalmask(){return this->readRegister(0xB);}
 void MDCCHandler::maskEcal(){this->writeRegister(0xB,0x1);}
 void MDCCHandler::unmaskEcal(){this->writeRegister(0xB,0x0);}
-void MDCCHandler::resetTDC(){this->writeRegister(0xC,0x1);}
+void MDCCHandler::resetTDC(uint8_t b){this->writeRegister(0xC,b);}
 uint32_t MDCCHandler::busyCount(uint8_t b){return this->readRegister(0x10+(b&0xF));}
 
 

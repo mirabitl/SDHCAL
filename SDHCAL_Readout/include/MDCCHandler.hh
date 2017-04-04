@@ -24,7 +24,7 @@ public:
   void maskEcal();
   void unmaskEcal();
   void resetCounter();
-  void resetTDC();
+  void resetTDC(uint8_t b);
   uint32_t mask();
   uint32_t ecalmask();
   uint32_t spillCount();
