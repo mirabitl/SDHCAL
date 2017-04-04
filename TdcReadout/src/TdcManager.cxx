@@ -270,7 +270,7 @@ void TdcManager::configure(levbdim::fsmmessage* m)
 	    return;
 	  }
   
-  std::string config=m->content()["configFile"].asString();
+  //std::string config=m->content()["configFile"].asString();
   
   // Read the file
   Json::Value jall;
@@ -278,7 +278,7 @@ void TdcManager::configure(levbdim::fsmmessage* m)
     {
   //PRSlow::loadAsics(config,_s1,_s2);
       Json::Reader reader;
-      std::ifstream ifs (config.c_str(), std::ifstream::in);
+      std::ifstream ifs (ffile.c_str(), std::ifstream::in);
       Json::Value jall;
       bool parsingSuccessful = reader.parse(ifs,jall,false);
     }
