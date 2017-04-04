@@ -181,7 +181,7 @@ public:
   std::string sendCommand(std::string name,std::string params=std::string(""))
   {
      std::stringstream s;
-     s<<_url<<"FSM?command="<<name;
+     s<<_url<<"CMD?name="<<name;
      if (params.length()>2)
        s<<params;
      std::string rc=curlQuery((char*) s.str().c_str());

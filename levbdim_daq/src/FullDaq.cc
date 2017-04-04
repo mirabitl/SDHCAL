@@ -474,10 +474,12 @@ void FullDaq::configure(levbdim::fsmmessage* m)
       for (auto tdc:_tdcClients)
 	{
 	  tdc->sendTransition("CONFIGURE");
+	  //
+	  std::cout<<"sending command DIFLIST \n";
 	  tdc->sendCommand("DIFLIST");
-	  if (tdc->answer()["DIFLIST"].asString().compare("DIFLIST")!=0)
+	  if (tdc->answer()["answer"].isMember("DIFLIST"))
 	    {
-	     const Json::Value& jdevs=tdc->answer()["DIFLIST"];
+	     const Json::Value& jdevs=tdc->answer()["answer"]["DIFLIST"];
 	     for (Json::ValueConstIterator it = jdevs.begin(); it != jdevs.end(); ++it)
 	       {
 		 Json::Value jd;
@@ -487,7 +489,7 @@ void FullDaq::configure(levbdim::fsmmessage* m)
 	       } 
 	    }
 	}
-      //std::cout<<"SENDING "<<jsou<<std::endl;
+      std::cout<<"SENDING "<<jsou<<std::endl;
       Json::Value jl;
       jl["sources"]=jsou;
       _builderClient->sendTransition("CONFIGURE",jl);
@@ -857,7 +859,7 @@ void FullDaq::triggerStatus(Mongoose::Request &request, Mongoose::JsonResponse &
 {
   if (_mdccClient==NULL){LOG4CXX_ERROR(_logLdaq, "No MDC client");response["STATUS"]= "No MDCC client";return;}
   _mdccClient->sendCommand("STATUS");
-  response["COUNTERS"]=_mdccClient->answer()["COUNTERS"];
+  response["COUNTERS"]=_mdccClient->answer()["answer"]["COUNTERS"];
   response["STATUS"]="DONE";
 }
 void FullDaq::triggerSpillOn(Mongoose::Request &request, Mongoose::JsonResponse &response)//uint32_t nc)
