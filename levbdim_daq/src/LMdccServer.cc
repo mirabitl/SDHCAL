@@ -251,8 +251,8 @@ void LMdccServer::c_resettdc(Mongoose::Request &request, Mongoose::JsonResponse 
 {
 
   if (_mdcc==NULL)    {response["STATUS"]="NO Mdcc created"; return;}
-  //uint32_t nc=atol(request.get("nclock","5000").c_str());
-  _mdcc->resetTDC();
+  uint32_t nc=atol(request.get("value","0").c_str());
+  _mdcc->resetTDC(nc&0xF);
 
   response["STATUS"]="DONE";
   //response["NCLOCK"]=nc;
