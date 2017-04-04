@@ -247,6 +247,17 @@ void LMdccServer::c_spilloff(Mongoose::Request &request, Mongoose::JsonResponse 
   response["NCLOCK"]=nc;
 
 } 
+void LMdccServer::c_resettdc(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+
+  if (_mdcc==NULL)    {response["STATUS"]="NO Mdcc created"; return;}
+  //uint32_t nc=atol(request.get("nclock","5000").c_str());
+  _mdcc->resetTDC();
+
+  response["STATUS"]="DONE";
+  //response["NCLOCK"]=nc;
+
+} 
 
 void LMdccServer::c_beamon(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
@@ -268,9 +279,9 @@ void LMdccServer::c_status(Mongoose::Request &request, Mongoose::JsonResponse &r
   rc["id"]=_mdcc->id();
   rc["mask"]=_mdcc->mask();
   rc["spill"]=_mdcc->spillCount();
-  rc["busy1"]=_mdcc->busy1Count();
-  rc["busy2"]=_mdcc->busy2Count();
-  rc["busy3"]=_mdcc->busy3Count();
+  rc["busy1"]=_mdcc->busyCount(1);
+  rc["busy2"]=_mdcc->busyCount(2);
+  rc["busy3"]=_mdcc->busyCount(3);
   rc["spillon"]=_mdcc->spillOn();
   rc["spilloff"]=_mdcc->spillOff();
   rc["ecalmask"]=_mdcc->ecalmask();
@@ -304,9 +315,9 @@ void LMdccServer::cmd(levbdim::fsmmessage* m)
       rc["id"]=_mdcc->id();
       rc["mask"]=_mdcc->mask();
       rc["spill"]=_mdcc->spillCount();
-      rc["busy1"]=_mdcc->busy1Count();
-      rc["busy2"]=_mdcc->busy2Count();
-      rc["busy3"]=_mdcc->busy3Count();
+      rc["busy1"]=_mdcc->busyCount(1);
+      rc["busy2"]=_mdcc->busyCount(2);
+      rc["busy3"]=_mdcc->busyCount(3);
       rc["spillon"]=_mdcc->spillOn();
       rc["spilloff"]=_mdcc->spillOff();
       rc["ecalmask"]=_mdcc->ecalmask();
@@ -407,7 +418,7 @@ LMdccServer::LMdccServer(std::string name) : levbdim::baseApplication(name),_mdc
  _fsm->addCommand("SPILLOFF",boost::bind(&LMdccServer::c_spilloff,this,_1,_2));
  _fsm->addCommand("BEAMON",boost::bind(&LMdccServer::c_beamon,this,_1,_2));
 
-
+ _fsm->addCommand("RESETTDC",boost::bind(&LMdccServer::c_resettdc,this,_1,_2));
  _fsm->addCommand("CALIBON",boost::bind(&LMdccServer::c_calibon,this,_1,_2));
  _fsm->addCommand("CALIBOFF",boost::bind(&LMdccServer::c_caliboff,this,_1,_2));
  _fsm->addCommand("RELOADCALIB",boost::bind(&LMdccServer::c_reloadcalib,this,_1,_2));
@@ -436,7 +447,7 @@ void LMdccServer::doOpen(std::string s)
   std::cout<<"calling open "<<std::endl;
   if (_mdcc!=NULL)
     delete _mdcc;
-  _mdcc= new MDCCReadout(s);
+  _mdcc= new MDCCHandler(s);
   _mdcc->open();
   //std::cout<<" Open Ptr "<<_mdcc<<std::endl;
 }

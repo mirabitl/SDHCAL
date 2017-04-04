@@ -7,7 +7,7 @@
 #include<stdio.h>
 #include "baseApplication.hh"
 
-#include "MDCCReadout.h"
+#include "MDCCHandler.hh"
 
 using namespace std;
 #include <sstream>
@@ -27,7 +27,7 @@ public:
   void cmd(levbdim::fsmmessage* m);
   void doOpen(std::string s);
 
-  MDCCReadout* getMDCCReadout(){  //std::cout<<" get Ptr "<<_mdcc<<std::endl;
+  MDCCHandler* getMDCCHandler(){  //std::cout<<" get Ptr "<<_mdcc<<std::endl;
     return _mdcc;}
   void c_joblog(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void c_status(Mongoose::Request &request, Mongoose::JsonResponse &response);
@@ -45,11 +45,12 @@ public:
   void c_reloadcalib(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void c_calibon(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void c_caliboff(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_resettdc(Mongoose::Request &request, Mongoose::JsonResponse &response);
 private:
   //levbdim::fsm* _fsm;
   fsmweb* _fsm;
  
-  MDCCReadout* _mdcc;
+  MDCCHandler* _mdcc;
 };
 #endif
 
