@@ -176,6 +176,7 @@ void TdcManager::initialise(levbdim::fsmmessage* m)
   try {
   _sTDC1=new NL::Socket(hTDC1.c_str(),pTDC1);
   _group->add(_sTDC1);
+  _msh->setMezzanine(1,hTDC1);
   }
   catch (NL::Exception e)
   {
@@ -195,6 +196,7 @@ void TdcManager::initialise(levbdim::fsmmessage* m)
   if (_sTDC2!=NULL) delete _sTDC2;
   _sTDC2=new NL::Socket(hTDC2.c_str(),pTDC2);
   _group->add(_sTDC2);
+  _msh->setMezzanine(2,hTDC2);
   }
  catch (NL::Exception e)
   {
@@ -228,7 +230,8 @@ void TdcManager::listen()
 {
   g_store.create_thread(boost::bind(&TdcManager::dolisten, this));
   _running=true;
-  g_run.create_thread(boost::bind(&TdcManager::doStart, this));
+  // Comment out for LEVBDIM running
+  //g_run.create_thread(boost::bind(&TdcManager::doStart, this));
 
 }
 void TdcManager::configure(levbdim::fsmmessage* m)

@@ -16,6 +16,15 @@ TdcMessageHandler::TdcMessageHandler(std::string directory) : _storeDir(director
   _tdc[0]=NULL;
   _tdc[1]=NULL;
 }
+void TdcMessageHandler::setMezzanine(uint8_t mezz,std::string host)
+{
+  if (_tdc[mezz-1]==NULL)
+    {
+      uint32_t ip_address=TdcMessageHandler::convertIP(host);
+      _tdc[mezz-1]=new TdcFpga(mezz,ip_address);
+      _tdc[mezz-1]->setStorage("/tmp");
+    }
+}
 void TdcMessageHandler::parseTdcData(NL::Socket* socket,ptrBuf& p) throw (std::string)
 {
   // found TDC

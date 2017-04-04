@@ -19,6 +19,8 @@ class TdcMessageHandler : public lytdc::MessageHandler
     void setReadout(uint64_t idsock,uint32_t e){_readout[idsock]=e;}
     std::map<uint64_t,uint32_t>& readoutMap(){return _readout;}
     TdcFpga* tdc(uint32_t i){return _tdc[i];}
+    void setMezzanine(uint8_t mezz,std::string host);
+
   private:
     std::string _storeDir;
     std::map<uint64_t, ptrBuf> _sockMap;
