@@ -25,6 +25,8 @@ LBuilder::LBuilder(std::string name) : levbdim::baseApplication(name),_evb(NULL)
 
   _fsm->addTransition("REGISTERDS","INITIALISED","INITIALISED",boost::bind(&LBuilder::registerDataSource,this,_1));
 
+
+  _fsm->addCommand("SETHEADER",boost::bind(&LBuilder::c_setheader,this,_1,_2));
   //Start server
   std::stringstream s0;
   s0.str(std::string());
@@ -36,6 +38,28 @@ LBuilder::LBuilder(std::string name) : levbdim::baseApplication(name),_evb(NULL)
       std::cout<<"Service "<<name<<" started on port "<<atoi(wp)<<std::endl;
     _fsm->start(atoi(wp));
     }
+
+}
+void LBuilder::c_setheader(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+
+  if (_evb==NULL)    {response["STATUS"]="NO EVB created"; return;}
+  std::string shead=request.get("header","None");
+  if (shead.compare("None")==0)
+    {response["STATUS"]="NO header provided "; return;}
+  Json::Reader reader;
+  Json::Value jsta;
+  bool parsingSuccessful = reader.parse(shead,jsta);
+  if (!parsingSuccessful)
+    {response["STATUS"]="Cannot parse header tag "; return;}
+  const Json::Value& jdevs=jsta;
+  std::vector<uint32_t>& v=_evb->runHeader();
+  v.clear();
+  for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
+    v.push_back((*jt).asInt());
+  _evb->processRunHeader();
+  response["STATUS"]="DONE";
+  response["VALUE"]=jsta;
 
 }
 void LBuilder::registerDataSource(levbdim::fsmmessage* m)
