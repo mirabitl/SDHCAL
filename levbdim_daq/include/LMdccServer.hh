@@ -46,6 +46,8 @@ public:
   void c_calibon(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void c_caliboff(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void c_resettdc(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_setspillregister(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_settrigext(Mongoose::Request &request, Mongoose::JsonResponse &response);
 private:
   //levbdim::fsm* _fsm;
   fsmweb* _fsm;

@@ -269,7 +269,33 @@ void LMdccServer::c_beamon(Mongoose::Request &request, Mongoose::JsonResponse &r
   response["STATUS"]="DONE";
   response["NCLOCK"]=nc;
 
+}
+void LMdccServer::c_setspillregister(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+
+  if (_mdcc==NULL)    {response["STATUS"]="NO Mdcc created"; return;}
+  uint32_t nc=atol(request.get("value","0").c_str());
+  _mdcc->setSpillRegister(nc);
+
+  response["STATUS"]="DONE";
+  response["VALUE"]=nc;
+
 } 
+void LMdccServer::c_settrigext(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+
+  if (_mdcc==NULL)    {response["STATUS"]="NO Mdcc created"; return;}
+  uint32_t delay=atol(request.get("delay","20").c_str());
+  uint32_t busy=atol(request.get("busy","20").c_str());
+  _mdcc->setTriggerDelay(delay);
+  _mdcc->setTriggerBusy(busy);
+
+  response["STATUS"]="DONE";
+  response["DELAY"]=delay;
+  response["BUSY"]=busy;
+
+} 
+
 void LMdccServer::c_status(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
 
@@ -287,6 +313,9 @@ void LMdccServer::c_status(Mongoose::Request &request, Mongoose::JsonResponse &r
   rc["ecalmask"]=_mdcc->ecalmask();
   rc["beam"]=_mdcc->beam();
   rc["calib"]=_mdcc->calibCount();
+  rc["spillreg"]=_mdcc->spillRegister();
+  rc["trigdelay"]=_mdcc->triggerDelay();
+  rc["trigbusy"]=_mdcc->triggerBusy();
   response["COUNTERS"]=rc;
   response["STATUS"]="DONE";
 
@@ -422,7 +451,9 @@ LMdccServer::LMdccServer(std::string name) : levbdim::baseApplication(name),_mdc
  _fsm->addCommand("CALIBON",boost::bind(&LMdccServer::c_calibon,this,_1,_2));
  _fsm->addCommand("CALIBOFF",boost::bind(&LMdccServer::c_caliboff,this,_1,_2));
  _fsm->addCommand("RELOADCALIB",boost::bind(&LMdccServer::c_reloadcalib,this,_1,_2));
-  _fsm->addCommand("SETCALIBCOUNT",boost::bind(&LMdccServer::c_setcalibcount,this,_1,_2));
+ _fsm->addCommand("SETCALIBCOUNT",boost::bind(&LMdccServer::c_setcalibcount,this,_1,_2));
+ _fsm->addCommand("SETSPILLREGISTER",boost::bind(&LMdccServer::c_setspillregister,this,_1,_2));
+ _fsm->addCommand("SETTRIGEXT",boost::bind(&LMdccServer::c_settrigext,this,_1,_2));
 
 
  
