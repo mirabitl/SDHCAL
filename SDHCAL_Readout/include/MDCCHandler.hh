@@ -46,6 +46,15 @@ public:
   void setCalibCount(uint32_t nc);
 
 
+  void setSpillRegister(uint32_t nc);
+  uint32_t spillRegister();
+  void useSPSSpill(bool t);
+  void useTrigExt(bool t);
+  void setTriggerDelay(uint32_t nc);
+  uint32_t triggerDelay();
+  void setTriggerBusy(uint32_t nc);
+  uint32_t triggerBusy();
+
   
 private : 
   FtdiUsbDriver* _driver;

@@ -62,7 +62,12 @@ when x"0009" => USB_data_out <= Calib_Counter_register;
 when x"000A" => USB_data_out <= nb_windows_register;
 when x"000B" => USB_data_out <= software_ECALveto_register;
 when x"000C" => USB_data_out <= Rstdet_register;
- 
+ 0xD   bit 0 => start/end of spill used
+       bit 1 => trigext used
+ default 0
+
+ 0XE delay trigext
+ OXF length busy trigext 
 
 when x"0010" => USB_data_out <= busy0Nb_register;
 when x"0011" => USB_data_out <= busy1Nb_register;
@@ -103,6 +108,31 @@ void MDCCHandler::calibOn(){this->writeRegister(0x8,0x2);}
 void MDCCHandler::calibOff(){this->writeRegister(0x8,0x0);}
 uint32_t MDCCHandler::calibCount(){return this->readRegister(0xa);}
 void MDCCHandler::setCalibCount(uint32_t nc){this->writeRegister(0xa,nc);}
+
+void MDCCHandler::setSpillRegister(uint32_t nc){this->writeRegister(0xD,nc);}
+uint32_t MDCCHandler::spillRegister(){this->readRegister(0xD);}
+void MDCCHandler::useSPSSpill(bool t)
+{
+  uint32_t reg=this->spillRegister();
+  if (t)
+    this->setSpillRegister(reg|1);
+  else
+    this->setSpillRegister(reg&~1);
+}
+void MDCCHandler::useTrigExt(bool t)
+{
+  uint32_t reg=this->spillRegister();
+  if (t)
+    this->setSpillRegister(reg|2);
+  else
+    this->setSpillRegister(reg&~2);
+}
+
+void MDCCHandler::setTriggerDelay(uint32_t nc){this->writeRegister(0xE,nc);}
+uint32_t MDCCHandler::triggerDelay(){this->readRegister(0xE);}
+void MDCCHandler::setTriggerBusy(uint32_t nc){this->writeRegister(0xF,nc);}
+uint32_t MDCCHandler::triggerBusy(){this->readRegister(0xF);}
+
 
 void MDCCHandler::reloadCalibCount(){
   
