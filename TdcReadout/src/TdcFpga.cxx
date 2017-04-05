@@ -27,6 +27,12 @@ TdcFpga::TdcFpga(uint32_t m,uint32_t adr) :_abcid(0),_gtc(0),_mezzanine(m),_last
    _detid=110;
    _dsData = new levbdim::datasource(_detid,_id,MAX_EVENT_SIZE);
 }
+void TdcFpga::clear()
+{
+  _gtc=0;
+  _event=0;
+  _lastGtc=0;
+}
 void TdcFpga::addChannels(uint8_t* buf,uint32_t size_buf)
 {
   _nBuffers++;
@@ -81,4 +87,6 @@ void TdcFpga::processEventTdc()
 
    memcpy((unsigned char*) _dsData->payload(),temp,idx);
    _dsData->publish(_gtc,_abcid,idx);
+   if (_event%100==0)
+     std::cout<<_mezzanine<<" "<<_event<<" "<<_gtc<<" "<<_abcid<<" "<<_channels.size()<<std::endl<<std::flush;
 }

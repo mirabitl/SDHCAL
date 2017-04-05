@@ -48,6 +48,7 @@ TdcManager::TdcManager(std::string name) : levbdim::baseApplication(name), _grou
   //_fsm->addCommand("JOBLOG",boost::bind(&TdcManager::c_joblog,this,_1,_2));
   _fsm->addCommand("STATUS",boost::bind(&TdcManager::c_status,this,_1,_2));
   _fsm->addCommand("DIFLIST",boost::bind(&TdcManager::c_diflist,this,_1,_2));
+  _fsm->addCommand("SET6BDAC",boost::bind(&TdcManager::c_set6bdac,this,_1,_2));
   
   
   
@@ -75,13 +76,20 @@ TdcManager::TdcManager(std::string name) : levbdim::baseApplication(name), _grou
 void TdcManager::c_status(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   response["STATUS"]="DONE";
- 
-  for (std::map<uint64_t,uint32_t>::iterator idr=_msh->readoutMap().begin();idr!=_msh->readoutMap().end();idr++)
+   if (_msh==NULL) return;
+  Json::Value jl;
+  for (uint32_t i=0;i<2;i++)
     {
-      std::stringstream ss;
-      ss<<boost::format("EVENT%lx") % idr->first; 
-      response[ss.str()]=idr->second;
+      if (_msh->tdc(i)==NULL) continue;
+      Json::Value jt;
+      jt["detid"]=_msh->tdc(i)->detectorId();
+      jt["sourceid"]=_msh->tdc(i)->difId();
+      jt["gtc"]=_msh->tdc(i)->gtc();
+      jt["abcid"]=(Json::Value::UInt64)_msh->tdc(i)->abcid();
+      jt["event"]=_msh->tdc(i)->event();
+      jl.append(jt);
     }
+  response["TDCSTATUS"]=jl;
 }
 void TdcManager::c_diflist(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
@@ -98,6 +106,18 @@ void TdcManager::c_diflist(Mongoose::Request &request, Mongoose::JsonResponse &r
       jl.append(jt);
     }
   response["DIFLIST"]=jl;
+}
+
+void TdcManager::c_set6bdac(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  response["STATUS"]="DONE";
+
+  if (_msh==NULL) return;
+  
+  uint32_t nc=atol(request.get("value","31").c_str());
+  
+  this->set6bDac(nc&0xFF);
+  response["6BDAC"]=nc;
 }
 void TdcManager::initialise(levbdim::fsmmessage* m)
 {
@@ -843,7 +863,12 @@ void TdcManager::start(levbdim::fsmmessage* m)
   s<<_directory<<"/tdc"<<_run<<".root";
   
   this->createTrees(s.str());
-  
+  // Clear evnt number
+   for (uint32_t i=0;i<2;i++)
+    {
+      if (_msh->tdc(i)==NULL) continue;
+      _msh->tdc(i)->clear();
+    }
  
   switch (_type)
     {
@@ -880,7 +905,7 @@ void TdcManager::stop(levbdim::fsmmessage* m)
   std::cout<<m->command()<<std::endl<<m->content()<<std::endl;
   
   this->startAcquisition(false);
-  ::sleep(10);
+  ::sleep(2);
   //g_run.join_all();
   this->closeTrees();
 }

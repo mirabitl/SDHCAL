@@ -40,6 +40,10 @@ public:
   void addChannels(uint8_t* buf,uint32_t sizeb);
   uint32_t detectorId(){return _detid;}
   uint32_t difId(){return _id;}
+  uint64_t abcid(){return _abcid;}
+  uint32_t gtc(){return _gtc;}
+  uint32_t event(){return _event;}
+  void clear();
 private:
   uint32_t _mezzanine,_adr,_startIdx;
   uint8_t _buf[0x100000];
