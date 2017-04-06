@@ -464,6 +464,7 @@ class fdaqClient:
       print sr    
       
 
+      
   def trig_status(self):
       lcgi={}
       sr=executeCMD(self.daqhost,self.daqport,"FDAQ","TRIGGERSTATUS",lcgi)
@@ -514,7 +515,79 @@ class fdaqClient:
       
       sr=executeCMD(self.daqhost,self.daqport,"FDAQ","BEAMON",lcgi)
       print sr    
-                  
+
+  def trig_spillregister(self,value):
+      lcgi={}
+      lcgi["value"]=value
+      
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","SPILLREGISTER",lcgi)
+      print sr    
+
+  def trig_calibcount(self,value):
+      lcgi={}
+      lcgi["clock"]=value
+      
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","CALIBCOUNT",lcgi)
+      print sr    
+
+  def trig_calibon(self,value):
+      lcgi={}
+      lcgi["value"]=value
+      
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","CALIBON",lcgi)
+      print sr    
+
+  def trig_reloadcalib(self):
+      lcgi={}
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","RELOADCALIB",lcgi)
+      print sr    
+
+  def tdc_set6bdac(self,value):
+      lcgi={}
+      lcgi["value"]=value
+      
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","SET6BDAC",lcgi)
+      print sr    
+
+  def daq_setrunheader(self,rtyp,value):
+      lcgi={}
+      lcgi["value"]=value
+      lcgi["type"]=rtyp
+      
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","SETRUNHEADER",lcgi)
+      print sr    
+
+  def daq_calibdac(self):
+      ntrg=800
+      self.trig_spillon(10)
+      self.trig_spilloff(100000)
+      self.trig_spillregister(0)
+      self.trig_calibon(1)
+      self.trig_calibcount(ntrg)
+      self.trig_status()
+
+      for idac in range(11,61):
+          self.tdc_set6bdac(idac)
+          self.daq_setrunheader(1,idac)
+          # check current evb status
+          sr=self.daq_evbstatus()
+          sj=json.loads(sr)
+          ssj=sj["answer"]
+          firstEvent=int(ssj["event"])
+          time.sleep(2)
+          self.trig_reloadcalib()
+          self.trig_resume()
+          self.trig_status()
+          lastEvent=firstEvent
+          while (lastEvent<(firstEvent+ntrg-1)):
+              sr=self.daq_evbstatus()
+              sj=json.loads(sr)
+              ssj=sj["answer"]
+              lastEvent=int(ssj["event"])
+              print firstEvent,lastEvent,idac
+              time.sleep(1)
+      return
+    
 parser = argparse.ArgumentParser()
 
 # configure all the actions
@@ -551,6 +624,7 @@ grp_action.add_argument('--daq-stoprun',action='store_true',help=' stop the run'
 grp_action.add_argument('--daq-destroy',action='store_true',help='destroy the DIF readout, back to the PREPARED state')
 grp_action.add_argument('--daq-downloaddb',action='store_true',help='download the dbsate specified in --dbstate=state')
 grp_action.add_argument('--daq-dbstatus',action='store_true',help='get current run and state from db')
+grp_action.add_argument('--daq-calibdac',action='store_true',help='get current run and state from db')
 grp_action.add_argument('--daq-ctrlreg',action='store_true',help='set the ctrlregister specified with --ctrlreg=register')
 
 # Calibration
@@ -625,7 +699,7 @@ parser.add_argument('--lines', action='store',type=int, default=None,dest='lines
 parser.add_argument('--host', action='store', dest='host',default=None,help='host for log')
 parser.add_argument('--jobname', action='store', dest='jobname',default=None,help='job name')
 parser.add_argument('--jobpid', action='store', type=int,dest='jobpid',default=None,help='job pid')
-
+parser.add_argument('--value', action='store', type=int,dest='value',default=None,help='value to pass')
 
 
 parser.add_argument('-v','--verbose',action='store_true',default=False,help='Raw Json output')
@@ -877,7 +951,10 @@ elif(results.daq_dbstatus):
     else:
         parseReturn(r_cmd,sr)
     exit(0)
-
+elif(results.daq_calibdac):
+    r_cmd='calibdac'
+    fdc.daq_calibdac()
+    exit(0)
 elif(results.daq_downloaddb):
     r_cmd='downloadDB'
     if (results.dbstate!=None):

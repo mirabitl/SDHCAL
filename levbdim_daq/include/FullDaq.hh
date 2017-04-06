@@ -54,6 +54,15 @@ public:
   void setGain(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void registerDataSource(Mongoose::Request &request, Mongoose::JsonResponse &response);
 
+  //Calibration
+  void triggerSpillRegister(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void triggerCalibCount(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void triggerCalibOn(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void triggerReloadCalib(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void tdcSet6bDac(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void setRunHeader(Mongoose::Request &request, Mongoose::JsonResponse &response);
+
+  
   std::string state(){return _fsm->state();}
   void forceState(std::string s){_fsm->setState(s);}
   // Virtual from baseAPplication

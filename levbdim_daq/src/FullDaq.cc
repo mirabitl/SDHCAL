@@ -58,6 +58,15 @@ FullDaq::FullDaq(std::string name) : levbdim::baseApplication(name)
     _fsm->addCommand("SETTHRESHOLD",boost::bind(&FullDaq::setThreshold,this,_1,_2));
     _fsm->addCommand("SETGAIN",boost::bind(&FullDaq::setGain,this,_1,_2));
     _fsm->addCommand("REGISTERDS",boost::bind(&FullDaq::registerDataSource,this,_1,_2));
+
+    //Calibration
+    _fsm->addCommand("SPILLREGISTER",boost::bind(&FullDaq::triggerSpillRegister,this,_1,_2));
+    _fsm->addCommand("CALIBCOUNT",boost::bind(&FullDaq::triggerCalibCount,this,_1,_2));
+    _fsm->addCommand("CALIBON",boost::bind(&FullDaq::triggerCalibOn,this,_1,_2));
+    _fsm->addCommand("RELOADCALIB",boost::bind(&FullDaq::triggerReloadCalib,this,_1,_2));
+    _fsm->addCommand("SET6BDAC",boost::bind(&FullDaq::tdcSet6bDac,this,_1,_2));
+    _fsm->addCommand("SETRUNHEADER",boost::bind(&FullDaq::setRunHeader,this,_1,_2));
+	
     
   cout<<"Building FullDaq"<<endl;
   std::stringstream s0;
@@ -908,7 +917,84 @@ void FullDaq::triggerBeam(Mongoose::Request &request, Mongoose::JsonResponse &re
   return;
 }
 
-    
+void FullDaq::triggerSpillRegister(Mongoose::Request &request, Mongoose::JsonResponse &response)//uint32_t nc)
+{
+  uint32_t nc=atoi(request.get("value","0").c_str());
+  if (_mdccClient==NULL){LOG4CXX_ERROR(_logLdaq, "No MDC client");response["STATUS"]= "No MDCC client";return;}
+ 
+  std::stringstream sp;sp<<"&value="<<nc;
+  _mdccClient->sendCommand("SETSPILLREGISTER",sp.str());
+  
+  response["SPILLREGISTER"]=nc;
+  response["STATUS"]="DONE";
+  return;
+}
+void FullDaq::triggerCalibCount(Mongoose::Request &request, Mongoose::JsonResponse &response)//uint32_t nc)
+{
+  uint32_t nc=atoi(request.get("clock","50").c_str());
+  if (_mdccClient==NULL){LOG4CXX_ERROR(_logLdaq, "No MDC client");response["STATUS"]= "No MDCC client";return;}
+   std::stringstream sp;sp<<"&nclock="<<nc;
+  _mdccClient->sendCommand("SETCALIBCOUNT",sp.str());
+  response["CALIBCOUNT"]=nc;
+  response["STATUS"]="DONE";
+  
+  return;
+}
+
+void FullDaq::triggerCalibOn(Mongoose::Request &request, Mongoose::JsonResponse &response)//uint32_t nc)
+{
+  uint32_t nc=atoi(request.get("value","1").c_str());
+  if (_mdccClient==NULL){LOG4CXX_ERROR(_logLdaq, "No MDC client");response["STATUS"]= "No MDCC client";return;}
+ 
+
+  if (nc==0)
+    _mdccClient->sendCommand("CALIBOFF");
+  else
+    _mdccClient->sendCommand("CALIBON");
+  response["CALIBON"]=nc;
+  response["STATUS"]="DONE";
+  return;
+}
+
+void FullDaq::triggerReloadCalib(Mongoose::Request &request, Mongoose::JsonResponse &response)//uint32_t nc)
+{
+
+  if (_mdccClient==NULL){LOG4CXX_ERROR(_logLdaq, "No MDC client");response["STATUS"]= "No MDCC client";return;}
+
+    _mdccClient->sendCommand("RELOADCALIB");
+
+  response["STATUS"]="DONE";
+  return;
+}
+
+void FullDaq::tdcSet6bDac(Mongoose::Request &request, Mongoose::JsonResponse &response)//uint32_t nc)
+{
+
+  uint32_t nc=atoi(request.get("value","31").c_str());
+  for (auto tdc:_tdcClients)
+    {
+      std::stringstream sp;sp<<"&value="<<nc;
+      tdc->sendCommand("SET6BDAC",sp.str());
+    }
+  response["DAC6B"]=nc;
+  response["STATUS"]="DONE";
+  return;
+}
+
+void FullDaq::setRunHeader(Mongoose::Request &request, Mongoose::JsonResponse &response)//uint32_t nc)
+{
+
+  if (_builderClient==NULL){LOG4CXX_ERROR(_logLdaq, "No Builder client");response["STATUS"]= "No Builder client";return;}
+    uint32_t rtyp=atoi(request.get("type","0").c_str());
+    uint32_t rval=atoi(request.get("value","0").c_str());
+    std::stringstream sp;sp<<"&header=["<<rtyp<<","<<rval<<"]";
+    _builderClient->sendCommand("SETHEADER",sp.str());
+
+  response["STATUS"]="DONE";
+  response["HEADER"]=sp.str();
+  return;
+}
+
 
 
 void FullDaq::setThreshold(Mongoose::Request &request, Mongoose::JsonResponse &response)//uint32_t nc)
