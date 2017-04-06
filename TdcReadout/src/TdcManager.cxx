@@ -49,6 +49,7 @@ TdcManager::TdcManager(std::string name) : levbdim::baseApplication(name), _grou
   _fsm->addCommand("STATUS",boost::bind(&TdcManager::c_status,this,_1,_2));
   _fsm->addCommand("DIFLIST",boost::bind(&TdcManager::c_diflist,this,_1,_2));
   _fsm->addCommand("SET6BDAC",boost::bind(&TdcManager::c_set6bdac,this,_1,_2));
+  _fsm->addCommand("SETMASK",boost::bind(&TdcManager::c_setMask,this,_1,_2));
   
   
   
@@ -118,6 +119,17 @@ void TdcManager::c_set6bdac(Mongoose::Request &request, Mongoose::JsonResponse &
   
   this->set6bDac(nc&0xFF);
   response["6BDAC"]=nc;
+}
+void TdcManager::c_setMask(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  response["STATUS"]="DONE";
+
+  if (_msh==NULL) return;
+  
+  uint32_t nc=atol(request.get("value","31").c_str());
+  
+  this->setMask(nc&0x1F);
+  response["MASK"]=nc;
 }
 void TdcManager::initialise(levbdim::fsmmessage* m)
 {
@@ -344,6 +356,8 @@ void TdcManager::configure(levbdim::fsmmessage* m)
 
 void TdcManager::set6bDac(uint8_t dac)
 {
+  //this->startAcquisition(false);
+  ::sleep(1);
   for (int i=0;i<32;i++)
     {
       _s1.set6bDac(i,dac);
@@ -363,6 +377,44 @@ void TdcManager::set6bDac(uint8_t dac)
 
   // store an "event"
   this->storeSlowControl(0x100);
+  //this->startAcquisition(true);
+  ::sleep(1);
+
+}
+void TdcManager::setMask(uint8_t mask)
+{
+  //this->startAcquisition(false);
+  ::sleep(1);
+  for (int i=0;i<32;i++)
+    {
+      if ((mask>>i)&1)
+	{
+	  _s1.setMaskDiscriTime(i,0);
+	  _s2.setMaskDiscriTime(i,0);
+	}
+      else
+	{
+	  _s1.setMaskDiscriTime(i,1);
+	  _s2.setMaskDiscriTime(i,1);
+	}
+    }
+  _s2.prepare4Tdc(_slcAddr,_slcBuffer);
+  _s1.prepare4Tdc(_slcAddr,_slcBuffer,80);
+  //s2.prepare4Tdc(adr,val,80);
+  _slcBytes=160;
+  _slcBuffer[_slcBytes]=0x3;
+  _slcAddr[_slcBytes]=0x201;
+  _slcBytes++;
+  this->writeRamAvm();
+
+  // do it twice
+  this->writeRamAvm();
+
+  // store an "event"
+  this->storeSlowControl(0x100);
+  //this->startAcquisition(true);
+  ::sleep(1);
+
 }
 
 void TdcManager::setVthTime(uint32_t vth)
