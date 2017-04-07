@@ -548,33 +548,40 @@ class fdaqClient:
       
       sr=executeCMD(self.daqhost,self.daqport,"FDAQ","SET6BDAC",lcgi)
       print sr    
+  def tdc_setmask(self,value):
+      lcgi={}
+      lcgi["value"]=value
+      
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","SETMASK",lcgi)
+      print sr    
 
-  def daq_setrunheader(self,rtyp,value):
+  def daq_setrunheader(self,rtyp,value,mask=0XFFFFFFFF):
       lcgi={}
       lcgi["value"]=value
       lcgi["type"]=rtyp
-      
+      lcgi["mask"]=mask
       sr=executeCMD(self.daqhost,self.daqport,"FDAQ","SETRUNHEADER",lcgi)
       print sr    
 
-  def daq_calibdac(self):
-      ntrg=800
-      self.trig_spillon(10)
+  def daq_calibdac(self,ntrg,ncon,dacmin,dacmax,mask):
+      self.trig_pause()
+      self.trig_spillon(30)
       self.trig_spilloff(100000)
       self.trig_spillregister(0)
       self.trig_calibon(1)
       self.trig_calibcount(ntrg)
       self.trig_status()
 
-      for idac in range(11,61):
+      for idac in range(dacmin,dacmax+1):
           self.tdc_set6bdac(idac)
+          #self.tdc_setmask(mask)
           self.daq_setrunheader(1,idac)
           # check current evb status
           sr=self.daq_evbstatus()
           sj=json.loads(sr)
           ssj=sj["answer"]
           firstEvent=int(ssj["event"])
-          time.sleep(2)
+          time.sleep(1)
           self.trig_reloadcalib()
           self.trig_resume()
           self.trig_status()
@@ -586,6 +593,8 @@ class fdaqClient:
               lastEvent=int(ssj["event"])
               print firstEvent,lastEvent,idac
               time.sleep(1)
+      self.trig_calibon(0)
+      self.trig_pause()
       return
     
 parser = argparse.ArgumentParser()
@@ -953,7 +962,7 @@ elif(results.daq_dbstatus):
     exit(0)
 elif(results.daq_calibdac):
     r_cmd='calibdac'
-    fdc.daq_calibdac()
+    fdc.daq_calibdac(400,15,11,61,0xFFFFFFFF)
     exit(0)
 elif(results.daq_downloaddb):
     r_cmd='downloadDB'

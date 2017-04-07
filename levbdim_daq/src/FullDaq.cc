@@ -65,6 +65,8 @@ FullDaq::FullDaq(std::string name) : levbdim::baseApplication(name)
     _fsm->addCommand("CALIBON",boost::bind(&FullDaq::triggerCalibOn,this,_1,_2));
     _fsm->addCommand("RELOADCALIB",boost::bind(&FullDaq::triggerReloadCalib,this,_1,_2));
     _fsm->addCommand("SET6BDAC",boost::bind(&FullDaq::tdcSet6bDac,this,_1,_2));
+    _fsm->addCommand("SET6BDAC",boost::bind(&FullDaq::tdcSet6bDac,this,_1,_2));
+    _fsm->addCommand("SETMASK",boost::bind(&FullDaq::tdcSetMask,this,_1,_2));
     _fsm->addCommand("SETRUNHEADER",boost::bind(&FullDaq::setRunHeader,this,_1,_2));
 	
     
@@ -977,6 +979,19 @@ void FullDaq::tdcSet6bDac(Mongoose::Request &request, Mongoose::JsonResponse &re
       tdc->sendCommand("SET6BDAC",sp.str());
     }
   response["DAC6B"]=nc;
+  response["STATUS"]="DONE";
+  return;
+}
+void FullDaq::tdcSetMask(Mongoose::Request &request, Mongoose::JsonResponse &response)//uint32_t nc)
+{
+
+  uint32_t nc=atoi(request.get("value","31").c_str());
+  for (auto tdc:_tdcClients)
+    {
+      std::stringstream sp;sp<<"&value="<<nc;
+      tdc->sendCommand("SETMASK",sp.str());
+    }
+  response["MASK"]=nc;
   response["STATUS"]="DONE";
   return;
 }

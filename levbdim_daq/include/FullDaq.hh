@@ -60,6 +60,7 @@ public:
   void triggerCalibOn(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void triggerReloadCalib(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void tdcSet6bDac(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void tdcSetMask(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void setRunHeader(Mongoose::Request &request, Mongoose::JsonResponse &response);
 
   
