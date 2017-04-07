@@ -87,6 +87,6 @@ void TdcFpga::processEventTdc()
 
    memcpy((unsigned char*) _dsData->payload(),temp,idx);
    _dsData->publish(_gtc,_abcid,idx);
-   if (_event%100==0)
+   if (_event%5==0)
      std::cout<<_mezzanine<<" "<<_event<<" "<<_gtc<<" "<<_abcid<<" "<<_channels.size()<<std::endl<<std::flush;
 }
