@@ -1002,6 +1002,7 @@ void FullDaq::setRunHeader(Mongoose::Request &request, Mongoose::JsonResponse &r
   if (_builderClient==NULL){LOG4CXX_ERROR(_logLdaq, "No Builder client");response["STATUS"]= "No Builder client";return;}
     uint32_t rtyp=atoi(request.get("type","0").c_str());
     uint32_t rval=atoi(request.get("value","0").c_str());
+    uint32_t mask=atoi(request.get("mask","4294967295").c_str());
     std::stringstream sp;sp<<"&header=["<<rtyp<<","<<rval<<"]";
     _builderClient->sendCommand("SETHEADER",sp.str());
 

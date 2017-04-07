@@ -566,11 +566,12 @@ class fdaqClient:
   def daq_calibdac(self,ntrg,ncon,dacmin,dacmax,mask):
       self.trig_pause()
       self.trig_spillon(30)
-      self.trig_spilloff(100000)
+      self.trig_spilloff(1000000)
       self.trig_spillregister(0)
       self.trig_calibon(1)
       self.trig_calibcount(ntrg)
       self.trig_status()
+      #self.tdc_setmask(63)
 
       for idac in range(dacmin,dacmax+1):
           self.tdc_set6bdac(idac)
@@ -586,13 +587,17 @@ class fdaqClient:
           self.trig_resume()
           self.trig_status()
           lastEvent=firstEvent
-          while (lastEvent<(firstEvent+ntrg-1)):
+          nloop=0;
+          while (lastEvent<(firstEvent+ntrg-10)):
               sr=self.daq_evbstatus()
               sj=json.loads(sr)
               ssj=sj["answer"]
               lastEvent=int(ssj["event"])
               print firstEvent,lastEvent,idac
               time.sleep(1)
+              nloop=nloop+1
+              if (nloop>20):
+                  break
       self.trig_calibon(0)
       self.trig_pause()
       return
@@ -962,7 +967,7 @@ elif(results.daq_dbstatus):
     exit(0)
 elif(results.daq_calibdac):
     r_cmd='calibdac'
-    fdc.daq_calibdac(400,15,11,61,0xFFFFFFFF)
+    fdc.daq_calibdac(200,15,15,61,4294967295)
     exit(0)
 elif(results.daq_downloaddb):
     r_cmd='downloadDB'
