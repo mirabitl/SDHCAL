@@ -171,8 +171,23 @@ bs.addRun(733655,"/data/srv02/RAID6/Oct2016/SMM_071016_233612_733655.dat");
   //bs.addRun(734693,"/data/srv02/RAID6/Dome0916/SMM_060417_113630_734693.dat");
   //bs.addRun(734695,"/data/srv02/RAID6/Dome0916/SMM_060417_133638_734695.dat");
   //bs.addRun(734696,"/data/srv02/RAID6/Dome0916/SMM_060417_141925_734696.dat");
-  bs.addRun(734697,"/data/srv02/RAID6/Dome0916/SMM_060417_144308_734697.dat");
+  //bs.addRun(734697,"/data/srv02/RAID6/Dome0916/SMM_060417_144308_734697.dat");
   //bs.addRun(734698,"/data/srv02/RAID6/Dome0916/SMM_060417_145503_734698.dat");
+  //bs.addRun(734707,"/data/srv02/RAID6/Dome0916/SMM_070417_063254_734707.dat");
+  //bs.addRun(734708,"/data/srv02/RAID6/Dome0916/SMM_070417_065109_734708.dat");
+  //bs.addRun(734716,"/data/srv02/RAID6/Dome0916/SMM_070417_103018_734716.dat");
+  // bs.addRun(734720,"/data/srv02/RAID6/Dome0916/SMM_070417_113308_734720.dat");
+
+  //bs.addRun(734721,"/data/srv02/RAID6/Dome0916/SMM_070417_140432_734721.dat");
+  //bs.addRun(734722,"/data/srv02/RAID6/Dome0916/SMM_070417_141907_734722.dat");
+  // PR 0
+  /// bs.addRun(734732,"/data/srv02/RAID6/Dome0916/SMM_070417_151758_734732.dat");
+  //PR 1
+  ///bs.addRun(734733,"/data/srv02/RAID6/Dome0916/SMM_070417_153153_734733.dat");
+  //PR 3
+  //bs.addRun(734734,"/data/srv02/RAID6/Dome0916/SMM_070417_153851_734734.dat");
+  // PR 4
+  bs.addRun(734735,"/data/srv02/RAID6/Dome0916/SMM_070417_155603_734735.dat");
   DCHistogramHandler rootHandler;
   DHCalEventReader  dher;
   
