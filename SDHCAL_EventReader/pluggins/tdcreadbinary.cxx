@@ -81,6 +81,9 @@ void tdcreadbinary::Read()
     {
       std::cout<<"NEW File "<<it->first<<" "<<it->second<<std::endl;
       _run=it->first;
+      std::stringstream sff;
+      sff<<"sudo chmod o+r "<<it->second;
+      system(sff.str().c_str());
       this->open(it->second);
       this->read();
       this->close();
@@ -148,7 +151,8 @@ void tdcreadbinary::read()
 	  if (b.detectorId()==255)
 	    {
 	       uint32_t* buf=(uint32_t*) b.payload();
-	       
+	       printf("NEW RUN %d \n",_event);
+	       _run=_event;
 	  for (int i=0;i<b.payloadSize()/4;i++)
 	    {
 	      printf("%d ",buf[i]);
@@ -156,7 +160,9 @@ void tdcreadbinary::read()
 	  _runType=buf[0];
 	  if (_runType==1)
 	    _dacSet=buf[1];
-	  printf("\n Run type %d DAC set %d \n",_runType,_dacSet);
+	  if (_runType==2)
+	    _vthSet=buf[1];
+	  printf("\n Run type %d DAC set %d VTH set %d \n",_runType,_dacSet,_vthSet);
 
 	    }
 	   if (b.detectorId()==110)
@@ -187,6 +193,7 @@ void tdcreadbinary::read()
 	      _mezzanine=ibuf[4];
 	      _gtc=ibuf[1];
 	      if (_runType==1) this->pedestalAnalysis();
+	      if (_runType==2) this->scurveAnalysis();
 	    }
 	    }
 	  if (b.detectorId()!=100) continue;
@@ -342,6 +349,43 @@ void tdcreadbinary::pedestalAnalysis()
 	   if (dt>25 || dt<0)
 	     hdac->Fill(dac*1.);
 	 }//break;}
+       }
+   }
+
+}
+void tdcreadbinary::scurveAnalysis()
+{
+
+  //if (_gtc[_mezzanine-1]
+  std::cout<<"Mezzanine "<<_mezzanine<<"Event "<<_event<<" GTC"<<_gtc<<" hits"<<_channels.size()<<std::endl;
+
+ // Analyze
+ std::stringstream sr;
+ sr<<"/run"<<_run<<"/TDC"<<_mezzanine<<"/";
+
+ uint32_t vth =_vthSet;
+ for (int ich=0;ich<28;ich++)
+   {
+ 
+      std::stringstream src;
+      src<<sr.str()<<"vth"<<ich;
+     TH1* hvth=_rh->GetTH1(src.str());
+     if (hvth==NULL)
+       {
+	 
+	 hvth=_rh->BookTH1(src.str(),300,200.,500.);
+       }
+     bool found=false;
+     double lastf=0;
+     for (auto x :_channels)
+       {
+	 if (x.channel()==ich) {
+	   //printf("%d %d %f \n",x.channel(),x.bcid(),x.tdcTime());
+	   double dt=x.tdcTime()-lastf;
+	   lastf=x.tdcTime();
+	   if (dt>25 || dt<0)
+	     hvth->Fill(vth*1.);
+	 break;}
        }
    }
 

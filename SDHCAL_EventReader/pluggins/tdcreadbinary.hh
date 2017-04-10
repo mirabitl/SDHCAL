@@ -35,6 +35,7 @@
     uint32_t eventNumber();
     uint32_t runNumber();
     void pedestalAnalysis();
+    void scurveAnalysis();
     void addRun(uint32_t r,std::string name) { _files.push_back(std::pair<uint32_t,std::string>(r,name));}
   private:
     std::vector<std::pair<uint32_t,std::string> > _files;
@@ -55,7 +56,7 @@
     uint32_t _numberOfShower,_numberOfMuon;
     DCHistogramHandler* _rh;
     std::vector<recoTrack*> _vtk;
-    uint32_t _runType,_dacSet,_mezzanine;
+    uint32_t _runType,_dacSet,_vthSet,_mezzanine;
     std::vector<TdcChannel> _channels;
   };
 #endif

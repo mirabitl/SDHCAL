@@ -187,7 +187,44 @@ bs.addRun(733655,"/data/srv02/RAID6/Oct2016/SMM_071016_233612_733655.dat");
   //PR 3
   //bs.addRun(734734,"/data/srv02/RAID6/Dome0916/SMM_070417_153851_734734.dat");
   // PR 4
-  bs.addRun(734735,"/data/srv02/RAID6/Dome0916/SMM_070417_155603_734735.dat");
+  //bs.addRun(734735,"/data/srv02/RAID6/Dome0916/SMM_070417_155603_734735.dat");
+
+  // MASK 32
+  //bs.addRun(734740,"/data/srv02/RAID6/Dome0916/SMM_080417_162526_734740.dat");
+  //bs.addRun(734741,"/data/srv02/RAID6/Dome0916/SMM_080417_165040_734741.dat");
+  // MASK 64
+  //bs.addRun(734742,"/data/srv02/RAID6/Dome0916/SMM_080417_170012_734742.dat");
+  //bs.addRun(734743,"/data/srv02/RAID6/Dome0916/SMM_080417_170817_734743.dat");
+  // MASK 128
+  //bs.addRun(734744,"/data/srv02/RAID6/Dome0916/SMM_080417_171702_734744.dat");
+  //bs.addRun(734746,"/data/srv02/RAID6/Dome0916/SMM_080417_173206_734746.dat");
+  // MASK 256
+  //bs.addRun(734748,"/data/srv02/RAID6/Dome0916/SMM_090417_085513_734748.dat");
+  // Mask 512
+  //bs.addRun(734749,"/data/srv02/RAID6/Dome0916/SMM_090417_090515_734749.dat");
+  /*
+  bs.addRun(734750,"/data/srv02/RAID6/Dome0916/SMM_090417_091706_734750.dat");
+  // Mask 1024
+  bs.addRun(734751,"/data/srv02/RAID6/Dome0916/SMM_090417_092418_734751.dat");
+  // Mask 2048
+  bs.addRun(734752,"/data/srv02/RAID6/Dome0916/SMM_090417_092704_734752.dat");
+  // Maks 4096
+  bs.addRun(734753,"/data/srv02/RAID6/Dome0916/SMM_090417_093030_734753.dat");
+  // 8192
+  bs.addRun(734754,"/data/srv02/RAID6/Dome0916/SMM_090417_093337_734754.dat");
+  // 16384
+  // &value=2147483648 PR 31
+  bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_090417_093942_734756.dat");
+  // PR 30
+  bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_090417_094409_734757.dat");
+  // PR 29
+  bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_090417_094810_734758.dat");
+  */
+  // ALL
+  //bad bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_090417_113300_734759.dat");
+  //bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_090417_125608_734760.dat");
+  // bad bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_090417_192114_734761.dat");
+  bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_090417_221033_734762.dat");
   DCHistogramHandler rootHandler;
   DHCalEventReader  dher;
   
