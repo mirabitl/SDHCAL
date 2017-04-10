@@ -49,6 +49,7 @@ TdcManager::TdcManager(std::string name) : levbdim::baseApplication(name), _grou
   _fsm->addCommand("STATUS",boost::bind(&TdcManager::c_status,this,_1,_2));
   _fsm->addCommand("DIFLIST",boost::bind(&TdcManager::c_diflist,this,_1,_2));
   _fsm->addCommand("SET6BDAC",boost::bind(&TdcManager::c_set6bdac,this,_1,_2));
+  _fsm->addCommand("SETVTHTIME",boost::bind(&TdcManager::c_setvthtime,this,_1,_2));
   _fsm->addCommand("SETMASK",boost::bind(&TdcManager::c_setMask,this,_1,_2));
   
   
@@ -120,15 +121,26 @@ void TdcManager::c_set6bdac(Mongoose::Request &request, Mongoose::JsonResponse &
   this->set6bDac(nc&0xFF);
   response["6BDAC"]=nc;
 }
+void TdcManager::c_setvthtime(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  response["STATUS"]="DONE";
+
+  if (_msh==NULL) return;
+  
+  uint32_t nc=atol(request.get("value","380").c_str());
+  
+  this->setVthTime(nc);
+  response["VTHTIME"]=nc;
+}
 void TdcManager::c_setMask(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   response["STATUS"]="DONE";
 
   if (_msh==NULL) return;
   
-  uint32_t nc=atol(request.get("value","31").c_str());
+  uint32_t nc=atol(request.get("value","4294967295").c_str());
   
-  this->setMask(nc&0x1F);
+  this->setMask(nc);
   response["MASK"]=nc;
 }
 void TdcManager::initialise(levbdim::fsmmessage* m)
@@ -381,7 +393,7 @@ void TdcManager::set6bDac(uint8_t dac)
   ::sleep(1);
 
 }
-void TdcManager::setMask(uint8_t mask)
+void TdcManager::setMask(uint32_t mask)
 {
   //this->startAcquisition(false);
   ::sleep(1);
