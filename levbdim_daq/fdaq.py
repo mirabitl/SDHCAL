@@ -548,6 +548,12 @@ class fdaqClient:
       
       sr=executeCMD(self.daqhost,self.daqport,"FDAQ","SET6BDAC",lcgi)
       print sr    
+  def tdc_setvthtime(self,value):
+      lcgi={}
+      lcgi["value"]=value
+      
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","SETVTHTIME",lcgi)
+      print sr    
   def tdc_setmask(self,value):
       lcgi={}
       lcgi["value"]=value
@@ -601,7 +607,52 @@ class fdaqClient:
       self.trig_calibon(0)
       self.trig_pause()
       return
-    
+  def daq_scurve(self,ntrg,ncon,thmin,thmax,mask):
+      self.trig_pause()
+      self.trig_spillon(ncon)
+      self.trig_spilloff(500000)
+      self.trig_spillregister(0)
+      self.trig_calibon(1)
+      self.trig_calibcount(ntrg)
+      self.trig_status()
+      #self.tdc_setmask(mask)
+      thrange=(thmax-thmin+1)/2
+      for vth in range(0,thrange):
+          self.tdc_setvthtime(thmax-vth*2)
+          #self.tdc_setmask(mask)
+          self.daq_setrunheader(2,(thmax-vth*2))
+          # check current evb status
+          sr=self.daq_evbstatus()
+          sj=json.loads(sr)
+          ssj=sj["answer"]
+          firstEvent=int(ssj["event"])
+          #time.sleep(1)
+          self.trig_reloadcalib()
+          self.trig_resume()
+          self.trig_status()
+          lastEvent=firstEvent
+          nloop=0;
+          while (lastEvent<(firstEvent+ntrg-10)):
+              sr=self.daq_evbstatus()
+              sj=json.loads(sr)
+              ssj=sj["answer"]
+              lastEvent=int(ssj["event"])
+              print firstEvent,lastEvent,thmax-vth*2
+              time.sleep(1)
+              nloop=nloop+1
+              if (nloop>15):
+                  break
+      self.trig_calibon(0)
+      self.trig_pause()
+      return
+  def daq_fullscurve(self):
+      self.daq_start()
+      for ist in range(0,14):
+          self.tdc_setmask((1<<ist))
+          self.daq_scurve(200,30,230,450,4294967295)
+          self.tdc_setmask((1<<(31-ist)))
+          self.daq_scurve(200,30,230,450,4294967295)
+      self.daq_stop()
 parser = argparse.ArgumentParser()
 
 # configure all the actions
@@ -639,6 +690,7 @@ grp_action.add_argument('--daq-destroy',action='store_true',help='destroy the DI
 grp_action.add_argument('--daq-downloaddb',action='store_true',help='download the dbsate specified in --dbstate=state')
 grp_action.add_argument('--daq-dbstatus',action='store_true',help='get current run and state from db')
 grp_action.add_argument('--daq-calibdac',action='store_true',help='get current run and state from db')
+grp_action.add_argument('--daq-scurve',action='store_true',help='get current run and state from db')
 grp_action.add_argument('--daq-ctrlreg',action='store_true',help='set the ctrlregister specified with --ctrlreg=register')
 
 # Calibration
@@ -968,6 +1020,11 @@ elif(results.daq_dbstatus):
 elif(results.daq_calibdac):
     r_cmd='calibdac'
     fdc.daq_calibdac(200,15,15,61,4294967295)
+    exit(0)
+elif(results.daq_scurve):
+    r_cmd='scurve'
+    fdc.daq_fullscurve()
+    #fdc.daq_scurve(50,50,250,450,4294967295)
     exit(0)
 elif(results.daq_downloaddb):
     r_cmd='downloadDB'
