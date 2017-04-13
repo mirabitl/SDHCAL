@@ -6,10 +6,10 @@ import httplib, urllib,urllib2
 from urllib2 import URLError, HTTPError
 import json
 from copy import deepcopy
-
+import base64
 import time
 import argparse
-
+import requests
 def parseReturn(command,sr):
     if (command=="jobStatus"):
         #s=r1.read()
@@ -208,17 +208,30 @@ class fdaqClient:
 
       
   def parseConfig(self):
+    self.login=os.getenv("DAQLOGIN","NONE")
+    useAuth=self.login!="NONE"
     dm=os.getenv("DAQURL","NONE")
     if (dm!="NONE"):
         self.daq_url=dm
-        req=urllib2.Request(dm)
-        try:
-            r1=urllib2.urlopen(req)
-        except URLError, e:
-            p_rep={}
-            re
+        read_conf=None
+        if (useAuth):
+            r = requests.get(dm, auth=(self.login.split(":")[0],self.login.split(":")[1]))
+            read_conf=r.json()
         else:
-            self.p_conf=json.loads(r1.read())
+            req=urllib2.Request(dm)
+            try:
+                r1=urllib2.urlopen(req)
+            except URLError, e:
+                print e
+                p_rep={}
+                return
+            
+            read_conf=json.loads(r1.read())
+        #print read_conf
+        if ("content" in read_conf):
+            self.p_conf=read_conf["content"]
+        else:
+            self.p_conf=read_conf
     dm=os.getenv("DAQFILE","NONE")
     if (dm!="NONE"):
         self.daq_file=dm
@@ -229,6 +242,8 @@ class fdaqClient:
     lcgi={}
     if (self.daq_url!=None):
         lcgi["url"]=self.daq_url
+        if (self.login!="NONE"):
+            lcgi["login"]=self.login
     else:
         if (self.daq_file!=None):
             lcgi["file"]=self.daq_file
@@ -282,6 +297,8 @@ class fdaqClient:
       lcgi={}
       if (self.daq_url!=None):
           lcgi["url"]=self.daq_url
+          if (self.login!="NONE"):
+            lcgi["login"]=self.login
       else:
           if (self.daq_file!=None):
               lcgi["file"]=self.daq_file

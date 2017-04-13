@@ -96,7 +96,12 @@ void  FullDaq::userCreate(levbdim::fsmmessage* m)
 {
   // Stored the configuration file used
     if (m->content().isMember("url"))
-       _jConfigContent["url"]=m->content()["url"];
+      {
+	_jConfigContent["url"]=m->content()["url"];
+	if (m->content().isMember("login"))
+	  _jConfigContent["login"]=m->content()["login"];
+      }
+    
     else
       if (m->content().isMember("file"))
 	_jConfigContent["file"]=m->content()["file"];
