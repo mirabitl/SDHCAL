@@ -1,3 +1,4 @@
+# export PYTHONPATH=${SDHCALDIR}/python:${SDHCALDIR}/SDHCAL_EventReader:${ROOTSYS}/lib:${PYTHONPATH}
 #marlin="./Slot1_39_MARLIN.xml"
 marlin="../xml/m3_oct2015.xml"
 rebuild=False
@@ -23,7 +24,7 @@ cerenkovOutTimeDelay=6
 #filePath="/data/NAS/Results/PS_04_2012/DHCAL_%d_I%d_0.slcio"
 #filePath="/data/NAS/BeamTest2012Compressed/DHCAL_%d_I%d_%d.slcio"
 filePath="/data/NAS/October2015/DHCAL_%d_I%d_%d.slcio"
-fileOut="/data/NAS/October2015/STREAMOUT_tmp/DHCAL_%d_SO.slcio"
+fileOut="DHCAL_%d_SO.slcio"
 nevent=0
 rootFilePath="./histos/Tracks%d_%d.root"
 treeName="./histos/showers_%d_%d.root"
