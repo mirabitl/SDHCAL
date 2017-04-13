@@ -1,6 +1,6 @@
 #ifndef _FullDaq_h
 #define _FullDaq_h
-#include "fsmwebClient.hh"
+#include "fsmwebCaller.hh"
 #include "baseApplication.hh"
 #include <string>
 #include <vector>
@@ -15,12 +15,12 @@ public:
   void  discover(levbdim::fsmmessage* m);
   void  prepare(levbdim::fsmmessage* m);
   std::string  difstatus();
-  void  singlescan(fsmwebClient* d);
-  void  singleinit(fsmwebClient* d);
-  void  singleregisterdb(fsmwebClient* d);
-  void  singleconfigure(fsmwebClient* d);
-  void  singlestart(fsmwebClient* d);
-  void  singlestop(fsmwebClient* d);
+  void  singlescan(fsmwebCaller* d);
+  void  singleinit(fsmwebCaller* d);
+  void  singleregisterdb(fsmwebCaller* d);
+  void  singleconfigure(fsmwebCaller* d);
+  void  singlestart(fsmwebCaller* d);
+  void  singlestop(fsmwebCaller* d);
   Json::Value  toJson(std::string s);
   void  initialise(levbdim::fsmmessage* m);
   void  configure(levbdim::fsmmessage* m);
@@ -71,9 +71,9 @@ public:
   virtual void  userCreate(levbdim::fsmmessage* m);
 private:
   fsmweb* _fsm;
-  fsmwebClient* _dbClient,*_zupClient,*_cccClient,*_mdccClient,*_builderClient,*_gpioClient;
-  std::vector<fsmwebClient*> _DIFClients;
-    std::vector<fsmwebClient*> _tdcClients;
+  fsmwebCaller* _dbClient,*_zupClient,*_cccClient,*_mdccClient,*_builderClient,*_gpioClient;
+  std::vector<fsmwebCaller*> _DIFClients;
+    std::vector<fsmwebCaller*> _tdcClients;
  
   std::string _dbstate;
   uint32_t _ctrlreg,_run;

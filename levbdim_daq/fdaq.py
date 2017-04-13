@@ -616,11 +616,11 @@ class fdaqClient:
       self.trig_calibcount(ntrg)
       self.trig_status()
       #self.tdc_setmask(mask)
-      thrange=(thmax-thmin+1)/2
+      thrange=(thmax-thmin+1)/15
       for vth in range(0,thrange):
-          self.tdc_setvthtime(thmax-vth*2)
+          self.tdc_setvthtime(thmax-vth*15)
           #self.tdc_setmask(mask)
-          self.daq_setrunheader(2,(thmax-vth*2))
+          self.daq_setrunheader(2,(thmax-vth*15))
           # check current evb status
           sr=self.daq_evbstatus()
           sj=json.loads(sr)
@@ -637,7 +637,7 @@ class fdaqClient:
               sj=json.loads(sr)
               ssj=sj["answer"]
               lastEvent=int(ssj["event"])
-              print firstEvent,lastEvent,thmax-vth*2
+              print firstEvent,lastEvent,thmax-vth*15
               time.sleep(1)
               nloop=nloop+1
               if (nloop>15):
@@ -649,9 +649,9 @@ class fdaqClient:
       self.daq_start()
       for ist in range(0,14):
           self.tdc_setmask((1<<ist))
-          self.daq_scurve(200,30,230,450,4294967295)
+          self.daq_scurve(100,20,10,900,4294967295)
           self.tdc_setmask((1<<(31-ist)))
-          self.daq_scurve(200,30,230,450,4294967295)
+          self.daq_scurve(100,20,10,900,4294967295)
       self.daq_stop()
 parser = argparse.ArgumentParser()
 

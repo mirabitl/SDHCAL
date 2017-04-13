@@ -137,7 +137,7 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 	  // Now analyse process Name
 	  if (p_name.compare("WRITER")==0)
 	    {
-	      _builderClient= new fsmwebClient(host,port);
+	      _builderClient= new fsmwebCaller(host,port);
 	      std::string state=_builderClient->queryState();
 	      printf("Builder client %x  %s \n",_builderClient,state.c_str());
 	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
@@ -147,7 +147,7 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 	    }
 	  if (p_name.compare("DBSERVER")==0)
 	    {
-	      _dbClient= new fsmwebClient(host,port);
+	      _dbClient= new fsmwebCaller(host,port);
 	      std::string state=_dbClient->queryState();
 	      printf("DB client %x  %s \n",_dbClient,state.c_str());
 	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
@@ -159,7 +159,7 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 	    }
 	  if (p_name.compare("CCCSERVER")==0)
 	    {
-	      _cccClient= new fsmwebClient(host,port);
+	      _cccClient= new fsmwebCaller(host,port);
 	      std::string state=_cccClient->queryState();
 	      printf("Ccc client %x  %s \n",_cccClient,state.c_str());
 	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
@@ -171,7 +171,7 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 	    }
 	  if (p_name.compare("MDCCSERVER")==0)
 	    {
-	      _mdccClient= new fsmwebClient(host,port);
+	      _mdccClient= new fsmwebCaller(host,port);
 	      std::string state=_mdccClient->queryState();
 	      printf("Mdcc client %x  %s \n",_mdccClient,state.c_str());
 	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
@@ -183,7 +183,7 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 	    }
 	  if (p_name.compare("ZUPSERVER")==0)
 	    {
-	      _zupClient= new fsmwebClient(host,port);
+	      _zupClient= new fsmwebCaller(host,port);
 	      std::string state=_zupClient->queryState();
 	      printf("ZUP client %x  %s \n",_zupClient,state.c_str());
 	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
@@ -195,7 +195,7 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 	    }
 	  if (p_name.compare("GPIOSERVER")==0)
 	    {
-	      _gpioClient= new fsmwebClient(host,port);
+	      _gpioClient= new fsmwebCaller(host,port);
 	      std::string state=_gpioClient->queryState();
 	      printf("GPIO client %x  %s \n",_gpioClient,state.c_str());
 	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
@@ -212,7 +212,7 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 	    }
 	   if (p_name.compare("DIFSERVER")==0)
 	    {
-	      fsmwebClient* dc= new fsmwebClient(host,port);
+	      fsmwebCaller* dc= new fsmwebCaller(host,port);
 	      //printf("DIF client %x \n",dc);
 	      std::string state=dc->queryState();
 	      printf("DIF client %x  %s \n",dc,state.c_str());
@@ -225,7 +225,7 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 	    }
 	   if (p_name.compare("TDCSERVER")==0)
 	    {
-	      fsmwebClient* tdc= new fsmwebClient(host,port);
+	      fsmwebCaller* tdc= new fsmwebCaller(host,port);
 	      //printf("TDC client %x \n",tdc);
 	      std::string state=tdc->queryState();
 	      printf("TDC client %x  %s \n",tdc,state.c_str());
@@ -341,32 +341,32 @@ std::string FullDaq::difstatus()
   return fastWriter.write(devlist);
 }
 
-void FullDaq::singlescan(fsmwebClient* d)
+void FullDaq::singlescan(fsmwebCaller* d)
 {
  
   d->sendTransition("SCAN");
 }
-void FullDaq::singleinit(fsmwebClient* d)
+void FullDaq::singleinit(fsmwebCaller* d)
 {
   Json::Value c;
   c["difid"]=0;
   d->sendTransition("INITIALISE",c);
 }
 
-void FullDaq::singleregisterdb(fsmwebClient* d)
+void FullDaq::singleregisterdb(fsmwebCaller* d)
 {
   
   d->sendTransition("REGISTERDB",this->parameters()["db"]);
   //  std::cout<<"Register DB"<<d->parameters()<<std::endl;
 }
-void FullDaq::singleconfigure(fsmwebClient* d)
+void FullDaq::singleconfigure(fsmwebCaller* d)
 {
   Json::Value jc=this->parameters()["db"];
   jc["difid"]=0;
   jc["ctrlreg"]=this->parameters()["ctrlreg"];
   d->sendTransition("CONFIGURE",jc);
 }
-void FullDaq::singlestart(fsmwebClient* d)
+void FullDaq::singlestart(fsmwebCaller* d)
 {
  
   Json::Value c;
@@ -374,7 +374,7 @@ void FullDaq::singlestart(fsmwebClient* d)
   d->sendTransition("START",c);
   //std::cout<<"received "<<d->reply()<<std::endl;
 }
-void FullDaq::singlestop(fsmwebClient* d)
+void FullDaq::singlestop(fsmwebCaller* d)
 {
 
   Json::Value c;
@@ -405,13 +405,13 @@ void FullDaq::initialise(levbdim::fsmmessage* m)
 
   // Make a DIF SCAN
   boost::thread_group g;
-  for (std::vector<fsmwebClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+  for (std::vector<fsmwebCaller*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
       g.create_thread(boost::bind(&FullDaq::singlescan, this,(*it)));
   g.join_all();
 
   // Merge devlist
   Json::Value devlist;
-  for (std::vector<fsmwebClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+  for (std::vector<fsmwebCaller*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     {
        const Json::Value& jdevs=(*it)->answer();
       for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
@@ -420,7 +420,7 @@ void FullDaq::initialise(levbdim::fsmmessage* m)
   //std::cout<<devlist<<std::endl;
 
   // Initialise
-  for (std::vector<fsmwebClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+  for (std::vector<fsmwebCaller*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
       g.create_thread(boost::bind(&FullDaq::singleinit, this,(*it)));
   g.join_all();
   
@@ -449,7 +449,7 @@ void FullDaq::configure(levbdim::fsmmessage* m)
 
   // register to the dbstate
   boost::thread_group g;
-  for (std::vector<fsmwebClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+  for (std::vector<fsmwebCaller*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     {
       g.create_thread(boost::bind(&FullDaq::singleregisterdb, this,(*it)));
     }
@@ -457,7 +457,7 @@ void FullDaq::configure(levbdim::fsmmessage* m)
   //std::cout<<"REGISTER DB DONE"<<std::endl;
   ::sleep(2);
   //Configure them
-  for (std::vector<fsmwebClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+  for (std::vector<fsmwebCaller*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     {
      
       g.create_thread(boost::bind(&FullDaq::singleconfigure, this,(*it)));
@@ -530,7 +530,7 @@ void FullDaq::start(levbdim::fsmmessage* m)
     }
    // Start the DIFs
   boost::thread_group g;
-  for (std::vector<fsmwebClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+  for (std::vector<fsmwebCaller*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     {
       //std::cout<<"Creating thread"<<std::endl;
       g.create_thread(boost::bind(&FullDaq::singlestart, this,(*it)));
@@ -582,7 +582,7 @@ void FullDaq::stop(levbdim::fsmmessage* m)
 
    // Stop the DIFs
   boost::thread_group g;
-  for (std::vector<fsmwebClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+  for (std::vector<fsmwebCaller*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     {
       g.create_thread(boost::bind(&FullDaq::singlestop, this,(*it)));
     }
@@ -605,7 +605,7 @@ void FullDaq::stop(levbdim::fsmmessage* m)
 
 void FullDaq::destroy(levbdim::fsmmessage* m)
 {
-  for (std::vector<fsmwebClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+  for (std::vector<fsmwebCaller*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     {
       Json::Value jl;
       jl["difid"]=0;
@@ -627,7 +627,7 @@ FullDaq::~FullDaq()
   if (_gpioClient) delete _gpioClient;
   if (_mdccClient) delete _mdccClient;
   if (_builderClient) delete _builderClient;
-  for (std::vector<fsmwebClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+  for (std::vector<fsmwebCaller*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     delete (*it);
   
   _DIFClients.clear();
@@ -827,7 +827,7 @@ void  FullDaq::builderStatus(Mongoose::Request &request, Mongoose::JsonResponse 
 void FullDaq::status(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   Json::Value devlist;
-  for (std::vector<fsmwebClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+  for (std::vector<fsmwebCaller*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     {
 
       (*it)->sendTransition("STATUS");
@@ -1043,7 +1043,7 @@ void FullDaq::setThreshold(Mongoose::Request &request, Mongoose::JsonResponse &r
   saction<<"&CTRLREG="<<std::hex<<this->parameters()["ctrlreg"].asUInt();
 
   Json::Value jlist;
- for (std::vector<fsmwebClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+ for (std::vector<fsmwebCaller*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     {
       
       std::string rep=(*it)->sendCommand("SETTHRESHOLD",saction.str());
@@ -1067,7 +1067,7 @@ void FullDaq::setGain(Mongoose::Request &request, Mongoose::JsonResponse &respon
   saction<<"&GAIN="<<request.get("GAIN","128");
   saction<<"&CTRLREG="<<std::hex<<this->parameters()["ctrlreg"].asUInt();
   Json::Value jlist;
- for (std::vector<fsmwebClient*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
+ for (std::vector<fsmwebCaller*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     {
       
       std::string rep=(*it)->sendCommand("SETGAIN",saction.str());
