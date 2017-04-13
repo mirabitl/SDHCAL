@@ -43,6 +43,7 @@ class LMGeneric: public IMPL::LCGenericObjectImpl
 {
  public:
   LMGeneric(){;}
+  ~LMGeneric(){;}
   std::vector<int>& getIntVector(){return _intVec;}
 
 };

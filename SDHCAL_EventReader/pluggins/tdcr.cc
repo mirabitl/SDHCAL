@@ -21,6 +21,8 @@
 #include "DHCalEventReader.h"
 #include "TApplication.h"
 #include "TCanvas.h"
+#include <dirent.h>
+#include <fnmatch.h>
 
 int main(int argc, char** argv )
 {
@@ -224,7 +226,67 @@ bs.addRun(733655,"/data/srv02/RAID6/Oct2016/SMM_071016_233612_733655.dat");
   //bad bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_090417_113300_734759.dat");
   //bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_090417_125608_734760.dat");
   // bad bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_090417_192114_734761.dat");
-  bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_090417_221033_734762.dat");
+
+  // refere bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_090417_221033_734762.dat");
+
+  // Apres les capa
+  //bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_100417_111538_734763.dat");
+
+  // idem avec spill court
+  //bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_100417_133123_734764.dat");
+
+  // idem 1 clock
+  //bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_100417_140251_734765.dat");
+
+  // 10 clock 200 fF On
+  //bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_100417_150608_734766.dat");
+
+  // Derniere capa ajoutees
+  //bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_100417_162143_734768.dat");
+
+   // Apres modifDHCAL_734769_I0_0.slcio
+  //   bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_110417_183924_734769.dat");
+  // bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_110417_200402_734770.dat");
+  //bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_120417_054140_734771.dat");
+
+  // SC changed
+  //bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_120417_151905_734772.dat");
+
+   // Verison 0
+  //bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_130417_063346_734773.dat");
+
+  // Version 0 oped corr
+  //  bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_130417_081038_734774.dat");
+
+  // Coreection de Nahalie
+  //bs.addRun(0,"/data/srv02/RAID6/Dome0916/SMM_130417_113403_734775.dat");
+
+  std::stringstream spat;
+  spat<<"*"<<atol(argv[1])<<"*.dat";
+  struct dirent **namelist;
+  int n;
+  std::cout<<"Pattern "<<spat.str()<<std::endl;
+  std::string dirp="/data/srv02/RAID6/Dome0916/";
+  n = scandir(dirp.c_str(), &namelist, NULL, alphasort);
+  if (n < 0)
+    perror("scandir");
+  else {
+    while (n--) {
+
+      if (fnmatch(spat.str().c_str(), namelist[n]->d_name, 0)==0)
+	{
+	  printf("%s %d \n", namelist[n]->d_name,fnmatch(spat.str().c_str(), namelist[n]->d_name, 0));
+	  printf("found\n");
+	  std::stringstream sf;
+	  sf<<dirp<<"/"<< namelist[n]->d_name;
+	  bs.addRun(0,sf.str());
+	}
+      free(namelist[n]);
+    }
+    free(namelist);
+  }
+
+  
   DCHistogramHandler rootHandler;
   DHCalEventReader  dher;
   

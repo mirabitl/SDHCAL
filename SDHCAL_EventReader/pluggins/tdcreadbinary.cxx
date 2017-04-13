@@ -373,7 +373,7 @@ void tdcreadbinary::scurveAnalysis()
      if (hvth==NULL)
        {
 	 
-	 hvth=_rh->BookTH1(src.str(),300,200.,500.);
+	 hvth=_rh->BookTH1(src.str(),500,100.,600.);
        }
      bool found=false;
      double lastf=0;
@@ -383,9 +383,10 @@ void tdcreadbinary::scurveAnalysis()
 	   //printf("%d %d %f \n",x.channel(),x.bcid(),x.tdcTime());
 	   double dt=x.tdcTime()-lastf;
 	   lastf=x.tdcTime();
-	   if (dt>25 || dt<0)
+	   //  if (dt>25 || dt<0)
 	     hvth->Fill(vth*1.);
-	 break;}
+	     break;
+	 }
        }
    }
 
