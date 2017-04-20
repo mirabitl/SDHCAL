@@ -144,7 +144,7 @@ void TdcMessageHandler::parseTdcData(NL::Socket* socket,ptrBuf& p) throw (std::s
        if (ib%LINELENGTH==0 && (p.second[LINELENGTH+ib]==chtrg)) {
 	 bcid= (p.second[LINELENGTH+ib+1]<<8|p.second[LINELENGTH+ib+2]);
 	 ss<<boost::format("EXTERNAL %x \n") % bcid;
-	 printed=true;
+	 // printed=true;
        }
      }
 
@@ -168,7 +168,7 @@ void TdcMessageHandler::parseTdcData(NL::Socket* socket,ptrBuf& p) throw (std::s
   // return;
   // #endif
 
-   if (printed) std::cout<<ss.str();
+   if (printed) std::cout<<ss.str()<<std::flush;
    //return;
   _readout[idsock]++;
   // Now store the event
@@ -203,62 +203,23 @@ void TdcMessageHandler::parseTdcData(NL::Socket* socket,ptrBuf& p) throw (std::s
 void TdcMessageHandler::parseSlowControl(NL::Socket* socket,ptrBuf& p) throw (std::string)
 {
 
-  printf("Parsing  SLOW CONTROL ================>\n");
-  return;
+  std::cout<<boost::format("Parsing  SLOW CONTROL ================>\n")<<std::flush;
+    //return;
   size_t ier=0;
   uint32_t* iptr=(uint32_t*) &p.second[0];
   uint16_t* sptr=(uint16_t*) &p.second[0];
-  uint32_t size_remain=2;
-  while (size_remain>0)
-  {
-    try 
-    {
-      ier=socket->read(&p.second[p.first+2-size_remain],size_remain);
-    }
-    catch (NL::Exception e)
-    {
-      printf("%s Error message when reading block %s \n",__PRETTY_FUNCTION__,e.msg().c_str());
-      p.first=0;
-      return;
-    }
-    if (ier<0)
-      break;
-    size_remain -=ier;
-    
-  }
-  p.first+=2;
-  printf("Header SlowControl %x %x \n ",sptr[2],htons(sptr[2]));
+  uint32_t size_remain=1024;
+  ier=socket->read(&p.second[p.first],size_remain);
+  p.first+=ier;
 
-  uint32_t length=htons(sptr[2]);
-  uint32_t elen=length*2;
- size_remain=elen;
-  //getchar();
-  while (size_remain>0)
-  {
-    try 
-    {
-      ier=socket->read(&p.second[p.first+elen-size_remain],size_remain);
-      printf("socket read here %d \n",ier);
-    }
-    catch (NL::Exception e)
-    {
-      printf("%s Error message when reading block %s \n",__PRETTY_FUNCTION__,e.msg().c_str());
-      return;
-    }
-    if (ier<0)
-      break;
-    size_remain -=ier;
-    
-  }
-  p.first+=elen;
-  printf("End of Slowcontrol %d %x %x \n",p.first,p.second[6],p.second[7]);
-  
-   for (int ib=0;ib<elen-2;ib++)
+  std::cout<<boost::format("End of Slowcontrol %d %x %x \n") % p.first % (int) p.second[6] % (int) p.second[7] << std::flush;
+			   
+   for (int ib=0;ib<p.first;ib++)
      {
-       printf("%d %x \n",ib,p.second[6+2+ib]);
+       std::cout<<boost::format("\t %d %x \n") % ib % (int) p.second[ib];
        //if (ib>0 && ib%2==1) printf("\n");
      }
-  printf("\n");
+   std::cout<<boost::format("\n")<<std::flush;
   p.first=0;
   return;
 

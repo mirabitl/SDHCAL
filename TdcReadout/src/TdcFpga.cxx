@@ -18,6 +18,7 @@
 #include <sstream>
 #include <map>
 #include <bitset>
+#include <boost/format.hpp>
 
 TdcFpga::TdcFpga(uint32_t m,uint32_t adr) :_abcid(0),_gtc(0),_mezzanine(m),_lastGtc(0),_startIdx(0),_event(0),_adr(adr)
 {
@@ -79,14 +80,41 @@ void TdcFpga::processEventTdc()
   itemp[5]=_adr;
   itemp[6]=_channels.size();
   uint32_t idx=28;
+  uint32_t trbcid=0;
+  for (auto x:_channels)
+    {
+      if (x.channel()==28)
+	{
+	  trbcid=x.bcid();
+	  break;
+	}
+    }
+  if (trbcid>0)
+    {
+      std::stringstream ss;
+       ss<<boost::format("Trigger %x %d %d %ld %d \n ") % _adr % _mezzanine % _gtc % _abcid % _channels.size();
+      for (auto x:_channels)
+	{
+	  ss<<boost::format("\t %d %d %f ") % (int) x.channel() % (int) x.bcid() % x.tdcTime();
+	  if (x.channel()!=28 && (x.bcid()>(trbcid-4) && x.bcid()<(trbcid+4)))
+	    {
+	      ss<<"---> found\n";
+	    }
+	  else
+	    ss<<"\n";
+	}
+      std::cout<<ss.str()<<std::flush;
+
+    }
   for (vector<TdcChannel>::iterator it=_channels.begin();it!=_channels.end();it++)
     {
       memcpy(&temp[idx],it->frame(),it->length());
       idx+=8;
+      
     }
 
    memcpy((unsigned char*) _dsData->payload(),temp,idx);
    _dsData->publish(_gtc,_abcid,idx);
-   if (_event%5==0)
+   if (_event%50==0)
      std::cout<<_mezzanine<<" "<<_event<<" "<<_gtc<<" "<<_abcid<<" "<<_channels.size()<<std::endl<<std::flush;
 }
