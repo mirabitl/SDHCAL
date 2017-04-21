@@ -194,6 +194,7 @@ void tdcreadbinary::read()
 	      _gtc=ibuf[1];
 	      if (_runType==1) this->pedestalAnalysis();
 	      if (_runType==2) this->scurveAnalysis();
+	      if (_runType==0) this->normalAnalysis();
 	    }
 	    }
 	  if (b.detectorId()!=100) continue;
@@ -373,7 +374,7 @@ void tdcreadbinary::scurveAnalysis()
      if (hvth==NULL)
        {
 	 
-	 hvth=_rh->BookTH1(src.str(),500,100.,600.);
+	 hvth=_rh->BookTH1(src.str(),900,0.,900.);
        }
      bool found=false;
      double lastf=0;
@@ -390,6 +391,55 @@ void tdcreadbinary::scurveAnalysis()
        }
    }
 
+}
+void tdcreadbinary::normalAnalysis()
+{
+
+  //if (_gtc[_mezzanine-1]
+  std::cout<<"Mezzanine "<<_mezzanine<<"Event "<<_event<<" GTC"<<_gtc<<" hits"<<_channels.size()<<std::endl;
+
+ // Analyze
+ std::stringstream sr;
+ sr<<"/run"<<_run<<"/TDC"<<_mezzanine<<"/";
+ std::stringstream src;
+ src<<sr.str()<<"channel";
+ TH1* hchan=_rh->GetTH1(sr.str()+"channel");
+ TH1* hstrip=_rh->GetTH1(sr.str()+"strip");
+ TH2* hcorr=_rh->GetTH2(sr.str()+"correlation");
+ 
+ if (hchan==NULL)
+   {
+     
+     hchan=_rh->BookTH1(sr.str()+"channel",32,0.,32.);
+     hstrip=_rh->BookTH1(sr.str()+"strip",32,0.,9.);
+     hcorr=_rh->BookTH2(sr.str()+"correlation",32,0.,32.,32,0.,32.);
+   }
+
+ uint32_t sth=0;
+ bool found=false;
+ for (auto x :_channels)
+   {
+     hchan->Fill(x.channel()*1.);
+     if (x.channel()!=28) continue;
+     found=true;
+     for (auto y :_channels)
+       {
+	 //if (y.channel()==x.channel()) continue;
+	 if (abs(y.bcid()-x.bcid())<3)
+	   {
+	     printf("%d %d %d %d \n",x.channel(),y.channel(),x.bcid(),y.bcid());
+	     hcorr->Fill(x.channel()*1.,y.channel()*1.);
+	     
+	     if (y.channel()==x.channel()) continue;
+	     sth|=(1<<(y.channel()/2));
+	     //getchar();
+	   }
+       }
+   }
+ if (found)
+ for (uint32_t i=0;i<32;i++)
+   if (((sth>>i)&1) == 1) hstrip->Fill(i*0.4+0.2);
+ this->timeAnalysis();
 }
 void tdcreadbinary::processEvent(uint32_t iseed)
 {
@@ -795,9 +845,275 @@ void tdcreadbinary::end()
 
   
 }
+#define FW29
 
+void tdcreadbinary::timeAnalysis()
+{
 
+ if (_channels.size()>512) return;
+  uint32_t run=_run;
+ // Analyze
+  uint16_t chtrg;
+  if (_mezzanine==1)
+    chtrg=0x10;
+  else
+    chtrg=0x1c;
+  chtrg=0x18; //24
+  chtrg=0x1c; //28
+ std::stringstream sr;
+ sr<<"/run"<<run<<"/TDC"<<_mezzanine<<"/";
+ TH2* hpos=_rh->GetTH2(sr.str()+"Position");
+ TH1* hdt=_rh->GetTH1(sr.str()+"DeltaT");
+ TH1* hdtau=_rh->GetTH1(sr.str()+"DeltaTU");
+ TH1* hdc=_rh->GetTH1(sr.str()+"DeltaCluster");
 
+ TH1* hdtr=_rh->GetTH1(sr.str()+"DeltaTr");
+ TH1* hns=_rh->GetTH1(sr.str()+"NChannel");
+ TH1* hfin=_rh->GetTH1(sr.str()+"Fine");
+ TH1* heff=_rh->GetTH1(sr.str()+"Efficiency");
+ TH1* hstrip=_rh->GetTH1(sr.str()+"Strips");
+ TH1* hstript=_rh->GetTH1(sr.str()+"Stript");
+ TH1* hnstrip=_rh->GetTH1(sr.str()+"NStrips");
+ TH1* hxp=_rh->GetTH1(sr.str()+"XP");
+ TH1* hti=_rh->GetTH1(sr.str()+"time");
+ TH1* hra=_rh->GetTH1(sr.str()+"rate");
+ if (hpos==NULL)
+   {
+     hpos=_rh->BookTH2(sr.str()+"Position",100,0.,20.,300,-300.,300.);
+     hdt=_rh->BookTH1(sr.str()+"DeltaT",500,-10.,10.);
+     hdtau=_rh->BookTH1(sr.str()+"DeltaTU",500,-10.,10.);
+     hdc=_rh->BookTH1(sr.str()+"DeltaCluster",500,-10.,10.);
+     hdtr=_rh->BookTH1(sr.str()+"DeltaTr",3000,-300.,300.);
+     hns=_rh->BookTH1(sr.str()+"NChannel",1024,0.,1024.);
+     hfin=_rh->BookTH1(sr.str()+"Fine",257,0.,257.);
+     heff=_rh->BookTH1(sr.str()+"Efficiency",32,0.,32.);
+     hstrip=_rh->BookTH1(sr.str()+"Strips",32,0.,32.);
+     hstript=_rh->BookTH1(sr.str()+"Stript",32,0.,32.);
+     hnstrip=_rh->BookTH1(sr.str()+"NStrips",32,0.,32.);
+     hxp=_rh->BookTH1(sr.str()+"XP",400,0.,10.);
+     hti=_rh->BookTH1(sr.str()+"time",400,0.,0.2);
+     hra=_rh->BookTH1(sr.str()+"rate",750,0.,2000.);
+
+   }
+ hns->Fill(_channels.size()*1.);
+ // Firmware 100 ps
+ #ifdef OLDFIRMWARE
+ double shift1[32]={-0.61,2.61,-0.742,-0.665,-0.311,0.71,0.198,0.,24*0};
+ #else
+ // firmware 30 ps 1/2 16 pistes
+ //double shift1[32]={0.,-1.152,-0.637,-2.124,-0.880,-0.731,-1.072,0.,24*0};
+ // double shift1[32]={32*0};
+#ifdef FW24
+ double shift1[32]={-3.07,-3.66,-5.441,-4.61,-5.008,-5.491,-5.666,-5.873,
+		    -5.558,-6.298,-5.339,-4.911,20*0};
+ #endif
+#ifdef FW29
+ double shift1[32]={-3.07,-3.66,-4.719,-4.80,-5.036,-5.299,-5.249,-5.925,
+		    -6.491,-6.248,-4.971,-5.319,-5.592,-5.725,18*0};
+ double shift2[32]={0,0,6.413,5.292,5.614,7.932,6.453,6.407,3.822,9.33,8.923,3.406,5.729,19*0};
+ #endif
+ 
+ #endif
+ _nevt++;
+ heff->Fill(0.1);
+ uint32_t ndec=0;
+ //printf("Event %d %d %d \n",_gtc,_mezzanine,_channels.size());
+ float ti=0,tmax=0;
+ // if (_channels.size()>0)
+ //   ti=_channels.begin()->bcid()*2.E-7;
+ uint32_t lbcid=0,bcidshift=0;
+ for (std::vector<TdcChannel>::iterator it=_channels.begin();it!=_channels.end();it++){
+
+   if (it->bcid()<lbcid) bcidshift+=65535;
+   lbcid=it->bcid();
+   float t=((int) it->bcid()*2E-7)+(bcidshift*2.E-7)-ti;
+   if (t>tmax) tmax=t;
+    if (it->channel()==chtrg) ndec++;
+    //printf("%d %d %x %x %x \n",_gtc,it->channel(),it->coarse(),it->fine(),it->bcid());
+ }
+ if (tmax==0 && _channels.size()>0)
+   {
+      for (std::vector<TdcChannel>::iterator it=_channels.begin();it!=_channels.end();it++)
+	std::cout<<(int) it->channel()<<" "<<it->coarse()*2.5E-9<<" "<<it->bcid()*2E-7<<endl;
+      //getchar();
+   }
+ else
+   std::cout<<"T MAX "<<tmax<<std::endl;
+ hti->Fill(tmax);
+ if (tmax>0) hra->Fill(_channels.size()/tmax);
+  if (ndec>1) return;
+ _trigger=_channels.end();
+
+ for (std::vector<TdcChannel>::iterator it=_channels.begin();it!=_channels.end();it++)
+   if (it->channel()==chtrg) {_trigger=it;it->setUsed(true);break;}
+  for (std::vector<TdcChannel>::iterator it=_channels.begin();it!=_channels.end();it++)
+    {
+      hstrip->Fill(it->channel()*1.);
+      for (int j=0;j<8;j++)
+	{
+	  if (_mezzanine==2 )
+	    shift1[j]=0;
+	  uint8_t fi=it->fine();
+	  //printf("%d %d %d %d \n",fi,j,(fi>>j),((fi>>j)&0x1)); 
+	  if (((fi>>j)&0x1) !=0)
+	    {
+	      //  printf("--->ok\n");
+	      hfin->Fill(j+0.1);
+	    }
+	}
+
+      // Mask channel 0/1 fro FW29 and mezzanine 1
+      #ifdef FW29
+      //if (_mezzanine==1 && it->channel()/2==0) it->setUsed(true);
+      #endif
+    }
+  if (_trigger==_channels.end()) return;
+  printf("TDC %d  GTC %d   TRIGGER %x %x \n",_mezzanine,_gtc,_trigger->bcid(),_trigger->coarse()/80);
+  //_trigger=_channels.begin();
+ _ntrigger++;
+ heff->Fill(1.1);
+ bool found=false;
+ uint32_t ngood=0;
+ for (std::vector<TdcChannel>::iterator it=_channels.begin();it!=_channels.end();it++)
+   {
+
+     if (it->used()) continue;
+     int32_t dbcid=it->bcid()-_trigger->bcid();
+     if ((dbcid>-3 && dbcid<3))
+       {found=true; ngood++; hstript->Fill(it->channel()*1.);}
+     else
+       it->setUsed(true);
+   }
+ if (!found) return;
+ _nfound++;
+ heff->Fill(2.1);
+ // if (ngood>6) return;
+ bool bside=false;
+ bool sused[32]={32*0};
+ #ifdef FW29
+ //if (_mezzanine==1) sused[0]=true;
+ #endif
+ typedef std::pair<uint8_t,double> tdchit;
+ typedef std::vector<tdchit> tdcl;
+ std::vector<tdchit> hits;
+ hits.clear();
+ for (std::vector<TdcChannel>::iterator it=_channels.begin();it!=_channels.end();it++)
+   {
+     printf("%d %d %f \n",it->channel(),it->bcid(),it->tdcTime());
+     if (it->used()) continue;
+     
+     if (it->channel()%2!=0) continue;
+     hdtr->Fill(it->tdcTime()-_trigger->tdcTime());
+     if (it->tdcTime()-_trigger->tdcTime()>-240.) continue;
+     int str=it->channel()/2;
+     if (sused[str]) continue;
+     for (std::vector<TdcChannel>::iterator jt=_channels.begin();jt!=_channels.end();jt++)
+       {
+
+	 if (it==jt) continue;
+	 if (jt->used()) continue;
+	 if (jt->channel()!=(it->channel()+1)) continue;
+	 double t0=it->tdcTime();
+	 double t1=jt->tdcTime();
+	 ///if (it->coarse()!=jt->coarse()-1) continue;
+	 if (abs(t1-t0)>100) continue;
+	 it->setUsed(true);
+	 jt->setUsed(true);
+	 //if (str==0) std::cout<<"oops"<<(int) it->channel()<<" "<<(int) jt->channel()<<std::endl;
+
+	 sused[str]=true;
+	 double tsh=0;
+	 if (_mezzanine==1)
+	   tsh=shift1[str];
+	 else
+	   tsh=shift2[str];
+	 if (_mezzanine==1 && str>=4&&str<=12)
+	   hdt->Fill((t0-t1)-tsh);
+	 if (_mezzanine==2 && str>=7&&str<=12)
+	   hdt->Fill((t0-t1)-tsh);
+	 hits.push_back(tdchit((uint8_t) str&0xFF,(t0-t1)-tsh));
+	 std::stringstream s;
+	 s<<"hdts"<<str;
+	 TH1* hdts=_rh->GetTH1(sr.str()+s.str());
+	 if (hdts==NULL)
+	   {
+	     hdts=_rh->BookTH1(sr.str()+s.str(),500,-20.,20.);
+	   }
+	 hdts->Fill(t0-t1-tsh);
+          
+	 double x=str*0.4+0.2;
+	 double y=((t0-t1)-tsh)*100./7.;
+	 //std::cout<<x<<" "<<y<<std::endl;
+	 bside=true;
+	 hpos->Fill(x,y);
+       }     
+   }
+ // Loop on hits
+ hnstrip->Fill(hits.size()*1.);
+ if (hits.size()<=6)
+   {
+   
+     std::vector<tdchit> hitg;
+ for (int i=0;i<32;i++)
+   {
+     int np=0;
+     for (auto x:hits)
+       if (x.first==i) np++;
+     if (np!=1) continue;
+     
+     printf(" strip %d np %d \n",i,np);
+     for (auto x:hits)
+       if (x.first==i)
+       {
+	 hitg.push_back(x);
+	 std::stringstream s;
+	 s<<"hdtu"<<i;
+	 TH1* hdtu=_rh->GetTH1(sr.str()+s.str());
+	 if (hdtu==NULL)
+	   {
+	     hdtu=_rh->BookTH1(sr.str()+s.str(),500,-20.,20.);
+	   }
+	 hdtu->Fill(x.second);
+	 if (x.first>=4&&x.first<=12)
+	   hdtau->Fill(x.second);
+
+       }
+    
+   }
+  tdcl v;
+     for (auto x:hitg)
+       {
+	 bool found=false;
+	 for (auto c:v)
+	   {
+	     if (abs(c.first-x.first)<2)
+	       {
+		 found=true;
+		 v.push_back(x);
+		 break;
+	       }
+	   }
+	 if (!found && v.size()==0) v.push_back(x);
+       }
+     float dt=0,xp=0;
+     float nt=0;
+     for (auto x:v)
+       {
+	 nt++;
+	 dt+=x.second;
+	 xp+=x.first;
+	 //hxp->Fill(x.first*0.4+0.2);
+       }
+     if (nt>0&&nt<7) {
+       hdc->Fill(dt/nt);
+       xp=xp/nt;
+       
+       hxp->Fill(xp*0.4+0.2);
+     }
+   }
+ if (bside) {_nbside++;heff->Fill(3.1);}
+ printf("%d-%d %d  #evt %d #trig %d #found %d  #time %d \n",_run,_event,_gtc,_nevt,_ntrigger,_nfound,_nbside); 
+}
 
 
 #ifdef TESTMAINEXAMPLE

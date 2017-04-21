@@ -1,9 +1,9 @@
 import accessHisto as ah
 from ROOT import *
-f=TFile("scurve734771.root")
+f=TFile("scurve735014.root")
 
 def calcth(tdc,num):
-    h=ah.getth1("/run734771/TDC%d/vth%d" % (tdc,num))
+    h=ah.getth1("/run735014/TDC%d/vth%d" % (tdc,num))
     ax=h.GetXaxis()
     i20=0;i180=0;
     ped=0;width=0;
@@ -39,7 +39,7 @@ def calcall(tdc):
         width[i]=0
         a=calcth(tdc,i)
         if (a[0]>0):
-            if (a[0]>pa):
+            if (a[0]>pa and a[0]<600):
                 pa=a[0]
             if (a[0]<pi):
                 pi=a[0]

@@ -29,13 +29,15 @@
     void draw(std::vector<recoPoint*> vp);
 
     void geometry(std::string name);
-    void timeAnalysis();
+    
     void processEvent(uint32_t seed);
     uint32_t totalSize();
     uint32_t eventNumber();
     uint32_t runNumber();
     void pedestalAnalysis();
     void scurveAnalysis();
+    void normalAnalysis();
+    void timeAnalysis();
     void addRun(uint32_t r,std::string name) { _files.push_back(std::pair<uint32_t,std::string>(r,name));}
   private:
     std::vector<std::pair<uint32_t,std::string> > _files;
@@ -44,6 +46,7 @@
     double _t,_t0,_tspill;
     std::string _directory;
     uint32_t _run,_event,_totalSize;
+    uint32_t _nevt,_ntrigger,_nfound,_nbside;
     int32_t _fdIn;
     bool _started;
     unsigned char _buf[32*1024*1024];
@@ -58,5 +61,7 @@
     std::vector<recoTrack*> _vtk;
     uint32_t _runType,_dacSet,_vthSet,_mezzanine;
     std::vector<TdcChannel> _channels;
+    std::vector<TdcChannel>::iterator _trigger;
+
   };
 #endif
