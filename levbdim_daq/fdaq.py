@@ -417,6 +417,13 @@ class fdaqClient:
       print sr
 
   def daq_start(self):
+      self.trig_reset()
+      self.trig_spillon(1000000)
+      self.trig_spilloff(100000)
+      self.trig_spillregister(0)
+      self.trig_calibon(0)
+      self.trig_status()
+
       lcgi={}
       sr=executeFSM(self.daqhost,self.daqport,"FDAQ","START",lcgi)
       print sr
@@ -554,6 +561,11 @@ class fdaqClient:
       sr=executeCMD(self.daqhost,self.daqport,"FDAQ","CALIBON",lcgi)
       print sr    
 
+  def daq_process(self):
+      lcgi={}
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","LISTPROCESS",lcgi)
+      print sr    
+
   def trig_reloadcalib(self):
       lcgi={}
       sr=executeCMD(self.daqhost,self.daqport,"FDAQ","RELOADCALIB",lcgi)
@@ -627,17 +639,17 @@ class fdaqClient:
   def daq_scurve(self,ntrg,ncon,thmin,thmax,mask):
       self.trig_pause()
       self.trig_spillon(ncon)
-      self.trig_spilloff(500000)
+      self.trig_spilloff(50000)
       self.trig_spillregister(0)
       self.trig_calibon(1)
       self.trig_calibcount(ntrg)
       self.trig_status()
       #self.tdc_setmask(mask)
-      thrange=(thmax-thmin+1)/15
+      thrange=(thmax-thmin+1)/5
       for vth in range(0,thrange):
-          self.tdc_setvthtime(thmax-vth*15)
+          self.tdc_setvthtime(thmax-vth*5)
           #self.tdc_setmask(mask)
-          self.daq_setrunheader(2,(thmax-vth*15))
+          self.daq_setrunheader(2,(thmax-vth*5))
           # check current evb status
           sr=self.daq_evbstatus()
           sj=json.loads(sr)
@@ -649,26 +661,30 @@ class fdaqClient:
           self.trig_status()
           lastEvent=firstEvent
           nloop=0;
-          while (lastEvent<(firstEvent+ntrg-10)):
+          while (lastEvent<(firstEvent+ntrg-20)):
               sr=self.daq_evbstatus()
               sj=json.loads(sr)
               ssj=sj["answer"]
               lastEvent=int(ssj["event"])
-              print firstEvent,lastEvent,thmax-vth*15
+              print firstEvent,lastEvent,thmax-vth*5
               time.sleep(1)
               nloop=nloop+1
-              if (nloop>15):
+              if (nloop>6):
                   break
       self.trig_calibon(0)
       self.trig_pause()
       return
   def daq_fullscurve(self):
       self.daq_start()
+      #self.tdc_setmask(0XFFFFFFFF)
+      #self.daq_scurve(100,30,180,650,4294967295)
+      #self.daq_stop()
+      #return
       for ist in range(0,14):
           self.tdc_setmask((1<<ist))
-          self.daq_scurve(100,20,10,900,4294967295)
+          self.daq_scurve(100,30,250,480,4294967295)
           self.tdc_setmask((1<<(31-ist)))
-          self.daq_scurve(100,20,10,900,4294967295)
+          self.daq_scurve(100,30,250,480,4294967295)
       self.daq_stop()
 parser = argparse.ArgumentParser()
 
@@ -851,6 +867,7 @@ elif (results.webstatus):
 elif(results.available):
     r_cmd='available'
     fdc.daq_list()
+
     #srd=executeCMD(conf.daqhost,conf.daqport,"WDAQ",None,None)
     #if (results.verbose):
         #print srd
@@ -869,6 +886,7 @@ elif(results.available):
     #else:
         #print ">>>>>>>>>>>>>>>> JOB CONTROL <<<<<<<<<<<<<<<<<<"
         #parseReturn("state",srj)
+    #fdc.daq_process()
     exit(0)
 elif(results.jc_create):
     r_cmd='createJobControl'

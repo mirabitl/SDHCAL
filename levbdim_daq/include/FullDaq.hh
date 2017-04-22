@@ -28,7 +28,7 @@ public:
   void  stop(levbdim::fsmmessage* m);
   void  destroy(levbdim::fsmmessage* m);
 
-
+  void listProcess(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void forceState(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void doubleSwitchZup(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void  LVStatus(Mongoose::Request &request, Mongoose::JsonResponse &response);

@@ -37,6 +37,7 @@ FullDaq::FullDaq(std::string name) : levbdim::baseApplication(name)
     // Commands
 
     _fsm->addCommand("DOUBLESWITCHZUP",boost::bind(&FullDaq::doubleSwitchZup,this,_1,_2));
+    _fsm->addCommand("LISTPROCESS",boost::bind(&FullDaq::listProcess,this,_1,_2));
     _fsm->addCommand("LVSTATUS",boost::bind(&FullDaq::LVStatus,this,_1,_2));
     _fsm->addCommand("LVON",boost::bind(&FullDaq::LVON,this,_1,_2));
     _fsm->addCommand("FORCESTATE",boost::bind(&FullDaq::forceState,this,_1,_2));
@@ -107,6 +108,107 @@ void  FullDaq::userCreate(levbdim::fsmmessage* m)
 	_jConfigContent["file"]=m->content()["file"];
 }
 
+void FullDaq::listProcess(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  Json::Value rep;
+  Json::Value cjs=this->configuration()["HOSTS"];
+  //  std::cout<<cjs<<std::endl;
+  std::vector<std::string> lhosts=this->configuration()["HOSTS"].getMemberNames();
+  // Loop on hosts
+  for (auto host:lhosts)
+    {
+      //std::cout<<" Host "<<host<<" found"<<std::endl;
+      // Loop on processes
+      const Json::Value cjsources=this->configuration()["HOSTS"][host];
+      //std::cout<<cjsources<<std::endl;
+      for (Json::ValueConstIterator it = cjsources.begin(); it != cjsources.end(); ++it)
+	{
+	  const Json::Value& process = *it;
+	  std::string p_name=process["NAME"].asString();
+	  // Loop on environenemntal variable
+	  uint32_t port=0;
+	  const Json::Value& cenv=process["ENV"];
+	  for (Json::ValueConstIterator iev = cenv.begin(); iev != cenv.end(); ++iev)
+	    {
+	      std::string envp=(*iev).asString();
+	      //      std::cout<<"Env found "<<envp.substr(0,7)<<std::endl;
+	      //std::cout<<"Env found "<<envp.substr(8,envp.length()-7)<<std::endl;
+	      if (envp.substr(0,7).compare("WEBPORT")==0)
+		{
+		  port=atol(envp.substr(8,envp.length()-7).c_str());
+		  break;
+		}
+	    }
+	  if (port==0) continue;
+	  // Now analyse process Name
+	  if (p_name.compare("WRITER")==0 )
+	    {
+	      if (_builderClient == NULL) _builderClient= new fsmwebCaller(host,port);
+	      Json::Value jstat=_builderClient->queryWebStatus();Json::Value jres;jres["NAME"]=p_name;jres["HOST"]=host;jres["PORT"]=port;jres["PID"]=jstat["PID"];jres["STATE"]=jstat["STATE"];rep.append(jres);
+
+	     
+	    }
+	  if (p_name.compare("DBSERVER")==0)
+	    {
+	       if (_dbClient == NULL) _dbClient= new fsmwebCaller(host,port);
+	      Json::Value jstat=_dbClient->queryWebStatus();Json::Value jres;jres["NAME"]=p_name;jres["HOST"]=host;jres["PORT"]=port;jres["PID"]=jstat["PID"];jres["STATE"]=jstat["STATE"];rep.append(jres);
+
+	     
+	      //printf("DB client %x \n",_dbClient);
+	    }
+	  if (p_name.compare("CCCSERVER")==0)
+	    {
+	      if (_cccClient == NULL) _cccClient= new fsmwebCaller(host,port);
+	      Json::Value jstat=_cccClient->queryWebStatus();Json::Value jres;jres["NAME"]=p_name;jres["HOST"]=host;jres["PORT"]=port;jres["PID"]=jstat["PID"];jres["STATE"]=jstat["STATE"];rep.append(jres);
+
+	     
+	    }
+	  if (p_name.compare("MDCCSERVER")==0)
+	    {
+	      if (_mdccClient == NULL) _mdccClient= new fsmwebCaller(host,port);
+	      Json::Value jstat=_mdccClient->queryWebStatus();Json::Value jres;jres["NAME"]=p_name;jres["HOST"]=host;jres["PORT"]=port;jres["PID"]=jstat["PID"];jres["STATE"]=jstat["STATE"];rep.append(jres);
+
+	     
+	    }
+	  if (p_name.compare("ZUPSERVER")==0)
+	    {
+	      if (_zupClient == NULL) _zupClient= new fsmwebCaller(host,port);
+	      Json::Value jstat=_zupClient->queryWebStatus();Json::Value jres;jres["NAME"]=p_name;jres["HOST"]=host;jres["PORT"]=port;jres["PID"]=jstat["PID"];jres["STATE"]=jstat["STATE"];rep.append(jres);
+
+	      
+	    }
+	  if (p_name.compare("GPIOSERVER")==0)
+	    {
+	      if (_gpioClient == NULL) _gpioClient= new fsmwebCaller(host,port);
+	      Json::Value jstat=_gpioClient->queryWebStatus();Json::Value jres;jres["NAME"]=p_name;jres["HOST"]=host;jres["PORT"]=port;jres["PID"]=jstat["PID"];jres["STATE"]=jstat["STATE"];rep.append(jres);
+
+	      
+	
+	    }
+	   if (p_name.compare("DIFSERVER")==0)
+	    {
+	      fsmwebCaller dc(host,port);
+	      //printf("DIF client %x \n",dc);
+	      Json::Value jstat=dc.queryWebStatus();Json::Value jres;jres["NAME"]=p_name;jres["HOST"]=host;jres["PORT"]=port;jres["PID"]=jstat["PID"];jres["STATE"]=jstat["STATE"];rep.append(jres);
+
+	    }
+	   if (p_name.compare("TDCSERVER")==0)
+	    {
+	      fsmwebCaller tdc(host,port);
+	      //printf("TDC client %x \n",tdc);
+	      Json::Value jstat=tdc.queryWebStatus();Json::Value jres;jres["NAME"]=p_name;jres["HOST"]=host;jres["PORT"]=port;jres["PID"]=jstat["PID"];jres["STATE"]=jstat["STATE"];rep.append(jres);
+
+	    }
+	   
+	  
+	}
+
+    }
+  
+  response["LIST"]=rep;
+  
+}
+   
 void FullDaq::discover(levbdim::fsmmessage* m)
 {
   _DIFClients.clear();
