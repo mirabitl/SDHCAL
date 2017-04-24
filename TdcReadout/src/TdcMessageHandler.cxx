@@ -210,6 +210,8 @@ void TdcMessageHandler::parseSlowControl(NL::Socket* socket,ptrBuf& p) throw (st
   uint16_t* sptr=(uint16_t*) &p.second[0];
   uint32_t size_remain=1024;
   ier=socket->read(&p.second[p.first],size_remain);
+  if (ier<0) return;
+  if (ier>1024) return;
   p.first+=ier;
 
   std::cout<<boost::format("End of Slowcontrol %d %x %x \n") % p.first % (int) p.second[6] % (int) p.second[7] << std::flush;
