@@ -40,9 +40,19 @@ void rawAnalysis::initialise()
   theStartBCID_=0;  
 }
 void rawAnalysis::initJob(){
-  presetParameters();
-  if (_geo!=NULL)
-    _monitor=new hitMonitor(_geo);
+  // presetParameters();
+  // if (_geo!=NULL)
+  //   _monitor=new hitMonitor(_geo);
+  char* wp=getenv("GEOMETRY");
+
+  std::cout<<" INITJOB \n"<<wp<<std::flush;
+  if (wp!=NULL)
+    {
+      _geo=new jsonGeo(std::string(wp));
+    }
+  else
+    _geo=new jsonGeo("/home/acqilc/SDHCAL/SDHCAL_EventReader/pluggins/newgeo4_dome.json");
+ _monitor=new hitMonitor(_geo);
 }
 void rawAnalysis::endJob(){
   if (theMonitoringPeriod_!=0)
@@ -77,7 +87,6 @@ void rawAnalysis::presetParameters()
     }
 	
 }
-
 
 void rawAnalysis::processEvent()
 {
@@ -116,7 +125,7 @@ void rawAnalysis::processEvent()
 	double t=d->getFrameTimeToTrigger(i)*2E-7;
 
 	if (t>3.8) {
-	  printf("Wrong Time %f %x \n",t,d->getFrameTimeToTrigger(i));
+	  //printf("Wrong Time %f %x \n",t,d->getFrameTimeToTrigger(i));
 	  continue;
 	}
 	if (dbase->getDTC()==17 && d->getFrameTimeToTrigger(i)>80385 && d->getFrameTimeToTrigger(i)<80395 )
@@ -138,6 +147,7 @@ void rawAnalysis::processEvent()
 	TH1* han20=rootHandler_->GetTH1(s.str()+"/Hits20");
 	TH1* hfr=rootHandler_->GetTH1(s.str()+"/Frequency");
 	TH1* hframetime=rootHandler_->GetTH1(s.str()+"/FrameTime");
+	TH1* hmul=rootHandler_->GetTH1(s.str()+"/AsicMul");
 
 	if (han==NULL)
 	  {
@@ -146,16 +156,22 @@ void rawAnalysis::processEvent()
 	    han20 =rootHandler_->BookTH1(s.str()+"/Hits20",64,0.1,64.1);
 	    hfr =rootHandler_->BookTH1(s.str()+"/Frequency",64,0.1,64.1);
 	    hframetime =rootHandler_->BookTH1(s.str()+"/FrameTime",2000,0.,2000.);
+	    hmul =rootHandler_->BookTH1(s.str()+"/AsicMul",65,0.,65.);
       
 	  }
 	hframetime->Fill(d->getFrameTimeToTrigger(i)*1.);
+	uint32_t ninasic=0;
 	 for (uint32_t j=0;j<64;j++)
 	   {
-	     if (!(d->getFrameLevel(i,j,0) || d->getFrameLevel(i,j,1))) continue;
+	     if (!(d->getFrameLevel(i,j,0) || d->getFrameLevel(i,j,1)))
+	       continue;
+	     else
+	       ninasic++;
 	     han->Fill(j*1.);
 	     if (d->getFrameTimeToTrigger(i)<20)
 	       han20->Fill(j*1.);
 	   }
+	 hmul->Fill(ninasic*1.);
       }
     }
   hacqtime->Fill(theEventTotalTime_);
@@ -198,12 +214,35 @@ void rawAnalysis::processEvent()
   // STudy RAwCalorimeters hits
   if (_geo!=NULL && _monitor!=NULL)
     {
-      IMPL::LCCollectionVec* rhcol=(IMPL::LCCollectionVec*) reader_->getEvent()->getCollection("DHCALRawHits");
+      IMPL::LCCollectionVec* rhcold=NULL;
+      IMPL::LCCollectionVec* rhcol=NULL;
+      try {
+      rhcold=(IMPL::LCCollectionVec*) reader_->getEvent()->getCollection("DHCALRawHits");
+      } catch(...)
+	{
+	  std::cout<<" No DHCALrawHits \n";
+	}
+   
+      reader_->parseLevbdimEvent();
+
+      //reader_->flagSynchronizedFrame();
+      std::vector<uint32_t> seed;
+      seed.clear();
+      //reader_->findDIFSeeds(minChambersInTime_);
+      //rhcol=reader_->createRawCalorimeterHits(reader_->getDIFSeeds());
+      rhcol=reader_->createRawCalorimeterHits(seed);
+      if (rhcold!=0)
+	printf("DHCALRAWHITS %d ne col %d \n",rhcold->getNumberOfElements(),rhcol->getNumberOfElements());
       if (rhcol!=NULL)
 	{
-	  _monitor->FillTimeAsic(rhcol);
+	  if (rhcol->getNumberOfElements()<2500)
+	    {
+	      _monitor->FillTimeAsic(rhcol);
 
+	      _monitor->DIFStudy(rhcol);
+	    }
 	}
+      delete rhcol;
     }
   /*
   std::map<unsigned int,DifGeom>::iterator idg = reader_->getDifMap().find(d->getID());

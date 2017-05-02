@@ -38,6 +38,7 @@
     void scurveAnalysis();
     void normalAnalysis();
     void timeAnalysis();
+    void LmAnalysis();
     void addRun(uint32_t r,std::string name) { _files.push_back(std::pair<uint32_t,std::string>(r,name));}
   private:
     std::vector<std::pair<uint32_t,std::string> > _files;

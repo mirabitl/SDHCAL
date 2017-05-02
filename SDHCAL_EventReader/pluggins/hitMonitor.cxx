@@ -142,6 +142,7 @@ void hitMonitor::DIFStudy( IMPL::LCCollectionVec* rhcol,bool external)
       _hits.push_back(h);
     }
   printf("DIFSTUDY %d hits\n",_hits.size());
+  bool fit=false;
   for (std::vector<RecoHit>::iterator it=_hits.begin();it!=_hits.end();it++)
     {
       RecoHit& h=(*it);
@@ -198,12 +199,13 @@ void hitMonitor::DIFStudy( IMPL::LCCollectionVec* rhcol,bool external)
 	  hthr2 =rootHandler_->BookTH2( namech.str()+"/Seuil2",96,0.,96.,96,0.,96.);
 	}
       if (h.isTagged(RecoHit::THR0)||h.isTagged(RecoHit::THR2)) hthr0->Fill(h.I()*1.,h.J()*1.);
+      if (h.isTagged(RecoHit::THR2)) hthr2->Fill(h.I()*1.,h.J()*1.);
       if (h.isTagged(RecoHit::THR1)||h.isTagged(RecoHit::THR2)||h.isTagged(RecoHit::THR0))
 	{
 	  hthr1->Fill(h.I()*1.,h.J()*1.);
-	  if (bc<20) hthr1it->Fill(h.I()*1.,h.J()*1.);
+	  if (bc>8 && bc<21 && !fit) {hthr1it->Fill(h.I()*1.,h.J()*1.);fit=true;}
 	}
-      if (h.isTagged(RecoHit::THR2)) hthr2->Fill(h.I()*1.,h.J()*1.);
+
 
     }
 

@@ -190,7 +190,7 @@ void trackAnalysis::initHistograms()
 
 trackAnalysis::trackAnalysis() :trackIndex_(0),nAnalyzed_(0),clockSynchCut_(8), spillSize_(90000),maxHitCount_(500000),minHitCount_(2),
 				tkMinPoint_(3),tkExtMinPoint_(3),tkBigClusterSize_(32),tkChi2Cut_(0.01),tkDistCut_(5.),tkExtChi2Cut_(0.01),tkExtDistCut_(10.),tkAngularCut_(20.),zLastAmas_(134.),
-				findTracks_(true),dropFirstSpillEvent_(false),useSynchronised_(true),chamberEdge_(5.),rebuild_(false),oldAlgo_(true),collectionName_("DHCALRawHits"),
+				findTracks_(true),dropFirstSpillEvent_(false),useSynchronised_(true),chamberEdge_(5.),rebuild_(false),oldAlgo_(true),collectionName_("DHCALRawHits1"),
 				tkFirstChamber_(1),tkLastChamber_(61),useTk4_(false),offTimePrescale_(1),houghIndex_(0),theRhcolTime_(0.),theTimeSortTime_(0.),theTrackingTime_(0),
 				theHistoTime_(0),theSeuil_(0),draw_(false),theSkip_(0),_monitor(NULL),theMonitoringPeriod_(0),theMonitoringPath_("/dev/shm/Monitoring"),ntkbetween(0),theBCIDSpill_(0),theLastBCID_(0),theSpillLength_(8.),_geo(NULL)
 {
@@ -677,7 +677,7 @@ void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
 {
   
   //printf("On entre %s\n",__PRETTY_FUNCTION__);
-  
+  //if (seed<10 || seed>20) return;
   ptime("Enter");
   _tcl.clear();
   for (std::vector<planeCluster*>::iterator ic=allClusters_.begin();ic!=allClusters_.end();ic++)
@@ -854,17 +854,18 @@ void trackAnalysis::processEvent()
 	}
     }
   rebuild_=true;
-  collectionName_="DHCALRawHits";
+  collectionName_="DHCALRawHits1";
+  useSynchronised_=false;
   if (rebuild_)
     {
     
       reader_->parseLevbdimEvent();
-      DEBUG_PRINT("End of parseraw \n");
+      INFO_PRINT("End of parseraw \n");
       //reader_->flagSynchronizedFrame();
       std::vector<uint32_t> seed;
       if (useSynchronised_ )
 	{
-	  //DEBUG_PRINT("Calling FastFlag2\n");
+	  INFO_PRINT("Calling FastFlag2\n");
       
 	  reader_->findTimeSeeds(minChambersInTime_,seed);
 	  // DEBUG_PRINT("End of FastFlag2 \n");
@@ -878,23 +879,32 @@ void trackAnalysis::processEvent()
       //
       // getchar();
       seed.clear();
-      //INFO_PRINT("Calling CreaetRaw %d\n",minChambersInTime_);
+      INFO_PRINT("Calling CreaetRaw %d\n",minChambersInTime_);
       //reader_->findDIFSeeds(minChambersInTime_);
       //rhcol=reader_->createRawCalorimeterHits(reader_->getDIFSeeds());
       if (collectionName_.compare("DHCALRawHits")!=0)
 	{
 	  rhcol=reader_->createRawCalorimeterHits(seed);
+	  INFO_PRINT("Calling CreaetRaw %d\n", rhcol->getNumberOfElements());
 	  evt_->addCollection(rhcol,collectionName_);
+	  INFO_PRINT("Calling CreaetRaw %d\n",minChambersInTime_);
 	  rhcoltransient=false;
 	}
       else
-	rhcol=(IMPL::LCCollectionVec*) evt_->getCollection(collectionName_);
+	try {
+	  rhcol=(IMPL::LCCollectionVec*) evt_->getCollection(collectionName_);
+	}
+	catch(...)
+	  {
+	    return;
+	  }
     
     }
   else
     rhcol=(IMPL::LCCollectionVec*) evt_->getCollection(collectionName_);
 
-
+  INFO_PRINT("After createraw %d\n",rhcol->getNumberOfElements());
+  //  if (rhcol->getNumberOfElements()>1000) return;
   _info.processDIFs(reader_->getDIFList());
   if (_info.getReadoutTotalTime()>_geo->cuts()["maxTime"].asFloat())
     {
@@ -946,7 +956,7 @@ void trackAnalysis::processEvent()
   bool hasPion=false;
   for (uint32_t is=0;is<vseeds.size();is++)
     {
-      //printf("%d %d %x \n",is,vseeds[is],rhcol);
+      printf("%d %d %x \n",is,vseeds[is],rhcol);
       this->processSeed(rhcol,vseeds[is]);
     
     

@@ -3,7 +3,7 @@
 	"firstEvent":1,
 	"maxTime":100800.0,
     "timeAnalysis":1,
-    "timeWindow":2,
+    "timeWindow":3,
     "difAnalysis":20,
     "cerenkovAnalysis":0,
     "showerAnalysis":0,
@@ -16,12 +16,12 @@
 	"cosSeed":0.03,
 	"tkDistCut":4.0,
 	"tkDzMax":50.,
-	"tkMinPoint":3,
-	"tkExtMinPoint":3,
+	"tkMinPoint":1,
+	"tkExtMinPoint":1,
 	"tkChi2":0.01,
 	"edge":3.0,
 	"zedge":15,
-	"minPlans":3,
+	"minPlans":1,
 	"mipRate":0.1,
         "bifChamber":57,
 	"xBeamMin": 0.0,
@@ -39,7 +39,7 @@
 	"6":{"chamber":4,"di":0.0,"dj":0.000000,"poli":1.0,"polj":1.0,"type":"HR2PAD"}, 
     "2":{"chamber":5,"di":0.0,"dj":0.000000,"poli":1.0,"polj":1.0,"type":"HR2PAD"},
     "142":{"chamber":6,"di":0.0,"dj":0.000000,"poli":1.0,"polj":1.0,"type":"HR2PAD"},
-    "198":{"chamber":1,"di":0.0,"dj":0.000000,"poli":1.0,"polj":1.0,"type":"HR2PAD"}
+    "30":{"chamber":1,"di":0.0,"dj":0.000000,"poli":1.0,"polj":1.0,"type":"HR2PAD"}
     },
     "chambers":{
 	"1":{"x0":0.0,"y0":0.0,"z0":0.0000000,"x1":70.0,"y1":40.0,"z1":0.0000000,"plan":1},

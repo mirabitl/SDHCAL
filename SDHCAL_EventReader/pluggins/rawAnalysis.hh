@@ -36,6 +36,7 @@ public:
       reader_->writeRunHeader();
   }
   void presetParameters();
+ 
   void setWriting(bool t){writing_=t;}
   virtual void setReader(DHCalEventReader* r){reader_=r;rootHandler_=DCHistogramHandler::instance();}
 
