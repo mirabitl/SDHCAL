@@ -93,6 +93,7 @@ void TdcFpga::processEventTdc()
     {
       std::stringstream ss;
        ss<<boost::format("Trigger %x %d %d %ld %d \n ") % _adr % _mezzanine % _gtc % _abcid % _channels.size();
+       int nch=0;
       for (auto x:_channels)
 	{
 	  ss<<boost::format("\t %d %d %f ") % (int) x.channel() % (int) x.bcid() % x.tdcTime();
@@ -102,6 +103,8 @@ void TdcFpga::processEventTdc()
 	    }
 	  else
 	    ss<<"\n";
+	  nch++;
+	  if (nch>40) {ss<<" and more.. \n";break;}
 	}
       std::cout<<ss.str()<<std::flush;
 
