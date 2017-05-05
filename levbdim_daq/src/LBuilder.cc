@@ -27,6 +27,7 @@ LBuilder::LBuilder(std::string name) : levbdim::baseApplication(name),_evb(NULL)
 
 
   _fsm->addCommand("SETHEADER",boost::bind(&LBuilder::c_setheader,this,_1,_2));
+  _fsm->addCommand("STATUS",boost::bind(&LBuilder::c_status,this,_1,_2));
   //Start server
   std::stringstream s0;
   s0.str(std::string());
@@ -40,6 +41,19 @@ LBuilder::LBuilder(std::string name) : levbdim::baseApplication(name),_evb(NULL)
     }
 
 }
+
+void LBuilder::c_status(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+
+  if (_evb==NULL)    {response["STATUS"]="NO EVB created"; return;}
+  Json::Value rp;
+  rp["run"]=_evb->run();
+  rp["event"]=_evb->event();
+  response["STATUS"]="DONE";
+  response["VALUE"]=rp;
+
+}
+
 void LBuilder::c_setheader(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
 

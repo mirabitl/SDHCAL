@@ -18,6 +18,7 @@ public:
   void status(levbdim::fsmmessage* m);
   void registerDataSource(levbdim::fsmmessage* m);
   void c_setheader(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_status(Mongoose::Request &request, Mongoose::JsonResponse &response);
 private:
   fsmweb* _fsm;
   std::vector<levbdim::datasocket*> _sources;

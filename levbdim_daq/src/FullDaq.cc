@@ -433,6 +433,7 @@ void FullDaq::prepare(levbdim::fsmmessage* m)
 
 std::string FullDaq::difstatus()
 {
+  printf("%s \n",__PRETTY_FUNCTION__);
   Json::Value devlist;
   for (auto dc:_DIFClients)
     {
@@ -630,15 +631,17 @@ void FullDaq::start(levbdim::fsmmessage* m)
   // Get the new run number
    if (_dbClient)
     {
+      std::cout<<" calling for new runs \n";
       _dbClient->sendTransition("NEWRUN");
-      //std::cout<<_dbClient->answer();
+      std::cout<<_dbClient->answer();
       _run=_dbClient->answer()["run"].asInt();
-      //  std::cout<<" new run "<<_run<<std::endl;
+      std::cout<<" new run "<<_run<<std::endl;
     }
    // Start the DIFs
   boost::thread_group g;
   for (std::vector<fsmwebCaller*>::iterator it=_DIFClients.begin();it!=_DIFClients.end();it++)
     {
+      std::cout<<" calling for DIFS \n";
       //std::cout<<"Creating thread"<<std::endl;
       g.create_thread(boost::bind(&FullDaq::singlestart, this,(*it)));
     }
@@ -647,6 +650,7 @@ void FullDaq::start(levbdim::fsmmessage* m)
   // Start the builder
    if (_builderClient)
     {
+      std::cout<<" calling for BUILDER \n";
       Json::Value jl;
       jl["run"]=_run;
       _builderClient->sendTransition("START",jl);
@@ -654,6 +658,7 @@ void FullDaq::start(levbdim::fsmmessage* m)
    // Start TDC
    for (auto tdc:_tdcClients)
 	{
+	  std::cout<<" calling for TDC \n";
 	  Json::Value jl;
 	  jl["run"]=_run;
 	  jl["type"]=0;
@@ -662,6 +667,7 @@ void FullDaq::start(levbdim::fsmmessage* m)
   //Start the CCC
    if (_cccClient)
      {
+        std::cout<<" calling for CCC \n";
        _cccClient->sendTransition("START");
      }
   // Resume the MDCC
@@ -670,7 +676,7 @@ void FullDaq::start(levbdim::fsmmessage* m)
        //_mdccClient->sendTransition("RESET");
        //_mdccClient->sendTransition("RESUME");
      }
-
+   std::cout<<" calling ends \n";
    m->setAnswer(toJson(this->difstatus()));  
 }
 void FullDaq::stop(levbdim::fsmmessage* m)
@@ -894,8 +900,9 @@ void FullDaq::setControlRegister(Mongoose::Request &request, Mongoose::JsonRespo
 
 void FullDaq::dbStatus(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
+  printf("%s \n",__PRETTY_FUNCTION__);
   response["run"]=_run;
-  response["state"]=_dbstate;
+  response["state"]= this->parameters()["db"]["dbstate"];
   response["STATUS"]="DONE";
 }
 void FullDaq::registerDataSource(Mongoose::Request &request, Mongoose::JsonResponse &response)
@@ -919,15 +926,23 @@ void FullDaq::registerDataSource(Mongoose::Request &request, Mongoose::JsonRespo
 
 void  FullDaq::builderStatus(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
+  printf("%s \n",__PRETTY_FUNCTION__);
   Json::FastWriter fastWriter;
   Json::Value fromScratch;
   response["run"]=-1;
   response["event"]=-1;
   
   if (_builderClient==NULL){LOG4CXX_ERROR(_logLdaq, "No SHM client");response["STATUS"]= "No SHM client";return;}
-  _builderClient->sendTransition("STATUS");
-  response["run"]=_builderClient->answer()["run"];
-  response["event"]=_builderClient->answer()["event"];
+  _builderClient->sendCommand("STATUS");
+  std::cout<<_builderClient->answer()<<std::endl;
+  if (!_builderClient->answer().empty())
+    {
+      if (_builderClient->answer().isMember("VALUE"))
+	{
+	  response["run"]=_builderClient->answer()["VALUE"]["run"];
+	  response["event"]=_builderClient->answer()["VALUE"]["event"];
+	}
+    }
   response["STATUS"]="DONE";
 }
 

@@ -418,8 +418,8 @@ class fdaqClient:
 
   def daq_start(self):
       self.trig_reset()
-      self.trig_spillon(1000000)
-      self.trig_spilloff(100000)
+      #self.trig_spillon(1000000)
+      #self.trig_spilloff(100000)
       self.trig_spillregister(0)
       self.trig_calibon(0)
       self.trig_status()
@@ -636,7 +636,7 @@ class fdaqClient:
       self.trig_calibon(0)
       self.trig_pause()
       return
-  def daq_scurve(self,ntrg,ncon,thmin,thmax,mask):
+  def daq_scurve(self,ntrg,ncon,thmin,thmax,mask,step=5):
       self.trig_pause()
       self.trig_spillon(ncon)
       self.trig_spilloff(50000)
@@ -645,11 +645,11 @@ class fdaqClient:
       self.trig_calibcount(ntrg)
       self.trig_status()
       #self.tdc_setmask(mask)
-      thrange=(thmax-thmin+1)/5
+      thrange=(thmax-thmin+1)/step
       for vth in range(0,thrange):
-          self.tdc_setvthtime(thmax-vth*5)
+          self.tdc_setvthtime(thmax-vth*step)
           #self.tdc_setmask(mask)
-          self.daq_setrunheader(2,(thmax-vth*5))
+          self.daq_setrunheader(2,(thmax-vth*step))
           # check current evb status
           sr=self.daq_evbstatus()
           sj=json.loads(sr)
@@ -666,7 +666,7 @@ class fdaqClient:
               sj=json.loads(sr)
               ssj=sj["answer"]
               lastEvent=int(ssj["event"])
-              print firstEvent,lastEvent,thmax-vth*5
+              print firstEvent,lastEvent,thmax-vth*step
               time.sleep(1)
               nloop=nloop+1
               if (nloop>6):
@@ -677,14 +677,14 @@ class fdaqClient:
   def daq_fullscurve(self):
       self.daq_start()
       #self.tdc_setmask(0XFFFFFFFF)
-      #self.daq_scurve(100,30,180,650,4294967295)
+      #self.daq_scurve(100,30,150,650,4294967295)
       #self.daq_stop()
       #return
       for ist in range(0,14):
           self.tdc_setmask((1<<ist))
-          self.daq_scurve(100,30,250,480,4294967295)
+          self.daq_scurve(100,300,200,550,4294967295,5)
           self.tdc_setmask((1<<(31-ist)))
-          self.daq_scurve(100,30,250,480,4294967295)
+          self.daq_scurve(100,300,200,550,4294967295,5)
       self.daq_stop()
 parser = argparse.ArgumentParser()
 
@@ -1038,6 +1038,7 @@ elif(results.daq_startrun):
 
 elif(results.daq_stoprun):
     r_cmd='stop'
+    fdc.trig_pause();
     fdc.daq_stop()
     exit(0)
 elif(results.daq_destroy):
