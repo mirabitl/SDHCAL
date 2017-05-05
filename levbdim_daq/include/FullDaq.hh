@@ -63,6 +63,7 @@ public:
   void tdcSetVthTime(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void tdcSetMask(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void setRunHeader(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void tdcstatus(Mongoose::Request &request, Mongoose::JsonResponse &response);
 
   
   std::string state(){return _fsm->state();}

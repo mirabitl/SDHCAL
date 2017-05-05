@@ -47,6 +47,8 @@ FullDaq::FullDaq(std::string name) : levbdim::baseApplication(name)
     _fsm->addCommand("DBSTATUS",boost::bind(&FullDaq::dbStatus,this,_1,_2));
     _fsm->addCommand("EVBSTATUS",boost::bind(&FullDaq::builderStatus,this,_1,_2));
     _fsm->addCommand("DIFSTATUS",boost::bind(&FullDaq::status,this,_1,_2));
+    
+    _fsm->addCommand("TDCSTATUS",boost::bind(&FullDaq::tdcstatus,this,_1,_2));
     _fsm->addCommand("PAUSE",boost::bind(&FullDaq::pauseTrigger,this,_1,_2));
     _fsm->addCommand("RESUME",boost::bind(&FullDaq::resumeTrigger,this,_1,_2));
     _fsm->addCommand("ECALPAUSE",boost::bind(&FullDaq::pauseEcal,this,_1,_2));
@@ -937,12 +939,31 @@ void  FullDaq::builderStatus(Mongoose::Request &request, Mongoose::JsonResponse 
   std::cout<<_builderClient->answer()<<std::endl;
   if (!_builderClient->answer().empty())
     {
-      if (_builderClient->answer().isMember("VALUE"))
+      if (_builderClient->answer().isMember("answer"))
+	if (_builderClient->answer()["answer"].isMember("VALUE"))
 	{
-	  response["run"]=_builderClient->answer()["VALUE"]["run"];
-	  response["event"]=_builderClient->answer()["VALUE"]["event"];
+	  response["run"]=_builderClient->answer()["answer"]["VALUE"]["run"];
+	  response["event"]=_builderClient->answer()["answer"]["VALUE"]["event"];
 	}
     }
+  response["STATUS"]="DONE";
+}
+
+void FullDaq::tdcstatus(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  
+  Json::Value devlist;
+  for (std::vector<fsmwebCaller*>::iterator it=_tdcClients.begin();it!=_tdcClients.end();it++)
+    {
+
+      (*it)->sendCommand("STATUS");
+      const Json::Value& jdevs=(*it)->answer();
+      if (jdevs.isMember("answer"))
+	if (jdevs["answer"].isMember("TDCSTATUS"))
+      //for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
+	  devlist.append(jdevs["answer"]["TDCSTATUS"]);
+    }
+  response["tdclist"]=devlist;
   response["STATUS"]="DONE";
 }
 
