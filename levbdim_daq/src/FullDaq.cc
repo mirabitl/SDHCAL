@@ -127,6 +127,8 @@ void FullDaq::listProcess(Mongoose::Request &request, Mongoose::JsonResponse &re
 	{
 	  const Json::Value& process = *it;
 	  std::string p_name=process["NAME"].asString();
+	  Json::Value p_param=Json::Value::null;
+	  if (process.isMember("PARAMETER")) p_param=process["PARAMETER"];
 	  // Loop on environenemntal variable
 	  uint32_t port=0;
 	  const Json::Value& cenv=process["ENV"];
@@ -147,7 +149,7 @@ void FullDaq::listProcess(Mongoose::Request &request, Mongoose::JsonResponse &re
 	    {
 	      if (_builderClient == NULL) _builderClient= new fsmwebCaller(host,port);
 	      Json::Value jstat=_builderClient->queryWebStatus();Json::Value jres;jres["NAME"]=p_name;jres["HOST"]=host;jres["PORT"]=port;jres["PID"]=jstat["PID"];jres["STATE"]=jstat["STATE"];rep.append(jres);
-
+	      
 	     
 	    }
 	  if (p_name.compare("DBSERVER")==0)
@@ -155,28 +157,25 @@ void FullDaq::listProcess(Mongoose::Request &request, Mongoose::JsonResponse &re
 	       if (_dbClient == NULL) _dbClient= new fsmwebCaller(host,port);
 	      Json::Value jstat=_dbClient->queryWebStatus();Json::Value jres;jres["NAME"]=p_name;jres["HOST"]=host;jres["PORT"]=port;jres["PID"]=jstat["PID"];jres["STATE"]=jstat["STATE"];rep.append(jres);
 
-	     
 	      //printf("DB client %x \n",_dbClient);
 	    }
 	  if (p_name.compare("CCCSERVER")==0)
 	    {
 	      if (_cccClient == NULL) _cccClient= new fsmwebCaller(host,port);
 	      Json::Value jstat=_cccClient->queryWebStatus();Json::Value jres;jres["NAME"]=p_name;jres["HOST"]=host;jres["PORT"]=port;jres["PID"]=jstat["PID"];jres["STATE"]=jstat["STATE"];rep.append(jres);
-
 	     
 	    }
 	  if (p_name.compare("MDCCSERVER")==0)
 	    {
 	      if (_mdccClient == NULL) _mdccClient= new fsmwebCaller(host,port);
 	      Json::Value jstat=_mdccClient->queryWebStatus();Json::Value jres;jres["NAME"]=p_name;jres["HOST"]=host;jres["PORT"]=port;jres["PID"]=jstat["PID"];jres["STATE"]=jstat["STATE"];rep.append(jres);
-
+	      if (!p_param.empty()) this->parameters()["mdcc"]=p_param;
 	     
 	    }
 	  if (p_name.compare("ZUPSERVER")==0)
 	    {
 	      if (_zupClient == NULL) _zupClient= new fsmwebCaller(host,port);
 	      Json::Value jstat=_zupClient->queryWebStatus();Json::Value jres;jres["NAME"]=p_name;jres["HOST"]=host;jres["PORT"]=port;jres["PID"]=jstat["PID"];jres["STATE"]=jstat["STATE"];rep.append(jres);
-
 	      
 	    }
 	  if (p_name.compare("GPIOSERVER")==0)
@@ -184,7 +183,7 @@ void FullDaq::listProcess(Mongoose::Request &request, Mongoose::JsonResponse &re
 	      if (_gpioClient == NULL) _gpioClient= new fsmwebCaller(host,port);
 	      Json::Value jstat=_gpioClient->queryWebStatus();Json::Value jres;jres["NAME"]=p_name;jres["HOST"]=host;jres["PORT"]=port;jres["PID"]=jstat["PID"];jres["STATE"]=jstat["STATE"];rep.append(jres);
 
-	      
+	     
 	
 	    }
 	   if (p_name.compare("DIFSERVER")==0)
@@ -228,6 +227,8 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 	{
 	  const Json::Value& process = *it;
 	  std::string p_name=process["NAME"].asString();
+	  Json::Value p_param=Json::Value::null;
+	  if (process.isMember("PARAMETER")) p_param=process["PARAMETER"];
 	  // Loop on environenemntal variable
 	  uint32_t port=0;
 	  const Json::Value& cenv=process["ENV"];
@@ -253,6 +254,7 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 		{
 		  _builderClient->sendTransition("CREATE",_jConfigContent);
 		}
+	      if (!p_param.empty()) this->parameters()["builder"]=p_param;
 	    }
 	  if (p_name.compare("DBSERVER")==0)
 	    {
@@ -263,7 +265,7 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 		{
 		  _dbClient->sendTransition("CREATE",_jConfigContent);
 		}
-
+	      if (!p_param.empty()) this->parameters()["db"]=p_param;
 	      //printf("DB client %x \n",_dbClient);
 	    }
 	  if (p_name.compare("CCCSERVER")==0)
@@ -275,7 +277,7 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 		{
 		  _cccClient->sendTransition("CREATE",_jConfigContent);
 		}
-
+	      if (!p_param.empty()) this->parameters()["ccc"]=p_param;
 	      //printf("CCC client %x \n",_cccClient);
 	    }
 	  if (p_name.compare("MDCCSERVER")==0)
@@ -287,7 +289,8 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 		{
 		  _mdccClient->sendTransition("CREATE",_jConfigContent);
 		}
-
+	      if (!p_param.empty()) this->parameters()["mdcc"]=p_param;
+		      
 	      //printf("MDCC client %x \n",_mdccClient);
 	    }
 	  if (p_name.compare("ZUPSERVER")==0)
@@ -299,7 +302,7 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 		{
 		  _zupClient->sendTransition("CREATE",_jConfigContent);
 		}
-
+	      if (!p_param.empty()) this->parameters()["zup"]=p_param;
 	      //printf("ZUP client %x \n",_zupClient);
 	    }
 	  if (p_name.compare("GPIOSERVER")==0)
@@ -311,6 +314,7 @@ void FullDaq::discover(levbdim::fsmmessage* m)
 		{
 		  _gpioClient->sendTransition("CREATE",_jConfigContent);
 		}
+	      if (!p_param.empty()) this->parameters()["gpio"]=p_param;
 
 	      //printf("Gpio client %x \n",_gpioClient);
 	      _gpioClient->sendTransition("CONFIGURE");
@@ -904,7 +908,16 @@ void FullDaq::dbStatus(Mongoose::Request &request, Mongoose::JsonResponse &respo
 {
   printf("%s \n",__PRETTY_FUNCTION__);
   response["run"]=_run;
-  response["state"]= this->parameters()["db"]["dbstate"];
+  response["state"]= "unknown";
+  std::cout<<this->parameters()<<std::endl;
+  if (!this->parameters().empty())
+    {
+      if (this->parameters().isMember("db"))
+	{
+	   response["state"]= this->parameters()["db"]["dbstate"];
+	}
+    }
+  
   response["STATUS"]="DONE";
 }
 void FullDaq::registerDataSource(Mongoose::Request &request, Mongoose::JsonResponse &response)

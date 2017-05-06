@@ -935,7 +935,7 @@ elif(results.daq_state):
 elif(results.daq_discover):
     r_cmd='Discover'
     fdc.daq_discover()
-    fdc.daq_setparameters()
+    #fdc.daq_setparameters()
     exit(0)
 elif(results.daq_setparameters):
     r_cmd='setParameters'
