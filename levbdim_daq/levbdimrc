@@ -5,7 +5,9 @@ export DAQCONFIG=config_mdcc
 export DAQCONFIGFILE=${DAQDIR}/levbdim_daq/${DAQCONFIG}.py
 # uncomment if socks is used
 #export SOCKPORT=1080
-alias runc='webc.py'
+export DAQURL=http://lyosdhcal9/daq/032017/config_small.json
+
+alias runc='fdaq.py'
 
 
 

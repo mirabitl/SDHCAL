@@ -182,7 +182,7 @@ env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
 #LIBRARY_SOURCES=Glob("#src/*.cc")
 
 #print LIBRARY_SOURCES
-LIBRARY_SOURCES=['src/LDIF.cc','src/LDIFServer.cc','src/LCccServer.cc','src/LZupServer.cc','src/LMdccServer.cc','src/LBuilder.cc','src/LDaq.cc','src/LRootPublisher.cc','src/LGpioServer.cc']
+LIBRARY_SOURCES=['src/LDIF.cc','src/LDIFServer.cc','src/LCccServer.cc','src/LZupServer.cc','src/LMdccServer.cc','src/LBuilder.cc','src/LDaq.cc','src/LRootPublisher.cc','src/LGpioServer.cc','src/LGenesysServer.cc']
 
 if (Use_Oracle):
   LIBRARY_SOURCES.append('src/LDbServer.cc')
@@ -211,6 +211,8 @@ ldifd=env.Program("bin/levbdim_dif",source="src/LDIFDaemon.cxx",LIBPATH=EXE_LIBP
 plist.append(ldifd)
 lzupd=env.Program("bin/levbdim_zup",source="src/LZupDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 plist.append(lzupd)
+lgenesysd=env.Program("bin/levbdim_genesys",source="src/LGenesysDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+plist.append(lgenesysd)
 lcccd=env.Program("bin/levbdim_ccc",source="src/LCccDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 plist.append(lcccd)
 lmdccd=env.Program("bin/levbdim_mdcc",source="src/LMdccDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
