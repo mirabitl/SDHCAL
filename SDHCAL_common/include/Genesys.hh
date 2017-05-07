@@ -14,6 +14,7 @@
 #include <errno.h>
 
 #include <termios.h>
+#include <time.h>
 
 #include <unistd.h>
 #include <string>
@@ -24,10 +25,83 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/select.h>
+#include <boost/format.hpp>
+
 using namespace std;
 class Genesys
 {
 public:
+  void setIos()
+  {
+    struct termios oldtio,newtio;
+    char buf[255];
+    /* 
+       Open modem device for reading and writing and not as controlling tty
+       because we don't want to get killed if linenoise sends CTRL-C.
+    */
+            
+    tcgetattr(fd1,&oldtio); /* save current serial port settings */
+    bzero(&newtio, sizeof(newtio)); /* clear struct for new port settings */
+        
+    /* 
+       BAUDRATE: Set bps rate. You could also use cfsetispeed and cfsetospeed.
+       CRTSCTS : output hardware flow control (only used if the cable has
+       all necessary lines. See sect. 7 of Serial-HOWTO)
+       CS8     : 8n1 (8bit,no parity,1 stopbit)
+       CLOCAL  : local connection, no modem contol
+       CREAD   : enable receiving characters
+    */
+         newtio.c_cflag = B9600 | CRTSCTS | CS8 | CLOCAL | CREAD;
+	 
+        /*
+          IGNPAR  : ignore bytes with parity errors
+          ICRNL   : map CR to NL (otherwise a CR input on the other computer
+                    will not terminate input)
+          otherwise make device raw (no other input processing)
+        */
+         newtio.c_iflag = IGNPAR | ICRNL;
+         
+        /*
+         Raw output.
+        */
+         newtio.c_oflag = 0;
+         
+        /*
+          ICANON  : enable canonical input
+          disable all echo functionality, and don't send signals to calling program
+        */
+         newtio.c_lflag = ICANON;
+         
+        /* 
+          initialize all control characters 
+          default values can be found in /usr/include/termios.h, and are given
+          in the comments, but we don't need them here
+        */
+         newtio.c_cc[VINTR]    = 0;     /* Ctrl-c */ 
+         newtio.c_cc[VQUIT]    = 0;     /* Ctrl-\ */
+         newtio.c_cc[VERASE]   = 0;     /* del */
+         newtio.c_cc[VKILL]    = 0;     /* @ */
+         newtio.c_cc[VEOF]     = 4;     /* Ctrl-d */
+         newtio.c_cc[VTIME]    = 0;     /* inter-character timer unused */
+         newtio.c_cc[VMIN]     = 1;     /* blocking read until 1 character arrives */
+         newtio.c_cc[VSWTC]    = 0;     /* '\0' */
+         newtio.c_cc[VSTART]   = 0;     /* Ctrl-q */ 
+         newtio.c_cc[VSTOP]    = 0;     /* Ctrl-s */
+         newtio.c_cc[VSUSP]    = 0;     /* Ctrl-z */
+         newtio.c_cc[VEOL]     = 0;     /* '\0' */
+         newtio.c_cc[VREPRINT] = 0;     /* Ctrl-r */
+         newtio.c_cc[VDISCARD] = 0;     /* Ctrl-u */
+         newtio.c_cc[VWERASE]  = 0;     /* Ctrl-w */
+         newtio.c_cc[VLNEXT]   = 0;     /* Ctrl-v */
+         newtio.c_cc[VEOL2]    = 0;     /* '\0' */
+        
+        /* 
+          now clean the modem line and activate the settings for the port
+        */
+         tcflush(fd1, TCIFLUSH);
+         tcsetattr(fd1,TCSANOW,&newtio);
+         
+  }
   Genesys(std::string device,uint32_t address)
   {
 
@@ -49,9 +123,8 @@ public:
 	printf("Port 1 has been sucessfully opened and %d is the file description\n",fd1);
       }
 
-
     int portstatus = 0;
-
+#ifdef OLDWAY
     struct termios options;
     // Get the current options for the port...
     tcgetattr(fd1, &options);
@@ -68,7 +141,7 @@ public:
     //options.c_cflag |= SerialDataBitsInterp(8);           /* CS8 - Selects 8 data bits */
      options.c_cflag &= ~CRTSCTS;                            // disable hardware flow control
      options.c_iflag &= ~(IXON | IXOFF | IXANY);           // disable XON XOFF (for transmit and receive)
-     //options.c_cflag |= CRTSCTS;                     /* enable hardware flow control */
+     options.c_cflag |= CRTSCTS;                     /* enable hardware flow control */
 
 
     options.c_cc[VMIN] = 1;     //min carachters to be read
@@ -89,20 +162,22 @@ public:
     else
       portstatus = 1;
 
-
+#else
+    setIos();
+#endif
 
     char hadr[20];
     memset(hadr,0,20);
-    sprintf(hadr,"ADR %2d\r\n\n",address);
+    sprintf(hadr,"ADR %2d\r\n",address);
     stringstream s;
-    s<<"ADR "<<address<<"\r\n";
+    s<<"ADR "<<address<<"\r";
 
     this->readCommand(s.str());
     // wr=write(fd1,s.str().c_str(),s.str().length());usleep(50000);
     // printf("%d Bytes sent are %d \n",portstatus,wr);
   
     s.str(std::string());
-    s<<"RMT 1\r\n";
+    s<<"RMT 1\r";
     this->readCommand(s.str());
     // wr=write(fd1,s.str().c_str(),s.str().length());usleep(50000);
     // printf("%d Bytes sent are %d \n",portstatus,wr);
@@ -115,18 +190,13 @@ public:
   }
   void ON()
   {
-    stringstream s;
-    s<<"OUT 1\r\n\n";
-    wr=write(fd1,s.str().c_str(),s.str().length());usleep(50000);
-    printf("Bytes sent are %d \n",wr);
-
+    readCommand("OUT 1\r");
+    this->INFO();
   }
   void OFF()
   {
-
-    wr=write(fd1,":OUT0;",6);usleep(50000);
-    //printf("Bytes sent are %d \n",wr);
-
+    readCommand("OUT 0\r");
+    this->INFO();
   }
 
   void readCommand(std::string cmd)
@@ -149,11 +219,11 @@ public:
       {
 	read( fd1, buff, 100 ); /* there was data to read */
     
-	std::cout<<"Y avait "<<buff<<std::endl;
+	//std::cout<<"Y avait "<<buff<<std::endl;
       }
     wr=write(fd1,cmd.c_str(),cmd.length());
     //std::cout<<"sleep "<<std::endl;
-    //for (int i=0;i<2500;i++) usleep(100);
+    for (int i=0;i<20;i++) usleep(1000);
     memset(buff,0,1024);
     int32_t nchar=0,rd=0;
     while (1)
@@ -162,7 +232,7 @@ public:
 	FD_SET(fd1, &set); /* add our file descriptor to the set */
 	
 	timeout.tv_sec = 0;
-	timeout.tv_usec = 500000;
+	timeout.tv_usec = 480000;
 
 
 	rv = select(fd1 + 1, &set, NULL, NULL, &timeout);
@@ -183,7 +253,7 @@ public:
 	    if (rd>0)
 	      nchar+=rd;
 	  }
-	usleep(10);
+	usleep(1);
       }
 
     
@@ -195,17 +265,43 @@ public:
     for (int i=0;i<nchar;i++)
       if (buff[i]<0x5f) {bufr[istart]=buff[i];istart++;}
     //memcpy(bufr,&buff[istart],nchar-istart);
-    std::string toto;toto.assign(bufr,istart);
+    std::string toto;toto.assign(bufr,istart-1);
     //printf(" %d %d Corrected %s\n",istart,nchar,toto.c_str());
+    
     _value=toto;
   }
   void INFO()
   {
-    //this->readCommand("IDN?\r\n");
-    this->readCommand("PV?\r\n");
-    this->readCommand("MV?\r\n");
-    this->readCommand("PC?\r\n");
-    this->readCommand("MC?\r\n");
+    do
+      {
+	this->readCommand("IDN?\r");
+	std::cout<<boost::format(" Device %s \n") % _value;
+      } while (_value.compare("LAMBDA,GEN6-200")!=0);
+    this->readCommand("MODE?\r");
+    std::cout<<boost::format(" Status %s \n") % _value;
+    std::size_t found;
+    do {
+      this->readCommand("STT?\r");
+      std::cout<<boost::format("Full Status=>\n\t %s \n") % _value;
+
+    
+    found=_value.find("MV(");
+    if (found == std::string::npos) continue;;
+    sscanf( _value.substr(found+3,6).c_str(),"%f",&_vRead);
+    found=_value.find("PV(");
+    if (found == std::string::npos) continue;;
+    sscanf(_value.substr(found+3,4).c_str(),"%f",&_vSet);
+    found=_value.find("MC(");
+    if (found == std::string::npos) continue;;
+    sscanf(_value.substr(found+3,6).c_str(),"%f",&_iRead);
+    found=_value.find("PC(");
+    if (found == std::string::npos) continue;;
+    sscanf(_value.substr(found+3,6).c_str(),"%f",&_iSet);
+    std::cout<<boost::format("Vset %f Vread %f Iset %f I read %f  \n") % _vSet % _vRead % _iSet % _iRead;
+    } while (found==std::string::npos);
+    this->readCommand("OUT?\r");
+    std::cout<<boost::format("Output Status=>\n\t %s \n") % _value;
+    _lastInfo=time(0);
     /*
     wr=write(fd1,":MDL?;",6);usleep(50000);
     memset(buff,0,100);rd=read(fd1,buff,100); printf("%s \n",buff);
@@ -219,38 +315,19 @@ public:
   }
   float ReadVoltageSet()
   {
-    this->readCommand("PV?\r\n");
-    /*
-    wr=write(fd1,":VOL!;",6);usleep(50000);
-    memset(buff,0,100);rd=read(fd1,buff,100); printf("%s \n",buff);
-    */
-    float v;
-    sscanf(_value.c_str(),"%f",&v);
-    //sscanf(buff,"SV%f",&v);
-    return v;
+    if (time(0)-_lastInfo > 20) this->INFO();
+    return _vSet;
   }
   float ReadVoltageUsed()
   {
-    this->readCommand("MV?\r\n");
-    /*
-    wr=write(fd1,":VOL?;",6);usleep(50000);
-    memset(buff,0,100);rd=read(fd1,buff,100); printf("%s \n",buff);
-    */
-    float v;
-    sscanf(_value.c_str(),"%f",&v);
-    return v;
+    if (time(0)-_lastInfo > 20) this->INFO();
+    return _vRead;
   }
   float ReadCurrentUsed()
   {
-    this->readCommand("MC?\r\n");
-    /*
-    wr=write(fd1,":CUR?;",6);usleep(50000);
-    memset(buff,0,100);rd=read(fd1,buff,100); printf("%s \n",buff);
-    */
-    float v;
-    //sscanf(buff,"AA%f",&v);
-    sscanf(_value.c_str(),"%f",&v);
-    return v;
+    if (time(0)-_lastInfo > 20) this->INFO();
+    return _iRead;
+
   }
   std::string readValue(){return _value;}
 private:
@@ -261,6 +338,8 @@ private:
   unsigned char buff[1024];
   std::string _value;
   int wr,rd,nbytes,tries;
+  float _vSet,_vRead,_iSet,_iRead;
+  time_t _lastInfo;
 };
 #ifdef _USE_MAIN_EXAMPLE_
 int main()
@@ -271,19 +350,27 @@ int main()
   Genesys* z=new Genesys("/dev/ttyUSB1",6);
 
   printf("Set Volatge\n");
-  z->readCommand("PV 4.50\r\n");
-  //z->INFO();
+  //z->readCommand("PV 4.50\r");
+  z->INFO();
+  getchar();
+  printf("%f %f %f \n",z->ReadVoltageSet(),z->ReadVoltageUsed(),z->ReadCurrentUsed());
   // printf("%f %f %f \n",z.ReadVoltageSet(),z.ReadVoltageUsed(),z.ReadCurrentUsed());
-  // //getchar();
-  // z.ON();
+  z->OFF();
+  getchar();
+  z->ON();
   // getchar();
   // //z->INFO();
+  /*
   printf("Read Volatge\n");
   printf("%f %f %f \n",z->ReadVoltageSet(),z->ReadVoltageUsed(),z->ReadCurrentUsed());
-  // z->OFF();
-  // getchar();
-  // //z->INFO();
-  // printf("%f %f %f \n",z->ReadVoltageSet(),z->ReadVoltageUsed(),z->ReadCurrentUsed());
+  z->OFF();
+  getchar();
+  z->INFO();
+  
+  z->ON();
+  getchar();
+  z->INFO();
+  */
   // // getchar();
 }
 #endif
