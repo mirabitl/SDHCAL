@@ -32,6 +32,10 @@ public:
   float* readstatus(){return _status;}
 
   void c_joblog(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_on(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_off(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_status(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  
 private:
   float _status[3];
   DimService* _zsStatus; //State of the last register read

@@ -16,7 +16,7 @@ void LGenesysServer::configure(levbdim::fsmmessage* m)
     }
   else
     device=this->parameters()["device"].asString();
-if (m->content().isMember("port"))
+  if (m->content().isMember("port"))
     { 
       port=m->content()["port"].asInt();
       this->parameters()["port"]=m->content()["port"];
@@ -65,6 +65,81 @@ void LGenesysServer::c_joblog(Mongoose::Request &request, Mongoose::JsonResponse
   response["FILE"]=s.str();
   response["LINES"]=so.str();
 }
+void LGenesysServer::c_on(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  if (_zup==NULL)
+    {
+      LOG4CXX_ERROR(_logLdaq," Genesys not created ");
+      response["STATUS"]="FAILED";
+      return;
+    }
+  
+  _zup->ON();
+  response["STATUS"]="DONE";
+  Json::Value jrep;
+  jrep["state"]="ON";
+  jrep["vset"]=_zup->ReadVoltageSet();
+  jrep["vread"]=_zup->ReadVoltageUsed();
+  jrep["iread"]=_zup->ReadCurrentUsed();
+  if (_zup->ReadCurrentUsed()<0.1)
+    jrep["state"]="OFF";
+  _status[0]=_zup->ReadVoltageSet();
+  _status[1]=_zup->ReadVoltageUsed();
+  _status[2]=_zup->ReadCurrentUsed();
+
+  response["INFO"]=jrep;
+
+}
+void LGenesysServer::c_off(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  if (_zup==NULL)
+    {
+      LOG4CXX_ERROR(_logLdaq," Genesys not created ");
+      response["STATUS"]="FAILED";
+      return;
+    }
+  
+  _zup->OFF();
+  response["STATUS"]="DONE";
+  Json::Value jrep;
+  jrep["state"]="ON";
+  jrep["vset"]=_zup->ReadVoltageSet();
+  jrep["vread"]=_zup->ReadVoltageUsed();
+  jrep["iread"]=_zup->ReadCurrentUsed();
+  if (_zup->ReadCurrentUsed()<0.1)
+    jrep["state"]="OFF";
+  _status[0]=_zup->ReadVoltageSet();
+  _status[1]=_zup->ReadVoltageUsed();
+  _status[2]=_zup->ReadCurrentUsed();
+
+  response["INFO"]=jrep;
+
+}
+void LGenesysServer::c_status(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  if (_zup==NULL)
+    {
+      LOG4CXX_ERROR(_logLdaq," Genesys not created ");
+      response["STATUS"]="FAILED";
+      return;
+    }
+  
+  _zup->INFO();
+  response["STATUS"]="DONE";
+  Json::Value jrep;
+  jrep["state"]="ON";
+  jrep["vset"]=_zup->ReadVoltageSet();
+  jrep["vread"]=_zup->ReadVoltageUsed();
+  jrep["iread"]=_zup->ReadCurrentUsed();
+  if (_zup->ReadCurrentUsed()<0.1)
+    jrep["state"]="OFF";
+  _status[0]=_zup->ReadVoltageSet();
+  _status[1]=_zup->ReadVoltageUsed();
+  _status[2]=_zup->ReadCurrentUsed();
+
+  response["INFO"]=jrep;
+
+}
 
 LGenesysServer::LGenesysServer(std::string name) : levbdim::baseApplication(name),_zup(NULL)
 {
@@ -78,15 +153,18 @@ LGenesysServer::LGenesysServer(std::string name) : levbdim::baseApplication(name
   _fsm->addState("OFF");
 
   _fsm->addTransition("CONFIGURE","CREATED","CONFIGURED",boost::bind(&LGenesysServer::configure, this,_1));
-  _fsm->addTransition("ON","CONFIGURED","ON",boost::bind(&LGenesysServer::on, this,_1));
-  _fsm->addTransition("ON","OFF","ON",boost::bind(&LGenesysServer::on, this,_1));
-  _fsm->addTransition("OFF","CONFIGURED","OFF",boost::bind(&LGenesysServer::off, this,_1));
-  _fsm->addTransition("OFF","ON","OFF",boost::bind(&LGenesysServer::off, this,_1));
-  _fsm->addTransition("READ","ON","ON",boost::bind(&LGenesysServer::read, this,_1));
-  _fsm->addTransition("READ","OFF","OFF",boost::bind(&LGenesysServer::read, this,_1));
-  _fsm->addTransition("READ","CONFIGURED","CONFIGURED",boost::bind(&LGenesysServer::read, this,_1));
+  _fsm->addTransition("TON","CONFIGURED","ON",boost::bind(&LGenesysServer::on, this,_1));
+  _fsm->addTransition("TON","OFF","ON",boost::bind(&LGenesysServer::on, this,_1));
+  _fsm->addTransition("TOFF","CONFIGURED","OFF",boost::bind(&LGenesysServer::off, this,_1));
+  _fsm->addTransition("TOFF","ON","OFF",boost::bind(&LGenesysServer::off, this,_1));
+  _fsm->addTransition("TREAD","ON","ON",boost::bind(&LGenesysServer::read, this,_1));
+  _fsm->addTransition("TREAD","OFF","OFF",boost::bind(&LGenesysServer::read, this,_1));
+  _fsm->addTransition("TREAD","CONFIGURED","CONFIGURED",boost::bind(&LGenesysServer::read, this,_1));
 
   _fsm->addCommand("JOBLOG",boost::bind(&LGenesysServer::c_joblog,this,_1,_2));
+  _fsm->addCommand("ON",boost::bind(&LGenesysServer::c_on,this,_1,_2));
+  _fsm->addCommand("OFF",boost::bind(&LGenesysServer::c_off,this,_1,_2));
+  _fsm->addCommand("STATUS",boost::bind(&LGenesysServer::c_status,this,_1,_2));
   std::stringstream s0;
   s0.str(std::string());
   s0<<"/DZUP/"<<name<<"/STATUS";
