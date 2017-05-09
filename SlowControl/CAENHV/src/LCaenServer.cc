@@ -1,6 +1,5 @@
 
 #include "LCaenServer.hh"
-#include "fileTailer.hh"
 
 
 
@@ -8,9 +7,16 @@ void LCaenServer::configure(levbdim::fsmmessage* m)
 {
   LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
   //uint32_t port=m->content()["port"].asInt();
-  std::string ip=m->content()["ip"].asString();
+  std::string _account=m->content()["account"].asString();
+   if (m->content().isMember("account"))
+    {
+      _account=m->content()["account"].asString();
+      this->parameters()["account"]=m->content()["account"];
+    }
+  else
+    _account=this->parameters()["account"].asString();
   
-  this->Open(ip);
+  this->Open(_account);
 
   _hv->Connect();
   Json::Value jrep;
@@ -33,22 +39,6 @@ void LCaenServer::destroy(levbdim::fsmmessage* m)
   m->setAnswer(r);
 }
 
-
-void LCaenServer::c_joblog(Mongoose::Request &request, Mongoose::JsonResponse &response)
-{
-  uint32_t nlines=atol(request.get("lines","100").c_str());
-  uint32_t pid=getpid();
-  std::stringstream s;
-  s<<"/tmp/dimjcPID"<<pid<<".log";
-  std::stringstream so;
-  fileTailer t(1024*512);
-  char buf[1024*512];
-  t.tail(s.str(),nlines,buf);
-  so<<buf;
-  response["STATUS"]="DONE";
-  response["FILE"]=s.str();
-  response["LINES"]=so.str();
-}
 
 void LCaenServer::c_setOutputVoltage(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
@@ -157,10 +147,11 @@ void LCaenServer::c_getStatus(Mongoose::Request &request, Mongoose::JsonResponse
   response["HVSTATUS"]=rep;
  
 }
-LCaenServer::LCaenServer(std::string name) : _hv(NULL)
+LCaenServer::LCaenServer(std::string name) : levbdim::baseApplication(name), _hv(NULL)
 {
   //_fsm=new levbdim::fsm(name);
-  _fsm=new fsmweb(name);
+  //_fsm=new fsmweb(name);
+  _fsm=this->fsm();
 // Register state
   _fsm->addState("CREATED");
   _fsm->addState("CONFIGURED");
@@ -170,7 +161,6 @@ LCaenServer::LCaenServer(std::string name) : _hv(NULL)
 
 
   // Command
-  _fsm->addCommand("JOBLOG",boost::bind(&LCaenServer::c_joblog,this,_1,_2));
   _fsm->addCommand("SETOUTPUTSWITCH",boost::bind(&LCaenServer::c_setOutputSwitch,this,_1,_2));
   _fsm->addCommand("SETOUTPUTVOLTAGE",boost::bind(&LCaenServer::c_setOutputVoltage,this,_1,_2));
   _fsm->addCommand("SETOUTPUTVOLTAGERISERATE",boost::bind(&LCaenServer::c_setOutputVoltageRiseRate,this,_1,_2));
