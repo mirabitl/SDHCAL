@@ -16,6 +16,15 @@ void LMdccServer::open(levbdim::fsmmessage* m)
     device=this->parameters()["device"].asString();
 
   doOpen(device);
+
+  if (this->parameters().isMember("spillon") && _mdcc!=NULL)
+    {
+      _mdcc->setSpillOn(this->parameters()["spillon"].asInt()); 
+    }
+  if (this->parameters().isMember("spilloff") && _mdcc!=NULL)
+    {
+      _mdcc->setSpillOff(this->parameters()["spilloff"].asInt()); 
+    }
   //_mdcc->maskTrigger();
   //_mdcc->resetCounter();
 }

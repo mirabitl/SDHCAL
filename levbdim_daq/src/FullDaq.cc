@@ -420,7 +420,7 @@ void FullDaq::prepare(levbdim::fsmmessage* m)
 
       _mdccClient->sendCommand("STATUS");
       //std::cout<<"Current MDCC values "<<_mdccClient->reply()<<std::endl;
-      
+      _mdccClient->sendTransition("ECALRESUME");
     }
   // Builder
   if (_builderClient)
@@ -679,7 +679,7 @@ void FullDaq::start(levbdim::fsmmessage* m)
   // Resume the MDCC
    if (_mdccClient)
      {
-       //_mdccClient->sendTransition("RESET");
+       _mdccClient->sendTransition("RESET");
        //_mdccClient->sendTransition("RESUME");
      }
    std::cout<<" calling ends \n";
