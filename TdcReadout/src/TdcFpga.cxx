@@ -81,6 +81,7 @@ void TdcFpga::processEventTdc()
   itemp[6]=_channels.size();
   uint32_t idx=28;
   uint32_t trbcid=0;
+  #ifdef DUMPTRIGGER
   for (auto x:_channels)
     {
       if (x.channel()==28)
@@ -109,6 +110,7 @@ void TdcFpga::processEventTdc()
       std::cout<<ss.str()<<std::flush;
 
     }
+  #endif
   for (vector<TdcChannel>::iterator it=_channels.begin();it!=_channels.end();it++)
     {
       memcpy(&temp[idx],it->frame(),it->length());
@@ -118,6 +120,6 @@ void TdcFpga::processEventTdc()
 
    memcpy((unsigned char*) _dsData->payload(),temp,idx);
    _dsData->publish(_gtc,_abcid,idx);
-   if (_event%50==0)
+   if (_event%500==0)
      std::cout<<_mezzanine<<" "<<_event<<" "<<_gtc<<" "<<_abcid<<" "<<_channels.size()<<std::endl<<std::flush;
 }

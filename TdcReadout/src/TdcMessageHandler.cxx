@@ -52,7 +52,7 @@ void TdcMessageHandler::parseTdcData(NL::Socket* socket,ptrBuf& p) throw (std::s
   std::stringstream ss;
   uint64_t idsock=( (uint64_t) ip_address<<32)|socket->portTo();
   //return;
-  ss<<boost::format("Parsing Tdc Data ================> from %d %lx %d \n") % mezz % idsock % _readout[idsock] ;
+  //ss<<boost::format("Parsing Tdc Data ================> from %d %lx %d \n") % mezz % idsock % _readout[idsock] ;
   
   //  return;
 #ifdef DEBUGBUF
@@ -87,8 +87,8 @@ void TdcMessageHandler::parseTdcData(NL::Socket* socket,ptrBuf& p) throw (std::s
   ss<<"Header \n ";
   p.first=LINELENGTH;
   linelength=LINELENGTH;
-  for (int ib=0;ib<linelength-4;ib++)
-    ss<<boost::format("%.2x ") % static_cast<int>(p.second[4+ib]);
+  //for (int ib=0;ib<linelength-4;ib++)
+    //ss<<boost::format("%.2x ") % static_cast<int>(p.second[4+ib]);
   ss<<"\n";
   #ifdef DEBUGBUF
   std::cout<<ss.str()<<std::endl;
@@ -96,7 +96,7 @@ void TdcMessageHandler::parseTdcData(NL::Socket* socket,ptrBuf& p) throw (std::s
   #endif
   uint32_t length=(ntohs(sptr[1+linelength/2]))&0xFFFF;
   length=p.second[LINELENGTH-1];
-  ss<<boost::format("Expected length here %d %d %d \n") % length % length % p.first;
+  //ss<<boost::format("Expected length here %d %d %d \n") % length % length % p.first;
   // Now read payload
   uint8_t byteslen=LINELENGTH;
   uint32_t elen=length*byteslen;
@@ -124,7 +124,7 @@ void TdcMessageHandler::parseTdcData(NL::Socket* socket,ptrBuf& p) throw (std::s
     
   }
   p.first+=elen;
-  ss<<boost::format("End of data readout %d bytes read \n") % p.first;
+  //ss<<boost::format("End of data readout %d bytes read \n") % p.first;
 
   // Found the GTC
   uint8_t* buf=p.second;
@@ -132,9 +132,13 @@ void TdcMessageHandler::parseTdcData(NL::Socket* socket,ptrBuf& p) throw (std::s
   uint32_t nlines=buf[7];
   uint64_t abcid=buf[ll+ll-1]|((uint64_t) buf[ll+ll-2]<<8)|((uint64_t) buf[ll+ll-3]<<16)|((uint64_t) buf[ll+ll-4]<<24)|((uint64_t) buf[ll+ll-5]<<32)|((uint64_t)buf[ll+ll-6]<<40);
   uint32_t gtc= buf[ll+1]|((uint32_t) buf[ll]<<8);
+  if (gtc%500==0)
+    // TEST
+  printf("End of data readout Mezzanine %d ,%d bytes read, ABCID %lx , GTC %d lines %d  \n", mezz,p.first,abcid,gtc,nlines);
 
-  //printf("End of data readout Mezzanine %d ,%d bytes read, ABCID %lx , GTC %d lines %d  \n", mezz,p.first,abcid,gtc,nlines);
+  // TEST
   _tdc[mezz-1]->addChannels(p.second,p.first);
+  p.first=0;return;
   // p.first=0;return;
   bool printed=false;
   uint32_t bcid=0;
@@ -143,7 +147,7 @@ void TdcMessageHandler::parseTdcData(NL::Socket* socket,ptrBuf& p) throw (std::s
        //printf("%.2x ",p.second[LINELENGTH+ib]);
        if (ib%LINELENGTH==0 && (p.second[LINELENGTH+ib]==chtrg)) {
 	 bcid= (p.second[LINELENGTH+ib+1]<<8|p.second[LINELENGTH+ib+2]);
-	 ss<<boost::format("EXTERNAL %x \n") % bcid;
+	 //ss<<boost::format("EXTERNAL %x \n") % bcid;
 	 // printed=true;
        }
      }
@@ -151,7 +155,7 @@ void TdcMessageHandler::parseTdcData(NL::Socket* socket,ptrBuf& p) throw (std::s
    uint32_t sbcid=0;
    for (int ib=0;ib<elen;ib++)
      {
-       ss<<boost::format("%.2x ") % static_cast<int>(p.second[LINELENGTH+ib]);
+       //ss<<boost::format("%.2x ") % static_cast<int>(p.second[LINELENGTH+ib]);
        if (ib>0 && ib%LINELENGTH==LINELENGTH-1)
 	 {
 	   sbcid=(p.second[LINELENGTH+ib-LINELENGTH-2]<<8|p.second[LINELENGTH+ib-LINELENGTH-3]);
