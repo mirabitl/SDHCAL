@@ -676,15 +676,15 @@ class fdaqClient:
       return
   def daq_fullscurve(self):
       self.daq_start()
-      self.tdc_setmask(0XFFFFFFFF)
-      self.daq_scurve(100,30,300,1020,4294967295)
-      self.daq_stop()
-      return
+      #self.tdc_setmask(0XFFFFFFFF)
+      #self.daq_scurve(100,30,300,1020,4294967295)
+      #self.daq_stop()
+      #return
       for ist in range(0,8):
           self.tdc_setmask((1<<ist))
-          self.daq_scurve(100,300,200,1020,4294967295,5)
+          self.daq_scurve(100,300,200,1020,4294967295,10)
           self.tdc_setmask((1<<(31-ist)))
-          self.daq_scurve(100,300,200,1020,4294967295,5)
+          self.daq_scurve(100,300,200,1020,4294967295,10)
       self.daq_stop()
 parser = argparse.ArgumentParser()
 

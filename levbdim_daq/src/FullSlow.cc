@@ -30,11 +30,14 @@ FullSlow::FullSlow(std::string name) : levbdim::baseApplication(name)
   _fsm=this->fsm();
  
   _fsm->addState("DISCOVERED");
+  _fsm->addState("CONFIGURED");
  
  
   _fsm->addTransition("DISCOVER","CREATED","DISCOVERED",boost::bind(&FullSlow::discover, this,_1));
   
   _fsm->addTransition("DESTROY","DISCOVERED","CREATED",boost::bind(&FullSlow::destroy, this,_1));
+  _fsm->addTransition("CONFIGURE","DISCOVERED","CONFIGURED",boost::bind(&FullSlow::configure, this,_1));
+  _fsm->addTransition("DESTROY","CONFIGURED","CREATED",boost::bind(&FullSlow::destroy, this,_1));
 
   // Commands
   _fsm->addCommand("LVSTATUS",boost::bind(&FullSlow::LVStatus,this,_1,_2));
@@ -66,12 +69,12 @@ FullSlow::FullSlow(std::string name) : levbdim::baseApplication(name)
 
   _jConfigContent=Json::Value::null;
   
-}
+
 
   
 }
 
-void  FullDaq::userCreate(levbdim::fsmmessage* m)
+void  FullSlow::userCreate(levbdim::fsmmessage* m)
 {
   // Stored the configuration file used
   if (m->content().isMember("url"))
@@ -86,7 +89,17 @@ void  FullDaq::userCreate(levbdim::fsmmessage* m)
       _jConfigContent["file"]=m->content()["file"];
 }
 
-
+void FullSlow::destroy(levbdim::fsmmessage* m)
+{
+   _caenClient=0;_zupClient=0;_genesysClient=0;_bmpClient=0;_gpioClient=0;
+ 
+}
+void FullSlow::configure(levbdim::fsmmessage* m)
+{
+  if (_caenClient!=0) _caenClient->sendTransition("CONFIGURE");
+  if (_genesysClient!=0) _genesysClient->sendTransition("CONFIGURE");
+ 
+}
 void FullSlow::discover(levbdim::fsmmessage* m)
 {
 
@@ -125,8 +138,8 @@ void FullSlow::discover(levbdim::fsmmessage* m)
 	  if (p_name.compare("CAEN")==0)
 	    {
 	      _caenClient= new fsmwebCaller(host,port);
-	      std::string state=_builderClient->queryState();
-	      printf("CAEN client %x  %s \n",_builderClient,state.c_str());
+	      std::string state=_caenClient->queryState();
+	      printf("CAEN client %x  %s \n",_caenClient,state.c_str());
 	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
 		{
 		  _caenClient->sendTransition("CREATE",_jConfigContent);
@@ -136,8 +149,8 @@ void FullSlow::discover(levbdim::fsmmessage* m)
 	  if (p_name.compare("GENESYS")==0)
 	    {
 	      _genesysClient= new fsmwebCaller(host,port);
-	      std::string state=_dbClient->queryState();
-	      printf("GENESYS client %x  %s \n",_dbClient,state.c_str());
+	      std::string state=_genesysClient->queryState();
+	      printf("GENESYS client %x  %s \n",_genesysClient,state.c_str());
 	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
 		{
 		  _genesysClient->sendTransition("CREATE",_jConfigContent);
@@ -148,8 +161,8 @@ void FullSlow::discover(levbdim::fsmmessage* m)
 	  if (p_name.compare("BMP183")==0)
 	    {
 	      _bmpClient= new fsmwebCaller(host,port);
-	      std::string state=_cccClient->queryState();
-	      printf("BMP183 client %x  %s \n",_cccClient,state.c_str());
+	      std::string state=_bmpClient->queryState();
+	      printf("BMP183 client %x  %s \n",_bmpClient,state.c_str());
 	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
 		{
 		  _bmpClient->sendTransition("CREATE",_jConfigContent);
@@ -191,7 +204,7 @@ void FullSlow::discover(levbdim::fsmmessage* m)
 
     }
   
-  printf("Clients: CAEN %x GENESYS %x ZUP %x BMP %x GPIO %x \n",_caenClient,_genesysClient,_zupClient,_bmpClient,_gpioCient);
+  printf("Clients: CAEN %x GENESYS %x ZUP %x BMP %x GPIO %x \n",_caenClient,_genesysClient,_zupClient,_bmpClient,_gpioClient);
 }
 
 FullSlow::~FullSlow()
@@ -211,7 +224,7 @@ void FullSlow::HVStatus(Mongoose::Request &request, Mongoose::JsonResponse &resp
       LOG4CXX_ERROR(_logLdaq, "No CAEN client");response["STATUS"]="NO CAEN CLient";return;
     }
   std::stringstream sp;sp<<"&first="<<first<<"&last="<<last;
-  _caenClient->sendCommand("STATUS",sp.str());
+  _caenClient->sendCommand("GETSTATUS",sp.str());
   
   response["STATUS"]="DONE";
   response["ANSWER"]=_caenClient->answer();
@@ -226,7 +239,7 @@ void FullSlow::setVoltage(Mongoose::Request &request, Mongoose::JsonResponse &re
     {
       LOG4CXX_ERROR(_logLdaq, "No CAEN client");response["STATUS"]="NO CAEN CLient";return;
     }
-  std::stringstream sp;sp<<"&first="<<first<<"&last="<<last<<"&value="<<value;
+  std::stringstream sp;sp<<"&first="<<first<<"&last="<<last<<"&value="<<v;
   _caenClient->sendCommand("SETOUTPUTVOLTAGE",sp.str());
   response["STATUS"]="DONE";
   response["ANSWER"]==_caenClient->answer();
@@ -242,7 +255,7 @@ void FullSlow::setCurrentLimit(Mongoose::Request &request, Mongoose::JsonRespons
     {
       LOG4CXX_ERROR(_logLdaq, "No CAEN client");response["STATUS"]="NO CAEN CLient";return;
     }
-  std::stringstream sp;sp<<"&first="<<first<<"&last="<<last<<"&value="<<value;
+  std::stringstream sp;sp<<"&first="<<first<<"&last="<<last<<"&value="<<v;
   _caenClient->sendCommand("SETCURRENTLIMIT",sp.str());
   response["STATUS"]="DONE";
   response["ANSWER"]==_caenClient->answer();
