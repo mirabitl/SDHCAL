@@ -168,7 +168,7 @@ class fdaqClient:
       self.slowhost=None
       self.slowport=None
       self.daq_par={}
-      
+      self.slow_par={}
       for x,y in self.p_conf["HOSTS"].iteritems():
           for p in y:
               port=0
@@ -184,7 +184,7 @@ class fdaqClient:
                       if ("s_ctrlreg" in self.daq_par):
                           self.daq_par["ctrlreg"]=int(self.daq_par["s_ctrlreg"],16)
               
-              if (p["NAME"]=="WSLOW"):
+              if (p["NAME"]=="FSLOW"):
                   self.slowhost=x
                   self.slowport=port
               if (p["NAME"]=="DBSERVER"):
@@ -327,6 +327,41 @@ class fdaqClient:
                   if (p_rep["STATE"]=="VOID"):
                       sr=executeFSM(x,port,p_rep["PREFIX"],"CREATE",lcgi)
                       #print sr
+  def slow_create(self):
+      lcgi={}
+      if (self.daq_url!=None):
+          lcgi["url"]=self.daq_url
+          if (self.login!="NONE"):
+            lcgi["login"]=self.login
+      else:
+          if (self.daq_file!=None):
+              lcgi["file"]=self.daq_file
+      for x,y in self.p_conf["HOSTS"].iteritems():
+          for p in y:
+              if (p["NAME"] != "FSLOW"):
+                  continue;
+              print x,p["NAME"]," process found"
+              port=0
+              for e in p["ENV"]:
+                  if (e.split("=")[0]=="WEBPORT"):
+                      port=int(e.split("=")[1])
+              if (port==0):
+                  continue
+              p_rep={}
+              surl="http://%s:%d/" % (x,port)
+              req=urllib2.Request(surl)
+              try:
+                  r1=urllib2.urlopen(req)
+                  p_rep=json.loads(r1.read())
+              except URLError, e:
+                  print surl,e
+                  p_rep={}
+              print x,port,p["NAME"],p_rep
+              if ("STATE" in p_rep):
+                  if (p_rep["STATE"]=="VOID"):
+                      sr=executeFSM(x,port,p_rep["PREFIX"],"CREATE",lcgi)
+                      #print sr
+
   def daq_list(self):
       lcgi={}
       if (self.daq_url!=None):
@@ -361,6 +396,16 @@ class fdaqClient:
   def daq_discover(self):
       lcgi={}
       sr=executeFSM(self.daqhost,self.daqport,"FDAQ","DISCOVER",lcgi)
+      print sr
+      
+  def slow_discover(self):
+      lcgi={}
+      sr=executeFSM(self.slowhost,self.slowport,"FSLOW","DISCOVER",lcgi)
+      print sr
+      
+  def slow_configure(self):
+      lcgi={}
+      sr=executeFSM(self.slowhost,self.slowport,"FSLOW","CONFIGURE",lcgi)
       print sr
       
   def daq_setparameters(self):
@@ -676,15 +721,15 @@ class fdaqClient:
       return
   def daq_fullscurve(self):
       self.daq_start()
-      self.tdc_setmask(0XFFFFFFFF)
-      self.daq_scurve(100,30,300,1020,4294967295)
-      self.daq_stop()
-      return
-      for ist in range(0,8):
+      #self.tdc_setmask(0XFFFFFFFF)
+      #self.daq_scurve(100,30,200,500,4294967295)
+      #self.daq_stop()
+      #return
+      for ist in range(0,14):
           self.tdc_setmask((1<<ist))
-          self.daq_scurve(100,300,200,1020,4294967295,5)
+          self.daq_scurve(100,60,200,700,4294967295,5)
           self.tdc_setmask((1<<(31-ist)))
-          self.daq_scurve(100,300,200,1020,4294967295,5)
+          self.daq_scurve(100,60,200,700,4294967295,5)
       self.daq_stop()
 parser = argparse.ArgumentParser()
 
@@ -750,6 +795,7 @@ grp_action.add_argument('--trig-beam',action='store_true',help=' set beam length
 # SLC
 grp_action.add_argument('--slc-create',action='store_true',help='Create the DimSlowControl object to control WIENER crate and BMP sensor')
 grp_action.add_argument('--slc-initialisesql',action='store_true',help='initiliase the mysql access specified with --account=login/pwd@host:base')
+grp_action.add_argument('--slc-configure',action='store_true',help='initiliase the mysql access specified with --account=login/pwd@host:base')
 grp_action.add_argument('--slc-loadreferences',action='store_true',help='load in the wiener crate chambers references voltage download from DB')
 grp_action.add_argument('--slc-hvstatus',action='store_true',help='display hvstatus of all channel of the wiener crate')
 grp_action.add_argument('--slc-ptstatus',action='store_true',help='display the P and T from the BMP183 readout')
@@ -1142,26 +1188,16 @@ elif(results.trig_resume):
 elif(results.slc_create):
     r_cmd='createSlowControl'
     #lcgi['jsonfile']=conf.jsonfile
-    if (fdc.slowhost==None or fdc.slowport==None):
-      print "No WSLOW application exiting"
-      exit(0)
-    lcgi.clear()
-    sr=executeFSM(fdc.slowhost,fdc.slowport,"WSLOW","DISCOVER",lcgi)
-    print sr
+    fdc.slow_create()
     exit(0)
 
 elif(results.slc_initialisesql):
     r_cmd='initialiseDB'
-    if (fdc.slowhost==None or fdc.slowport==None):
-      print "No WSLOW application exiting"
-      exit(0)
-    if (results.account!=None):
-        lcgi['account']=results.account
-    else:
-        print 'Please specify the MYSQL account --account=log/pwd@host:base'
-        exit(0)
-    sr=executeFSM(fdc.slowhost,fdc.slowport,"WSLOW","INITIALISE",lcgi)
-    print sr
+    fdc.slow_discover()
+    exit(0)
+elif(results.slc_configure):
+    r_cmd='initialiseDB'
+    fdc.slow_configure()
     exit(0)
 elif(results.slc_loadreferences):
     r_cmd='loadReferences'
