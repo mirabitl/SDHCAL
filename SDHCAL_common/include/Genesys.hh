@@ -191,11 +191,13 @@ public:
   void ON()
   {
     readCommand("OUT 1\r");
+    ::sleep(1);
     this->INFO();
   }
   void OFF()
   {
     readCommand("OUT 0\r");
+    ::sleep(1);
     this->INFO();
   }
 

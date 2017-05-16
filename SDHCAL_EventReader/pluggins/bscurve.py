@@ -60,7 +60,7 @@ def calcall(run,tdc,old=defped):
         hp.Fill(i+0.1,a[0])
         hw.Fill(i+0.1,a[1])
         
-    #med[tdc]=(pa+pi)/2
+    med[tdc]=(pa+pi)/2
     print "MEDIANE", med[tdc],pa,pi
     dacn={}
     for i in range (0,32):

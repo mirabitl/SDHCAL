@@ -81,35 +81,38 @@ void TdcFpga::processEventTdc()
   itemp[6]=_channels.size();
   uint32_t idx=28;
   uint32_t trbcid=0;
+  #define DUMPTRIGGER
   #ifdef DUMPTRIGGER
   for (auto x:_channels)
     {
-      if (x.channel()==28)
+      if (x.channel()==16)
 	{
 	  trbcid=x.bcid();
-	  break;
+	  printf("Trigger %x %d %d %ld %d %x \n ", _adr,_mezzanine,_gtc,_abcid,_channels.size(),trbcid);
+	   //  break;
 	}
     }
-  if (trbcid>0)
-    {
-      std::stringstream ss;
-       ss<<boost::format("Trigger %x %d %d %ld %d \n ") % _adr % _mezzanine % _gtc % _abcid % _channels.size();
-       int nch=0;
-      for (auto x:_channels)
-	{
-	  ss<<boost::format("\t %d %d %f ") % (int) x.channel() % (int) x.bcid() % x.tdcTime();
-	  if (x.channel()!=28 && (x.bcid()>(trbcid-4) && x.bcid()<(trbcid+4)))
-	    {
-	      ss<<"---> found\n";
-	    }
-	  else
-	    ss<<"\n";
-	  nch++;
-	  if (nch>40) {ss<<" and more.. \n";break;}
-	}
-      std::cout<<ss.str()<<std::flush;
+  // if (trbcid>0)
+  //{
+      //printf("Trigger %x %d %d %ld %d \n ", _adr,_mezzanine,_gtc,_abcid,_channels.size());
+      //std::stringstream ss;
+      //       ss<<boost::format("Trigger %x %d %d %ld %d \n ") % _adr % _mezzanine % _gtc % _abcid % _channels.size();
+      //int nch=0;
+       // for (auto x:_channels)
+       //	{
+	  //  ss<<boost::format("\t %d %d %f ") % (int) x.channel() % (int) x.bcid() % x.tdcTime();
+	  //if (x.channel()!=16 && (x.bcid()>(trbcid-4) && x.bcid()<(trbcid+4)))
+	  //  {
+	      //  ss<<"---> found\n";
+	  //  }
+	  //else
+	  //  ss<<"\n";
+	  //nch++;
+	  // if (nch>40) {ss<<" and more.. \n";break;}
+       //}
+      //std::cout<<ss.str()<<std::flush;
 
-    }
+       //}
   #endif
   for (vector<TdcChannel>::iterator it=_channels.begin();it!=_channels.end();it++)
     {

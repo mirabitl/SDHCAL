@@ -20,7 +20,7 @@ public:
   #ifdef BCIDFROMCOARSE
   inline uint16_t bcid(){return (uint16_t) (coarse()*2.5/200);}
   #else
-  inline uint16_t bcid(){return (_fr[2]|(_fr[1]<<8));}
+  inline const uint16_t bcid(){return (_fr[2]|(_fr[1]<<8));}
   #endif
   inline double tdcTime(){ return (coarse()*2.5+fine()*0.009765625);}
   inline uint8_t* frame(){ return _fr;}

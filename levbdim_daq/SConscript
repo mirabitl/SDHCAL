@@ -191,6 +191,7 @@ print LIBRARY_SOURCES
 
 if (Use_Mongoose):
   LIBRARY_SOURCES.append('src/FullDaq.cc')
+  LIBRARY_SOURCES.append('src/FullSlow.cc')
   LIBRARY_SOURCES.append('src/WebDaq.cc')
   LIBRARY_SOURCES.append('src/WebSlowControl.cc')
   LIBRARY_SOURCES.append('src/WebJobControl.cc')	
@@ -226,6 +227,8 @@ if (Use_Mongoose):
   plist.append(lwdaqd)
   lfdaqd=env.Program("bin/levbdim_fdaq",source="src/FDaqDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
   plist.append(lfdaqd)
+  lfslowd=env.Program("bin/levbdim_fslow",source="src/FSlowDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+  plist.append(lfslowd)
   lwslowd=env.Program("bin/levbdim_wslow",source="src/WSlowControlDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
   plist.append(lwslowd)
   lwjobd=env.Program("bin/levbdim_wjob",source="src/WJobDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)

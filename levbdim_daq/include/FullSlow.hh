@@ -44,6 +44,8 @@ public:
   void forceState(std::string s){_fsm->setState(s);}
   
   void discover(levbdim::fsmmessage* m);
+  void configure(levbdim::fsmmessage* m);
+  void destroy(levbdim::fsmmessage* m);
  // Virtual from baseAPplication
   virtual void  userCreate(levbdim::fsmmessage* m);
 
@@ -61,6 +63,8 @@ public:
 private:
   fsmweb* _fsm;
   fsmwebCaller* _caenClient,*_zupClient,*_genesysClient,*_bmpClient,*_gpioClient;
+  Json::Value _jConfigContent;
+
  
 };
 #endif

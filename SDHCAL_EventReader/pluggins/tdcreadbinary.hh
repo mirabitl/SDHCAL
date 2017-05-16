@@ -40,6 +40,7 @@
     void timeAnalysis();
     void LmAnalysis();
     void addRun(uint32_t r,std::string name) { _files.push_back(std::pair<uint32_t,std::string>(r,name));}
+    void setRun(int r){_run=r;}
   private:
     std::vector<std::pair<uint32_t,std::string> > _files;
     uint64_t _bxId;
@@ -60,7 +61,7 @@
     uint32_t _numberOfShower,_numberOfMuon;
     DCHistogramHandler* _rh;
     std::vector<recoTrack*> _vtk;
-    uint32_t _runType,_dacSet,_vthSet,_mezzanine;
+    uint32_t _runType,_dacSet,_vthSet,_mezzanine,_difId;
     std::vector<TdcChannel> _channels;
     std::vector<TdcChannel>::iterator _trigger;
 

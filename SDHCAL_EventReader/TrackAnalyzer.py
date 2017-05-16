@@ -26,9 +26,9 @@ rootHandler=dr.DCHistogramHandler()
 
 
 #config.marlin='m3_aout2012.xml'
-dher.ParseSteering("xml/m3_oct2015.xml")
+#dher.ParseSteering("xml/m3_oct2015.xml")
 #dher.readGeometry("acqilc/RPC_2008@lyosdhcal10:GEOMETRY","SPS_08_2012");
-dher.registerAnalysis("trackAnalysis","./pluggins/");
+#dher.registerAnalysis("trackAnalysis","./pluggins/");
 dher.registerAnalysis("rawAnalysis","./pluggins/");
 
 
