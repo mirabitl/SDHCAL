@@ -346,7 +346,7 @@ void tdcrb::end()
 void tdcrb::LmAnalysis()
 {
 
-  if (_channels.size()>1024) return;
+  if (_channels.size()>4096) return;
   uint32_t run=_run;
   // Analyze
   uint16_t chtrg;
@@ -408,6 +408,7 @@ void tdcrb::LmAnalysis()
   int32_t tbcid=0;
   for (std::vector<TdcChannel>::iterator it=_channels.begin();it!=_channels.end();it++)
     {
+      hstrip->Fill(it->channel()*1.+0.5);
       if (it->bcid()>bcidmax) bcidmax=it->bcid();
       // if (it->bcid()<lbcid) {
       //   printf("lbcid %d bcid %d  Shift %d \n",lbcid,it->bcid(),b
@@ -427,7 +428,7 @@ void tdcrb::LmAnalysis()
   //     //getchar();
   //   }
   
-  hti->Fill(tmax);
+  if (ndec==0) hti->Fill(tmax);
   if (tmax>0 && ndec==0) hra->Fill(_channels.size()/tmax);
   // Accept events with only one trigger
   if (ndec!=1) return;
@@ -484,19 +485,27 @@ void tdcrb::LmAnalysis()
       double trigtime=0,trigbcid=0;
       bool chused[32]={32*0};
       bool sused[32]={32*0};
+      for (int i=0;i<32;i++) {chused[i]=false;sused[i]=false;}
+      std::sort(t.second.begin(),t.second.end());
       for (auto x:t.second)
 	if (x.channel()==chtrg) {chused[chtrg]=1;trigtime=x.tdcTime();trigbcid=x.bcid()*200;}
       hnst->Fill(t.second.size()*1.);
-      if (t.second.size()>1) found=true;
-      if (t.second.size()>20) continue; // Use trigger with less than  20 strip
+      if (t.second.size()>1)  heff->Fill(4.1);
+      printf(" Effective TDC %d  GTC %d   Number %d \n",_difId,_gtc,t.second.size());
+      if (t.second.size()>2000) continue; // Use trigger with less than  20 strip
       for (auto x:t.second)
 	{
 	  printf("Chan %d bcid %d Time %f %f \n",x.channel(),x.bcid(),x.tdcTime(),trigtime);
 	  if (x.channel()==chtrg) continue;
-	  if (chused[x.channel()]) continue;
-	  if (x.channel()%2!=0) continue;
+
 	  if (x.tdcTime()-trigtime>-861) continue;
 	  if (x.tdcTime()-trigtime<-900) continue;
+	  found=true;
+
+	  
+	  if (chused[x.channel()]) continue;
+	  if (x.channel()%2!=0) continue;
+	 
 	  hdtr->Fill(x.channel()+1.,x.tdcTime()-trigtime);
 	  //hdtr->Fill(x.channel(),x.bcid()*200-trigbcid);
 
@@ -510,8 +519,8 @@ void tdcrb::LmAnalysis()
 	      double t1=y.tdcTime();
 	      ///if (it->coarse()!=jt->coarse()-1) continue;
 	      //if (abs(t1-t0)>100) continue;
-	      chused[x.channel()]=1;
-	      chused[y.channel()]=1;
+	      chused[x.channel()]=true;
+	      chused[y.channel()]=true;
 	      sused[str]=true;
 	      double tsh=0;
 	      hdt->Fill((t0-t1)-tsh);
