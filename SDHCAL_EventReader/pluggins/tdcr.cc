@@ -33,6 +33,8 @@ int main(int argc, char** argv )
   std::stringstream spat;
   int runask=atol(argv[1]);
   spat<<"*"<<atol(argv[1])<<"*.dat";
+ #define UNTEST
+ #ifdef UNTEST
   struct dirent **namelist;
   int n;
   std::cout<<"Pattern "<<spat.str()<<std::endl;
@@ -55,11 +57,34 @@ int main(int argc, char** argv )
     }
     free(namelist);
   }
-
+#endif
   
   DCHistogramHandler rootHandler;
   DHCalEventReader  dher;
 
+
+  
+  std::stringstream filename("");    
+  char dateStr [64];
+            
+  time_t tm= time(NULL);
+  strftime(dateStr,20,"SMO_%d%m%y_%H%M%S",localtime(&tm));
+  filename<<"/tmp/"<<dateStr<<"_"<<runask<<".dat";
+  int32_t _fdOut= ::open(filename.str().c_str(),O_CREAT| O_RDWR | O_NONBLOCK,S_IRWXU);
+  if (_fdOut<0)
+    {
+      perror("No way to store to file :");
+      //std::cout<<" No way to store to file"<<std::endl;
+      exit(0);
+    }
+  else
+    bs.setOutFileId(_fdOut);
+
+
+  #ifndef UNTEST
+  bs.setOutFileId(-1);
+  bs.addRun(735986,"/tmp/SMO_220517_143427_735986.dat");
+  #endif
   bs.Read();
   bs.setRun(runask);
   bs.end();
