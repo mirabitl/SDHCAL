@@ -121,8 +121,9 @@ void tdcrb::streamout(uint32_t ndifout)
 	    {
 	      printf("Cannot read anymore number of DIF %d \n ",ier);return;
 	    }
-	  //else
-	  //   printf("================> Event %d Number of DIF found %d \n",_event,theNumberOfDIF);
+	  else
+	    if (_event%1000==0)
+	      printf("================> Event %d Number of DIF found %d \n",_event,theNumberOfDIF);
 
 	  for (uint32_t idif=0;idif<theNumberOfDIF;idif++) 
 	    {
