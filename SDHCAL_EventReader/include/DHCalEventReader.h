@@ -43,7 +43,6 @@ class LMGeneric: public IMPL::LCGenericObjectImpl
 {
  public:
   LMGeneric(){;}
-  ~LMGeneric(){;}
   std::vector<int>& getIntVector(){return _intVec;}
 
 };
@@ -445,6 +444,7 @@ int readOneEvent(int run,int event);
   std::vector<uint32_t>& getTimeSeeds(){return theTimeSeeds_;}
   std::vector<DIFPtr*>& getDIFList(){return  theDIFPtrList_;}
   void correctGeometry();
+  bool isBad(){return _badEvent;}
  private:
   LCReader* lcReader_; /// LCIO Reader
   //  LCSplitWriter* lcWriter_; /// LCIO Writer
@@ -488,6 +488,7 @@ int readOneEvent(int run,int event);
   
   std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> > thePhysicsEventMap_;
 
+  bool _badEvent;
 };
 
 #endif

@@ -104,6 +104,7 @@ public:
   };
   void ptime(std::string s);
   void debora(std::vector<recoPoint*> v);
+  void externTrigger();
 private:
 
 
