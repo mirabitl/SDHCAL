@@ -2,6 +2,8 @@ import accessHisto as ah
 from ROOT import *
 #f=TFile("scurve735113.root")
 defped=[31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31]
+c=TCanvas()
+
 def calcth(run,tdc,num):
    
     h=ah.getth1("/run%d/TDC%d/vth%d" % (run,tdc,num))
@@ -9,6 +11,10 @@ def calcth(run,tdc,num):
     i20=0;i180=0;
     ped=0;width=0;
     h.Rebin(5)
+    c.cd()
+    h.Draw()
+    c.Update()
+    raw_input("Please hit return ...")
     ax=h.GetXaxis()
     for i in range(0,ax.GetNbins()):
         if (h.GetBinContent(ax.GetNbins()-i)>10 and h.GetBinContent(ax.GetNbins()-i-1)>10):
@@ -60,7 +66,7 @@ def calcall(run,tdc,old=defped):
         hp.Fill(i+0.1,a[0])
         hw.Fill(i+0.1,a[1])
         
-    #med[tdc]=(pa+pi)/2
+    med[tdc]=(pa+pi)/2
     print "MEDIANE", med[tdc],pa,pi
     dacn={}
     for i in range (0,32):

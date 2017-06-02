@@ -770,7 +770,7 @@ IMPL::LCCollectionVec* DHCalEventReader::createRawCalorimeterHits(std::vector<ui
 	}
       }
     }
-  
+  std::cout<<"  collection of hits=========================================>"<<RawVec->getNumberOfElements()<<std::flush<<std::endl;
 for (std::vector<DIFPtr*>::iterator it = theDIFPtrList_.begin();it!=theDIFPtrList_.end();it++)
     {
       DIFPtr* d = (*it);
