@@ -317,6 +317,15 @@ void LMdccServer::c_status(Mongoose::Request &request, Mongoose::JsonResponse &r
   rc["busy1"]=_mdcc->busyCount(1);
   rc["busy2"]=_mdcc->busyCount(2);
   rc["busy3"]=_mdcc->busyCount(3);
+  rc["busy4"]=_mdcc->busyCount(4);
+  rc["busy5"]=_mdcc->busyCount(5);
+  rc["busy6"]=_mdcc->busyCount(6);
+  rc["busy7"]=_mdcc->busyCount(7);
+  rc["busy8"]=_mdcc->busyCount(8);
+  rc["busy9"]=_mdcc->busyCount(9);
+  rc["busy10"]=_mdcc->busyCount(10);
+  rc["busy11"]=_mdcc->busyCount(11);
+  rc["busy12"]=_mdcc->busyCount(12);
   rc["spillon"]=_mdcc->spillOn();
   rc["spilloff"]=_mdcc->spillOff();
   rc["ecalmask"]=_mdcc->ecalmask();
