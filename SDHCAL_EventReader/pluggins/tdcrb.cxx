@@ -326,6 +326,8 @@ void tdcrb::read()
 	  _strips.clear();
 	  uint32_t difFound[256];
 	  memset(difFound,0,256*sizeof(uint32_t));
+	  uint32_t trigFound[256];
+	  memset(trigFound,0,256*sizeof(uint32_t));
 	  for (uint32_t idif=0;idif<theNumberOfDIF;idif++) 
 	    {
 	      //printf("\t writing %d bytes",idata[SHM_BUFFER_SIZE]);
@@ -378,7 +380,11 @@ void tdcrb::read()
 		  //  }
 		  uint32_t nch=ibuf[6];
 		  //printf("\n channels -> %d \n",nch);
-		  _channels.clear();	  
+		  _channels.clear();
+		  _mezzanine=ibuf[4];
+		  _difId=(ibuf[5]>>24)&0xFF;
+		  _gtc=ibuf[1];
+
 		  if (ibuf[6]>0)
 		    {
 
@@ -391,12 +397,13 @@ void tdcrb::read()
 			    printf("\n");
 			  */
 			  TdcChannel c(&cbuf[8*i]);
+			  if (c.channel()==16)
+			    {
+			      trigFound[_difId]++;
+			    }
 			  _channels.push_back(c);
 			}
 		    }
-		  _mezzanine=ibuf[4];
-		  _difId=(ibuf[5]>>24)&0xFF;
-		  _gtc=ibuf[1];
 		  difFound[ _difId]+=1;
 		  if (_gtc%5000==0) printf("Type %d Mez %d DIF %d %x  channels %d Event %d \n",_runType,_mezzanine,_difId,ibuf[5],_channels.size(),_gtc);
 		  if (_runType==1) this->pedestalAnalysis();
@@ -407,15 +414,55 @@ void tdcrb::read()
 
      
 	    }
+	   uint32_t nst[8];
+	   memset(nst,0,8*4);
 	  if (_strips.size()>0)
 	    {
 	      printf("================> Event %d Number of DIF found %d \n",_event,theNumberOfDIF);
 	      printf(" ======================================> Strips \n");
+
+	     
 	      for (auto x:_strips)
 		{
-		  printf("\t %d %d %f %f pos %f \n",x.dif(),x.strip(),x.t0(),x.t1(),x.pos());
+		  printf("\t %d %d %f %f pos %f %f \n",x.dif(),x.strip(),x.t0(),x.t1(),x.xpos(),x.ypos());
+		  nst[x.dif()/2]++;
+		  std::stringstream sr;
+		  uint32_t ich=x.dif()/2;
+		  sr<<"/run"<<_run<<"/Chamber"<<ich<<"/";
+		  
+		  TH2* hpos=_rh->GetTH2(sr.str()+"XY");
+		  if (hpos==NULL)
+		    {
+		      
+		      hpos=_rh->BookTH2(sr.str()+"XY",16,-4.,4.,120,-60.,60.);
+
+
+		    }
+		  hpos->Fill(x.xpos(),x.ypos());
 		}
+	      // getchar();
+	      
 	    }
+	  if (trigFound[14]==1 && trigFound[15]==1 &&  trigFound[12]==1 && trigFound[13]==1)
+	    for (int ich=6;ich<=7;ich++)
+	      {
+		//if (nst[ich]==0) continue;
+		std::stringstream sr;
+		
+		sr<<"/run"<<_run<<"/Chamber"<<ich<<"/";
+		
+		TH1* hns=_rh->GetTH1(sr.str()+"NStrip");
+		if (hns==NULL)
+		  {
+		    
+		    hns=_rh->BookTH1(sr.str()+"NStrip",32,0.,32.);
+		    
+		    
+		  }
+		hns->Fill(nst[ich]*1.);
+		  
+	      }
+
 	  // bool stop=false;
 	  // uint32_t ndf=0;
 	  // for (int i=0;i<256;i++)
@@ -600,6 +647,7 @@ void tdcrb::LmAnalysis()
   sr<<"/run"<<run<<"/TDC"<<_difId<<"/LmAnalysis/";
   TH2* hpos=_rh->GetTH2(sr.str()+"Position");
   TH1* hdt=_rh->GetTH1(sr.str()+"DeltaT");
+  TH1* hdtr0=_rh->GetTH1(sr.str()+"DeltaTr0");
 
   TH2* hdtr=_rh->GetTH2(sr.str()+"DeltaTr");
   TH2* hdtra=_rh->GetTH2(sr.str()+"DeltaTrAll");
@@ -615,10 +663,11 @@ void tdcrb::LmAnalysis()
   TH1* hra=_rh->GetTH1(sr.str()+"rate");
   if (hpos==NULL)
     {
-      hpos=_rh->BookTH2(sr.str()+"Position",100,0.,20.,300,-300.,300.);
+      hpos=_rh->BookTH2(sr.str()+"Position",40,0.,20.,200,-100.,100.);
       hdt=_rh->BookTH1(sr.str()+"DeltaT",500,-10.,10.);
 
       hdtr=_rh->BookTH2(sr.str()+"DeltaTr",32,0,32.,400,-1000.,-800.);
+      hdtr0=_rh->BookTH1(sr.str()+"DeltaTr0",1000,-1000.,-500.);
       hdtra=_rh->BookTH2(sr.str()+"DeltaTrAll",32,0,32.,500,-20.,20.);
       hns=_rh->BookTH1(sr.str()+"NChannel",1024,0.,1024.);
       hnst=_rh->BookTH1(sr.str()+"NChannelTrigger",1024,0.,1024.);
@@ -646,6 +695,7 @@ void tdcrb::LmAnalysis()
   float ti=0,tmax=0;
   uint32_t lbcid=0,bcidshift=0,bcidmax=0;
   int32_t tbcid=0;
+  printf("Event %d DIF %d GTC %d ABCID %lu Size %d  \n",_event,_difId,_gtc,_bxId,_channels.size());
   for (std::vector<TdcChannel>::iterator it=_channels.begin();it!=_channels.end();it++)
     {
       hstrip->Fill(it->channel()*1.+0.5);
@@ -659,10 +709,11 @@ void tdcrb::LmAnalysis()
       if (t>tmax) tmax=t;
       if (it->channel()==chtrg) {
 	ndec++; tbcid=it->bcid();
-	printf("Event %d DIF %d GTC %d ABCID %lu BCID trigger %d \n",_event,_difId,_gtc,_bxId,tbcid);
+	printf("Event %d DIF %d GTC %d ABCID %lu BCID trigger %d # %d \n",_event,_difId,_gtc,_bxId,tbcid,ndec);
       }
-      //printf("%d %d %x %x %x \n",_gtc,it->channel(),it->coarse(),it->fine(),it->bcid());
+      //printf("%d %d %d %d %d  %f \n",_gtc,it->channel(),it->coarse(),it->fine(),it->bcid(),it->tdcTime());
     }
+  //getchar();
   //printf("BCID max %d Bcidshift %d Tmax %f \n",bcidmax,bcidshift,tmax);
   // if (tmax==0 && _channels.size()>0)
   //   {
@@ -706,14 +757,14 @@ void tdcrb::LmAnalysis()
 	    {
 	      if (x.used()) continue;
 	      if (x.channel() == chtrg) continue;
-	      if (x.bcid()>(it->bcid()-2) || x.bcid()<(it->bcid()-8)) continue;
+	      if (x.bcid()>(it->bcid()+2) || x.bcid()<(it->bcid()-8)) continue;
 #ifdef TIMECORR
 	      if ((x.tdcTime()-it->tdcTime())<jall[difname.str()]["low"][x.channel()].asInt()) continue;
 	      if ((x.tdcTime()-it->tdcTime())>jall[difname.str()]["high"][x.channel()].asInt()) continue;
 #endif
 	      // Large PM
-	      //if ((x.tdcTime()-it->tdcTime())<-900) continue;
-	      //if ((x.tdcTime()-it->tdcTime())>-860) continue;
+	      //if ((x.tdcTime()-it->tdcTime())<-895) continue;
+	      //if ((x.tdcTime()-it->tdcTime())>-855) continue;
 	      // small PM
 	      //if ((x.tdcTime()-it->tdcTime())<-640) continue;
 	      //if ((x.tdcTime()-it->tdcTime())>-600) continue;
@@ -734,48 +785,83 @@ void tdcrb::LmAnalysis()
       hstrip->Fill(it->channel()*1.);
     }
 
-  //if (_trmap.size()>0) printf("TDC %d  GTC %d   Number %d \n",_difId,_gtc,_trmap.size());
+  if (_trmap.size()>0) printf("TDC %d  GTC %d   Number %d \n",_difId,_gtc,_trmap.size());
   bool found=false;
   bool bside=false;
  
   for (auto t:_trmap)
     {
-      //printf("Trigger %d \n",t.first);
+      printf("Trigger %d => channels %d  \n",t.first,t.second.size());
       double trigtime=0,trigbcid=0;
       bool chused[32]={32*0};
       bool sused[32]={32*0};
       for (int i=0;i<32;i++) {chused[i]=false;sused[i]=false;}
       std::sort(t.second.begin(),t.second.end());
+      double tev0=0;
       for (auto x:t.second)
-	if (x.channel()==chtrg) {chused[chtrg]=1;trigtime=x.tdcTime();trigbcid=x.bcid()*200;}
-      hnst->Fill(t.second.size()*1.);
-      if (t.second.size()>1)  heff->Fill(4.1);
+	{
+	  x.setUsed(false);
+	if (x.channel()==chtrg)
+	  {chused[chtrg]=1;trigtime=x.tdcTime();trigbcid=x.bcid()*200;x.setUsed(true);}
+	else
+	  if (tev0==0) tev0=x.tdcTime();
+
+	}
+      uint32_t nch=0;
+      //for (auto x:t.second)
+      for (std::vector<TdcChannel>::iterator it=t.second.begin();it!=t.second.end();it++)
+	{
+	  if (it->tdcTime()>tev0+12) it->setUsed(true);
+	  if (it->used()) continue;
+	  //printf("%d %u %u %u %f \n",x.channel(),x.coarse(),x.fine(),x.bcid(),x.tdcTime()-tev0);
+	  nch++;
+	}
+      //      getchar();
+      hdtr0->Fill(tev0-trigtime);
+      hnst->Fill(nch*1.);
+      if (nch>=1)  heff->Fill(4.1);
       //printf(" Effective TDC %d  GTC %d   Number %d \n",_difId,_gtc,t.second.size());
       if (t.second.size()>2000) continue; // Use trigger with less than  20 strip
       for (auto x:t.second)
 	{
 	  //printf("Chan %d bcid %d Time %f %f \n",x.channel(),x.bcid(),x.tdcTime(),trigtime);
 	  if (x.channel()==chtrg) continue;
-
+	  if (x.used()) continue;
+	  int str=x.channel()/2;
+		  
+	  if (sused[str]) continue;
 	  //if (x.tdcTime()-trigtime>-861) continue;
 	  //if (x.tdcTime()-trigtime<-900) continue;
 	  found=true;
 
+
 	  
-	  if (chused[x.channel()]) continue;
-	  if (x.channel()%2!=0) continue;
-	 
+	  if (x.channel()%2!=(_mezzanine-1)) continue;
+	  printf("%d %u %u %u %f \n",x.channel(),x.coarse(),x.fine(),x.bcid(),x.tdcTime()-tev0);
+	  std::stringstream s;
+	  s<<"hdtz"<<(int) x.channel();
+	  TH1* hdtz=_rh->GetTH1(sr.str()+s.str());
+	  if (hdtz==NULL)
+	    {
+	      hdtz=_rh->BookTH1(sr.str()+s.str(),500,0.,15.);
+	    }
+
+	  hdtz->Fill(x.tdcTime()-tev0);
+	  //if (x.tdcTime()-tev0>7.5) continue;	 
 	  hdtr->Fill(x.channel()+1.,x.tdcTime()-trigtime);
 	  //hdtr->Fill(x.channel(),x.bcid()*200-trigbcid);
 
-	  int str=x.channel()/2;
-	  if (sused[str]) continue;
+
 	  for (auto y:t.second)
 	    {
-	      if (chused[y.channel()]) continue;
-	      if (y.channel()!=(x.channel()+1)) continue;
+	      if (y.used()) continue;
+	      if (_mezzanine==1 && y.channel()!=(x.channel()+1)) continue;
+	      if (_mezzanine==2 && y.channel()!=(x.channel()-1)) continue;
+	      
+	      //if (y.channel()!=(x.channel()+1)) continue;
 	      double t0=x.tdcTime();
 	      double t1=y.tdcTime();
+	      if (t1<t0) continue;
 	      //if (_difId%2==0 && t1>t0) continue;
 	      //if (_difId%2==1 && t0>t1) continue;
 	      ///if (it->coarse()!=jt->coarse()-1) continue;
@@ -785,6 +871,7 @@ void tdcrb::LmAnalysis()
 	      sused[str]=true;
 	    
 	      double tsh=jall["100000"][difname.str()]["shift"][str].asFloat();
+	      //tsh=0;
 	      TdcStrip strip(_difId,str,t0,t1,tsh);
 	      _strips.push_back(strip);
 	      //printf("%d %s %s %f \n",str,runname.str().c_str(),difname.str().c_str(),tsh);
@@ -802,7 +889,7 @@ void tdcrb::LmAnalysis()
 	      TH1* hdtrx=_rh->GetTH1(sr.str()+sx.str());
 	      if (hdtrx==NULL)
 		{
-		  hdtrx=_rh->BookTH1(sr.str()+sx.str(),4000,-900.,-500.);
+		  hdtrx=_rh->BookTH1(sr.str()+sx.str(),400,-200.,-200.);
 		}
 	      hdts->Fill(t0-t1-tsh);
 	      hdtrx->Fill(t0-trigtime);
@@ -811,11 +898,11 @@ void tdcrb::LmAnalysis()
 	      TH1* hdtry=_rh->GetTH1(sr.str()+sry.str());
 	      if (hdtry==NULL)
 		{
-		  hdtry=_rh->BookTH1(sr.str()+sry.str(),4000,-900.,-500.);
+		  hdtry=_rh->BookTH1(sr.str()+sry.str(),400,-200.,-200.);
 		}
 	      hdtry->Fill(t1-trigtime);
 	      double x=str*0.4+0.2;
-	      double yp=((t0-t1)-tsh)*100./7.;
+	      double yp=((t0-t1)-tsh)*100./12.;
 	      //std::cout<<x<<" "<<y<<std::endl;
 	      bside=true;
 	      hpos->Fill(x,yp);
@@ -824,7 +911,7 @@ void tdcrb::LmAnalysis()
 	}
     }
   //if (_difId==15 ) getchar();
-
+  //getchar();
   _ntrigger++;
   heff->Fill(1.1);
   if (!found) return;

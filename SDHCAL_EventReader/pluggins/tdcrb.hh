@@ -25,7 +25,12 @@ public:
   inline uint8_t dif() const {return _dif;}
   inline double t0() const {return _t0;}
   inline double t1() const {return _t1;}
-  inline double pos() const {return (_t0-_t1-_shift)/0.125;}
+  inline double ypos() const {return (_t0-_t1-_shift)/0.125;}
+  inline double xpos() const {
+    if (_dif%2==1) return -1*(_str*0.4+0.2);
+    else return +1*(_str*0.4+0.2);
+  }
+  
 private:
   uint16_t _dif,_str;
   double _t0,_t1,_shift;

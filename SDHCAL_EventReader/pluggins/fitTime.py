@@ -12,11 +12,12 @@ def fitStrip(run,tdc):
   res=[]
   for i in range(0,8):
     h=ah.getth1("/run%d/TDC%d/LmAnalysis/hdts%d" % (run,tdc,i))
+    h.Rebin(4)
     bmax=0
     ibmax=h.GetMaximumBin()
     bmax=h.GetBinCenter(ibmax)
     c.cd(i+1)
-    h.Fit("myfit","Q","",bmax-0.5,bmax+0.5)
+    h.Fit("myfit","Q","",bmax-1.5,bmax+1.5)
     print "%d DIF %d Strip %d Mean %7.3f Width %f " % (run,tdc,i,myfit.GetParameter(1),myfit.GetParameter(2))
     mean.append(myfit.GetParameter(1))
     res.append(myfit.GetParameter(2))

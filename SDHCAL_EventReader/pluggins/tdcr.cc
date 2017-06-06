@@ -32,13 +32,13 @@ int main(int argc, char** argv )
 
   std::stringstream spat;
   int runask=atol(argv[1]);
-  spat<<"*"<<atol(argv[1])<<"*.dat";
+  spat<<"SMM*"<<atol(argv[1])<<"*.dat";
  #define UNTEST
  #ifdef UNTEST
   struct dirent **namelist;
   int n;
   std::cout<<"Pattern "<<spat.str()<<std::endl;
-  std::string dirp="/data/NAS/RPCH4/";
+  std::string dirp="/data/NAS/RPCH4";
   n = scandir(dirp.c_str(), &namelist, NULL, alphasort);
   if (n < 0)
     perror("scandir");
@@ -63,7 +63,7 @@ int main(int argc, char** argv )
   DHCalEventReader  dher;
 
 
-  
+  #ifdef STREAMOUT
   std::stringstream filename("");    
   char dateStr [64];
             
@@ -79,10 +79,10 @@ int main(int argc, char** argv )
     }
   else
     bs.setOutFileId(_fdOut);
-
-
-  #ifndef UNTEST
+#endif
   bs.setOutFileId(-1);
+  #ifndef UNTEST
+  
   bs.addRun(735986,"/tmp/SMO_220517_143427_735986.dat");
   #endif
   bs.Read();
