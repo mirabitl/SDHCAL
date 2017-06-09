@@ -895,8 +895,9 @@ void DHCalEventReader::buildEvent(bool rebuild)
 void DHCalEventReader::openOutput(std::string filename)
 {
 
-  std::cout<<"Opening new file "<<filename<<std::endl;
+  std::cout<<"Trying to Open new file "<<filename<<std::endl;
   lcWriter_->open(filename) ;
+  std::cout<<"Done Opening new file "<<filename<<std::endl;
 
 }
 

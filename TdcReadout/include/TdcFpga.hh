@@ -27,7 +27,7 @@ public:
   inline bool used(){return _used;}
   inline void setUsed(bool t){_used=t;}
   bool operator<(const TdcChannel &ipaddr){
-    if( tdcTime() < ipaddr.tdcTime())
+    if( coarse() < ipaddr.coarse())
     return true;
   else
     return false;

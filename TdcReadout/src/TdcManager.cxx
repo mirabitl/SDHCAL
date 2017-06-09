@@ -318,15 +318,19 @@ void TdcManager::configure(levbdim::fsmmessage* m)
 	  }
   
   //std::string config=m->content()["configFile"].asString();
-  
+
+  std::cout<<this->parameters()<<std::endl;
+  std::cout<<"File is "<<ffile<<std::endl;
+  std::cout<<"URL is "<<furl<<std::endl;
   // Read the file
   Json::Value jall;
   if (ffile.length()>2)
     {
   //PRSlow::loadAsics(config,_s1,_s2);
+      std::cout<<"File is "<<ffile.length()<<std::endl;
       Json::Reader reader;
       std::ifstream ifs (ffile.c_str(), std::ifstream::in);
-      Json::Value jall;
+      //      Json::Value jall;
       bool parsingSuccessful = reader.parse(ifs,jall,false);
     }
   else

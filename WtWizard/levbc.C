@@ -1110,10 +1110,10 @@ void levbc::StartButtonHandler()
 
   dialog->contents()->addStyleClass("form-group");
 
-  Wt::WPushButton *ok = new Wt::WPushButton("OK", dialog->footer());
-  ok->setDefault(true);
+  Wt::WPushButton *ok = new Wt::WPushButton("OK", dialog->contents());
+  //ok->setDefault(true);
 
-  Wt::WPushButton *cancel = new Wt::WPushButton("Cancel", dialog->footer());
+  Wt::WPushButton *cancel = new Wt::WPushButton("Cancel", dialog->contents());
   dialog->rejectWhenEscapePressed();
 
   /*

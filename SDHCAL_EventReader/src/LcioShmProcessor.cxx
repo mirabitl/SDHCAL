@@ -42,13 +42,18 @@ void LcioShmProcessor::start(uint32_t run)//,std::string dir,std::string setup)
   if (run!=theRunNumber_)
     theSequence_=0;
   theRunNumber_=run;
+  std::cout<<"call Dher 0 \n";
   _der->openOutput(getOutputFileName(theRunNumber_,theSequence_));
-
+  std::cout<<"File "<<getOutputFileName(theRunNumber_,theSequence_)<<" is opened"<<std::endl;
+    std::cout<<"call Dher 1 \n";
   _der->createEvent(run,"SD-HCAL");
+  std::cout<<"call Dher 2 \n";
   _der->createRunHeader(run,"SD-HCAL");
+  std::cout<<"call Dher 3 \n";
   _der->getRunHeader()->parameters().setValue("Setup",_setup);
+  std::cout<<"call Dher 4 \n";
   _der->writeRunHeader();
-
+  std::cout<<"call Dher 5 \n";
   _started=true;
 }
 void LcioShmProcessor::processRunHeader(std::vector<uint32_t> header)

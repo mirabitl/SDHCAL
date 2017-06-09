@@ -221,7 +221,10 @@ void LBuilder::start(levbdim::fsmmessage* m)
     Json::Value jc=m->content();
     int32_t run=jc["run"].asInt();
     //_writer->start(run);
+    std::cout<<"EVB is starting :"<<run<<std::endl;
     _evb->start(run);
+
+    std::cout<<"run is tarted :"<<run<<std::endl;
 }
 void LBuilder::stop(levbdim::fsmmessage* m)
 {
