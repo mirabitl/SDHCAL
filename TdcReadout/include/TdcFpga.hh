@@ -26,7 +26,7 @@ public:
   inline uint8_t* frame(){ return _fr;}
   inline bool used(){return _used;}
   inline void setUsed(bool t){_used=t;}
-  bool operator<(const TdcChannel &ipaddr){
+  bool operator<(const TdcChannel &ipaddr) const{
     if( coarse() < ipaddr.coarse())
     return true;
   else
