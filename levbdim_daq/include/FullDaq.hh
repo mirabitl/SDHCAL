@@ -1,6 +1,6 @@
 #ifndef _FullDaq_h
 #define _FullDaq_h
-#include "fsmwebClient.hh"
+#include "fsmwebCaller.hh"
 #include "baseApplication.hh"
 #include <string>
 #include <vector>
@@ -15,12 +15,12 @@ public:
   void  discover(levbdim::fsmmessage* m);
   void  prepare(levbdim::fsmmessage* m);
   std::string  difstatus();
-  void  singlescan(fsmwebClient* d);
-  void  singleinit(fsmwebClient* d);
-  void  singleregisterdb(fsmwebClient* d);
-  void  singleconfigure(fsmwebClient* d);
-  void  singlestart(fsmwebClient* d);
-  void  singlestop(fsmwebClient* d);
+  void  singlescan(fsmwebCaller* d);
+  void  singleinit(fsmwebCaller* d);
+  void  singleregisterdb(fsmwebCaller* d);
+  void  singleconfigure(fsmwebCaller* d);
+  void  singlestart(fsmwebCaller* d);
+  void  singlestop(fsmwebCaller* d);
   Json::Value  toJson(std::string s);
   void  initialise(levbdim::fsmmessage* m);
   void  configure(levbdim::fsmmessage* m);
@@ -28,7 +28,7 @@ public:
   void  stop(levbdim::fsmmessage* m);
   void  destroy(levbdim::fsmmessage* m);
 
-
+  void listProcess(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void forceState(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void doubleSwitchZup(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void  LVStatus(Mongoose::Request &request, Mongoose::JsonResponse &response);
@@ -54,16 +54,30 @@ public:
   void setGain(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void registerDataSource(Mongoose::Request &request, Mongoose::JsonResponse &response);
 
+  //Calibration
+  void triggerSpillRegister(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void triggerCalibCount(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void triggerCalibOn(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void triggerReloadCalib(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void tdcSet6bDac(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void tdcSetVthTime(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void tdcSetMask(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void setRunHeader(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void tdcstatus(Mongoose::Request &request, Mongoose::JsonResponse &response);
+
+  
   std::string state(){return _fsm->state();}
   void forceState(std::string s){_fsm->setState(s);}
-
+  // Virtual from baseAPplication
+  virtual void  userCreate(levbdim::fsmmessage* m);
 private:
   fsmweb* _fsm;
-  fsmwebClient* _dbClient,*_zupClient,*_cccClient,*_mdccClient,*_builderClient,*_gpioClient;
-  std::vector<fsmwebClient*> _DIFClients;
-    std::vector<fsmwebClient*> _tdcClients;
+  fsmwebCaller* _dbClient,*_zupClient,*_cccClient,*_mdccClient,*_builderClient,*_gpioClient;
+  std::vector<fsmwebCaller*> _DIFClients;
+    std::vector<fsmwebCaller*> _tdcClients;
  
   std::string _dbstate;
   uint32_t _ctrlreg,_run;
+  Json::Value _jConfigContent;
 };
 #endif

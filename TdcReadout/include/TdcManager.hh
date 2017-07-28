@@ -29,6 +29,9 @@ public:
   void c_joblog(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void c_status(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void c_diflist(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_set6bdac(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_setMask(Mongoose::Request &request, Mongoose::JsonResponse &response);
+  void c_setvthtime(Mongoose::Request &request, Mongoose::JsonResponse &response);
   
   void parseConfig(std::string name);
   void writeRamAvm();
@@ -47,6 +50,7 @@ public:
   void loopVthTime(uint32_t dacmin,uint32_t dacmax,uint32_t dacstep,uint8_t ngtc);
   void storeSlowControl(uint32_t code);
   void set6bDac(uint8_t dac);
+  void setMask(uint32_t mask);
   void sendTrigger(uint32_t nt);
   void setVthTime(uint32_t dac);
 private:

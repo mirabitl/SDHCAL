@@ -16,6 +16,15 @@ void LMdccServer::open(levbdim::fsmmessage* m)
     device=this->parameters()["device"].asString();
 
   doOpen(device);
+
+  if (this->parameters().isMember("spillon") && _mdcc!=NULL)
+    {
+      _mdcc->setSpillOn(this->parameters()["spillon"].asInt()); 
+    }
+  if (this->parameters().isMember("spilloff") && _mdcc!=NULL)
+    {
+      _mdcc->setSpillOff(this->parameters()["spilloff"].asInt()); 
+    }
   //_mdcc->maskTrigger();
   //_mdcc->resetCounter();
 }
@@ -247,6 +256,17 @@ void LMdccServer::c_spilloff(Mongoose::Request &request, Mongoose::JsonResponse 
   response["NCLOCK"]=nc;
 
 } 
+void LMdccServer::c_resettdc(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+
+  if (_mdcc==NULL)    {response["STATUS"]="NO Mdcc created"; return;}
+  uint32_t nc=atol(request.get("value","0").c_str());
+  _mdcc->resetTDC(nc&0xF);
+
+  response["STATUS"]="DONE";
+  //response["NCLOCK"]=nc;
+
+} 
 
 void LMdccServer::c_beamon(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
@@ -258,7 +278,33 @@ void LMdccServer::c_beamon(Mongoose::Request &request, Mongoose::JsonResponse &r
   response["STATUS"]="DONE";
   response["NCLOCK"]=nc;
 
+}
+void LMdccServer::c_setspillregister(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+
+  if (_mdcc==NULL)    {response["STATUS"]="NO Mdcc created"; return;}
+  uint32_t nc=atol(request.get("value","0").c_str());
+  _mdcc->setSpillRegister(nc);
+
+  response["STATUS"]="DONE";
+  response["VALUE"]=nc;
+
 } 
+void LMdccServer::c_settrigext(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+
+  if (_mdcc==NULL)    {response["STATUS"]="NO Mdcc created"; return;}
+  uint32_t delay=atol(request.get("delay","20").c_str());
+  uint32_t busy=atol(request.get("busy","20").c_str());
+  _mdcc->setTriggerDelay(delay);
+  _mdcc->setTriggerBusy(busy);
+
+  response["STATUS"]="DONE";
+  response["DELAY"]=delay;
+  response["BUSY"]=busy;
+
+} 
+
 void LMdccServer::c_status(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
 
@@ -268,14 +314,26 @@ void LMdccServer::c_status(Mongoose::Request &request, Mongoose::JsonResponse &r
   rc["id"]=_mdcc->id();
   rc["mask"]=_mdcc->mask();
   rc["spill"]=_mdcc->spillCount();
-  rc["busy1"]=_mdcc->busy1Count();
-  rc["busy2"]=_mdcc->busy2Count();
-  rc["busy3"]=_mdcc->busy3Count();
+  rc["busy1"]=_mdcc->busyCount(1);
+  rc["busy2"]=_mdcc->busyCount(2);
+  rc["busy3"]=_mdcc->busyCount(3);
+  rc["busy4"]=_mdcc->busyCount(4);
+  rc["busy5"]=_mdcc->busyCount(5);
+  rc["busy6"]=_mdcc->busyCount(6);
+  rc["busy7"]=_mdcc->busyCount(7);
+  rc["busy8"]=_mdcc->busyCount(8);
+  rc["busy9"]=_mdcc->busyCount(9);
+  rc["busy10"]=_mdcc->busyCount(10);
+  rc["busy11"]=_mdcc->busyCount(11);
+  rc["busy12"]=_mdcc->busyCount(12);
   rc["spillon"]=_mdcc->spillOn();
   rc["spilloff"]=_mdcc->spillOff();
   rc["ecalmask"]=_mdcc->ecalmask();
   rc["beam"]=_mdcc->beam();
   rc["calib"]=_mdcc->calibCount();
+  rc["spillreg"]=_mdcc->spillRegister();
+  rc["trigdelay"]=_mdcc->triggerDelay();
+  rc["trigbusy"]=_mdcc->triggerBusy();
   response["COUNTERS"]=rc;
   response["STATUS"]="DONE";
 
@@ -304,9 +362,9 @@ void LMdccServer::cmd(levbdim::fsmmessage* m)
       rc["id"]=_mdcc->id();
       rc["mask"]=_mdcc->mask();
       rc["spill"]=_mdcc->spillCount();
-      rc["busy1"]=_mdcc->busy1Count();
-      rc["busy2"]=_mdcc->busy2Count();
-      rc["busy3"]=_mdcc->busy3Count();
+      rc["busy1"]=_mdcc->busyCount(1);
+      rc["busy2"]=_mdcc->busyCount(2);
+      rc["busy3"]=_mdcc->busyCount(3);
       rc["spillon"]=_mdcc->spillOn();
       rc["spilloff"]=_mdcc->spillOff();
       rc["ecalmask"]=_mdcc->ecalmask();
@@ -407,11 +465,13 @@ LMdccServer::LMdccServer(std::string name) : levbdim::baseApplication(name),_mdc
  _fsm->addCommand("SPILLOFF",boost::bind(&LMdccServer::c_spilloff,this,_1,_2));
  _fsm->addCommand("BEAMON",boost::bind(&LMdccServer::c_beamon,this,_1,_2));
 
-
+ _fsm->addCommand("RESETTDC",boost::bind(&LMdccServer::c_resettdc,this,_1,_2));
  _fsm->addCommand("CALIBON",boost::bind(&LMdccServer::c_calibon,this,_1,_2));
  _fsm->addCommand("CALIBOFF",boost::bind(&LMdccServer::c_caliboff,this,_1,_2));
  _fsm->addCommand("RELOADCALIB",boost::bind(&LMdccServer::c_reloadcalib,this,_1,_2));
-  _fsm->addCommand("SETCALIBCOUNT",boost::bind(&LMdccServer::c_setcalibcount,this,_1,_2));
+ _fsm->addCommand("SETCALIBCOUNT",boost::bind(&LMdccServer::c_setcalibcount,this,_1,_2));
+ _fsm->addCommand("SETSPILLREGISTER",boost::bind(&LMdccServer::c_setspillregister,this,_1,_2));
+ _fsm->addCommand("SETTRIGEXT",boost::bind(&LMdccServer::c_settrigext,this,_1,_2));
 
 
  
@@ -436,7 +496,7 @@ void LMdccServer::doOpen(std::string s)
   std::cout<<"calling open "<<std::endl;
   if (_mdcc!=NULL)
     delete _mdcc;
-  _mdcc= new MDCCReadout(s);
+  _mdcc= new MDCCHandler(s);
   _mdcc->open();
   //std::cout<<" Open Ptr "<<_mdcc<<std::endl;
 }

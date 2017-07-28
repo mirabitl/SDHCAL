@@ -55,6 +55,30 @@ void RootShmProcessor::start(uint32_t run)//,std::string dir,std::string setup)
 
   _started=true;
 }
+void RootShmProcessor::processRunHeader(std::vector<uint32_t> header)
+{
+ if (!_started) return;
+ _der->createEvent(theRunNumber_,"SD-HCAL");
+
+ _der->getEvent()->setEventNumber(0);
+
+  
+ uint32_t ibuf[256];
+ for (int i=0;i<header.size();i++) ibuf[i]=header[i];
+ // Construct one levbdim buffer with header content
+ levbdim::buffer b(128+header.size());
+ b.setDetectorId(255);
+ b.setDataSourceId(1);
+ b.setEventId(0);
+ b.setBxId(0);
+ b.setPayload(ibuf,header.size()*sizeof(uint32_t));
+ unsigned char* cdata=(unsigned char*) b.ptr();
+ int32_t* idata=(int32_t*) cdata;
+ int difsize=b.size();
+ _der->addRawOnlineRU(idata,difsize/4+1);
+ _der->writeEvent(false);            
+}
+
 void RootShmProcessor::processEvent(uint32_t gtc,std::vector<levbdim::buffer*> vbuf)//writeEvent(uint32_t gtc,std::vector<unsigned char*> vbuf)
 {
   if (!_started) return;

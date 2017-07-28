@@ -12,6 +12,8 @@ public:
   virtual void start(uint32_t run);
   virtual void stop();
   virtual  void processEvent(uint32_t key,std::vector<levbdim::buffer*> dss);
+  virtual  void processRunHeader(std::vector<uint32_t> header);
+
   std::string getOutputFileName(uint32_t run,uint32_t seq);
   void close();
   std::string getSetup(){return _setup;}

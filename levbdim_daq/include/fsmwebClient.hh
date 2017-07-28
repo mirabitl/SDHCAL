@@ -84,6 +84,18 @@ public:
     _url=s.str();
     std::cout<<"fsmwebClient ok url => "<<_url;
   }
+
+  std::string queryState()
+  {
+    std::string rc=this->curlQuery((char*) _url.c_str());
+    
+    Json::Reader reader;
+    Json::Value jc;
+    _parseOk = reader.parse( rc, jc);
+    if (!_parseOk) return "UNKOWN";
+    return jc["STATE"].asString();
+   
+  }
   
   std::string curlQuery(std::string url)
   {
@@ -144,16 +156,16 @@ public:
        }
      else
        {
-	 printf("content  null\n");
+	 //printf("content  null\n");
 	 ss<<"&content={}";
 	 // printf("3 Sending %s \n",ss.str().c_str());
        }
      //std::cout<<"4 sending "<<ss.str()<<std::endl;
-     printf("Sending %s \n",ss.str().c_str());
+     //printf("Sending %s \n",ss.str().c_str());
      //     return "none";
    
     std::string rc=curlQuery((char*) ss.str().c_str());
-    printf("return %s %s \n",ss.str().c_str(),rc.c_str());
+    //printf("return %s %s \n",ss.str().c_str(),rc.c_str());
     Json::Reader reader;
     Json::Value jsta;
     bool parsingSuccessful = reader.parse(rc,jsta);
@@ -169,16 +181,21 @@ public:
   std::string sendCommand(std::string name,std::string params=std::string(""))
   {
      std::stringstream s;
-     s<<_url<<"FSM?command="<<name;
+     s<<_url<<"CMD?name="<<name;
      if (params.length()>2)
        s<<params;
+     //std::cout<<"SC Sending "<<s<<std::endl;
      std::string rc=curlQuery((char*) s.str().c_str());
+     //std::cout<<"SC received "<<rc<<std::endl;
      Json::Reader reader;
      Json::Value jsta;
      bool parsingSuccessful = reader.parse(rc,jsta);
      if (parsingSuccessful)
+       {
+	 //std::cout<<"SC parsing sucess"<<jsta<<std::endl;
        _answer=jsta;
-     else
+       }
+       else 
        _answer=Json::Value::null;
     return rc;
 

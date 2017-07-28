@@ -444,11 +444,13 @@ int readOneEvent(int run,int event);
   std::vector<uint32_t>& getTimeSeeds(){return theTimeSeeds_;}
   std::vector<DIFPtr*>& getDIFList(){return  theDIFPtrList_;}
   void correctGeometry();
+  bool isBad(){return _badEvent;}
 
   void setCerenkovDifId(int id){m_cerenkovDifId=id;}
   void setCerenkovOutDifId(int id){m_cerenkovOutDifId=id;}
   void setCerenkovOutAsicId(int id){m_cerenkovOutAsicId=id;}
   void setCerenkovOutTimeDelay(int td){m_cerenkovOutTimeDelay=td;}
+
 
  private:
   LCReader* lcReader_; /// LCIO Reader
@@ -493,10 +495,14 @@ int readOneEvent(int run,int event);
   
   std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> > thePhysicsEventMap_;
 
+
   int m_cerenkovDifId;
   int m_cerenkovOutDifId;
   int m_cerenkovOutAsicId;
   int m_cerenkovOutTimeDelay;
+
+  bool _badEvent;
+
 };
 
 #endif

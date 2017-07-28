@@ -5,13 +5,13 @@
 
 #include <string.h>
 #include <stdio.h>
-#include "fsmweb.hh"
+#include "baseApplication.hh"
 #include "HVCaenInterface.h"
 using namespace std;
 #include <sstream>
 #include "LdaqLogger.hh"
 
-class LCaenServer
+class LCaenServer : public levbdim::baseApplication
 {
 public:
   LCaenServer(std::string name);
@@ -20,7 +20,6 @@ public:
   void destroy(levbdim::fsmmessage* m);
   // action
   void Open(std::string ip);
-  void c_joblog(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void c_setOutputVoltage(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void c_setCurrentLimit(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void c_setOutputVoltageRiseRate(Mongoose::Request &request, Mongoose::JsonResponse &response);

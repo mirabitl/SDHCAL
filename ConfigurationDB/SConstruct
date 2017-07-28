@@ -1,0 +1,187 @@
+import sys,os,commands
+import  os
+import re
+import sys
+
+def SWIGSharedLibrary(env, library, sources, **args):
+  swigre = re.compile('(.*).i')
+  if env.WhereIs('swig') is None:
+    sourcesbis = []
+    for source in sources:
+      cName = swigre.sub(r'\1_wrap.c', source)
+      cppName = swigre.sub(r'\1_wrap.cc', source)
+      if os.path.exists(cName):
+        sourcesbis.append(cName)
+      elif os.path.exists(cppName):
+        sourcesbis.append(cppName)
+      else:
+        sourcesbis.append(source)
+  else:
+    sourcesbis = sources
+ 
+  if 'SWIGFLAGS' in args:
+    args['SWIGFLAGS'] += ['-python']
+  else:
+    args['SWIGFLAGS'] = ['-python'] + env['SWIGFLAGS']
+  args['SHLIBPREFIX']=""
+  if sys.version >= '2.5':
+    args['SHLIBSUFFIX']=".pyd"
+ 
+  cat=env.SharedLibrary(library, sourcesbis, **args)
+  return cat
+ 
+
+
+# environment
+#import xdaq
+#print xdaq.INCLUDES
+#print xdaq.LIBRARY_PATHS
+#print xdaq.LIBRARIES
+
+#print "----------------------------------------------"
+Decider('MD5-timestamp')
+
+
+Use_Oracle=os.path.exists("/usr/include/ILCConfDB")
+Use_Mongoose=os.path.exists("/usr/local/include/mongoose")
+
+if (not Use_Oracle):
+  print "ILCConfDB must be installed"
+  exit(0)
+
+XDAQ_ROOT="/opt/xdaq"
+DHCAL_ROOT=os.path.abspath("..")
+
+fres=os.popen('uname -r')
+kl=fres.readline().split(".")
+
+platform="UBUNTU"
+if (kl[len(kl)-1][0:3] == 'el5'):
+    platform="SLC5"
+
+
+fres=os.popen('uname -p')
+kp=fres.readline()
+osv=kp[0:len(kp)-1]
+
+print platform,osv
+Arm=os.uname()[4]=='armv7l'
+
+if Arm or platform=="UBUNTU":
+  boostsystem='boost_system'
+  boostthread='boost_thread'
+else:
+  boostsystem='boost_system-mt'
+  boostthread='boost_thread-mt'
+
+
+# includes
+INCLUDES=['include',"/usr/include/ILCConfDB",\
+	os.path.join(DHCAL_ROOT,"SDHCAL_common","include"),\
+	  os.path.join(DHCAL_ROOT,"DBUtils","python","Cpp"),"/usr/local/dim/dim","/opt/dhcal/levbdim/include"]
+
+if (platform=="SLC5"):
+    INCLUDES.append('/usr/include/boost141')
+    INCLUDES.append('/opt/xdaq/include')
+
+#MYSQL and sqlite
+INCLUDES.append("/usr/include/libxml2")
+INCLUDES.append("/usr/include/jsoncpp")
+INCLUDES.append("/data/ilcsoft/lcio/v01-51/include")
+
+INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
+
+CPPFLAGS=commands.getoutput("$ROOTSYS/bin/root-config --cflags").split(" ") + ["-O4","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2","-std=c++11"]
+if (Arm):
+  CPPFLAGS.append("-DNO_DB")
+#MYSQL
+MY_LIBS=[lib[2:] for lib in filter(lambda x: (x[:2]=="-l"), commands.getoutput("mysql_config --libs").split(" "))]
+MY_LIBPATH=[lib[2:] for lib in filter(lambda x: (x[:2]=="-L"), commands.getoutput("mysql_config --libs").split(" "))]
+#Library ROOT + some of XDAQ + DB 
+LIBRARIES=MY_LIBS+['pthread', 'uuid', 'm', 'ilcconfdb', 'dbi','xerces-c',  'stdc++','log4cxx',boostsystem,boostthread,'dl','sqlite3','dim','levbdim','mongoclient','jsoncpp']
+
+if (not Arm):
+  LIBRARIES.append('occi')
+  LIBRARIES.append('clntsh')
+  LIBRARIES.append('nnz11')
+
+
+#Library path XDAQ,DHCAL and ROOT + Python
+if ( platform=="SLC5" and osv=="x86_64"):
+    LIBRARY_PATHS=MY_LIBPATH+["/opt/xdaq/lib","/usr/lib64/boost141","/usr/lib64","/usr/local/lib"]
+else:
+    if ( platform=="SLC5"):
+        LIBRARY_PATHS=MY_LIBPATH+["/opt/xdaq/lib","/usr/lib/boost141","/usr/lib","/usr/local/lib"]
+    else:
+        LIBRARY_PATHS=MY_LIBPATH+["/usr/lib","/usr/local/lib","/usr/local/dim/linux","/opt/dhcal/levbdim/lib"]
+
+#Library path XDAQ,DHCAL and ROOT + Python
+LIBRARY_PATHS.append([os.path.join(XDAQ_ROOT,"lib"),os.path.join(DHCAL_ROOT,"opt","dhcal","lib"),os.path.join(os.environ["ROOTSYS"],"lib")])
+LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
+
+if (Use_Mongoose):
+  LIBRARY_PATHS.append('/usr/local/lib')
+  LIBRARIES.append('mongoose')
+  INCLUDES.append('/usr/local/include/')
+  INCLUDES.append('/usr/local/include/mongoose')
+
+  
+
+#link flags
+LDFLAGS=["-fPIC","-dynamiclib"]
+
+LDFLAGS=commands.getoutput("$ROOTSYS/bin/root-config --ldflags").split(" ")
+
+
+# SWIG
+SWIGSF=["-c++","-classic"]
+
+for i in INCLUDES:
+    SWIGSF.append("-I"+i)
+print SWIGSF
+
+# Create the Environment
+env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS,SWIGFLAGS=SWIGSF)
+
+#print "CC is:",env.subst('$CPPPATH')
+
+env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
+
+
+# Library source
+
+LIBRARY_SOURCES=Glob("#src/*.cc")
+
+for i in LIBRARY_SOURCES:
+  print i 	 
+#Shared library
+ConfigDb=env.SharedLibrary("#lib/ConfigurationDb",source=LIBRARY_SOURCES)
+LIBRARIES.append("ConfigurationDb")
+#Python module
+#LSDHCALDB=env.PythonModule('_LSDHCALDB', ['LSDHCALDB.i'],LIBPATH=["#lib",DHCAL_ROOT+"/opt/dhcal/lib","/usr/lib"],LIBS=LIBRARIES)
+
+
+#Daemon 
+EXE_LIBPATH=LIBRARY_PATHS
+EXE_LIBPATH.append("#lib")
+EXE_LIBS=LIBRARIES
+EXE_LIBS.append("ConfigurationDb")
+testdb=env.Program("bin/testdb",source="src/testdb.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+
+dbcd=env.Program("bin/levbdim_dbc",source="src/DbCacheDaemon.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+
+
+#Test Program
+#EXE_LIBPATH=LIBRARY_PATHS
+#EXE_LIBPATH.append("#lib")
+#EXE_LIBS=LIBRARIES
+#EXE_LIBS.append("SDHCALDB")
+#TMAIN=env.Program("bin/main",source="src/main.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+
+Default([ConfigDb,testdb,dbcd])
+env.Install(DHCAL_ROOT+"/opt/dhcal/lib",ConfigDb)
+env.Install(DHCAL_ROOT+"/opt/dhcal/bin",dbcd)
+env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib",DHCAL_ROOT+"/opt/dhcal/bin"])
+
+
+

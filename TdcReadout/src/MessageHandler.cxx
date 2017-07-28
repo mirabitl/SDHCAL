@@ -65,6 +65,7 @@ void lytdc::OnDisconnect::exec(NL::Socket* socket, NL::SocketGroup* group, void*
 }
 void lytdc::OnClientDisconnect::exec(NL::Socket* socket, NL::SocketGroup* group, void* reference) {
 
+  cout << "\nClient " << socket->hostTo() << " disconnected..."<<std::flush;
   uint32_t* i =(uint32_t*) reference;
   (*i)=0xDEAD;
 }

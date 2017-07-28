@@ -18,6 +18,7 @@
 #include <sstream>
 #include <map>
 #include <bitset>
+#include <boost/format.hpp>
 
 TdcFpga::TdcFpga(uint32_t m,uint32_t adr) :_abcid(0),_gtc(0),_mezzanine(m),_lastGtc(0),_startIdx(0),_event(0),_adr(adr)
 {
@@ -26,6 +27,12 @@ TdcFpga::TdcFpga(uint32_t m,uint32_t adr) :_abcid(0),_gtc(0),_mezzanine(m),_last
    _id=(adr>>24)&0xFF; // Last byte of IP address
    _detid=110;
    _dsData = new levbdim::datasource(_detid,_id,MAX_EVENT_SIZE);
+}
+void TdcFpga::clear()
+{
+  _gtc=0;
+  _event=0;
+  _lastGtc=0;
 }
 void TdcFpga::addChannels(uint8_t* buf,uint32_t size_buf)
 {
@@ -73,12 +80,49 @@ void TdcFpga::processEventTdc()
   itemp[5]=_adr;
   itemp[6]=_channels.size();
   uint32_t idx=28;
+  uint32_t trbcid=0;
+  #define DUMPTRIGGER
+  #ifdef DUMPTRIGGER
+  for (auto x:_channels)
+    {
+      if (x.channel()==16)
+	{
+	  trbcid=x.bcid();
+	  printf("Trigger %x %d %d %ld %d %x \n ", _adr,_mezzanine,_gtc,_abcid,_channels.size(),trbcid);
+	   //  break;
+	}
+    }
+  // if (trbcid>0)
+  //{
+      //printf("Trigger %x %d %d %ld %d \n ", _adr,_mezzanine,_gtc,_abcid,_channels.size());
+      //std::stringstream ss;
+      //       ss<<boost::format("Trigger %x %d %d %ld %d \n ") % _adr % _mezzanine % _gtc % _abcid % _channels.size();
+      //int nch=0;
+       // for (auto x:_channels)
+       //	{
+	  //  ss<<boost::format("\t %d %d %f ") % (int) x.channel() % (int) x.bcid() % x.tdcTime();
+	  //if (x.channel()!=16 && (x.bcid()>(trbcid-4) && x.bcid()<(trbcid+4)))
+	  //  {
+	      //  ss<<"---> found\n";
+	  //  }
+	  //else
+	  //  ss<<"\n";
+	  //nch++;
+	  // if (nch>40) {ss<<" and more.. \n";break;}
+       //}
+      //std::cout<<ss.str()<<std::flush;
+
+       //}
+  #endif
   for (vector<TdcChannel>::iterator it=_channels.begin();it!=_channels.end();it++)
     {
       memcpy(&temp[idx],it->frame(),it->length());
       idx+=8;
+      
     }
 
    memcpy((unsigned char*) _dsData->payload(),temp,idx);
    _dsData->publish(_gtc,_abcid,idx);
+   if (_event%500==0)
+     std::cout<<_mezzanine<<" "<<_event<<" "<<_gtc<<" "<<_abcid<<" "<<_channels.size()<<std::endl<<std::flush;
 }

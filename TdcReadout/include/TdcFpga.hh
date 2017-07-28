@@ -15,17 +15,23 @@ public:
   TdcChannel(uint8_t*  b) :_fr(b),_used(false) {;}
   inline uint8_t channel() {return  (_fr[0]&0XFF);}
   inline uint8_t length(){return 8;}
-  inline uint64_t coarse(){return ((uint64_t)_fr[6])|((uint64_t)_fr[5]<<8)|((uint64_t)_fr[4]<<16)|((uint64_t)_fr[3]<<24);}
-  inline uint8_t fine(){return _fr[7];}
+  inline uint64_t coarse() const {return ((uint64_t)_fr[6])|((uint64_t)_fr[5]<<8)|((uint64_t)_fr[4]<<16)|((uint64_t)_fr[3]<<24);}
+  inline uint8_t fine() const {return _fr[7];}
   #ifdef BCIDFROMCOARSE
   inline uint16_t bcid(){return (uint16_t) (coarse()*2.5/200);}
   #else
-  inline uint16_t bcid(){return (_fr[2]|(_fr[1]<<8));}
+  inline const uint16_t bcid(){return (_fr[2]|(_fr[1]<<8));}
   #endif
-  inline double tdcTime(){ return (coarse()*2.5+fine()*0.009765625);}
+  inline  double tdcTime() const { return (coarse()*2.5+fine()*0.009765625);}
   inline uint8_t* frame(){ return _fr;}
   inline bool used(){return _used;}
   inline void setUsed(bool t){_used=t;}
+  bool operator<(const TdcChannel &ipaddr){
+    if( coarse() < ipaddr.coarse())
+    return true;
+  else
+    return false;
+}
 private:
   uint8_t* _fr;
   bool _used;
@@ -40,6 +46,10 @@ public:
   void addChannels(uint8_t* buf,uint32_t sizeb);
   uint32_t detectorId(){return _detid;}
   uint32_t difId(){return _id;}
+  uint64_t abcid(){return _abcid;}
+  uint32_t gtc(){return _gtc;}
+  uint32_t event(){return _event;}
+  void clear();
 private:
   uint32_t _mezzanine,_adr,_startIdx;
   uint8_t _buf[0x100000];

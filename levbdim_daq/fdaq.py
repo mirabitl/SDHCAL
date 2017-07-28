@@ -6,10 +6,10 @@ import httplib, urllib,urllib2
 from urllib2 import URLError, HTTPError
 import json
 from copy import deepcopy
-
+import base64
 import time
 import argparse
-
+import requests
 def parseReturn(command,sr):
     if (command=="jobStatus"):
         #s=r1.read()
@@ -168,7 +168,7 @@ class fdaqClient:
       self.slowhost=None
       self.slowport=None
       self.daq_par={}
-      
+      self.slow_par={}
       for x,y in self.p_conf["HOSTS"].iteritems():
           for p in y:
               port=0
@@ -184,7 +184,7 @@ class fdaqClient:
                       if ("s_ctrlreg" in self.daq_par):
                           self.daq_par["ctrlreg"]=int(self.daq_par["s_ctrlreg"],16)
               
-              if (p["NAME"]=="WSLOW"):
+              if (p["NAME"]=="FSLOW"):
                   self.slowhost=x
                   self.slowport=port
               if (p["NAME"]=="DBSERVER"):
@@ -208,17 +208,30 @@ class fdaqClient:
 
       
   def parseConfig(self):
+    self.login=os.getenv("DAQLOGIN","NONE")
+    useAuth=self.login!="NONE"
     dm=os.getenv("DAQURL","NONE")
     if (dm!="NONE"):
         self.daq_url=dm
-        req=urllib2.Request(dm)
-        try:
-            r1=urllib2.urlopen(req)
-        except URLError, e:
-            p_rep={}
-            re
+        read_conf=None
+        if (useAuth):
+            r = requests.get(dm, auth=(self.login.split(":")[0],self.login.split(":")[1]))
+            read_conf=r.json()
         else:
-            self.p_conf=json.loads(r1.read())
+            req=urllib2.Request(dm)
+            try:
+                r1=urllib2.urlopen(req)
+            except URLError, e:
+                print e
+                p_rep={}
+                return
+            
+            read_conf=json.loads(r1.read())
+        #print read_conf
+        if ("content" in read_conf):
+            self.p_conf=read_conf["content"]
+        else:
+            self.p_conf=read_conf
     dm=os.getenv("DAQFILE","NONE")
     if (dm!="NONE"):
         self.daq_file=dm
@@ -229,6 +242,8 @@ class fdaqClient:
     lcgi={}
     if (self.daq_url!=None):
         lcgi["url"]=self.daq_url
+        if (self.login!="NONE"):
+            lcgi["login"]=self.login
     else:
         if (self.daq_file!=None):
             lcgi["file"]=self.daq_file
@@ -282,11 +297,15 @@ class fdaqClient:
       lcgi={}
       if (self.daq_url!=None):
           lcgi["url"]=self.daq_url
+          if (self.login!="NONE"):
+            lcgi["login"]=self.login
       else:
           if (self.daq_file!=None):
               lcgi["file"]=self.daq_file
       for x,y in self.p_conf["HOSTS"].iteritems():
           for p in y:
+              if (p["NAME"] != "FDAQ"):
+                  continue;
               print x,p["NAME"]," process found"
               port=0
               for e in p["ENV"]:
@@ -308,6 +327,41 @@ class fdaqClient:
                   if (p_rep["STATE"]=="VOID"):
                       sr=executeFSM(x,port,p_rep["PREFIX"],"CREATE",lcgi)
                       #print sr
+  def slow_create(self):
+      lcgi={}
+      if (self.daq_url!=None):
+          lcgi["url"]=self.daq_url
+          if (self.login!="NONE"):
+            lcgi["login"]=self.login
+      else:
+          if (self.daq_file!=None):
+              lcgi["file"]=self.daq_file
+      for x,y in self.p_conf["HOSTS"].iteritems():
+          for p in y:
+              if (p["NAME"] != "FSLOW"):
+                  continue;
+              print x,p["NAME"]," process found"
+              port=0
+              for e in p["ENV"]:
+                  if (e.split("=")[0]=="WEBPORT"):
+                      port=int(e.split("=")[1])
+              if (port==0):
+                  continue
+              p_rep={}
+              surl="http://%s:%d/" % (x,port)
+              req=urllib2.Request(surl)
+              try:
+                  r1=urllib2.urlopen(req)
+                  p_rep=json.loads(r1.read())
+              except URLError, e:
+                  print surl,e
+                  p_rep={}
+              print x,port,p["NAME"],p_rep
+              if ("STATE" in p_rep):
+                  if (p_rep["STATE"]=="VOID"):
+                      sr=executeFSM(x,port,p_rep["PREFIX"],"CREATE",lcgi)
+                      #print sr
+
   def daq_list(self):
       lcgi={}
       if (self.daq_url!=None):
@@ -342,6 +396,16 @@ class fdaqClient:
   def daq_discover(self):
       lcgi={}
       sr=executeFSM(self.daqhost,self.daqport,"FDAQ","DISCOVER",lcgi)
+      print sr
+      
+  def slow_discover(self):
+      lcgi={}
+      sr=executeFSM(self.slowhost,self.slowport,"FSLOW","DISCOVER",lcgi)
+      print sr
+      
+  def slow_configure(self):
+      lcgi={}
+      sr=executeFSM(self.slowhost,self.slowport,"FSLOW","CONFIGURE",lcgi)
       print sr
       
   def daq_setparameters(self):
@@ -398,6 +462,13 @@ class fdaqClient:
       print sr
 
   def daq_start(self):
+      self.trig_reset()
+      #self.trig_spillon(1000000)
+      #self.trig_spilloff(100000)
+      self.trig_spillregister(0)
+      self.trig_calibon(0)
+      self.trig_status()
+
       lcgi={}
       sr=executeFSM(self.daqhost,self.daqport,"FDAQ","START",lcgi)
       print sr
@@ -462,6 +533,7 @@ class fdaqClient:
       print sr    
       
 
+      
   def trig_status(self):
       lcgi={}
       sr=executeCMD(self.daqhost,self.daqport,"FDAQ","TRIGGERSTATUS",lcgi)
@@ -512,7 +584,163 @@ class fdaqClient:
       
       sr=executeCMD(self.daqhost,self.daqport,"FDAQ","BEAMON",lcgi)
       print sr    
-                  
+
+  def trig_spillregister(self,value):
+      lcgi={}
+      lcgi["value"]=value
+      
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","SPILLREGISTER",lcgi)
+      print sr    
+
+  def trig_calibcount(self,value):
+      lcgi={}
+      lcgi["clock"]=value
+      
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","CALIBCOUNT",lcgi)
+      print sr    
+
+  def trig_calibon(self,value):
+      lcgi={}
+      lcgi["value"]=value
+      
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","CALIBON",lcgi)
+      print sr    
+
+  def daq_process(self):
+      lcgi={}
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","LISTPROCESS",lcgi)
+      print sr    
+
+  def trig_reloadcalib(self):
+      lcgi={}
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","RELOADCALIB",lcgi)
+      print sr    
+
+  def tdc_set6bdac(self,value):
+      lcgi={}
+      lcgi["value"]=value
+      
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","SET6BDAC",lcgi)
+      print sr    
+  def tdc_setvthtime(self,value):
+      lcgi={}
+      lcgi["value"]=value
+      
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","SETVTHTIME",lcgi)
+      print sr    
+  def tdc_setmask(self,value):
+      lcgi={}
+      lcgi["value"]=value
+      
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","SETMASK",lcgi)
+      print sr    
+
+  def daq_setrunheader(self,rtyp,value,mask=0XFFFFFFFF):
+      lcgi={}
+      lcgi["value"]=value
+      lcgi["type"]=rtyp
+      lcgi["mask"]=mask
+      sr=executeCMD(self.daqhost,self.daqport,"FDAQ","SETRUNHEADER",lcgi)
+      print sr    
+
+  def daq_calibdac(self,ntrg,ncon,dacmin,dacmax,mask):
+      self.trig_pause()
+      self.trig_spillon(30)
+      self.trig_spilloff(1000000)
+      self.trig_spillregister(0)
+      self.trig_calibon(1)
+      self.trig_calibcount(ntrg)
+      self.trig_status()
+      #self.tdc_setmask(63)
+
+      for idac in range(dacmin,dacmax+1):
+          self.tdc_set6bdac(idac)
+          #self.tdc_setmask(mask)
+          self.daq_setrunheader(1,idac)
+          # check current evb status
+          sr=self.daq_evbstatus()
+          sj=json.loads(sr)
+          ssj=sj["answer"]
+          firstEvent=int(ssj["event"])
+          time.sleep(1)
+          self.trig_reloadcalib()
+          self.trig_resume()
+          self.trig_status()
+          lastEvent=firstEvent
+          nloop=0;
+          while (lastEvent<(firstEvent+ntrg-10)):
+              sr=self.daq_evbstatus()
+              sj=json.loads(sr)
+              ssj=sj["answer"]
+              lastEvent=int(ssj["event"])
+              print firstEvent,lastEvent,idac
+              time.sleep(1)
+              nloop=nloop+1
+              if (nloop>20):
+                  break
+      self.trig_calibon(0)
+      self.trig_pause()
+      return
+  def daq_scurve(self,ntrg,ncon,thmin,thmax,mask,step=5):
+      self.trig_pause()
+      self.trig_spillon(ncon)
+      self.trig_spilloff(50000)
+      self.trig_spillregister(0)
+      self.trig_calibon(1)
+      self.trig_calibcount(ntrg)
+      self.trig_status()
+      #self.tdc_setmask(mask)
+      thrange=(thmax-thmin+1)/step
+      for vth in range(0,thrange):
+          self.tdc_setvthtime(thmax-vth*step)
+          #self.tdc_setmask(mask)
+          self.daq_setrunheader(2,(thmax-vth*step))
+          # check current evb status
+          sr=self.daq_evbstatus()
+          sj=json.loads(sr)
+          ssj=sj["answer"]
+          firstEvent=int(ssj["event"])
+          #time.sleep(1)
+          self.trig_reloadcalib()
+          self.trig_resume()
+          self.trig_status()
+          lastEvent=firstEvent
+          nloop=0;
+          while (lastEvent<(firstEvent+ntrg-20)):
+              sr=self.daq_evbstatus()
+              sj=json.loads(sr)
+              ssj=sj["answer"]
+              lastEvent=int(ssj["event"])
+              print firstEvent,lastEvent,thmax-vth*step
+              time.sleep(1)
+              nloop=nloop+1
+              if (nloop>6):
+                  break
+      self.trig_calibon(0)
+      self.trig_pause()
+      return
+  def daq_fullscurve(self):
+      self.daq_start()
+      #self.tdc_setmask(0XFFFFFFFF)
+      #self.daq_scurve(100,30,200,500,4294967295)
+      #self.daq_stop()
+      #return
+      for ist in range(0,14):
+          self.tdc_setmask((1<<ist))
+          self.daq_scurve(100,60,200,700,4294967295,5)
+          self.tdc_setmask((1<<(31-ist)))
+          self.daq_scurve(100,60,200,700,4294967295,5)
+
+      #self.daq_scurve(100,30,300,1020,4294967295)
+      #self.daq_stop()
+      #return
+      for ist in range(0,8):
+          self.tdc_setmask((1<<ist))
+          self.daq_scurve(100,300,200,1020,4294967295,10)
+          self.tdc_setmask((1<<(31-ist)))
+          self.daq_scurve(100,300,200,1020,4294967295,10)
+
+      self.daq_stop()
 parser = argparse.ArgumentParser()
 
 # configure all the actions
@@ -549,6 +777,8 @@ grp_action.add_argument('--daq-stoprun',action='store_true',help=' stop the run'
 grp_action.add_argument('--daq-destroy',action='store_true',help='destroy the DIF readout, back to the PREPARED state')
 grp_action.add_argument('--daq-downloaddb',action='store_true',help='download the dbsate specified in --dbstate=state')
 grp_action.add_argument('--daq-dbstatus',action='store_true',help='get current run and state from db')
+grp_action.add_argument('--daq-calibdac',action='store_true',help='get current run and state from db')
+grp_action.add_argument('--daq-scurve',action='store_true',help='get current run and state from db')
 grp_action.add_argument('--daq-ctrlreg',action='store_true',help='set the ctrlregister specified with --ctrlreg=register')
 
 # Calibration
@@ -575,6 +805,7 @@ grp_action.add_argument('--trig-beam',action='store_true',help=' set beam length
 # SLC
 grp_action.add_argument('--slc-create',action='store_true',help='Create the DimSlowControl object to control WIENER crate and BMP sensor')
 grp_action.add_argument('--slc-initialisesql',action='store_true',help='initiliase the mysql access specified with --account=login/pwd@host:base')
+grp_action.add_argument('--slc-configure',action='store_true',help='initiliase the mysql access specified with --account=login/pwd@host:base')
 grp_action.add_argument('--slc-loadreferences',action='store_true',help='load in the wiener crate chambers references voltage download from DB')
 grp_action.add_argument('--slc-hvstatus',action='store_true',help='display hvstatus of all channel of the wiener crate')
 grp_action.add_argument('--slc-ptstatus',action='store_true',help='display the P and T from the BMP183 readout')
@@ -623,7 +854,7 @@ parser.add_argument('--lines', action='store',type=int, default=None,dest='lines
 parser.add_argument('--host', action='store', dest='host',default=None,help='host for log')
 parser.add_argument('--jobname', action='store', dest='jobname',default=None,help='job name')
 parser.add_argument('--jobpid', action='store', type=int,dest='jobpid',default=None,help='job pid')
-
+parser.add_argument('--value', action='store', type=int,dest='value',default=None,help='value to pass')
 
 
 parser.add_argument('-v','--verbose',action='store_true',default=False,help='Raw Json output')
@@ -692,6 +923,7 @@ elif (results.webstatus):
 elif(results.available):
     r_cmd='available'
     fdc.daq_list()
+
     #srd=executeCMD(conf.daqhost,conf.daqport,"WDAQ",None,None)
     #if (results.verbose):
         #print srd
@@ -710,6 +942,7 @@ elif(results.available):
     #else:
         #print ">>>>>>>>>>>>>>>> JOB CONTROL <<<<<<<<<<<<<<<<<<"
         #parseReturn("state",srj)
+    #fdc.daq_process()
     exit(0)
 elif(results.jc_create):
     r_cmd='createJobControl'
@@ -758,7 +991,7 @@ elif(results.daq_state):
 elif(results.daq_discover):
     r_cmd='Discover'
     fdc.daq_discover()
-    fdc.daq_setparameters()
+    #fdc.daq_setparameters()
     exit(0)
 elif(results.daq_setparameters):
     r_cmd='setParameters'
@@ -861,6 +1094,7 @@ elif(results.daq_startrun):
 
 elif(results.daq_stoprun):
     r_cmd='stop'
+    fdc.trig_pause();
     fdc.daq_stop()
     exit(0)
 elif(results.daq_destroy):
@@ -875,7 +1109,15 @@ elif(results.daq_dbstatus):
     else:
         parseReturn(r_cmd,sr)
     exit(0)
-
+elif(results.daq_calibdac):
+    r_cmd='calibdac'
+    fdc.daq_calibdac(200,15,15,61,4294967295)
+    exit(0)
+elif(results.daq_scurve):
+    r_cmd='scurve'
+    fdc.daq_fullscurve()
+    #fdc.daq_scurve(50,50,250,450,4294967295)
+    exit(0)
 elif(results.daq_downloaddb):
     r_cmd='downloadDB'
     if (results.dbstate!=None):
@@ -947,7 +1189,7 @@ elif(results.trig_reset):
     exit(0)
 elif(results.trig_pause):
     r_cmd='pause'
-    ffdc.trig_pause()
+    fdc.trig_pause()
     exit(0)
 elif(results.trig_resume):
     r_cmd='resume'
@@ -956,26 +1198,16 @@ elif(results.trig_resume):
 elif(results.slc_create):
     r_cmd='createSlowControl'
     #lcgi['jsonfile']=conf.jsonfile
-    if (fdc.slowhost==None or fdc.slowport==None):
-      print "No WSLOW application exiting"
-      exit(0)
-    lcgi.clear()
-    sr=executeFSM(fdc.slowhost,fdc.slowport,"WSLOW","DISCOVER",lcgi)
-    print sr
+    fdc.slow_create()
     exit(0)
 
 elif(results.slc_initialisesql):
     r_cmd='initialiseDB'
-    if (fdc.slowhost==None or fdc.slowport==None):
-      print "No WSLOW application exiting"
-      exit(0)
-    if (results.account!=None):
-        lcgi['account']=results.account
-    else:
-        print 'Please specify the MYSQL account --account=log/pwd@host:base'
-        exit(0)
-    sr=executeFSM(fdc.slowhost,fdc.slowport,"WSLOW","INITIALISE",lcgi)
-    print sr
+    fdc.slow_discover()
+    exit(0)
+elif(results.slc_configure):
+    r_cmd='initialiseDB'
+    fdc.slow_configure()
     exit(0)
 elif(results.slc_loadreferences):
     r_cmd='loadReferences'

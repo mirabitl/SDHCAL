@@ -48,6 +48,9 @@ TdcManager::TdcManager(std::string name) : levbdim::baseApplication(name), _grou
   //_fsm->addCommand("JOBLOG",boost::bind(&TdcManager::c_joblog,this,_1,_2));
   _fsm->addCommand("STATUS",boost::bind(&TdcManager::c_status,this,_1,_2));
   _fsm->addCommand("DIFLIST",boost::bind(&TdcManager::c_diflist,this,_1,_2));
+  _fsm->addCommand("SET6BDAC",boost::bind(&TdcManager::c_set6bdac,this,_1,_2));
+  _fsm->addCommand("SETVTHTIME",boost::bind(&TdcManager::c_setvthtime,this,_1,_2));
+  _fsm->addCommand("SETMASK",boost::bind(&TdcManager::c_setMask,this,_1,_2));
   
   
   
@@ -75,13 +78,20 @@ TdcManager::TdcManager(std::string name) : levbdim::baseApplication(name), _grou
 void TdcManager::c_status(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   response["STATUS"]="DONE";
- 
-  for (std::map<uint64_t,uint32_t>::iterator idr=_msh->readoutMap().begin();idr!=_msh->readoutMap().end();idr++)
+   if (_msh==NULL) return;
+  Json::Value jl;
+  for (uint32_t i=0;i<2;i++)
     {
-      std::stringstream ss;
-      ss<<boost::format("EVENT%lx") % idr->first; 
-      response[ss.str()]=idr->second;
+      if (_msh->tdc(i)==NULL) continue;
+      Json::Value jt;
+      jt["detid"]=_msh->tdc(i)->detectorId();
+      jt["sourceid"]=_msh->tdc(i)->difId();
+      jt["gtc"]=_msh->tdc(i)->gtc();
+      jt["abcid"]=(Json::Value::UInt64)_msh->tdc(i)->abcid();
+      jt["event"]=_msh->tdc(i)->event();
+      jl.append(jt);
     }
+  response["TDCSTATUS"]=jl;
 }
 void TdcManager::c_diflist(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
@@ -98,6 +108,40 @@ void TdcManager::c_diflist(Mongoose::Request &request, Mongoose::JsonResponse &r
       jl.append(jt);
     }
   response["DIFLIST"]=jl;
+}
+
+void TdcManager::c_set6bdac(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  response["STATUS"]="DONE";
+
+  if (_msh==NULL) return;
+  
+  uint32_t nc=atol(request.get("value","31").c_str());
+  
+  this->set6bDac(nc&0xFF);
+  response["6BDAC"]=nc;
+}
+void TdcManager::c_setvthtime(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  response["STATUS"]="DONE";
+
+  if (_msh==NULL) return;
+  
+  uint32_t nc=atol(request.get("value","380").c_str());
+  
+  this->setVthTime(nc);
+  response["VTHTIME"]=nc;
+}
+void TdcManager::c_setMask(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  response["STATUS"]="DONE";
+
+  if (_msh==NULL) return;
+  
+  uint32_t nc=atol(request.get("value","4294967295").c_str());
+  
+  this->setMask(nc);
+  response["MASK"]=nc;
 }
 void TdcManager::initialise(levbdim::fsmmessage* m)
 {
@@ -176,6 +220,7 @@ void TdcManager::initialise(levbdim::fsmmessage* m)
   try {
   _sTDC1=new NL::Socket(hTDC1.c_str(),pTDC1);
   _group->add(_sTDC1);
+  _msh->setMezzanine(1,hTDC1);
   }
   catch (NL::Exception e)
   {
@@ -195,6 +240,7 @@ void TdcManager::initialise(levbdim::fsmmessage* m)
   if (_sTDC2!=NULL) delete _sTDC2;
   _sTDC2=new NL::Socket(hTDC2.c_str(),pTDC2);
   _group->add(_sTDC2);
+  _msh->setMezzanine(2,hTDC2);
   }
  catch (NL::Exception e)
   {
@@ -228,7 +274,8 @@ void TdcManager::listen()
 {
   g_store.create_thread(boost::bind(&TdcManager::dolisten, this));
   _running=true;
-  g_run.create_thread(boost::bind(&TdcManager::doStart, this));
+  // Comment out for LEVBDIM running
+  //g_run.create_thread(boost::bind(&TdcManager::doStart, this));
 
 }
 void TdcManager::configure(levbdim::fsmmessage* m)
@@ -270,16 +317,20 @@ void TdcManager::configure(levbdim::fsmmessage* m)
 	    return;
 	  }
   
-  std::string config=m->content()["configFile"].asString();
-  
+  //std::string config=m->content()["configFile"].asString();
+
+  std::cout<<this->parameters()<<std::endl;
+  std::cout<<"File is "<<ffile<<std::endl;
+  std::cout<<"URL is "<<furl<<std::endl;
   // Read the file
   Json::Value jall;
   if (ffile.length()>2)
     {
   //PRSlow::loadAsics(config,_s1,_s2);
+      std::cout<<"File is "<<ffile.length()<<std::endl;
       Json::Reader reader;
-      std::ifstream ifs (config.c_str(), std::ifstream::in);
-      Json::Value jall;
+      std::ifstream ifs (ffile.c_str(), std::ifstream::in);
+      //      Json::Value jall;
       bool parsingSuccessful = reader.parse(ifs,jall,false);
     }
   else
@@ -321,6 +372,8 @@ void TdcManager::configure(levbdim::fsmmessage* m)
 
 void TdcManager::set6bDac(uint8_t dac)
 {
+  //this->startAcquisition(false);
+  ::sleep(1);
   for (int i=0;i<32;i++)
     {
       _s1.set6bDac(i,dac);
@@ -340,6 +393,44 @@ void TdcManager::set6bDac(uint8_t dac)
 
   // store an "event"
   this->storeSlowControl(0x100);
+  //this->startAcquisition(true);
+  ::sleep(1);
+
+}
+void TdcManager::setMask(uint32_t mask)
+{
+  //this->startAcquisition(false);
+  ::sleep(1);
+  for (int i=0;i<32;i++)
+    {
+      if ((mask>>i)&1)
+	{
+	  _s1.setMaskDiscriTime(i,0);
+	  _s2.setMaskDiscriTime(i,0);
+	}
+      else
+	{
+	  _s1.setMaskDiscriTime(i,1);
+	  _s2.setMaskDiscriTime(i,1);
+	}
+    }
+  _s2.prepare4Tdc(_slcAddr,_slcBuffer);
+  _s1.prepare4Tdc(_slcAddr,_slcBuffer,80);
+  //s2.prepare4Tdc(adr,val,80);
+  _slcBytes=160;
+  _slcBuffer[_slcBytes]=0x3;
+  _slcAddr[_slcBytes]=0x201;
+  _slcBytes++;
+  this->writeRamAvm();
+
+  // do it twice
+  this->writeRamAvm();
+
+  // store an "event"
+  this->storeSlowControl(0x100);
+  //this->startAcquisition(true);
+  ::sleep(1);
+
 }
 
 void TdcManager::setVthTime(uint32_t vth)
@@ -840,7 +931,12 @@ void TdcManager::start(levbdim::fsmmessage* m)
   s<<_directory<<"/tdc"<<_run<<".root";
   
   this->createTrees(s.str());
-  
+  // Clear evnt number
+   for (uint32_t i=0;i<2;i++)
+    {
+      if (_msh->tdc(i)==NULL) continue;
+      _msh->tdc(i)->clear();
+    }
  
   switch (_type)
     {
@@ -877,7 +973,7 @@ void TdcManager::stop(levbdim::fsmmessage* m)
   std::cout<<m->command()<<std::endl<<m->content()<<std::endl;
   
   this->startAcquisition(false);
-  ::sleep(10);
+  ::sleep(2);
   //g_run.join_all();
   this->closeTrees();
 }
