@@ -41,8 +41,10 @@ def SWIGSharedLibrary(env, library, sources, **args):
 #print "----------------------------------------------"
 Decider('MD5-timestamp')
 XDAQ_ROOT="/opt/xdaq"
-DIM_ROOT="/usr/local/dim"
+DIM_ROOT=os.getenv("DIMDIR")
 DHCAL_ROOT=os.path.abspath("..")
+DIMJC_ROOT=os.getenv("DIMJCDIR")
+LEVBDIM_ROOT=os.getenv("LEVBDIMDIR")
 
 fres=os.popen('uname -r')
 kl=fres.readline().split(".")
@@ -100,7 +102,7 @@ Use_LCIO=(os.getenv("USE_LCIO")!=None)
 #os.environ.has_key("DIM_DNS_NODE")
 
 # includes
-INCLUDES=['include',"/usr/include/boost141/",DHCAL_ROOT+"/SDHCAL_common/include",DHCAL_ROOT+"/SDHCAL_DB/include",DHCAL_ROOT+"/SDHCAL_Readout/include","/usr/include/jsoncpp","/opt/dhcal/levbdim/include",DHCAL_ROOT+"/SlowControl/GPIOCtrl/include"]
+INCLUDES=['include',"/usr/include/boost141/",DHCAL_ROOT+"/SDHCAL_common/include",DHCAL_ROOT+"/SDHCAL_DB/include",DHCAL_ROOT+"/SDHCAL_Readout/include","/usr/include/jsoncpp",LEVBDIM_ROOT+"/include",DHCAL_ROOT+"/SlowControl/GPIOCtrl/include"]
 INCLUDES.append("/usr/include/libxml2")
 if (Use_Dim):
   INCLUDES.append(DIM_ROOT+"/dim")
@@ -134,9 +136,9 @@ if (Use_LCIO):
 
 #Library path XDAQ,DHCAL and ROOT + Python
 if (Bit64):
-  LIBRARY_PATHS=["/usr/lib64","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/levbdim/lib"]
+  LIBRARY_PATHS=["/usr/lib64","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib",LEVBDIM_ROOT+"/lib"]
 else:
-  LIBRARY_PATHS=["/usr/lib","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib","/opt/dhcal/levbdim/lib"]
+  LIBRARY_PATHS=["/usr/lib","/usr/local/lib",DIM_ROOT+"/linux",DHCAL_ROOT+"/opt/dhcal/lib",LEVBDIM_ROOT+"/lib"]
 LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
 
 if Use_Dim:
@@ -155,8 +157,8 @@ if (Use_Mongoose):
   LIBRARIES.append('mongoose')
   INCLUDES.append('/usr/local/include/')
   INCLUDES.append('/usr/local/include/mongoose')
-  INCLUDES.append('/opt/dhcal/dimjc/include')
-  LIBRARY_PATHS.append('/opt/dhcal/dimjc/lib')
+  INCLUDES.append(DIMJC_ROOT+'/include')
+  LIBRARY_PATHS.append(DIMJC_ROOT+'/lib')
   LIBRARIES.append('dimjc')
  
   
@@ -204,7 +206,7 @@ levbdimdaq=env.SharedLibrary("#lib/levbdimdaq",LIBRARY_SOURCES)
 #Daemon 
 EXE_LIBPATH=LIBRARY_PATHS
 EXE_LIBPATH.append("#lib")
-EXE_LIBPATH.append("/opt/dhcal/lib")
+EXE_LIBPATH.append(DHCAL_ROOT+"/opt/dhcal/lib")
 EXE_LIBS=LIBRARIES
 EXE_LIBS.append("levbdimdaq")
 plist=[]

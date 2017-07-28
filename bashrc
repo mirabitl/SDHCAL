@@ -5,6 +5,7 @@ export DHCALDIR=/opt/dhcal
 export ROOTSYS=${DHCALDIR}/root
 export LCIODIR=${DHCALDIR}/lcio/v02-00
 export DIMDIR=${DHCALDIR}/dim
+export DIMJCDIR=${DHCALDIR}/dimjc
 export LEVBDIMDIR=${DHCALDIR}/levbdim
 
 export LD_LIBRARY_PATH=${DHCALDIR}/lib:${DIMDIR}/linux:${LCIODIR}/lib:${ROOTSYS}/lib:$LD_LIBRARY_PATH
