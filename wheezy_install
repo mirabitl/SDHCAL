@@ -7,25 +7,28 @@
    sudo apt-get -y install libjsoncpp-dev libmysqlclient-dev liblog4cxx10-dev  libcurl4-gnutls-dev
    #git clone https://github.com/mirabitl/SDHCAL.git
    #cd SDHCAL/
+   export SDHCALDIR="${HOME}/SDHCAL"
+   export DHCALDIR="/opt/dhcal"
+
    . ubuntu_packages.list 
-   sudo mkdir /opt/dhcal
-   sudo chmod 777 /opt/dhcal
-   cd /opt/dhcal
+   sudo mkdir -p ${DHCALDIR}
+   sudo chmod 777 ${DHCALDIR}
+   cd ${DHCALDIR}
    wget http://root.cern.ch/download/root_v5.34.26.source.tar.gz
    tar zxvf root_v5.34.26.source.tar.gz 
    cd root 
    ./configure --enable-python --enable-roofit
    make -j 4
-   mkdir -p /opt/dhcal/etc
-   mkdir -p /opt/dhcal/bin
-   mkdir -p /opt/dhcal/lib
+   mkdir -p ${DHCALDIR}/etc
+   mkdir -p ${DHCALDIR}/bin
+   mkdir -p ${DHCALDIR}/lib
    cd
-   cp SDHCAL/bashrc /opt/dhcal/etc/
-   echo "source /opt/dhcal/etc/bashrc" >> .bashrc
+   cp SDHCAL/bashrc ${DHCALDIR}/etc/
+   echo "source ${DHCALDIR}/etc/bashrc" >> .bashrc
    cat .bashrc
    . .bashrc
-   cd /opt/dhcal;tar zxvf $HOME/SDHCAL/DimDaq/extras/dimrpi.tgz;cd -
-   cd /opt/dhcal/dim/
+   cd ${DHCALDIR};tar zxvf ${SDHCALDIR}/DimDaq/extras/dimrpi.tgz;cd -
+   cd ${DHCALDIR}/dim/
    export OS=Linux
    . setup.sh 
    make clean
@@ -33,13 +36,30 @@
    make -j 4
    make -j 4
    cd -
-   cd /opt/dhcal/
+   cd ${DHCALDIR}/
    svn co svn://svn.freehep.org/lcio/tags/v02-00 lcio/v02-00
    cd lcio/v02-00
    mkdir build
    cd build
    cmake ..
    make install
+
+
+   # Now compile old DAQ SDHCAL specific
+   cd ${SDHCALDIR}
+   cd netLink;scons -c;scons install -j 6;scons;cd -
+   cd SDHCAL_common;scons -c;scons install -j 6;scons;cd -
+   cd SDHCAL_Readout;scons -c;scons install -j 6;scons;cd -
+   cd SDHCAL_DB;scons -c;scons install -j 6;scons;cd -
+   cd SDHCAL_Client;scons -c;scons install -j 6;scons;cd -
+   cd SDHCAL_EventReader;scons -c;scons install -j 6;scons
+   ln -s _DHCalEventReader.pyd _DHCalEventReader.so; cd -
+
+   cd DimDaq; scons -c;scons install -j 6;scons;cd -
+   cd DimDb;scons -c;scons install -j 6;scons;cd -
+   cd DimCtrl;scons -c;scons install -j 6;scons;cd -
+
+   dhcalinstall
 
 
 # DB installation

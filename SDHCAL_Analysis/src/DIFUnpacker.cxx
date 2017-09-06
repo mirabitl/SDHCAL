@@ -195,7 +195,7 @@ uint32_t DIFUnpacker::getFramePtr(std::vector<unsigned char*> &vFrame,std::vecto
       uint32_t header =DIFUnpacker::getFrameAsicHeader(&cb[fshift]);
       if (header == DU_END_OF_FRAME) return (fshift+2);
       //std::cout<<header<<" "<<fshift<<std::endl;
-      if (header<1 || header>48)
+			if (header<1 || ( header>48 && header != 129) )  // Header for 2nd channel in BIF = 129 (bug (feature) in firmware)
 	{
 	  std::stringstream s("");
 
