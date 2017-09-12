@@ -82,7 +82,7 @@ uint32_t trackAnalysis::PMAnalysis(uint32_t bifid)
 		    {
             
 		      float tj=dc->getFrameTimeToTrigger(j)*1.;
-		      if (chid==0)
+		      if (chid==57)
 			{
 			  uint32_t tag=0;
 			  for (uint32_t k=0;k<64;k++)
@@ -247,44 +247,7 @@ void trackAnalysis::presetParameters()
 	  std::cout<<it->second.getStringValue()<<std::endl;
 	  _geo=new jsonGeo(it->second.getStringValue());
 	}
-      // 	if ((it=m.find("SkipEvents"))!=m.end()) theSkip_=it->second.getIntValue();
-      //   
-      //       if ((it=m.find("ClockSynchCut"))!=m.end()) clockSynchCut_=it->second.getIntValue();
-      //       if ((it=m.find("SpillSize"))!=m.end()) spillSize_=it->second.getDoubleValue();
-      //       if ((it=m.find("MaxHitCount"))!=m.end()) maxHitCount_=it->second.getIntValue();
-      //       //if ((it=m.find("MinHitCount"))!=m.end()) minHitCount_=it->second.getIntValue();
-      //       if ((it=m.find("MinChambersInTime"))!=m.end()) minChambersInTime_=it->second.getIntValue();
-      //       if ((it=m.find("TkMinPoint"))!=m.end()) tkMinPoint_=it->second.getIntValue();
-      //       if ((it=m.find("TkExtMinPoint"))!=m.end()) tkExtMinPoint_=it->second.getIntValue();
-      //       if ((it=m.find("TkBigClusterSize"))!=m.end()) tkBigClusterSize_=it->second.getIntValue();
-      //       if ((it=m.find("TkChi2Cut"))!=m.end()) tkChi2Cut_=it->second.getDoubleValue();
-      //       if ((it=m.find("TkDistCut"))!=m.end()) tkDistCut_=it->second.getDoubleValue();
-      //       if ((it=m.find("TkExtChi2Cut"))!=m.end()) tkExtChi2Cut_=it->second.getDoubleValue();
-      //       if ((it=m.find("TkExtDistCut"))!=m.end()) tkExtDistCut_=it->second.getDoubleValue();
-      //       if ((it=m.find("TkAngularCut"))!=m.end()) tkAngularCut_=it->second.getDoubleValue();
-      //       if ((it=m.find("ChamberEdge"))!=m.end()) chamberEdge_=it->second.getDoubleValue();
-      //       if ((it=m.find("FindTracks"))!=m.end()) findTracks_=it->second.getBoolValue();
-      //       if ((it=m.find("DropFirstSpillEvent"))!=m.end()) dropFirstSpillEvent_=it->second.getBoolValue();
-      //       if ((it=m.find("UseSynchronised"))!=m.end()) useSynchronised_=it->second.getBoolValue();
-      //       if ((it=m.find("UseTk4"))!=m.end()) useTk4_=it->second.getBoolValue();
-      //       if ((it=m.find("Rebuild"))!=m.end()) rebuild_=it->second.getBoolValue();
-      //       if ((it=m.find("OldAlgo"))!=m.end()) oldAlgo_=it->second.getBoolValue();
-      //       if ((it=m.find("CollectionName"))!=m.end()) collectionName_=it->second.getStringValue();
-      //       if ((it=m.find("TkFirstChamber"))!=m.end()) tkFirstChamber_=it->second.getIntValue();
-      //       if ((it=m.find("TkLastChamber"))!=m.end()) tkLastChamber_=it->second.getIntValue();
-      //       if ((it=m.find("OffTimePrescale"))!=m.end()) offTimePrescale_=it->second.getIntValue();
-      //       if ((it=m.find("Seuil"))!=m.end()) theSeuil_=it->second.getIntValue();
-      //       if ((it=m.find("Interactif"))!=m.end()) draw_=it->second.getBoolValue();
-      // 
-      //       if ((it=m.find("zLastAmas"))!=m.end()) zLastAmas_=it->second.getDoubleValue();
-      //       if ((it=m.find("MonitoringPath"))!=m.end()) theMonitoringPath_=it->second.getStringValue();
-      //       if ((it=m.find("MonitoringPeriod"))!=m.end()) theMonitoringPeriod_=it->second.getIntValue();
-      //       if ((it=m.find("SpillLength"))!=m.end())
-      {
-	theSpillLength_=it->second.getDoubleValue();
-	//printf("I found %f spill length \n",theSpillLength_);
-	// getchar();
-      }
+      
     
       DEBUG_PRINT("Interactif %d \n",draw_);
     
@@ -691,7 +654,7 @@ void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   
   int nhits=0;
   theNplans_=0;
-  
+  uint32_t tag=0;
   std::bitset<60> chhit(0);
   std::map<uint32_t,std::vector<IMPL::RawCalorimeterHitImpl*> >::iterator iseed=reader_->getPhysicsEventMap().find(seed);
   if (iseed==reader_->getPhysicsEventMap().end()) 
@@ -703,12 +666,14 @@ void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   if (_geo->cuts()["cerenkovAnalysis"].asUInt()!=0)
     {
       theCerenkovTag_=this->CerenkovTagger(3,seed);
-      uint32_t tag=theCerenkovTag_;
+      tag=theCerenkovTag_;
   
-      //printf("%d %d \n",seed,theCerenkovTag_);
+      // printf("Cerenkov %d %d \n",seed,theCerenkovTag_);
     }
+  
   ptime("Init");
   theNplans_=this->fillVolume(seed);
+  
   ptime("fillVolume");
   if (theNplans_<_geo->cuts()["minPlans"].asUInt()) return;
   
@@ -764,7 +729,7 @@ void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
       this->debora(vrc);
 #else
       recoTrack::combinePoint1(vrc,_geo,_vtk);
-       std::cout<<"Number of tracks :"<<_vtk.size()<<std::endl;
+      //std::cout<<"Number of tracks :"<<_vtk.size()<<std::endl;
       _monitor->trackHistos(_vtk,vrc,"/Principal");
     
       if ((_geo->cuts()["clusterDisplay"].asUInt()&1)!=0 && _vtk.size()>=1 && _vtk[0]->size()>=4)
@@ -783,7 +748,14 @@ void trackAnalysis::processSeed(IMPL::LCCollectionVec* rhcol,uint32_t seed)
   this->tagMips();
   ptime("tagmip");
   //if (((_pMip>1E-5 && _pMip<0.4) || (_vtk.size()>0 || _hits.size()>30)) && (_geo->cuts()["clusterDisplay"].asUInt()&2)!=0)
-  if ((_pMip>1E-5 && _pMip<0.4)  && (_geo->cuts()["clusterDisplay"].asUInt()&2)!=0)
+    if (tag&1!=0 & false)
+    {
+      std::cout<<"ELECTRON "<<_hits.size()<<" hits "<<std::endl;
+      this->drawHits();
+      char c;c=getchar();putchar(c); if (c=='.') exit(0);
+    }
+    
+    if (((_pMip>1E-5 && _pMip<0.4 && _hits.size()>100) ) && (_geo->cuts()["clusterDisplay"].asUInt()&2)!=0)
     {
       std::cout<<_hits.size()<<" hits "<<_pMipCand*100<<" % low weight "<<realClusters_.size()<<" clusters "<<_pMip*100<<" % Mip tagged"<<std::endl;
       this->drawHits();
@@ -956,7 +928,7 @@ void trackAnalysis::processEvent()
   bool hasPion=false;
   for (uint32_t is=0;is<vseeds.size();is++)
     {
-      printf("%d %d %x \n",is,vseeds[is],rhcol);
+      //printf("%d %d %x \n",is,vseeds[is],rhcol);
       this->processSeed(rhcol,vseeds[is]);
     
     
@@ -2108,7 +2080,7 @@ void trackAnalysis::TagIsolated(uint32_t fpl,uint32_t lpl)
       //hweight=(TH1F*) rootHandler_->BookTH1("showerweight",100,0.,2.);
       hweight= rootHandler_->BookTH1("/HitStudy/showerweight",160,-0.1,1.5);
       hmipc= rootHandler_->BookTH1("/HitStudy/mipcand",160,-0.1,1.5);
-      hmipch= rootHandler_->BookTH2("/HitStudy/mipcandhit",250,0.,1500,160,-0.1,1.5);
+      hmipch= rootHandler_->BookTH2("/HitStudy/mipcandhit",300,0.,1800,160,-0.1,1.5);
       hnv= rootHandler_->BookTH1("/HitStudy/nv",150,0.,150.);
       hweight2= rootHandler_->BookTH2("/HitStudy/showerweight2",150,0.,150.,110,-0.1,0.99);
     }
@@ -2119,6 +2091,7 @@ void trackAnalysis::TagIsolated(uint32_t fpl,uint32_t lpl)
   int32_t ixmin=-6,ixmax=6; // 6 avant
   std::vector<RecoHit*> vnear_;
   float dcut2=47.; //36.
+  dcut2=25.;
   int nmipc=0;
   for (std::vector<RecoHit>::iterator it=_hits.begin();it!=_hits.end();it++)
     {
@@ -2129,7 +2102,7 @@ void trackAnalysis::TagIsolated(uint32_t fpl,uint32_t lpl)
 	  ROOT::Math::XYZVector d=(*it)-(*jt);
 	  //	   if (abs(d.Z())<1) continue;
 	  //float dist=2*(abs(d.X())+abs(d.y()))+abs(d.Z());
-	  if (d.Mag2()<47)
+	  if (d.Mag2()<dcut2)
 	    vnear_.push_back(&(*jt));
 	}
       /*

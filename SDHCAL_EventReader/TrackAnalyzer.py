@@ -26,16 +26,16 @@ rootHandler=dr.DCHistogramHandler()
 
 
 #config.marlin='m3_aout2012.xml'
-#dher.ParseSteering("xml/m3_oct2015.xml")
+dher.ParseSteering("xml/m3_oct2015.xml")
 #dher.readGeometry("acqilc/RPC_2008@lyosdhcal10:GEOMETRY","SPS_08_2012");
-#dher.registerAnalysis("trackAnalysis","./pluggins/");
-dher.registerAnalysis("rawAnalysis","./pluggins/");
+dher.registerAnalysis("trackAnalysis","./pluggins/");
+#dher.registerAnalysis("rawAnalysis","./pluggins/");
 
 
 dher.setXdaqShift(4); 
 dher.setDropFirstRU(false);
 fileList=[]
-filePath="/data/srv02/RAID6/Dome0916/DHCAL_%d_I0_%d.slcio"
+filePath="/data/NAS/H2SEPT2017/DHCAL_%d_I0_%d.slcio"
 #filePath="/data/srv02/RAID6/SPS_10_2015/Other/SO5DHCAL_%d_I9_0.slcio"
 #filePath="/data/srv02/RAID6/PS_06_2015/Other/SO3DHCAL_%d_I9_0.slcio"
 #80
