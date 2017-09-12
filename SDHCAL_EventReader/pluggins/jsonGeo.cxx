@@ -33,7 +33,29 @@ jsonGeo::jsonGeo(std::string config)
 		 <<std::endl;
 
       }
-    
+    for (int32_t i=0;i<255;i++)
+      {
+	if (_jroot["difs"].isMember(itoa(i)))
+	  {
+	    _jDif[i].chamber=_jroot["difs"][itoa(i)]["chamber"].asUInt();
+	    _jDif[i].di=_jroot["difs"][itoa(i)]["di"].asDouble();
+	    _jDif[i].dj=_jroot["difs"][itoa(i)]["dj"].asDouble();
+	    _jDif[i].poli=_jroot["difs"][itoa(i)]["poli"].asDouble();
+	    _jDif[i].polj=_jroot["difs"][itoa(i)]["polj"].asDouble();
+	    _jDif[i].type=_jroot["difs"][itoa(i)]["type"].asString();
+	  }
+	if (_jroot["chambers"].isMember(itoa(i)))
+	  {
+	    _jChamber[i].plan=_jroot["chambers"][itoa(i)]["plan"].asUInt();
+	    _jChamber[i].x0=_jroot["chambers"][itoa(i)]["x0"].asDouble();
+	    _jChamber[i].y0=_jroot["chambers"][itoa(i)]["y0"].asDouble();
+	    _jChamber[i].z0=_jroot["chambers"][itoa(i)]["z0"].asDouble();
+	    _jChamber[i].x1=_jroot["chambers"][itoa(i)]["x1"].asDouble();
+	    _jChamber[i].y1=_jroot["chambers"][itoa(i)]["y1"].asDouble();
+	    _jChamber[i].z1=_jroot["chambers"][itoa(i)]["z1"].asDouble();
+	    
+	  }
+      }
 
   }
 void jsonGeo::convert(uint32_t difid,uint32_t asicid,uint32_t ipad,ROOT::Math::XYZPoint* p)
@@ -137,30 +159,30 @@ void jsonGeo::convert(uint32_t difid,uint32_t asicid,uint32_t ipad,ROOT::Math::X
 
     };
 
-    Json::Value dif=this->difGeo(difid);
-    Json::Value ch=this->chamberGeo(dif["chamber"].asUInt());
+    jsonDifInfo dif=_jDif[difid];
+    jsonChamberInfo ch=_jChamber[dif.chamber];
     uint32_t I=0,J=0;
     double pad=1.04125;
     //Small chambers  HR
-    if(dif["type"].asString().compare("HR0PAD")==0){
+    if(dif.type.compare("HR0PAD")==0){
       I = MapISmallHR1[ipad]+AsicShiftI[asicid]+1;
       J = MapJSmallHR1[ipad]+AsicShiftJ[asicid]+1;
     }
  
     //First square meter HR1
-    if(dif["type"].asString().compare("HR1PAD")==0){
+    if(dif.type.compare("HR1PAD")==0){
       I = MapILargeHR1[ipad]+AsicShiftI[asicid]+1;
       J = MapJLargeHR1[ipad]+AsicShiftJ[asicid]+1;
     }
 
 
     //Second Square meter HR2
-    if(dif["type"].asString().compare("HR2PAD")==0){
+    if(dif.type.compare("HR2PAD")==0){
       I = MapILargeHR2[ipad]+AsicShiftI[asicid]+1;
       J = MapJLargeHR2[ipad]+AsicShiftJ[asicid]+1;
       J=33-J;
     }
-    if (dif["type"].asString().compare("MR2PAD")==0){
+    if (dif.type.compare("MR2PAD")==0){
       int jligne = 3-(asicid-1)/12;
       int icol = (asicid-1)%12;
       int ispad= ((ipad-1)/8)+1;
@@ -172,16 +194,17 @@ void jsonGeo::convert(uint32_t difid,uint32_t asicid,uint32_t ipad,ROOT::Math::X
 
     // from DIF (I,J) to chamber
     double fI,fJ;
-    if (dif["poli"].asDouble()>0)
-      fI=I+dif["di"].asDouble();
+    if (dif.poli>0)
+      fI=I+dif.di;
     else
-      fI=(96-I+1)+dif["di"].asDouble();
-    if (dif["polj"].asDouble()>0)
-      fJ=J+dif["dj"].asDouble();
+      fI=(96-I+1)+dif.di;
+    if (dif.polj>0)
+      fJ=J+dif.dj;
     else
-      fJ=(32-J+1)+dif["dj"].asDouble();
+      fJ=(32-J+1)+dif.dj;
 
     // Now go global
-    p->SetXYZ(fI*pad+ch["x0"].asDouble(),fJ*pad+ch["y0"].asDouble(),ch["z0"].asDouble());
+    if (p!=NULL)
+      p->SetXYZ(fI*pad+ch.x0,fJ*pad+ch.y0,ch.z0);
     
 }

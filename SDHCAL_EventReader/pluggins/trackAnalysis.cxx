@@ -43,7 +43,7 @@ uint32_t trackAnalysis::PMAnalysis(uint32_t bifid)
       for (std::vector<DIFPtr*>::iterator itb = reader_->getDIFList().begin();itb!=reader_->getDIFList().end();itb++)
 	{
 	  DIFPtr* d = (*itb);
-	  if(_geo->difGeo(d->getID())["type"].asString().compare("HR2BIF")!=0) continue;
+	  if(_geo->difInfo(d->getID()).type.compare("HR2BIF")!=0) continue;
       
 	  // Loop on frames
       
@@ -65,7 +65,7 @@ uint32_t trackAnalysis::PMAnalysis(uint32_t bifid)
 		{
 		  DIFPtr* dc = (*it);
           
-		  uint32_t chid = _geo->difGeo(dc->getID())["chamber"].asUInt();
+		  uint32_t chid = _geo->difInfo(dc->getID()).chamber;
 		  std::stringstream s;
 		  s<<ss.str()<<"BIFPOS"<<chid;
 		  TH1* hpattag1= rootHandler_->GetTH1(s.str());
@@ -1954,7 +1954,7 @@ uint32_t trackAnalysis::fillVolume(uint32_t seed)
       // Check the type of the RawCalorimeterHit
       //std::cout<<(int) (hit->getCellID0()&0xFF)<<" type = "<<_geo->difGeo(hit->getCellID0()&0xFF)["type"].asString()<<std::endl;
     
-      if (_geo->difGeo(hit->getCellID0()&0xFF)["type"].asString().compare("TRICOT")==0) continue;
+      if (_geo->difInfo(hit->getCellID0()&0xFF).type.compare("TRICOT")==0) continue;
       RecoHit h(_geo,hit);
       nPlansAll_.set(h.plan());
       _hits.push_back(h);
@@ -1972,11 +1972,11 @@ uint32_t trackAnalysis::fillVolume(uint32_t seed)
       // Check the type of the RawCalorimeterHit
       //std::cout<<(hit->getCellID0()&0xFF)<<" _vts "<<_vts.size()<<std::endl;
     
-      if (_geo->difGeo(hit->getCellID0()&0xFF)["type"].asString().compare("TRICOT")!=0) continue;
+      if (_geo->difInfo(hit->getCellID0()&0xFF).type.compare("TRICOT")!=0) continue;
       bool added=false;
-      Json::Value dif=_geo->difGeo(hit->getCellID0()&0xFF);
-      Json::Value ch=_geo->chamberGeo(dif["chamber"].asUInt());
-      nPlansAll_.set(ch["plan"].asUInt());
+      //Json::Value dif=_geo->difGeo(hit->getCellID0()&0xFF);
+      //Json::Value ch=_geo->chamberGeo(dif["chamber"].asUInt());
+      nPlansAll_.set(_geo->chamberInfo(_geo->difInfo(hit->getCellID0()&0xFF).chamber).plan);
       //std::cout<<(hit->getCellID0()&0xFF)<<" av "<<(0xFF & (hit->getCellID0()&0xFF00)>>8)<<" "<<(0xFF & (hit->getCellID0()&0x3F0000)>>16)<<std::endl;
       if (true)
 	for (std::vector<TStripCluster*>::iterator its=_vts.begin();its!=_vts.end();its++)
@@ -2274,8 +2274,8 @@ std::vector<uint32_t> trackAnalysis::cleanMap(uint32_t nchmin)
       for (std::vector<IMPL::RawCalorimeterHitImpl*>::iterator ih=iseed->second.begin();ih!=iseed->second.end();ih++)
 	{
 	  uint32_t difid=(*ih)->getCellID0()&0xFF;
-	  Json::Value dif=_geo->difGeo(difid);
-	  plans.set(dif["chamber"].asUInt(),1);
+	  //Json::Value dif=_geo->difGeo(difid);
+	  plans.set(_geo->difInfo(difid).chamber,1);
       
 	}
       //std::cout<<"Seed "<<iseed->first<<" "<<plans.count()<<" "<<plans<<std::endl;
